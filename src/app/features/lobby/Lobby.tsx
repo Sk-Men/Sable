@@ -235,13 +235,14 @@ export function Lobby() {
         return false;
       }
 
+      // As a subspace can be in multiple spaces,
+      // only return true if all parent spaces are closed.
       let anyOpen = false;
       parentParentIds.forEach((id) => {
         if (!getInClosedCategories(spaceId, id, parentId)) {
           anyOpen = true;
         }
       });
-
       closedCategoriesCache.current.set(categoryId, !anyOpen);
       return !anyOpen;
     },
@@ -491,7 +492,7 @@ export function Lobby() {
     const collapsed = closedCategories.has(categoryId);
     const [spaceId, roomId] = getLobbyCategoryIdParts(categoryId);
 
-    // Only prevent collapsing if all parents are collapsed
+    // Prevent collapsing if all parents are collapsed
     const toggleable = !getAllAncestorsCollapsed(spaceId, roomId);
 
     if (toggleable) {
