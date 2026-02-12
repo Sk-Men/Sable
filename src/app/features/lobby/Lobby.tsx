@@ -224,6 +224,7 @@ export function Lobby() {
           }
         }
       }
+
       if (closedCategories.has(categoryId)) {
         closedCategoriesCache.current.set(categoryId, true);
         return true;

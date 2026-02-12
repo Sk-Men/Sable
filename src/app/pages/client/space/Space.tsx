@@ -452,13 +452,14 @@ export function Space() {
         return false;
       }
 
+      // As a subspace can be in multiple spaces,
+      // only return true if all parent spaces are closed.
       let anyOpen = false;
       parentParentIds.forEach((id) => {
         if (!getInClosedCategories(spaceId, id, parentId)) {
           anyOpen = true;
         }
       });
-
       closedCategoriesCache.current.set(categoryId, !anyOpen);
       return !anyOpen;
     },
