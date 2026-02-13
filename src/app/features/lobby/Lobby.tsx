@@ -235,14 +235,9 @@ export function Lobby() {
 
       // As a subspace can be in multiple spaces,
       // only return true if all parent spaces are closed.
-      let anyOpen = false;
-      parentParentIds.forEach((id) => {
-        if (!getInClosedCategories(spaceId, id, parentId)) {
-          anyOpen = true;
-        }
-      });
-      closedCategoriesCache.current.set(categoryId, !anyOpen);
-      return !anyOpen;
+      return !Array.from(parentParentIds).some(
+        (id) => !getInClosedCategories(spaceId, id, parentId)
+      );
     },
     [closedCategories, getRoom, roomToParents, spaceRooms]
   );
@@ -261,13 +256,7 @@ export function Lobby() {
       return false;
     }
 
-    let allCollapsed = true;
-    parentIds.forEach((id) => {
-      if (!getInClosedCategories(spaceId, id, roomId)) {
-        allCollapsed = false;
-      }
-    });
-    return allCollapsed;
+    return !Array.from(parentIds).some((id) => !getInClosedCategories(spaceId, id, roomId));
   };
 
   const [draggingItem, setDraggingItem] = useState<HierarchyItem>();

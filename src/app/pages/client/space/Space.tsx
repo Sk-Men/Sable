@@ -453,14 +453,11 @@ export function Space() {
 
       // As a subspace can be in multiple spaces,
       // only return true if all parent spaces are closed.
-      let anyOpen = false;
-      parentParentIds.forEach((id) => {
-        if (!getInClosedCategories(spaceId, id, parentId)) {
-          anyOpen = true;
-        }
-      });
-      closedCategoriesCache.current.set(categoryId, !anyOpen);
-      return !anyOpen;
+      const allClosed = !Array.from(parentParentIds).some(
+        (id) => !getInClosedCategories(spaceId, id, parentId)
+      );
+      closedCategoriesCache.current.set(categoryId, allClosed);
+      return allClosed;
     },
     [closedCategories, getRoom, roomToParents, spaceRooms]
   );
@@ -482,14 +479,7 @@ export function Space() {
         return false;
       }
 
-      let visible = false;
-      childIds.forEach((id) => {
-        if (getContainsShowRoom(id)) {
-          visible = true;
-        }
-      });
-
-      return visible;
+      return Array.from(childIds).some((id) => getContainsShowRoom(id));
     },
     [roomToUnread, selectedRoomId, roomToChildren]
   );
@@ -513,13 +503,9 @@ export function Space() {
       return false;
     }
 
-    let allCollapsed = true;
-    parentIds.forEach((id) => {
-      if (!getInClosedCategories(spaceId, id, roomId)) {
-        allCollapsed = false;
-      }
-    });
-
+    const allCollapsed = !Array.from(parentIds).some(
+      (id) => !getInClosedCategories(spaceId, id, roomId)
+    );
     ancestorsCollapsedCache.current.set(categoryId, allCollapsed);
     return allCollapsed;
   };
