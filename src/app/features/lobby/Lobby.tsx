@@ -235,9 +235,11 @@ export function Lobby() {
 
       // As a subspace can be in multiple spaces,
       // only return true if all parent spaces are closed.
-      return !Array.from(parentParentIds).some(
+      const allClosed = !Array.from(parentParentIds).some(
         (id) => !getInClosedCategories(spaceId, id, parentId)
       );
+      closedCategoriesCache.current.set(categoryId, allClosed);
+      return allClosed;
     },
     [closedCategories, getRoom, roomToParents, spaceRooms]
   );
