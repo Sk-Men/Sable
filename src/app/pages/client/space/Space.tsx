@@ -48,6 +48,7 @@ import {
 } from '../../../hooks/router/useSelectedSpace';
 import { useSpace } from '../../../hooks/useSpace';
 import { VirtualTile } from '../../../components/virtualizer';
+import { spaceRoomsAtom } from '../../../state/spaceRooms';
 import { RoomNavCategoryButton, RoomNavItem } from '../../../features/room-nav';
 import { makeNavCategoryId, getNavCategoryIdParts } from '../../../state/closedNavCategories';
 import { roomToUnreadAtom } from '../../../state/room/roomToUnread';
@@ -387,6 +388,7 @@ export function Space() {
   const roomToParents = useAtomValue(roomToParentsAtom);
   const roomToChildren = useAtomValue(roomToChildrenAtom);
   const allRooms = useAtomValue(allRoomsAtom);
+  const [spaceRooms] = useAtom(spaceRoomsAtom);
   const allJoinedRooms = useMemo(() => new Set(allRooms), [allRooms]);
   const notificationPreferences = useRoomsNotificationPreferencesContext();
 
@@ -425,20 +427,17 @@ export function Space() {
    */
   const getInClosedCategories = useCallback(
     (spaceId: string, parentId: string, previousId?: string): boolean => {
+      // Ignore root space being collapsed if in a subspace,
+      // this is due to many spaces dumping all rooms in the top-level space.
+      if (parentId === spaceId && previousId) {
+        if (spaceRooms.has(previousId) || getRoom(previousId)?.isSpaceRoom()) {
+          return false;
+        }
+      }
+
       const categoryId = makeNavCategoryId(spaceId, parentId);
       if (closedCategoriesCache.current.has(categoryId)) {
         return closedCategoriesCache.current.get(categoryId);
-      }
-
-      // Ignore root space being collapsed if in a subspace,
-      // this is due to many spaces dumping all rooms in the top-level space.
-      if (parentId === spaceId) {
-        if (previousId) {
-          if (getRoom(previousId)?.isSpaceRoom()) {
-            closedCategoriesCache.current.set(categoryId, false);
-            return false;
-          }
-        }
       }
 
       if (closedCategories.has(categoryId)) {
@@ -463,7 +462,7 @@ export function Space() {
       closedCategoriesCache.current.set(categoryId, !anyOpen);
       return !anyOpen;
     },
-    [closedCategories, getRoom, roomToParents]
+    [closedCategories, getRoom, roomToParents, spaceRooms]
   );
 
   /**

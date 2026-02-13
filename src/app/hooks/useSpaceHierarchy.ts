@@ -207,11 +207,10 @@ const getSpaceJoinedHierarchy = (
   const getContainsRoom = (spaceId: string, visited: Set<string> = new Set()) => {
     // Prevent infinite recursion
     if (visited.has(spaceId)) return false;
+    visited.add(spaceId);
 
     const space = getRoom(spaceId);
     if (!space) return false;
-
-    visited.add(spaceId);
 
     const childEvents = getStateEvents(space, StateEvent.SpaceChild);
 

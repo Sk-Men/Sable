@@ -209,20 +209,17 @@ export function Lobby() {
    */
   const getInClosedCategories = useCallback(
     (spaceId: string, parentId: string, previousId?: string): boolean => {
+      // Ignore root space being collapsed if in a subspace,
+      // this is due to many spaces dumping all rooms in the top-level space.
+      if (parentId === spaceId && previousId) {
+        if (spaceRooms.has(previousId) || getRoom(previousId)?.isSpaceRoom()) {
+          return false;
+        }
+      }
+
       const categoryId = makeLobbyCategoryId(spaceId, parentId);
       if (closedCategoriesCache.current.has(categoryId)) {
         return closedCategoriesCache.current.get(categoryId);
-      }
-
-      // Ignore root space being collapsed if in a subspace,
-      // this is due to many spaces dumping all rooms in the top-level space.
-      if (parentId === spaceId) {
-        if (previousId) {
-          if (getRoom(previousId)?.isSpaceRoom() || spaceRooms.has(previousId)) {
-            closedCategoriesCache.current.set(categoryId, false);
-            return false;
-          }
-        }
       }
 
       if (closedCategories.has(categoryId)) {

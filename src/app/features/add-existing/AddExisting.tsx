@@ -87,13 +87,44 @@ export function AddExistingModal({ parentId, space, requestClose }: AddExistingM
   const allRoomsSet = useAllJoinedRoomsSet();
   const getRoom = useGetRoom(allRoomsSet);
 
+  /**
+   * Recursively checks if a given sourceId room is an ancestor to the targetId space.
+   *
+   * @param sourceId - The room to check.
+   * @param targetId - The space ID to check against.
+   * @returns True if rId is an ancestor of targetId.
+   */
+  const isAncestor = useCallback(
+    (sourceId: string, targetId: string, visited: Set<string> = new Set()): boolean => {
+      // Prevent infinite recursion
+      if (visited.has(targetId)) return false;
+      visited.add(targetId);
+
+      const parentIds = roomIdToParents.get(targetId);
+      if (!parentIds) return false;
+
+      if (parentIds.has(sourceId)) {
+        return true;
+      }
+
+      let hasAncestor = false;
+      parentIds.forEach((id) => {
+        if (isAncestor(sourceId, id, visited)) {
+          hasAncestor = true;
+        }
+      });
+      return hasAncestor;
+    },
+    [roomIdToParents]
+  );
+
   const allItems: string[] = useMemo(() => {
     const rIds = space ? [...spaces] : [...rooms, ...directs];
 
     return rIds
-      .filter((rId) => rId !== parentId && !roomIdToParents.get(rId)?.has(parentId))
+      .filter((rId) => rId !== parentId && !isAncestor(rId, parentId))
       .sort(factoryRoomIdByAtoZ(mx));
-  }, [spaces, rooms, directs, space, parentId, roomIdToParents, mx]);
+  }, [space, spaces, rooms, directs, mx, parentId, isAncestor]);
 
   const getRoomNameStr: SearchItemStrGetter<string> = useCallback(
     (rId) => getRoom(rId)?.name ?? rId,
