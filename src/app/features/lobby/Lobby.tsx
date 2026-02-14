@@ -205,10 +205,16 @@ export function Lobby() {
    * @param spaceId - The root space ID.
    * @param parentId - The parent space ID to start the check from.
    * @param previousId - The last ID checked, only used to ignore root collapse state.
+   * @param visited - Set used to prevent recursion errors.
    * @returns True if parentId or all ancestors is in a closed category.
    */
   const getInClosedCategories = useCallback(
-    (spaceId: string, parentId: string, previousId?: string): boolean => {
+    (
+      spaceId: string,
+      parentId: string,
+      previousId?: string,
+      visited: Set<string> = new Set()
+    ): boolean => {
       // Ignore root space being collapsed if in a subspace,
       // this is due to many spaces dumping all rooms in the top-level space.
       if (parentId === spaceId && previousId) {
@@ -218,6 +224,11 @@ export function Lobby() {
       }
 
       const categoryId = makeLobbyCategoryId(spaceId, parentId);
+
+      // Prevent infinite recursion
+      if (visited.has(categoryId)) return false;
+      visited.add(categoryId);
+
       if (closedCategoriesCache.current.has(categoryId)) {
         return closedCategoriesCache.current.get(categoryId);
       }
@@ -236,8 +247,9 @@ export function Lobby() {
       // As a subspace can be in multiple spaces,
       // only return true if all parent spaces are closed.
       const allClosed = !Array.from(parentParentIds).some(
-        (id) => !getInClosedCategories(spaceId, id, parentId)
+        (id) => !getInClosedCategories(spaceId, id, parentId, visited)
       );
+      visited.delete(categoryId);
       closedCategoriesCache.current.set(categoryId, allClosed);
       return allClosed;
     },

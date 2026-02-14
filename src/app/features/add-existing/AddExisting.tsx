@@ -92,6 +92,7 @@ export function AddExistingModal({ parentId, space, requestClose }: AddExistingM
    *
    * @param sourceId - The room to check.
    * @param targetId - The space ID to check against.
+   * @param visited - Set used to prevent recursion errors.
    * @returns True if rId is an ancestor of targetId.
    */
   const isAncestor = useCallback(

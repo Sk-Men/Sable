@@ -7,6 +7,7 @@ import { useMatrixClient } from './useMatrixClient';
 import { roomToParentsAtom } from '../state/room/roomToParents';
 import { MSpaceChildContent, StateEvent } from '../../types/matrix/room';
 import { getAllParents, getStateEvents, isValidChild } from '../utils/room';
+import { makeLobbyCategoryId } from '../state/closedLobbyCategories';
 import { isRoomId } from '../utils/matrix';
 import { SortFunc, byOrderKey, byTsOldToNew, factoryRoomIdByActivity } from '../utils/sort';
 import { useStateEventCallback } from './useStateEventCallback';
@@ -56,8 +57,17 @@ const getHierarchySpaces = (
   };
   const spaceItems: HierarchyItemSpace[] = [];
 
-  const findAndCollectHierarchySpaces = (spaceItem: HierarchyItemSpace) => {
-    if (spaceItems.find((item) => item.roomId === spaceItem.roomId)) return;
+  const findAndCollectHierarchySpaces = (
+    spaceItem: HierarchyItemSpace,
+    parentSpaceId: string,
+    visited: Set<string> = new Set()
+  ) => {
+    const spaceItemId = makeLobbyCategoryId(parentSpaceId, spaceItem.roomId);
+
+    // Prevent infinite recursion
+    if (visited.has(spaceItemId)) return;
+    visited.add(spaceItemId);
+
     const space = getRoom(spaceItem.roomId);
     spaceItems.push(spaceItem);
 
@@ -89,10 +99,10 @@ const getHierarchySpaces = (
         parentId: spaceItem.roomId,
         depth: spaceItem.depth + 1,
       };
-      findAndCollectHierarchySpaces(childItem);
+      findAndCollectHierarchySpaces(childItem, spaceItem.roomId, visited);
     });
   };
-  findAndCollectHierarchySpaces(rootSpaceItem);
+  findAndCollectHierarchySpaces(rootSpaceItem, rootSpaceId);
 
   return spaceItems;
 };
@@ -202,6 +212,7 @@ const getSpaceJoinedHierarchy = (
    * Recursively checks if the given space or any of its descendants contain non-space rooms.
    *
    * @param spaceId - The space ID to check.
+   * @param visited - Set used to prevent recursion errors.
    * @returns True if the space or any descendant contains non-space rooms.
    */
   const getContainsRoom = (spaceId: string, visited: Set<string> = new Set()) => {
