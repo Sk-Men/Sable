@@ -1,12 +1,16 @@
 import { useMatch, useParams } from 'react-router-dom';
 import { getCanonicalAliasRoomId, isRoomAlias } from '$appUtils/matrix';
+import { tryDecodeURIComponent } from '$appUtils/dom';
 import { useMatrixClient } from '../useMatrixClient';
 import { getSpaceLobbyPath, getSpaceSearchPath } from '$pages/pathUtils';
 
 export const useSelectedSpace = (): string | undefined => {
   const mx = useMatrixClient();
 
-  const { spaceIdOrAlias } = useParams();
+  const { spaceIdOrAlias: encodedSpaceIdOrAlias } = useParams();
+  const spaceIdOrAlias = encodedSpaceIdOrAlias
+    ? tryDecodeURIComponent(encodedSpaceIdOrAlias)
+    : undefined;
 
   const spaceId =
     spaceIdOrAlias && isRoomAlias(spaceIdOrAlias)

@@ -7,6 +7,7 @@ import { useMatrixClient } from '$hooks/useMatrixClient';
 import { JoinBeforeNavigate } from '$features/join-before-navigate';
 import { useSpace } from '$hooks/useSpace';
 import { getAllParents, getSpaceChildren } from '$appUtils/room';
+import { tryDecodeURIComponent } from '$appUtils/dom';
 import { roomToParentsAtom } from '$state/room/roomToParents';
 import { allRoomsAtom } from '$state/room-list/roomList';
 import { useSearchParamsViaServers } from '$hooks/router/useSearchParamsViaServers';
@@ -22,7 +23,11 @@ export function SpaceRouteRoomProvider({ children }: { children: ReactNode }) {
   const mDirects = useAtomValue(mDirectAtom);
   const allRooms = useAtomValue(allRoomsAtom);
 
-  const { roomIdOrAlias, eventId } = useParams();
+  const { roomIdOrAlias: encodedRoomIdOrAlias, eventId: encodedEventId } = useParams();
+  const roomIdOrAlias = encodedRoomIdOrAlias
+    ? tryDecodeURIComponent(encodedRoomIdOrAlias)
+    : undefined;
+  const eventId = encodedEventId ? tryDecodeURIComponent(encodedEventId) : undefined;
   const viaServers = useSearchParamsViaServers();
   const roomId = useSelectedRoom();
   const room = mx.getRoom(roomId);

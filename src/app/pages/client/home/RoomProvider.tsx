@@ -6,12 +6,17 @@ import { useMatrixClient } from '$hooks/useMatrixClient';
 import { JoinBeforeNavigate } from '$features/join-before-navigate';
 import { useHomeRooms } from './useHomeRooms';
 import { useSearchParamsViaServers } from '$hooks/router/useSearchParamsViaServers';
+import { tryDecodeURIComponent } from '$appUtils/dom';
 
 export function HomeRouteRoomProvider({ children }: { children: ReactNode }) {
   const mx = useMatrixClient();
   const rooms = useHomeRooms();
 
-  const { roomIdOrAlias, eventId } = useParams();
+  const { roomIdOrAlias: encodedRoomIdOrAlias, eventId: encodedEventId } = useParams();
+  const roomIdOrAlias = encodedRoomIdOrAlias
+    ? tryDecodeURIComponent(encodedRoomIdOrAlias)
+    : undefined;
+  const eventId = encodedEventId ? tryDecodeURIComponent(encodedEventId) : undefined;
   const viaServers = useSearchParamsViaServers();
   const roomId = useSelectedRoom();
   const room = mx.getRoom(roomId);
