@@ -1,8 +1,8 @@
 import React, { CSSProperties, ReactNode } from 'react';
 import { Box, Chip, Icon, Icons, Text, toRem } from 'folds';
 import { IContent } from '$types/matrix-sdk';
-import { JUMBO_EMOJI_REG, URL_REG } from '../../utils/regex';
-import { trimReplyFromBody } from '../../utils/room';
+import { JUMBO_EMOJI_REG, URL_REG } from '$appUtils/regex';
+import { trimReplyFromBody } from '$appUtils/room';
 import { MessageTextBody } from './layout';
 import {
   MessageBadEncryptedContent,
@@ -25,8 +25,8 @@ import {
   MATRIX_SPOILER_PROPERTY_NAME,
   MATRIX_SPOILER_REASON_PROPERTY_NAME,
 } from '../../../types/matrix/common';
-import { FALLBACK_MIMETYPE, getBlobSafeMimeType } from '../../utils/mimeTypes';
-import { parseGeoUri, scaleYDimension } from '../../utils/common';
+import { FALLBACK_MIMETYPE, getBlobSafeMimeType } from '$appUtils/mimeTypes';
+import { parseGeoUri, scaleYDimension } from '$appUtils/common';
 import { Attachment, AttachmentBox, AttachmentContent, AttachmentHeader } from './attachment';
 import { FileHeader, FileDownloadButton } from './FileHeader';
 

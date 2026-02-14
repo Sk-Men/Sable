@@ -2,23 +2,23 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Badge, Box, Button, Chip, config, Icon, Icons, Menu, Spinner, Text } from 'folds';
 import { produce } from 'immer';
-import { SequenceCard } from '../../../components/sequence-card';
+import { SequenceCard } from '$components/sequence-card';
 import { SequenceCardStyle } from '../styles.css';
-import { SettingTile } from '../../../components/setting-tile';
+import { SettingTile } from '$components/setting-tile';
 import {
   applyPermissionPower,
   getPermissionPower,
   IPowerLevels,
   PermissionLocation,
-} from '../../../hooks/usePowerLevels';
+} from '$hooks/usePowerLevels';
 import { PermissionGroup } from './types';
-import { getPowerLevelTag, getPowers, usePowerLevelTags } from '../../../hooks/usePowerLevelTags';
-import { useRoom } from '../../../hooks/useRoom';
-import { useMatrixClient } from '../../../hooks/useMatrixClient';
-import { StateEvent } from '../../../../types/matrix/room';
-import { PowerSwitcher } from '../../../components/power';
-import { AsyncStatus, useAsyncCallback } from '../../../hooks/useAsyncCallback';
-import { useAlive } from '../../../hooks/useAlive';
+import { getPowerLevelTag, getPowers, usePowerLevelTags } from '$hooks/usePowerLevelTags';
+import { useRoom } from '$hooks/useRoom';
+import { useMatrixClient } from '$hooks/useMatrixClient';
+import { StateEvent } from '$types/matrix/room';
+import { PowerSwitcher } from '$components/power';
+import { AsyncStatus, useAsyncCallback } from '$hooks/useAsyncCallback';
+import { useAlive } from '$hooks/useAlive';
 
 const USER_DEFAULT_LOCATION: PermissionLocation = {
   user: true,

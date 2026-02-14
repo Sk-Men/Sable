@@ -9,29 +9,22 @@ import {
   useRoomJoinRuleIcon,
   useRoomJoinRuleLabel,
   useSpaceJoinRuleIcon,
-} from '../../../components/JoinRulesSwitcher';
-import { SequenceCard } from '../../../components/sequence-card';
-import { SequenceCardStyle } from '../../room-settings/styles.css';
-import { SettingTile } from '../../../components/setting-tile';
-import { useMatrixClient } from '../../../hooks/useMatrixClient';
-import { useRoom } from '../../../hooks/useRoom';
-import { StateEvent } from '../../../../types/matrix/room';
-import { useStateEvent } from '../../../hooks/useStateEvent';
-import { useSpaceOptionally } from '../../../hooks/useSpace';
-import { AsyncStatus, useAsyncCallback } from '../../../hooks/useAsyncCallback';
-import { getStateEvents } from '../../../utils/room';
-import {
-  useRecursiveChildSpaceScopeFactory,
-  useSpaceChildren,
-} from '../../../state/hooks/roomList';
-import { allRoomsAtom } from '../../../state/room-list/roomList';
-import { roomToParentsAtom } from '../../../state/room/roomToParents';
-import {
-  knockRestrictedSupported,
-  knockSupported,
-  restrictedSupported,
-} from '../../../utils/matrix';
-import { RoomPermissionsAPI } from '../../../hooks/useRoomPermissions';
+} from '$components/JoinRulesSwitcher';
+import { SequenceCard } from '$components/sequence-card';
+import { SequenceCardStyle } from '$features/room-settings/styles.css';
+import { SettingTile } from '$components/setting-tile';
+import { useMatrixClient } from '$hooks/useMatrixClient';
+import { useRoom } from '$hooks/useRoom';
+import { StateEvent } from '$types/matrix/room';
+import { useStateEvent } from '$hooks/useStateEvent';
+import { useSpaceOptionally } from '$hooks/useSpace';
+import { AsyncStatus, useAsyncCallback } from '$hooks/useAsyncCallback';
+import { getStateEvents } from '$appUtils/room';
+import { useRecursiveChildSpaceScopeFactory, useSpaceChildren } from '$state/hooks/roomList';
+import { allRoomsAtom } from '$state/room-list/roomList';
+import { roomToParentsAtom } from '$state/room/roomToParents';
+import { knockRestrictedSupported, knockSupported, restrictedSupported } from '$appUtils/matrix';
+import { RoomPermissionsAPI } from '$hooks/useRoomPermissions';
 
 type RestrictedRoomAllowContent = {
   room_id: string;

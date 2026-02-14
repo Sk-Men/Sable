@@ -2,19 +2,19 @@ import React from 'react';
 import { Icon, Icons } from 'folds';
 import { useNavigate } from 'react-router-dom';
 import { useAtomValue } from 'jotai';
-import { SidebarAvatar, SidebarItem, SidebarItemTooltip } from '../../../components/sidebar';
-import { useExploreSelected } from '../../../hooks/router/useExploreSelected';
+import { SidebarAvatar, SidebarItem, SidebarItemTooltip } from '$components/sidebar';
+import { useExploreSelected } from '$hooks/router/useExploreSelected';
 import {
   getExploreFeaturedPath,
   getExplorePath,
   getExploreServerPath,
   joinPathComponent,
-} from '../../pathUtils';
-import { useClientConfig } from '../../../hooks/useClientConfig';
-import { useMatrixClient } from '../../../hooks/useMatrixClient';
-import { getMxIdServer } from '../../../utils/matrix';
-import { ScreenSize, useScreenSizeContext } from '../../../hooks/useScreenSize';
-import { useNavToActivePathAtom } from '../../../state/hooks/navToActivePath';
+} from '$pages/pathUtils';
+import { useClientConfig } from '$hooks/useClientConfig';
+import { useMatrixClient } from '$hooks/useMatrixClient';
+import { getMxIdServer } from '$appUtils/matrix';
+import { ScreenSize, useScreenSizeContext } from '$hooks/useScreenSize';
+import { useNavToActivePathAtom } from '$state/hooks/navToActivePath';
 
 export function ExploreTab() {
   const mx = useMatrixClient();

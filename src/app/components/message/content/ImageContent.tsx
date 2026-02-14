@@ -20,17 +20,17 @@ import classNames from 'classnames';
 import { BlurhashCanvas } from 'react-blurhash';
 import FocusTrap from 'focus-trap-react';
 import { EncryptedAttachmentInfo } from 'browser-encrypt-attachment';
-import { IImageInfo, MATRIX_BLUR_HASH_PROPERTY_NAME } from '../../../../types/matrix/common';
-import { AsyncStatus, useAsyncCallback } from '../../../hooks/useAsyncCallback';
-import { useMatrixClient } from '../../../hooks/useMatrixClient';
+import { IImageInfo, MATRIX_BLUR_HASH_PROPERTY_NAME } from '$types/matrix/common';
+import { AsyncStatus, useAsyncCallback } from '$hooks/useAsyncCallback';
+import { useMatrixClient } from '$hooks/useMatrixClient';
 import * as css from './style.css';
-import { bytesToSize } from '../../../utils/common';
-import { FALLBACK_MIMETYPE } from '../../../utils/mimeTypes';
-import { stopPropagation } from '../../../utils/keyboard';
-import { decryptFile, downloadEncryptedMedia, mxcUrlToHttp } from '../../../utils/matrix';
-import { useMediaAuthentication } from '../../../hooks/useMediaAuthentication';
-import { ModalWide } from '../../../styles/Modal.css';
-import { validBlurHash } from '../../../utils/blurHash';
+import { bytesToSize } from '$appUtils/common';
+import { FALLBACK_MIMETYPE } from '$appUtils/mimeTypes';
+import { stopPropagation } from '$appUtils/keyboard';
+import { decryptFile, downloadEncryptedMedia, mxcUrlToHttp } from '$appUtils/matrix';
+import { useMediaAuthentication } from '$hooks/useMediaAuthentication';
+import { ModalWide } from '$styles/Modal.css';
+import { validBlurHash } from '$appUtils/blurHash';
 
 type RenderViewerProps = {
   src: string;

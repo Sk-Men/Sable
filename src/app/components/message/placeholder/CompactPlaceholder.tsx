@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { as, ContainerColor, toRem } from 'folds';
-import { randomNumberBetween } from '../../../utils/common';
+import { randomNumberBetween } from '$appUtils/common';
 import { LinePlaceholder } from './LinePlaceholder';
 import { CompactLayout } from '../layout';
 

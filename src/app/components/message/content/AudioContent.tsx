@@ -3,9 +3,9 @@ import React, { ReactNode, useCallback, useRef, useState } from 'react';
 import { Badge, Chip, Icon, IconButton, Icons, ProgressBar, Spinner, Text, toRem } from 'folds';
 import { EncryptedAttachmentInfo } from 'browser-encrypt-attachment';
 import { Range } from 'react-range';
-import { useMatrixClient } from '../../../hooks/useMatrixClient';
-import { AsyncStatus, useAsyncCallback } from '../../../hooks/useAsyncCallback';
-import { IAudioInfo } from '../../../../types/matrix/common';
+import { useMatrixClient } from '$hooks/useMatrixClient';
+import { AsyncStatus, useAsyncCallback } from '$hooks/useAsyncCallback';
+import { IAudioInfo } from '$types/matrix/common';
 import {
   PlayTimeCallback,
   useMediaLoading,
@@ -13,16 +13,11 @@ import {
   useMediaPlayTimeCallback,
   useMediaSeek,
   useMediaVolume,
-} from '../../../hooks/media';
-import { useThrottle } from '../../../hooks/useThrottle';
-import { secondsToMinutesAndSeconds } from '../../../utils/common';
-import {
-  decryptFile,
-  downloadEncryptedMedia,
-  downloadMedia,
-  mxcUrlToHttp,
-} from '../../../utils/matrix';
-import { useMediaAuthentication } from '../../../hooks/useMediaAuthentication';
+} from '$hooks/media';
+import { useThrottle } from '$hooks/useThrottle';
+import { secondsToMinutesAndSeconds } from '$appUtils/common';
+import { decryptFile, downloadEncryptedMedia, downloadMedia, mxcUrlToHttp } from '$appUtils/matrix';
+import { useMediaAuthentication } from '$hooks/useMediaAuthentication';
 
 const PLAY_TIME_THROTTLE_OPS = {
   wait: 500,

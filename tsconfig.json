@@ -9,7 +9,18 @@
     "esModuleInterop": true,
     "baseUrl": ".",
     "paths": {
-      "$types/*": ["src/types/*"]
+      "$hooks/*": ["src/app/hooks/*"],
+      "$plugins/*": ["src/app/plugins/*"],
+      "$components/*": ["src/app/components/*"],
+      "$features/*": ["src/app/features/*"],
+      "$state/*": ["src/app/state/*"],
+      "$styles/*": ["src/app/styles/*"],
+      "$appUtils/*": ["src/app/utils/*"],
+      "$pages/*": ["src/app/pages/*"],
+      "$types/*": ["src/types/*"],
+      "$public/*": ["public/*"],
+      "$util/*": ["src/util/*"],
+      "$client/*": ["src/client/*"]
     },
     "moduleResolution": "bundler",
     "allowImportingTsExtensions": true,

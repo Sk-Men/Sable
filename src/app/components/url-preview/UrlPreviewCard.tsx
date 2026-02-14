@@ -1,17 +1,17 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { IPreviewUrlResponse } from '$types/matrix-sdk';
 import { Box, Icon, IconButton, Icons, Scroll, Spinner, Text, as, color, config } from 'folds';
-import { AsyncStatus, useAsyncCallback } from '../../hooks/useAsyncCallback';
-import { useMatrixClient } from '../../hooks/useMatrixClient';
+import { AsyncStatus, useAsyncCallback } from '$hooks/useAsyncCallback';
+import { useMatrixClient } from '$hooks/useMatrixClient';
 import { UrlPreview, UrlPreviewContent, UrlPreviewDescription, UrlPreviewImg } from './UrlPreview';
 import {
   getIntersectionObserverEntry,
   useIntersectionObserver,
-} from '../../hooks/useIntersectionObserver';
+} from '$hooks/useIntersectionObserver';
 import * as css from './UrlPreviewCard.css';
-import { tryDecodeURIComponent } from '../../utils/dom';
-import { mxcUrlToHttp } from '../../utils/matrix';
-import { useMediaAuthentication } from '../../hooks/useMediaAuthentication';
+import { tryDecodeURIComponent } from '$appUtils/dom';
+import { mxcUrlToHttp } from '$appUtils/matrix';
+import { useMediaAuthentication } from '$hooks/useMediaAuthentication';
 
 const linkStyles = { color: color.Success.Main };
 

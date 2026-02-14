@@ -12,11 +12,11 @@ import {
   getVideoFileUrl,
   loadImageElement,
   loadVideoElement,
-} from '../../utils/dom';
-import { encryptFile, getImageInfo, getThumbnailContent, getVideoInfo } from '../../utils/matrix';
-import { TUploadItem } from '../../state/room/roomInputDrafts';
-import { encodeBlurHash } from '../../utils/blurHash';
-import { scaleYDimension } from '../../utils/common';
+} from '$appUtils/dom';
+import { encryptFile, getImageInfo, getThumbnailContent, getVideoInfo } from '$appUtils/matrix';
+import { TUploadItem } from '$state/room/roomInputDrafts';
+import { encodeBlurHash } from '$appUtils/blurHash';
+import { scaleYDimension } from '$appUtils/common';
 
 const generateThumbnailContent = async (
   mx: MatrixClient,

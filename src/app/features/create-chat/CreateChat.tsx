@@ -2,16 +2,16 @@ import { Box, Button, color, config, Icon, Icons, Input, Spinner, Switch, Text }
 import React, { FormEventHandler, useCallback, useState } from 'react';
 import { ICreateRoomStateEvent, MatrixError, Preset, Visibility } from '$types/matrix-sdk';
 import { useNavigate } from 'react-router-dom';
-import { SettingTile } from '../../components/setting-tile';
-import { SequenceCard } from '../../components/sequence-card';
-import { addRoomIdToMDirect, isUserId } from '../../utils/matrix';
-import { useMatrixClient } from '../../hooks/useMatrixClient';
-import { AsyncStatus, useAsyncCallback } from '../../hooks/useAsyncCallback';
+import { SettingTile } from '$components/setting-tile';
+import { SequenceCard } from '$components/sequence-card';
+import { addRoomIdToMDirect, isUserId } from '$appUtils/matrix';
+import { useMatrixClient } from '$hooks/useMatrixClient';
+import { AsyncStatus, useAsyncCallback } from '$hooks/useAsyncCallback';
 import { ErrorCode } from '../../cs-errorcode';
-import { millisecondsToMinutes } from '../../utils/common';
-import { createRoomEncryptionState } from '../../components/create-room';
-import { useAlive } from '../../hooks/useAlive';
-import { getDirectRoomPath } from '../../pages/pathUtils';
+import { millisecondsToMinutes } from '$appUtils/common';
+import { createRoomEncryptionState } from '$components/create-room';
+import { useAlive } from '$hooks/useAlive';
+import { getDirectRoomPath } from '$pages/pathUtils';
 
 type CreateChatProps = {
   defaultUserId?: string;

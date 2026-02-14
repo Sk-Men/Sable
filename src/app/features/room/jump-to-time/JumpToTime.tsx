@@ -20,17 +20,17 @@ import {
   RectCords,
 } from 'folds';
 import { Direction, MatrixError } from '$types/matrix-sdk';
-import { useMatrixClient } from '../../../hooks/useMatrixClient';
-import { AsyncStatus, useAsyncCallback } from '../../../hooks/useAsyncCallback';
-import { stopPropagation } from '../../../utils/keyboard';
-import { useAlive } from '../../../hooks/useAlive';
-import { useStateEvent } from '../../../hooks/useStateEvent';
-import { useRoom } from '../../../hooks/useRoom';
-import { StateEvent } from '../../../../types/matrix/room';
-import { getToday, getYesterday, timeDayMonthYear, timeHourMinute } from '../../../utils/time';
-import { DatePicker, TimePicker } from '../../../components/time-date';
-import { useSetting } from '../../../state/hooks/settings';
-import { settingsAtom } from '../../../state/settings';
+import { useMatrixClient } from '$hooks/useMatrixClient';
+import { AsyncStatus, useAsyncCallback } from '$hooks/useAsyncCallback';
+import { stopPropagation } from '$appUtils/keyboard';
+import { useAlive } from '$hooks/useAlive';
+import { useStateEvent } from '$hooks/useStateEvent';
+import { useRoom } from '$hooks/useRoom';
+import { StateEvent } from '$types/matrix/room';
+import { getToday, getYesterday, timeDayMonthYear, timeHourMinute } from '$appUtils/time';
+import { DatePicker, TimePicker } from '$components/time-date';
+import { useSetting } from '$state/hooks/settings';
+import { settingsAtom } from '$state/settings';
 
 type JumpToTimeProps = {
   onCancel: () => void;

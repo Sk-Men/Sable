@@ -3,29 +3,29 @@ import { useNavigate } from 'react-router-dom';
 import { Box, Icon, Icons, Menu, MenuItem, PopOut, RectCords, Text, config, toRem } from 'folds';
 import { useAtomValue } from 'jotai';
 import FocusTrap from 'focus-trap-react';
-import { useOrphanRooms } from '../../../state/hooks/roomList';
-import { useMatrixClient } from '../../../hooks/useMatrixClient';
-import { mDirectAtom } from '../../../state/mDirectList';
-import { roomToParentsAtom } from '../../../state/room/roomToParents';
-import { allRoomsAtom } from '../../../state/room-list/roomList';
-import { roomToUnreadAtom } from '../../../state/room/roomToUnread';
-import { getHomePath, joinPathComponent } from '../../pathUtils';
-import { useRoomsUnread } from '../../../state/hooks/unread';
+import { useOrphanRooms } from '$state/hooks/roomList';
+import { useMatrixClient } from '$hooks/useMatrixClient';
+import { mDirectAtom } from '$state/mDirectList';
+import { roomToParentsAtom } from '$state/room/roomToParents';
+import { allRoomsAtom } from '$state/room-list/roomList';
+import { roomToUnreadAtom } from '$state/room/roomToUnread';
+import { getHomePath, joinPathComponent } from '$pages/pathUtils';
+import { useRoomsUnread } from '$state/hooks/unread';
 import {
   SidebarAvatar,
   SidebarItem,
   SidebarItemBadge,
   SidebarItemTooltip,
-} from '../../../components/sidebar';
-import { useHomeSelected } from '../../../hooks/router/useHomeSelected';
-import { UnreadBadge } from '../../../components/unread-badge';
-import { ScreenSize, useScreenSizeContext } from '../../../hooks/useScreenSize';
-import { useNavToActivePathAtom } from '../../../state/hooks/navToActivePath';
+} from '$components/sidebar';
+import { useHomeSelected } from '$hooks/router/useHomeSelected';
+import { UnreadBadge } from '$components/unread-badge';
+import { ScreenSize, useScreenSizeContext } from '$hooks/useScreenSize';
+import { useNavToActivePathAtom } from '$state/hooks/navToActivePath';
 import { useHomeRooms } from '../home/useHomeRooms';
-import { markAsRead } from '../../../utils/notifications';
-import { stopPropagation } from '../../../utils/keyboard';
-import { useSetting } from '../../../state/hooks/settings';
-import { settingsAtom } from '../../../state/settings';
+import { markAsRead } from '$appUtils/notifications';
+import { stopPropagation } from '$appUtils/keyboard';
+import { useSetting } from '$state/hooks/settings';
+import { settingsAtom } from '$state/settings';
 
 type HomeMenuProps = {
   requestClose: () => void;

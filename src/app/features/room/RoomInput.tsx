@@ -29,7 +29,7 @@ import {
   toRem,
 } from 'folds';
 
-import { useMatrixClient } from '../../hooks/useMatrixClient';
+import { useMatrixClient } from '$hooks/useMatrixClient';
 import {
   CustomEditor,
   Toolbar,
@@ -53,20 +53,20 @@ import {
   getBeginCommand,
   trimCommand,
   getMentions,
-} from '../../components/editor';
-import { EmojiBoard, EmojiBoardTab } from '../../components/emoji-board';
-import { UseStateProvider } from '../../components/UseStateProvider';
+} from '$components/editor';
+import { EmojiBoard, EmojiBoardTab } from '$components/emoji-board';
+import { UseStateProvider } from '$components/UseStateProvider';
 import {
   TUploadContent,
   encryptFile,
   getImageInfo,
   getMxIdLocalPart,
   mxcUrlToHttp,
-} from '../../utils/matrix';
-import { useTypingStatusUpdater } from '../../hooks/useTypingStatusUpdater';
-import { useFilePicker } from '../../hooks/useFilePicker';
-import { useFilePasteHandler } from '../../hooks/useFilePasteHandler';
-import { useFileDropZone } from '../../hooks/useFileDrop';
+} from '$appUtils/matrix';
+import { useTypingStatusUpdater } from '$hooks/useTypingStatusUpdater';
+import { useFilePicker } from '$hooks/useFilePicker';
+import { useFilePasteHandler } from '$hooks/useFilePasteHandler';
+import { useFileDropZone } from '$hooks/useFileDrop';
 import {
   TUploadItem,
   TUploadMetadata,
@@ -74,49 +74,44 @@ import {
   roomIdToReplyDraftAtomFamily,
   roomIdToUploadItemsAtomFamily,
   roomUploadAtomFamily,
-} from '../../state/room/roomInputDrafts';
-import { UploadCardRenderer } from '../../components/upload-card';
+} from '$state/room/roomInputDrafts';
+import { UploadCardRenderer } from '$components/upload-card';
 import {
   UploadBoard,
   UploadBoardContent,
   UploadBoardHeader,
   UploadBoardImperativeHandlers,
-} from '../../components/upload-board';
-import {
-  Upload,
-  UploadStatus,
-  UploadSuccess,
-  createUploadFamilyObserverAtom,
-} from '../../state/upload';
-import { getImageUrlBlob, loadImageElement } from '../../utils/dom';
-import { safeFile } from '../../utils/mimeTypes';
-import { fulfilledPromiseSettledResult } from '../../utils/common';
-import { useSetting } from '../../state/hooks/settings';
-import { settingsAtom } from '../../state/settings';
+} from '$components/upload-board';
+import { Upload, UploadStatus, UploadSuccess, createUploadFamilyObserverAtom } from '$state/upload';
+import { getImageUrlBlob, loadImageElement } from '$appUtils/dom';
+import { safeFile } from '$appUtils/mimeTypes';
+import { fulfilledPromiseSettledResult } from '$appUtils/common';
+import { useSetting } from '$state/hooks/settings';
+import { settingsAtom } from '$state/settings';
 import {
   getAudioMsgContent,
   getFileMsgContent,
   getImageMsgContent,
   getVideoMsgContent,
 } from './msgContent';
-import { getMemberDisplayName, getMentionContent, trimReplyFromBody } from '../../utils/room';
+import { getMemberDisplayName, getMentionContent, trimReplyFromBody } from '$appUtils/room';
 import { CommandAutocomplete } from './CommandAutocomplete';
-import { Command, SHRUG, TABLEFLIP, UNFLIP, useCommands } from '../../hooks/useCommands';
-import { mobileOrTablet } from '../../utils/user-agent';
-import { useElementSizeObserver } from '../../hooks/useElementSizeObserver';
-import { ReplyLayout, ThreadIndicator } from '../../components/message';
-import { roomToParentsAtom } from '../../state/room/roomToParents';
-import { useMediaAuthentication } from '../../hooks/useMediaAuthentication';
-import { useImagePackRooms } from '../../hooks/useImagePackRooms';
-import { usePowerLevelsContext } from '../../hooks/usePowerLevels';
+import { Command, SHRUG, TABLEFLIP, UNFLIP, useCommands } from '$hooks/useCommands';
+import { mobileOrTablet } from '$appUtils/user-agent';
+import { useElementSizeObserver } from '$hooks/useElementSizeObserver';
+import { ReplyLayout, ThreadIndicator } from '$components/message';
+import { roomToParentsAtom } from '$state/room/roomToParents';
+import { useMediaAuthentication } from '$hooks/useMediaAuthentication';
+import { useImagePackRooms } from '$hooks/useImagePackRooms';
+import { usePowerLevelsContext } from '$hooks/usePowerLevels';
 import colorMXID from '../../../util/colorMXID';
-import { useIsDirectRoom } from '../../hooks/useRoom';
-import { useAccessiblePowerTagColors, useGetMemberPowerTag } from '../../hooks/useMemberPowerTag';
-import { useRoomCreators } from '../../hooks/useRoomCreators';
-import { useTheme } from '../../hooks/useTheme';
-import { useRoomCreatorsTag } from '../../hooks/useRoomCreatorsTag';
-import { usePowerLevelTags } from '../../hooks/usePowerLevelTags';
-import { useComposingCheck } from '../../hooks/useComposingCheck';
+import { useIsDirectRoom } from '$hooks/useRoom';
+import { useAccessiblePowerTagColors, useGetMemberPowerTag } from '$hooks/useMemberPowerTag';
+import { useRoomCreators } from '$hooks/useRoomCreators';
+import { useTheme } from '$hooks/useTheme';
+import { useRoomCreatorsTag } from '$hooks/useRoomCreatorsTag';
+import { usePowerLevelTags } from '$hooks/usePowerLevelTags';
+import { useComposingCheck } from '$hooks/useComposingCheck';
 
 interface RoomInputProps {
   editor: Editor;

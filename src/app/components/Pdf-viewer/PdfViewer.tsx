@@ -23,10 +23,10 @@ import {
 import FocusTrap from 'focus-trap-react';
 import FileSaver from 'file-saver';
 import * as css from './PdfViewer.css';
-import { AsyncStatus } from '../../hooks/useAsyncCallback';
-import { useZoom } from '../../hooks/useZoom';
-import { createPage, usePdfDocumentLoader, usePdfJSLoader } from '../../plugins/pdfjs-dist';
-import { stopPropagation } from '../../utils/keyboard';
+import { AsyncStatus } from '$hooks/useAsyncCallback';
+import { useZoom } from '$hooks/useZoom';
+import { createPage, usePdfDocumentLoader, usePdfJSLoader } from '$plugins/pdfjs-dist';
+import { stopPropagation } from '$appUtils/keyboard';
 
 export type PdfViewerProps = {
   name: string;

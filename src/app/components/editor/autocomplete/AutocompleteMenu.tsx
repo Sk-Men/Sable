@@ -4,8 +4,8 @@ import { isKeyHotkey } from 'is-hotkey';
 import { Header, Menu, Scroll, config } from 'folds';
 
 import * as css from './AutocompleteMenu.css';
-import { preventScrollWithArrowKey, stopPropagation } from '../../../utils/keyboard';
-import { useAlive } from '../../../hooks/useAlive';
+import { preventScrollWithArrowKey, stopPropagation } from '$appUtils/keyboard';
+import { useAlive } from '$hooks/useAlive';
 
 type AutocompleteMenuProps = {
   requestClose: () => void;

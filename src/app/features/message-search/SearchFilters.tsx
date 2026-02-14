@@ -28,17 +28,13 @@ import {
 import { SearchOrderBy } from '$types/matrix-sdk';
 import FocusTrap from 'focus-trap-react';
 import { useVirtualizer } from '@tanstack/react-virtual';
-import { useMatrixClient } from '../../hooks/useMatrixClient';
-import { joinRuleToIconSrc } from '../../utils/room';
-import { factoryRoomIdByAtoZ } from '../../utils/sort';
-import {
-  SearchItemStrGetter,
-  UseAsyncSearchOptions,
-  useAsyncSearch,
-} from '../../hooks/useAsyncSearch';
-import { DebounceOptions, useDebounce } from '../../hooks/useDebounce';
-import { VirtualTile } from '../../components/virtualizer';
-import { stopPropagation } from '../../utils/keyboard';
+import { useMatrixClient } from '$hooks/useMatrixClient';
+import { joinRuleToIconSrc } from '$appUtils/room';
+import { factoryRoomIdByAtoZ } from '$appUtils/sort';
+import { SearchItemStrGetter, UseAsyncSearchOptions, useAsyncSearch } from '$hooks/useAsyncSearch';
+import { DebounceOptions, useDebounce } from '$hooks/useDebounce';
+import { VirtualTile } from '$components/virtualizer';
+import { stopPropagation } from '$appUtils/keyboard';
 
 type OrderButtonProps = {
   order?: string;

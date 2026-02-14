@@ -20,16 +20,16 @@ import {
   UIAFlow,
   createClient,
 } from '$types/matrix-sdk';
-import { PasswordInput } from '../../../components/password-input';
+import { PasswordInput } from '$components/password-input';
 import {
   getLoginTermUrl,
   getUIAFlowForStages,
   hasStageInFlows,
   requiredStageInFlows,
-} from '../../../utils/matrix-uia';
-import { useUIACompleted, useUIAFlow, useUIAParams } from '../../../hooks/useUIAFlows';
-import { AsyncState, AsyncStatus, useAsyncCallback } from '../../../hooks/useAsyncCallback';
-import { useAutoDiscoveryInfo } from '../../../hooks/useAutoDiscoveryInfo';
+} from '$appUtils/matrix-uia';
+import { useUIACompleted, useUIAFlow, useUIAParams } from '$hooks/useUIAFlows';
+import { AsyncState, AsyncStatus, useAsyncCallback } from '$hooks/useAsyncCallback';
+import { useAutoDiscoveryInfo } from '$hooks/useAutoDiscoveryInfo';
 import { RegisterError, RegisterResult, register, useRegisterComplete } from './registerUtil';
 import { FieldError } from '../FiledError';
 import {
@@ -38,11 +38,11 @@ import {
   EmailStageDialog,
   ReCaptchaStageDialog,
   RegistrationTokenStageDialog,
-} from '../../../components/uia-stages';
-import { useRegisterEmail } from '../../../hooks/useRegisterEmail';
-import { ConfirmPasswordMatch } from '../../../components/ConfirmPasswordMatch';
-import { UIAFlowOverlay } from '../../../components/UIAFlowOverlay';
-import { RequestEmailTokenCallback, RequestEmailTokenResponse } from '../../../hooks/types';
+} from '$components/uia-stages';
+import { useRegisterEmail } from '$hooks/useRegisterEmail';
+import { ConfirmPasswordMatch } from '$components/ConfirmPasswordMatch';
+import { UIAFlowOverlay } from '$components/UIAFlowOverlay';
+import { RequestEmailTokenCallback, RequestEmailTokenResponse } from '$hooks/types';
 
 export const SUPPORTED_REGISTER_STAGES = [
   AuthType.RegistrationToken,

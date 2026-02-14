@@ -1,7 +1,7 @@
 import { as, ContainerColor as TContainerColor } from 'folds';
 import React from 'react';
 import classNames from 'classnames';
-import { ContainerColor } from '../../styles/ContainerColor.css';
+import { ContainerColor } from '$styles/ContainerColor.css';
 import * as css from './CutoutCard.css';
 
 export const CutoutCard = as<'div', { variant?: TContainerColor }>(

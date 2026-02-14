@@ -1,6 +1,6 @@
 import React, { CSSProperties, useMemo } from 'react';
 import { Avatar, Box, ContainerColor, as, color, toRem } from 'folds';
-import { randomNumberBetween } from '../../../utils/common';
+import { randomNumberBetween } from '$appUtils/common';
 import { LinePlaceholder } from './LinePlaceholder';
 import { ModernLayout } from '../layout';
 

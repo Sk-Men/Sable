@@ -3,7 +3,7 @@ import { Menu, Box, Text, Chip } from 'folds';
 import dayjs from 'dayjs';
 import * as css from './styles.css';
 import { PickerColumn } from './PickerColumn';
-import { dateFor, daysInMonth, daysToMs } from '../../utils/time';
+import { dateFor, daysInMonth, daysToMs } from '$appUtils/time';
 
 type DatePickerProps = {
   min: number;

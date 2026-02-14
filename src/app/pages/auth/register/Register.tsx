@@ -2,16 +2,16 @@ import React, { useMemo } from 'react';
 import { Box, Text, color } from 'folds';
 import { Link, useSearchParams } from 'react-router-dom';
 import { SSOAction } from '$types/matrix-sdk';
-import { useAuthServer } from '../../../hooks/useAuthServer';
-import { RegisterFlowStatus, useAuthFlows } from '../../../hooks/useAuthFlows';
-import { useParsedLoginFlows } from '../../../hooks/useParsedLoginFlows';
-import { PasswordRegisterForm, SUPPORTED_REGISTER_STAGES } from '../register/PasswordRegisterForm';
+import { useAuthServer } from '$hooks/useAuthServer';
+import { RegisterFlowStatus, useAuthFlows } from '$hooks/useAuthFlows';
+import { useParsedLoginFlows } from '$hooks/useParsedLoginFlows';
+import { PasswordRegisterForm, SUPPORTED_REGISTER_STAGES } from './PasswordRegisterForm';
 import { OrDivider } from '../OrDivider';
 import { SSOLogin } from '../SSOLogin';
-import { SupportedUIAFlowsLoader } from '../../../components/SupportedUIAFlowsLoader';
-import { getLoginPath } from '../../pathUtils';
-import { usePathWithOrigin } from '../../../hooks/usePathWithOrigin';
-import { RegisterPathSearchParams } from '../../paths';
+import { SupportedUIAFlowsLoader } from '$components/SupportedUIAFlowsLoader';
+import { getLoginPath } from '$pages/pathUtils';
+import { usePathWithOrigin } from '$hooks/usePathWithOrigin';
+import { RegisterPathSearchParams } from '$pages/paths';
 
 const useRegisterSearchParams = (searchParams: URLSearchParams): RegisterPathSearchParams =>
   useMemo(

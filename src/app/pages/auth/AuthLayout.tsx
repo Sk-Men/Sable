@@ -12,24 +12,20 @@ import classNames from 'classnames';
 
 import { AuthFooter } from './AuthFooter';
 import * as css from './styles.css';
-import * as PatternsCss from '../../styles/Patterns.css';
-import {
-  clientAllowedServer,
-  clientDefaultServer,
-  useClientConfig,
-} from '../../hooks/useClientConfig';
-import { AsyncStatus, useAsyncCallback } from '../../hooks/useAsyncCallback';
+import * as PatternsCss from '$styles/Patterns.css';
+import { clientAllowedServer, clientDefaultServer, useClientConfig } from '$hooks/useClientConfig';
+import { AsyncStatus, useAsyncCallback } from '$hooks/useAsyncCallback';
 import { LOGIN_PATH, REGISTER_PATH, RESET_PASSWORD_PATH } from '../paths';
-import CinnySVG from '../../../../public/res/svg/cinny.svg';
+import CinnySVG from '$public/res/svg/cinny.svg';
 import { ServerPicker } from './ServerPicker';
 import { AutoDiscoveryAction, autoDiscovery } from '../../cs-api';
-import { SpecVersionsLoader } from '../../components/SpecVersionsLoader';
-import { SpecVersionsProvider } from '../../hooks/useSpecVersions';
-import { AutoDiscoveryInfoProvider } from '../../hooks/useAutoDiscoveryInfo';
-import { AuthFlowsLoader } from '../../components/AuthFlowsLoader';
-import { AuthFlowsProvider } from '../../hooks/useAuthFlows';
-import { AuthServerProvider } from '../../hooks/useAuthServer';
-import { tryDecodeURIComponent } from '../../utils/dom';
+import { SpecVersionsLoader } from '$components/SpecVersionsLoader';
+import { SpecVersionsProvider } from '$hooks/useSpecVersions';
+import { AutoDiscoveryInfoProvider } from '$hooks/useAutoDiscoveryInfo';
+import { AuthFlowsLoader } from '$components/AuthFlowsLoader';
+import { AuthFlowsProvider } from '$hooks/useAuthFlows';
+import { AuthServerProvider } from '$hooks/useAuthServer';
+import { tryDecodeURIComponent } from '$appUtils/dom';
 
 const currentAuthPath = (pathname: string): string => {
   if (matchPath(LOGIN_PATH, pathname)) {

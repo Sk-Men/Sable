@@ -18,25 +18,16 @@ import {
   color,
   config,
 } from 'folds';
-import {
-  NavCategory,
-  NavCategoryHeader,
-  NavItem,
-  NavItemContent,
-  NavLink,
-} from '../../../components/nav';
-import { getExploreFeaturedPath, getExploreServerPath } from '../../pathUtils';
-import { useClientConfig } from '../../../hooks/useClientConfig';
-import {
-  useExploreFeaturedSelected,
-  useExploreServer,
-} from '../../../hooks/router/useExploreSelected';
-import { useMatrixClient } from '../../../hooks/useMatrixClient';
-import { getMxIdServer } from '../../../utils/matrix';
-import { AsyncStatus, useAsyncCallback } from '../../../hooks/useAsyncCallback';
-import { useNavToActivePathMapper } from '../../../hooks/useNavToActivePathMapper';
-import { PageNav, PageNavContent, PageNavHeader } from '../../../components/page';
-import { stopPropagation } from '../../../utils/keyboard';
+import { NavCategory, NavCategoryHeader, NavItem, NavItemContent, NavLink } from '$components/nav';
+import { getExploreFeaturedPath, getExploreServerPath } from '$pages/pathUtils';
+import { useClientConfig } from '$hooks/useClientConfig';
+import { useExploreFeaturedSelected, useExploreServer } from '$hooks/router/useExploreSelected';
+import { useMatrixClient } from '$hooks/useMatrixClient';
+import { getMxIdServer } from '$appUtils/matrix';
+import { AsyncStatus, useAsyncCallback } from '$hooks/useAsyncCallback';
+import { useNavToActivePathMapper } from '$hooks/useNavToActivePathMapper';
+import { PageNav, PageNavContent, PageNavHeader } from '$components/page';
+import { stopPropagation } from '$appUtils/keyboard';
 
 export function AddServer() {
   const mx = useMatrixClient();

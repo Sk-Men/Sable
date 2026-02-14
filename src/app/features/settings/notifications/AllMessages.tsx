@@ -7,19 +7,19 @@ import {
   PushRuleKind,
   RuleId,
 } from '$types/matrix-sdk';
-import { useAccountData } from '../../../hooks/useAccountData';
-import { AccountDataEvent } from '../../../../types/matrix/accountData';
+import { useAccountData } from '$hooks/useAccountData';
+import { AccountDataEvent } from '$types/matrix/accountData';
 import { NotificationModeSwitcher } from './NotificationModeSwitcher';
-import { SequenceCard } from '../../../components/sequence-card';
+import { SequenceCard } from '$components/sequence-card';
 import { SequenceCardStyle } from '../styles.css';
-import { SettingTile } from '../../../components/setting-tile';
-import { PushRuleData, usePushRule } from '../../../hooks/usePushRule';
+import { SettingTile } from '$components/setting-tile';
+import { PushRuleData, usePushRule } from '$hooks/usePushRule';
 import {
   getNotificationModeActions,
   NotificationMode,
   useNotificationModeActions,
-} from '../../../hooks/useNotificationMode';
-import { useMatrixClient } from '../../../hooks/useMatrixClient';
+} from '$hooks/useNotificationMode';
+import { useMatrixClient } from '$hooks/useMatrixClient';
 
 const getAllMessageDefaultRule = (
   ruleId: RuleId,

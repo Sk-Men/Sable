@@ -2,15 +2,15 @@ import to from 'await-to-js';
 import { LoginRequest, LoginResponse, MatrixError, createClient } from '$types/matrix-sdk';
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ClientConfig, clientAllowedServer } from '../../../hooks/useClientConfig';
+import { ClientConfig, clientAllowedServer } from '$hooks/useClientConfig';
 import { autoDiscovery, specVersions } from '../../../cs-api';
 import { ErrorCode } from '../../../cs-errorcode';
 import {
   deleteAfterLoginRedirectPath,
   getAfterLoginRedirectPath,
-} from '../../afterLoginRedirectPath';
-import { getHomePath } from '../../pathUtils';
-import { setFallbackSession } from '../../../state/sessions';
+} from '$pages/afterLoginRedirectPath';
+import { getHomePath } from '$pages/pathUtils';
+import { setFallbackSession } from '$state/sessions';
 
 export enum GetBaseUrlError {
   NotAllow = 'NotAllow',

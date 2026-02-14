@@ -1,8 +1,8 @@
 import React, { ReactNode } from 'react';
 import { as, Avatar, Box, Icon, Icons, Text } from 'folds';
 import { MatrixClient, Room, RoomMember } from '$types/matrix-sdk';
-import { getMemberDisplayName } from '../../utils/room';
-import { getMxIdLocalPart } from '../../utils/matrix';
+import { getMemberDisplayName } from '$appUtils/room';
+import { getMxIdLocalPart } from '$appUtils/matrix';
 import { UserAvatar } from '../user-avatar';
 import * as css from './style.css';
 

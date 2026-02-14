@@ -16,23 +16,23 @@ import {
 } from 'folds';
 import FocusTrap from 'focus-trap-react';
 import { General } from './general';
-import { PageNav, PageNavContent, PageNavHeader, PageRoot } from '../../components/page';
-import { ScreenSize, useScreenSizeContext } from '../../hooks/useScreenSize';
+import { PageNav, PageNavContent, PageNavHeader, PageRoot } from '$components/page';
+import { ScreenSize, useScreenSizeContext } from '$hooks/useScreenSize';
 import { Account } from './account';
-import { useUserProfile } from '../../hooks/useUserProfile';
-import { useMatrixClient } from '../../hooks/useMatrixClient';
-import { getMxIdLocalPart, mxcUrlToHttp } from '../../utils/matrix';
-import { useMediaAuthentication } from '../../hooks/useMediaAuthentication';
-import { UserAvatar } from '../../components/user-avatar';
-import { nameInitials } from '../../utils/common';
+import { useUserProfile } from '$hooks/useUserProfile';
+import { useMatrixClient } from '$hooks/useMatrixClient';
+import { getMxIdLocalPart, mxcUrlToHttp } from '$appUtils/matrix';
+import { useMediaAuthentication } from '$hooks/useMediaAuthentication';
+import { UserAvatar } from '$components/user-avatar';
+import { nameInitials } from '$appUtils/common';
 import { Notifications } from './notifications';
 import { Devices } from './devices';
 import { EmojisStickers } from './emojis-stickers';
 import { DeveloperTools } from './developer-tools';
 import { About } from './about';
-import { UseStateProvider } from '../../components/UseStateProvider';
-import { stopPropagation } from '../../utils/keyboard';
-import { LogoutDialog } from '../../components/LogoutDialog';
+import { UseStateProvider } from '$components/UseStateProvider';
+import { stopPropagation } from '$appUtils/keyboard';
+import { LogoutDialog } from '$components/LogoutDialog';
 
 export enum SettingsPages {
   GeneralPage,

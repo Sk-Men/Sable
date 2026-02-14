@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { EmojiGroupId } from '../../plugins/emoji';
+import { EmojiGroupId } from '$plugins/emoji';
 
 export type IEmojiGroupLabels = Record<EmojiGroupId, string>;
 

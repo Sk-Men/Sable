@@ -7,7 +7,7 @@ import {
   SearchOrderBy,
 } from '$types/matrix-sdk';
 import { useCallback } from 'react';
-import { useMatrixClient } from '../../hooks/useMatrixClient';
+import { useMatrixClient } from '$hooks/useMatrixClient';
 
 export type ResultItem = {
   rank: number;

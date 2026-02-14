@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { getRoomSearchParams } from '../../pages/pathSearchParam';
-import { decodeSearchParamValueArray } from '../../pages/pathUtils';
+import { getRoomSearchParams } from '$pages/pathSearchParam';
+import { decodeSearchParamValueArray } from '$pages/pathUtils';
 
 export const useSearchParamsViaServers = (): string[] | undefined => {
   const [searchParams] = useSearchParams();

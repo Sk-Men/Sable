@@ -24,13 +24,13 @@ import React, {
   useMemo,
   useState,
 } from 'react';
-import { getMxIdLocalPart, getMxIdServer, isUserId } from '../../utils/matrix';
-import { useDirectUsers } from '../../hooks/useDirectUsers';
+import { getMxIdLocalPart, getMxIdServer, isUserId } from '$appUtils/matrix';
+import { useDirectUsers } from '$hooks/useDirectUsers';
 import { SettingTile } from '../setting-tile';
-import { useMatrixClient } from '../../hooks/useMatrixClient';
-import { stopPropagation } from '../../utils/keyboard';
-import { useAsyncSearch, UseAsyncSearchOptions } from '../../hooks/useAsyncSearch';
-import { highlightText, makeHighlightRegex } from '../../plugins/react-custom-html-parser';
+import { useMatrixClient } from '$hooks/useMatrixClient';
+import { stopPropagation } from '$appUtils/keyboard';
+import { useAsyncSearch, UseAsyncSearchOptions } from '$hooks/useAsyncSearch';
+import { highlightText, makeHighlightRegex } from '$plugins/react-custom-html-parser';
 
 export const useAdditionalCreators = (defaultCreators?: string[]) => {
   const mx = useMatrixClient();

@@ -14,19 +14,19 @@ import {
   Text,
   TextArea,
 } from 'folds';
-import { SettingTile } from '../../components/setting-tile';
-import { SequenceCard } from '../../components/sequence-card';
+import { SettingTile } from '$components/setting-tile';
+import { SequenceCard } from '$components/sequence-card';
 import {
   creatorsSupported,
   knockRestrictedSupported,
   knockSupported,
   restrictedSupported,
-} from '../../utils/matrix';
-import { useMatrixClient } from '../../hooks/useMatrixClient';
-import { millisecondsToMinutes, replaceSpaceWithDash } from '../../utils/common';
-import { AsyncStatus, useAsyncCallback } from '../../hooks/useAsyncCallback';
-import { useCapabilities } from '../../hooks/useCapabilities';
-import { useAlive } from '../../hooks/useAlive';
+} from '$appUtils/matrix';
+import { useMatrixClient } from '$hooks/useMatrixClient';
+import { millisecondsToMinutes, replaceSpaceWithDash } from '$appUtils/common';
+import { AsyncStatus, useAsyncCallback } from '$hooks/useAsyncCallback';
+import { useCapabilities } from '$hooks/useCapabilities';
+import { useAlive } from '$hooks/useAlive';
 import { ErrorCode } from '../../cs-errorcode';
 import {
   AdditionalCreatorInput,
@@ -37,7 +37,7 @@ import {
   CreateRoomKindSelector,
   RoomVersionSelector,
   useAdditionalCreators,
-} from '../../components/create-room';
+} from '$components/create-room';
 
 const getCreateRoomKindToIcon = (kind: CreateRoomKind) => {
   if (kind === CreateRoomKind.Private) return Icons.HashLock;

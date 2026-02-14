@@ -1,12 +1,12 @@
 import React, { useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Box, Icon, IconButton, Icons, Scroll } from 'folds';
-import { useMatrixClient } from '../../../hooks/useMatrixClient';
-import { getDirectCreateSearchParams } from '../../pathSearchParam';
-import { getDirectRoomPath } from '../../pathUtils';
-import { getDMRoomFor } from '../../../utils/matrix';
+import { useMatrixClient } from '$hooks/useMatrixClient';
+import { getDirectCreateSearchParams } from '$pages/pathSearchParam';
+import { getDirectRoomPath } from '$pages/pathUtils';
+import { getDMRoomFor } from '$appUtils/matrix';
 import { useDirectRooms } from './useDirectRooms';
-import { ScreenSize, useScreenSizeContext } from '../../../hooks/useScreenSize';
+import { ScreenSize, useScreenSizeContext } from '$hooks/useScreenSize';
 import {
   Page,
   PageContent,
@@ -14,9 +14,9 @@ import {
   PageHeader,
   PageHero,
   PageHeroSection,
-} from '../../../components/page';
-import { BackRouteHandler } from '../../../components/BackRouteHandler';
-import { CreateChat } from '../../../features/create-chat';
+} from '$components/page';
+import { BackRouteHandler } from '$components/BackRouteHandler';
+import { CreateChat } from '$features/create-chat';
 
 export function DirectCreate() {
   const mx = useMatrixClient();

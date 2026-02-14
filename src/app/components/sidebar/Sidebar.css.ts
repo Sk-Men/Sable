@@ -1,7 +1,7 @@
 import { createVar, style } from '@vanilla-extract/css';
 import { recipe, RecipeVariants } from '@vanilla-extract/recipes';
 import { color, config, DefaultReset, Disabled, FocusOutline, toRem } from 'folds';
-import { ContainerColor } from '../../styles/ContainerColor.css';
+import { ContainerColor } from '$styles/ContainerColor.css';
 
 export const Sidebar = style([
   DefaultReset,

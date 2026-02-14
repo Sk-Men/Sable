@@ -9,8 +9,8 @@ import {
 import { RoomJoinRulesEventContent } from '$types/matrix-sdk';
 import { CreateRoomKind } from './CreateRoomKindSelector';
 import { RoomType, StateEvent } from '../../../types/matrix/room';
-import { getViaServers } from '../../plugins/via-servers';
-import { getMxIdServer } from '../../utils/matrix';
+import { getViaServers } from '$plugins/via-servers';
+import { getMxIdServer } from '$appUtils/matrix';
 
 export const createRoomCreationContent = (
   type: RoomType | undefined,

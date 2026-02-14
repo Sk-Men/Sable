@@ -15,16 +15,16 @@ import {
 import { HistoryVisibility, MatrixError } from '$types/matrix-sdk';
 import { RoomHistoryVisibilityEventContent } from '$types/matrix-sdk';
 import FocusTrap from 'focus-trap-react';
-import { SequenceCard } from '../../../components/sequence-card';
-import { SequenceCardStyle } from '../../room-settings/styles.css';
-import { SettingTile } from '../../../components/setting-tile';
-import { useMatrixClient } from '../../../hooks/useMatrixClient';
-import { useRoom } from '../../../hooks/useRoom';
-import { StateEvent } from '../../../../types/matrix/room';
-import { AsyncStatus, useAsyncCallback } from '../../../hooks/useAsyncCallback';
-import { useStateEvent } from '../../../hooks/useStateEvent';
-import { stopPropagation } from '../../../utils/keyboard';
-import { RoomPermissionsAPI } from '../../../hooks/useRoomPermissions';
+import { SequenceCard } from '$components/sequence-card';
+import { SequenceCardStyle } from '$features/room-settings/styles.css';
+import { SettingTile } from '$components/setting-tile';
+import { useMatrixClient } from '$hooks/useMatrixClient';
+import { useRoom } from '$hooks/useRoom';
+import { StateEvent } from '$types/matrix/room';
+import { AsyncStatus, useAsyncCallback } from '$hooks/useAsyncCallback';
+import { useStateEvent } from '$hooks/useStateEvent';
+import { stopPropagation } from '$appUtils/keyboard';
+import { RoomPermissionsAPI } from '$hooks/useRoomPermissions';
 
 const useVisibilityStr = () =>
   useMemo(

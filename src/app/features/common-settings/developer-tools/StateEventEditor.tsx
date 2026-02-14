@@ -14,23 +14,23 @@ import {
   Button,
 } from 'folds';
 import { MatrixError } from '$types/matrix-sdk';
-import { Page, PageHeader } from '../../../components/page';
-import { SequenceCard } from '../../../components/sequence-card';
-import { TextViewerContent } from '../../../components/text-viewer';
-import { useStateEvent } from '../../../hooks/useStateEvent';
-import { useRoom } from '../../../hooks/useRoom';
-import { StateEvent } from '../../../../types/matrix/room';
-import { useMatrixClient } from '../../../hooks/useMatrixClient';
-import { useAlive } from '../../../hooks/useAlive';
-import { Cursor } from '../../../plugins/text-area';
-import { AsyncStatus, useAsyncCallback } from '../../../hooks/useAsyncCallback';
-import { syntaxErrorPosition } from '../../../utils/dom';
-import { SettingTile } from '../../../components/setting-tile';
+import { Page, PageHeader } from '$components/page';
+import { SequenceCard } from '$components/sequence-card';
+import { TextViewerContent } from '$components/text-viewer';
+import { useStateEvent } from '$hooks/useStateEvent';
+import { useRoom } from '$hooks/useRoom';
+import { StateEvent } from '$types/matrix/room';
+import { useMatrixClient } from '$hooks/useMatrixClient';
+import { useAlive } from '$hooks/useAlive';
+import { Cursor } from '$plugins/text-area';
+import { AsyncStatus, useAsyncCallback } from '$hooks/useAsyncCallback';
+import { syntaxErrorPosition } from '$appUtils/dom';
+import { SettingTile } from '$components/setting-tile';
 import { SequenceCardStyle } from '../styles.css';
-import { usePowerLevels } from '../../../hooks/usePowerLevels';
-import { useTextAreaCodeEditor } from '../../../hooks/useTextAreaCodeEditor';
-import { useRoomCreators } from '../../../hooks/useRoomCreators';
-import { useRoomPermissions } from '../../../hooks/useRoomPermissions';
+import { usePowerLevels } from '$hooks/usePowerLevels';
+import { useTextAreaCodeEditor } from '$hooks/useTextAreaCodeEditor';
+import { useRoomCreators } from '$hooks/useRoomCreators';
+import { useRoomPermissions } from '$hooks/useRoomPermissions';
 
 const EDITOR_INTENT_SPACE_COUNT = 2;
 

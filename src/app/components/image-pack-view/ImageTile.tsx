@@ -1,14 +1,14 @@
 import React, { FormEventHandler, ReactNode, useMemo, useState } from 'react';
 import { Badge, Box, Button, Chip, Icon, Icons, Input, Text } from 'folds';
 import { UsageSwitcher, useUsageStr } from './UsageSwitcher';
-import { mxcUrlToHttp } from '../../utils/matrix';
+import { mxcUrlToHttp } from '$appUtils/matrix';
 import * as css from './style.css';
-import { ImageUsage, imageUsageEqual, PackImageReader } from '../../plugins/custom-emoji';
-import { useMatrixClient } from '../../hooks/useMatrixClient';
+import { ImageUsage, imageUsageEqual, PackImageReader } from '$plugins/custom-emoji';
+import { useMatrixClient } from '$hooks/useMatrixClient';
 import { SettingTile } from '../setting-tile';
-import { useObjectURL } from '../../hooks/useObjectURL';
-import { createUploadAtom, TUploadAtom } from '../../state/upload';
-import { replaceSpaceWithDash } from '../../utils/common';
+import { useObjectURL } from '$hooks/useObjectURL';
+import { createUploadAtom, TUploadAtom } from '$state/upload';
+import { replaceSpaceWithDash } from '$appUtils/common';
 
 type ImageTileProps = {
   defaultShortcode: string;

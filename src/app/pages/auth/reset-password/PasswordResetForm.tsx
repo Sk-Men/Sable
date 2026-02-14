@@ -15,19 +15,19 @@ import {
 import { useNavigate } from 'react-router-dom';
 import FocusTrap from 'focus-trap-react';
 import { AuthDict, AuthType, MatrixError, createClient } from '$types/matrix-sdk';
-import { useAutoDiscoveryInfo } from '../../../hooks/useAutoDiscoveryInfo';
-import { AsyncStatus, useAsyncCallback } from '../../../hooks/useAsyncCallback';
-import { useAuthServer } from '../../../hooks/useAuthServer';
-import { usePasswordEmail } from '../../../hooks/usePasswordEmail';
-import { PasswordInput } from '../../../components/password-input';
-import { ConfirmPasswordMatch } from '../../../components/ConfirmPasswordMatch';
+import { useAutoDiscoveryInfo } from '$hooks/useAutoDiscoveryInfo';
+import { AsyncStatus, useAsyncCallback } from '$hooks/useAsyncCallback';
+import { useAuthServer } from '$hooks/useAuthServer';
+import { usePasswordEmail } from '$hooks/usePasswordEmail';
+import { PasswordInput } from '$components/password-input';
+import { ConfirmPasswordMatch } from '$components/ConfirmPasswordMatch';
 import { FieldError } from '../FiledError';
-import { UIAFlowOverlay } from '../../../components/UIAFlowOverlay';
-import { EmailStageDialog } from '../../../components/uia-stages';
+import { UIAFlowOverlay } from '$components/UIAFlowOverlay';
+import { EmailStageDialog } from '$components/uia-stages';
 import { ResetPasswordResult, resetPassword } from './resetPasswordUtil';
-import { getLoginPath, withSearchParam } from '../../pathUtils';
-import { LoginPathSearchParams } from '../../paths';
-import { getUIAError, getUIAErrorCode } from '../../../utils/matrix-uia';
+import { getLoginPath, withSearchParam } from '$pages/pathUtils';
+import { LoginPathSearchParams } from '$pages/paths';
+import { getUIAError, getUIAErrorCode } from '$appUtils/matrix-uia';
 
 type FormData = {
   email: string;

@@ -15,7 +15,7 @@ import {
 import FocusTrap from 'focus-trap-react';
 import { SettingTile } from '../setting-tile';
 import { SequenceCard } from '../sequence-card';
-import { stopPropagation } from '../../utils/keyboard';
+import { stopPropagation } from '$appUtils/keyboard';
 
 export function RoomVersionSelector({
   versions,

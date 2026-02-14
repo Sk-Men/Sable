@@ -1,11 +1,11 @@
 import React, { ReactNode } from 'react';
 import { useParams } from 'react-router-dom';
-import { useSelectedRoom } from '../../../hooks/router/useSelectedRoom';
-import { IsDirectRoomProvider, RoomProvider } from '../../../hooks/useRoom';
-import { useMatrixClient } from '../../../hooks/useMatrixClient';
-import { JoinBeforeNavigate } from '../../../features/join-before-navigate';
+import { useSelectedRoom } from '$hooks/router/useSelectedRoom';
+import { IsDirectRoomProvider, RoomProvider } from '$hooks/useRoom';
+import { useMatrixClient } from '$hooks/useMatrixClient';
+import { JoinBeforeNavigate } from '$features/join-before-navigate';
 import { useHomeRooms } from './useHomeRooms';
-import { useSearchParamsViaServers } from '../../../hooks/router/useSearchParamsViaServers';
+import { useSearchParamsViaServers } from '$hooks/router/useSearchParamsViaServers';
 
 export function HomeRouteRoomProvider({ children }: { children: ReactNode }) {
   const mx = useMatrixClient();

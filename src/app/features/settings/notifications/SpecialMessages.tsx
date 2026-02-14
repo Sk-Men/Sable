@@ -1,21 +1,21 @@
 import React, { useCallback, useMemo } from 'react';
 import { ConditionKind, IPushRules, PushRuleKind, RuleId } from '$types/matrix-sdk';
 import { Box, Text, Badge } from 'folds';
-import { useAccountData } from '../../../hooks/useAccountData';
-import { AccountDataEvent } from '../../../../types/matrix/accountData';
-import { SequenceCard } from '../../../components/sequence-card';
+import { useAccountData } from '$hooks/useAccountData';
+import { AccountDataEvent } from '$types/matrix/accountData';
+import { SequenceCard } from '$components/sequence-card';
 import { SequenceCardStyle } from '../styles.css';
-import { SettingTile } from '../../../components/setting-tile';
-import { useMatrixClient } from '../../../hooks/useMatrixClient';
-import { useUserProfile } from '../../../hooks/useUserProfile';
-import { getMxIdLocalPart } from '../../../utils/matrix';
-import { makePushRuleData, PushRuleData, usePushRule } from '../../../hooks/usePushRule';
+import { SettingTile } from '$components/setting-tile';
+import { useMatrixClient } from '$hooks/useMatrixClient';
+import { useUserProfile } from '$hooks/useUserProfile';
+import { getMxIdLocalPart } from '$appUtils/matrix';
+import { makePushRuleData, PushRuleData, usePushRule } from '$hooks/usePushRule';
 import {
   getNotificationModeActions,
   NotificationMode,
   NotificationModeOptions,
   useNotificationModeActions,
-} from '../../../hooks/useNotificationMode';
+} from '$hooks/useNotificationMode';
 import { NotificationModeSwitcher } from './NotificationModeSwitcher';
 
 const NOTIFY_MODE_OPS: NotificationModeOptions = {

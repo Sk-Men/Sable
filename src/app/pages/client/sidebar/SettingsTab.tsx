@@ -1,14 +1,14 @@
 import React, { useState } from 'react';
 import { Text } from 'folds';
-import { SidebarItem, SidebarItemTooltip, SidebarAvatar } from '../../../components/sidebar';
-import { UserAvatar } from '../../../components/user-avatar';
-import { useMatrixClient } from '../../../hooks/useMatrixClient';
-import { getMxIdLocalPart, mxcUrlToHttp } from '../../../utils/matrix';
-import { nameInitials } from '../../../utils/common';
-import { useMediaAuthentication } from '../../../hooks/useMediaAuthentication';
-import { Settings } from '../../../features/settings';
-import { useUserProfile } from '../../../hooks/useUserProfile';
-import { Modal500 } from '../../../components/Modal500';
+import { SidebarItem, SidebarItemTooltip, SidebarAvatar } from '$components/sidebar';
+import { UserAvatar } from '$components/user-avatar';
+import { useMatrixClient } from '$hooks/useMatrixClient';
+import { getMxIdLocalPart, mxcUrlToHttp } from '$appUtils/matrix';
+import { nameInitials } from '$appUtils/common';
+import { useMediaAuthentication } from '$hooks/useMediaAuthentication';
+import { Settings } from '$features/settings';
+import { useUserProfile } from '$hooks/useUserProfile';
+import { Modal500 } from '$components/Modal500';
 
 export function SettingsTab() {
   const mx = useMatrixClient();

@@ -47,11 +47,11 @@ import {
 import { isKeyHotkey } from 'is-hotkey';
 import { Opts as LinkifyOpts } from 'linkifyjs';
 import { useTranslation } from 'react-i18next';
-import { eventWithShortcode, factoryEventSentBy, getMxIdLocalPart } from '../../utils/matrix';
-import { useMatrixClient } from '../../hooks/useMatrixClient';
-import { useVirtualPaginator, ItemRange } from '../../hooks/useVirtualPaginator';
-import { useAlive } from '../../hooks/useAlive';
-import { editableActiveElement, scrollToBottom } from '../../utils/dom';
+import { eventWithShortcode, factoryEventSentBy, getMxIdLocalPart } from '$appUtils/matrix';
+import { useMatrixClient } from '$hooks/useMatrixClient';
+import { useVirtualPaginator, ItemRange } from '$hooks/useVirtualPaginator';
+import { useAlive } from '$hooks/useAlive';
+import { editableActiveElement, scrollToBottom } from '$appUtils/dom';
 import {
   DefaultPlaceholder,
   CompactPlaceholder,
@@ -64,14 +64,14 @@ import {
   MSticker,
   ImageContent,
   EventContent,
-} from '../../components/message';
+} from '$components/message';
 import {
   factoryRenderLinkifyWithMention,
   getReactCustomHtmlParser,
   LINKIFY_OPTS,
   makeMentionCustomProps,
   renderMatrixMention,
-} from '../../plugins/react-custom-html-parser';
+} from '$plugins/react-custom-html-parser';
 import {
   canEditEvent,
   decryptAllTimelineEvent,
@@ -82,50 +82,50 @@ import {
   getReactionContent,
   isMembershipChanged,
   reactionOrEditEvent,
-} from '../../utils/room';
-import { useSetting } from '../../state/hooks/settings';
-import { MessageLayout, settingsAtom } from '../../state/settings';
-import { useMatrixEventRenderer } from '../../hooks/useMatrixEventRenderer';
+} from '$appUtils/room';
+import { useSetting } from '$state/hooks/settings';
+import { MessageLayout, settingsAtom } from '$state/settings';
+import { useMatrixEventRenderer } from '$hooks/useMatrixEventRenderer';
 import { Reactions, Message, Event, EncryptedContent } from './message';
-import { useMemberEventParser } from '../../hooks/useMemberEventParser';
-import * as customHtmlCss from '../../styles/CustomHtml.css';
-import { RoomIntro } from '../../components/room-intro';
+import { useMemberEventParser } from '$hooks/useMemberEventParser';
+import * as customHtmlCss from '$styles/CustomHtml.css';
+import { RoomIntro } from '$components/room-intro';
 import {
   getIntersectionObserverEntry,
   useIntersectionObserver,
-} from '../../hooks/useIntersectionObserver';
-import { markAsRead } from '../../utils/notifications';
-import { useDebounce } from '../../hooks/useDebounce';
-import { getResizeObserverEntry, useResizeObserver } from '../../hooks/useResizeObserver';
+} from '$hooks/useIntersectionObserver';
+import { markAsRead } from '$appUtils/notifications';
+import { useDebounce } from '$hooks/useDebounce';
+import { getResizeObserverEntry, useResizeObserver } from '$hooks/useResizeObserver';
 import * as css from './RoomTimeline.css';
-import { inSameDay, minuteDifference, timeDayMonthYear, today, yesterday } from '../../utils/time';
-import { createMentionElement, isEmptyEditor, moveCursor } from '../../components/editor';
-import { roomIdToReplyDraftAtomFamily } from '../../state/room/roomInputDrafts';
-import { usePowerLevelsContext } from '../../hooks/usePowerLevels';
+import { inSameDay, minuteDifference, timeDayMonthYear, today, yesterday } from '$appUtils/time';
+import { createMentionElement, isEmptyEditor, moveCursor } from '$components/editor';
+import { roomIdToReplyDraftAtomFamily } from '$state/room/roomInputDrafts';
+import { usePowerLevelsContext } from '$hooks/usePowerLevels';
 import { GetContentCallback, MessageEvent, StateEvent } from '../../../types/matrix/room';
-import { useKeyDown } from '../../hooks/useKeyDown';
-import { useDocumentFocusChange } from '../../hooks/useDocumentFocusChange';
-import { RenderMessageContent } from '../../components/RenderMessageContent';
-import { Image } from '../../components/media';
-import { ImageViewer } from '../../components/image-viewer';
-import { roomToParentsAtom } from '../../state/room/roomToParents';
-import { useRoomUnread } from '../../state/hooks/unread';
-import { roomToUnreadAtom } from '../../state/room/roomToUnread';
-import { useMentionClickHandler } from '../../hooks/useMentionClickHandler';
-import { useSpoilerClickHandler } from '../../hooks/useSpoilerClickHandler';
-import { useRoomNavigate } from '../../hooks/useRoomNavigate';
-import { useMediaAuthentication } from '../../hooks/useMediaAuthentication';
-import { useIgnoredUsers } from '../../hooks/useIgnoredUsers';
-import { useImagePackRooms } from '../../hooks/useImagePackRooms';
-import { useIsDirectRoom } from '../../hooks/useRoom';
-import { useOpenUserRoomProfile } from '../../state/hooks/userRoomProfile';
-import { useSpaceOptionally } from '../../hooks/useSpace';
-import { useRoomCreators } from '../../hooks/useRoomCreators';
-import { useRoomPermissions } from '../../hooks/useRoomPermissions';
-import { useAccessiblePowerTagColors, useGetMemberPowerTag } from '../../hooks/useMemberPowerTag';
-import { useTheme } from '../../hooks/useTheme';
-import { useRoomCreatorsTag } from '../../hooks/useRoomCreatorsTag';
-import { usePowerLevelTags } from '../../hooks/usePowerLevelTags';
+import { useKeyDown } from '$hooks/useKeyDown';
+import { useDocumentFocusChange } from '$hooks/useDocumentFocusChange';
+import { RenderMessageContent } from '$components/RenderMessageContent';
+import { Image } from '$components/media';
+import { ImageViewer } from '$components/image-viewer';
+import { roomToParentsAtom } from '$state/room/roomToParents';
+import { useRoomUnread } from '$state/hooks/unread';
+import { roomToUnreadAtom } from '$state/room/roomToUnread';
+import { useMentionClickHandler } from '$hooks/useMentionClickHandler';
+import { useSpoilerClickHandler } from '$hooks/useSpoilerClickHandler';
+import { useRoomNavigate } from '$hooks/useRoomNavigate';
+import { useMediaAuthentication } from '$hooks/useMediaAuthentication';
+import { useIgnoredUsers } from '$hooks/useIgnoredUsers';
+import { useImagePackRooms } from '$hooks/useImagePackRooms';
+import { useIsDirectRoom } from '$hooks/useRoom';
+import { useOpenUserRoomProfile } from '$state/hooks/userRoomProfile';
+import { useSpaceOptionally } from '$hooks/useSpace';
+import { useRoomCreators } from '$hooks/useRoomCreators';
+import { useRoomPermissions } from '$hooks/useRoomPermissions';
+import { useAccessiblePowerTagColors, useGetMemberPowerTag } from '$hooks/useMemberPowerTag';
+import { useTheme } from '$hooks/useTheme';
+import { useRoomCreatorsTag } from '$hooks/useRoomCreatorsTag';
+import { usePowerLevelTags } from '$hooks/usePowerLevelTags';
 
 const TimelineFloat = as<'div', css.TimelineFloatVariants>(
   ({ position, className, ...props }, ref) => (

@@ -17,29 +17,29 @@ import {
   Menu,
 } from 'folds';
 import { MatrixError } from '$types/matrix-sdk';
-import { SequenceCard } from '../../../components/sequence-card';
+import { SequenceCard } from '$components/sequence-card';
 import {
   ImagePack,
   ImageUsage,
   PackAddress,
   packAddressEqual,
   PackContent,
-} from '../../../plugins/custom-emoji';
-import { useRoom } from '../../../hooks/useRoom';
-import { useRoomImagePacks } from '../../../hooks/useImagePacks';
-import { LineClamp2 } from '../../../styles/Text.css';
-import { SettingTile } from '../../../components/setting-tile';
+} from '$plugins/custom-emoji';
+import { useRoom } from '$hooks/useRoom';
+import { useRoomImagePacks } from '$hooks/useImagePacks';
+import { LineClamp2 } from '$styles/Text.css';
+import { SettingTile } from '$components/setting-tile';
 import { SequenceCardStyle } from '../styles.css';
-import { useMatrixClient } from '../../../hooks/useMatrixClient';
-import { mxcUrlToHttp } from '../../../utils/matrix';
-import { useMediaAuthentication } from '../../../hooks/useMediaAuthentication';
-import { usePowerLevels } from '../../../hooks/usePowerLevels';
-import { StateEvent } from '../../../../types/matrix/room';
-import { suffixRename } from '../../../utils/common';
-import { AsyncStatus, useAsyncCallback } from '../../../hooks/useAsyncCallback';
-import { useAlive } from '../../../hooks/useAlive';
-import { useRoomCreators } from '../../../hooks/useRoomCreators';
-import { useRoomPermissions } from '../../../hooks/useRoomPermissions';
+import { useMatrixClient } from '$hooks/useMatrixClient';
+import { mxcUrlToHttp } from '$appUtils/matrix';
+import { useMediaAuthentication } from '$hooks/useMediaAuthentication';
+import { usePowerLevels } from '$hooks/usePowerLevels';
+import { StateEvent } from '$types/matrix/room';
+import { suffixRename } from '$appUtils/common';
+import { AsyncStatus, useAsyncCallback } from '$hooks/useAsyncCallback';
+import { useAlive } from '$hooks/useAlive';
+import { useRoomCreators } from '$hooks/useRoomCreators';
+import { useRoomPermissions } from '$hooks/useRoomPermissions';
 
 type CreatePackTileProps = {
   packs: ImagePack[];

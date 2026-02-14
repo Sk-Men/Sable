@@ -4,7 +4,7 @@ import classNames from 'classnames';
 import { useAtomValue } from 'jotai';
 
 import * as css from './UploadBoard.css';
-import { TUploadFamilyObserverAtom, Upload, UploadStatus, UploadSuccess } from '../../state/upload';
+import { TUploadFamilyObserverAtom, Upload, UploadStatus, UploadSuccess } from '$state/upload';
 
 type UploadBoardProps = {
   header: ReactNode;

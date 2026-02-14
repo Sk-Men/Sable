@@ -1,7 +1,7 @@
 import { ReactNode } from 'react';
 
-import { useMatrixClient } from '../../hooks/useMatrixClient';
-import { useBindAtoms } from '../../state/hooks/useBindAtoms';
+import { useMatrixClient } from '$hooks/useMatrixClient';
+import { useBindAtoms } from '$state/hooks/useBindAtoms';
 
 type ClientBindAtomsProps = {
   children: ReactNode;

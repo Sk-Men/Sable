@@ -1,18 +1,15 @@
 import React, { useCallback, useState } from 'react';
 import { Box, Text, IconButton, Icon, Icons, Scroll, Switch, Button } from 'folds';
-import { Page, PageContent, PageHeader } from '../../../components/page';
-import { SequenceCard } from '../../../components/sequence-card';
+import { Page, PageContent, PageHeader } from '$components/page';
+import { SequenceCard } from '$components/sequence-card';
 import { SequenceCardStyle } from '../styles.css';
-import { SettingTile } from '../../../components/setting-tile';
-import { useSetting } from '../../../state/hooks/settings';
-import { settingsAtom } from '../../../state/settings';
-import { useMatrixClient } from '../../../hooks/useMatrixClient';
+import { SettingTile } from '$components/setting-tile';
+import { useSetting } from '$state/hooks/settings';
+import { settingsAtom } from '$state/settings';
+import { useMatrixClient } from '$hooks/useMatrixClient';
 import { AccountDataEvents } from '$types/matrix-sdk';
-import {
-  AccountDataEditor,
-  AccountDataSubmitCallback,
-} from '../../../components/AccountDataEditor';
-import { copyToClipboard } from '../../../utils/dom';
+import { AccountDataEditor, AccountDataSubmitCallback } from '$components/AccountDataEditor';
+import { copyToClipboard } from '$appUtils/dom';
 import { AccountData } from './AccountData';
 
 type AccountDataEventType = Extract<keyof AccountDataEvents, string>;

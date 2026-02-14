@@ -14,7 +14,7 @@ import {
 
 import { CustomEditor, useEditor } from './Editor';
 import { Toolbar } from './Toolbar';
-import { stopPropagation } from '../../utils/keyboard';
+import { stopPropagation } from '$appUtils/keyboard';
 
 export function EditorPreview() {
   const [open, setOpen] = useState(false);

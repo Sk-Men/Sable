@@ -7,17 +7,17 @@ import {
   HierarchyItemRoom,
   HierarchyItemSpace,
   useFetchSpaceHierarchyLevel,
-} from '../../hooks/useSpaceHierarchy';
-import { IPowerLevels } from '../../hooks/usePowerLevels';
-import { useMatrixClient } from '../../hooks/useMatrixClient';
+} from '$hooks/useSpaceHierarchy';
+import { IPowerLevels } from '$hooks/usePowerLevels';
+import { useMatrixClient } from '$hooks/useMatrixClient';
 import { SpaceItemCard } from './SpaceItem';
 import { AfterItemDropTarget, CanDropCallback } from './DnD';
 import { HierarchyItemMenu } from './HierarchyItemMenu';
 import { RoomItemCard } from './RoomItem';
 import { RoomType, StateEvent } from '../../../types/matrix/room';
-import { SequenceCard } from '../../components/sequence-card';
-import { getRoomCreatorsForRoomId } from '../../hooks/useRoomCreators';
-import { getRoomPermissionsAPI } from '../../hooks/useRoomPermissions';
+import { SequenceCard } from '$components/sequence-card';
+import { getRoomCreatorsForRoomId } from '$hooks/useRoomCreators';
+import { getRoomPermissionsAPI } from '$hooks/useRoomPermissions';
 
 type SpaceHierarchyProps = {
   summary: IHierarchyRoom | undefined;

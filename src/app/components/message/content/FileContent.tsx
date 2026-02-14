@@ -17,25 +17,20 @@ import {
 import FileSaver from 'file-saver';
 import { EncryptedAttachmentInfo } from 'browser-encrypt-attachment';
 import FocusTrap from 'focus-trap-react';
-import { IFileInfo } from '../../../../types/matrix/common';
-import { AsyncStatus, useAsyncCallback } from '../../../hooks/useAsyncCallback';
-import { useMatrixClient } from '../../../hooks/useMatrixClient';
-import { bytesToSize } from '../../../utils/common';
+import { IFileInfo } from '$types/matrix/common';
+import { AsyncStatus, useAsyncCallback } from '$hooks/useAsyncCallback';
+import { useMatrixClient } from '$hooks/useMatrixClient';
+import { bytesToSize } from '$appUtils/common';
 import {
   READABLE_EXT_TO_MIME_TYPE,
   READABLE_TEXT_MIME_TYPES,
   getFileNameExt,
   mimeTypeToExt,
-} from '../../../utils/mimeTypes';
-import { stopPropagation } from '../../../utils/keyboard';
-import {
-  decryptFile,
-  downloadEncryptedMedia,
-  downloadMedia,
-  mxcUrlToHttp,
-} from '../../../utils/matrix';
-import { useMediaAuthentication } from '../../../hooks/useMediaAuthentication';
-import { ModalWide } from '../../../styles/Modal.css';
+} from '$appUtils/mimeTypes';
+import { stopPropagation } from '$appUtils/keyboard';
+import { decryptFile, downloadEncryptedMedia, downloadMedia, mxcUrlToHttp } from '$appUtils/matrix';
+import { useMediaAuthentication } from '$hooks/useMediaAuthentication';
+import { ModalWide } from '$styles/Modal.css';
 
 const renderErrorButton = (retry: () => void, text: string) => (
   <TooltipProvider

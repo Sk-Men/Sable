@@ -15,14 +15,14 @@ import { Room } from '$types/matrix-sdk';
 import classNames from 'classnames';
 import FocusTrap from 'focus-trap-react';
 
-import { getMemberDisplayName } from '../../utils/room';
-import { getMxIdLocalPart } from '../../utils/matrix';
+import { getMemberDisplayName } from '$appUtils/room';
+import { getMxIdLocalPart } from '$appUtils/matrix';
 import * as css from './RoomViewFollowing.css';
-import { useMatrixClient } from '../../hooks/useMatrixClient';
-import { useRoomLatestRenderedEvent } from '../../hooks/useRoomLatestRenderedEvent';
-import { useRoomEventReaders } from '../../hooks/useRoomEventReaders';
-import { EventReaders } from '../../components/event-readers';
-import { stopPropagation } from '../../utils/keyboard';
+import { useMatrixClient } from '$hooks/useMatrixClient';
+import { useRoomLatestRenderedEvent } from '$hooks/useRoomLatestRenderedEvent';
+import { useRoomEventReaders } from '$hooks/useRoomEventReaders';
+import { EventReaders } from '$components/event-readers';
+import { stopPropagation } from '$appUtils/keyboard';
 
 export function RoomViewFollowingPlaceholder() {
   return <div className={css.RoomViewFollowingPlaceholder} />;

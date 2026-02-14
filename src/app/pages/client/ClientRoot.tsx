@@ -23,18 +23,18 @@ import {
   logoutClient,
   startClient,
 } from '../../../client/initMatrix';
-import { SplashScreen } from '../../components/splash-screen';
-import { ServerConfigsLoader } from '../../components/ServerConfigsLoader';
-import { CapabilitiesProvider } from '../../hooks/useCapabilities';
-import { MediaConfigProvider } from '../../hooks/useMediaConfig';
-import { MatrixClientProvider } from '../../hooks/useMatrixClient';
+import { SplashScreen } from '$components/splash-screen';
+import { ServerConfigsLoader } from '$components/ServerConfigsLoader';
+import { CapabilitiesProvider } from '$hooks/useCapabilities';
+import { MediaConfigProvider } from '$hooks/useMediaConfig';
+import { MatrixClientProvider } from '$hooks/useMatrixClient';
 import { SpecVersions } from './SpecVersions';
-import { AsyncStatus, useAsyncCallback } from '../../hooks/useAsyncCallback';
-import { useSyncState } from '../../hooks/useSyncState';
-import { stopPropagation } from '../../utils/keyboard';
+import { AsyncStatus, useAsyncCallback } from '$hooks/useAsyncCallback';
+import { useSyncState } from '$hooks/useSyncState';
+import { stopPropagation } from '$appUtils/keyboard';
 import { SyncStatus } from './SyncStatus';
-import { AuthMetadataProvider } from '../../hooks/useAuthMetadata';
-import { getFallbackSession } from '../../state/sessions';
+import { AuthMetadataProvider } from '$hooks/useAuthMetadata';
+import { getFallbackSession } from '$state/sessions';
 
 function ClientRootLoading() {
   return (

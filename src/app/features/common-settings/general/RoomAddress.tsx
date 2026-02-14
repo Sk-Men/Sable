@@ -15,24 +15,24 @@ import {
   toRem,
 } from 'folds';
 import { MatrixError } from '$types/matrix-sdk';
-import { SettingTile } from '../../../components/setting-tile';
-import { SequenceCard } from '../../../components/sequence-card';
-import { SequenceCardStyle } from '../../room-settings/styles.css';
-import { useMatrixClient } from '../../../hooks/useMatrixClient';
-import { useRoom } from '../../../hooks/useRoom';
+import { SettingTile } from '$components/setting-tile';
+import { SequenceCard } from '$components/sequence-card';
+import { SequenceCardStyle } from '$features/room-settings/styles.css';
+import { useMatrixClient } from '$hooks/useMatrixClient';
+import { useRoom } from '$hooks/useRoom';
 import {
   useLocalAliases,
   usePublishedAliases,
   usePublishUnpublishAliases,
   useSetMainAlias,
-} from '../../../hooks/useRoomAliases';
-import { AsyncStatus, useAsyncCallback } from '../../../hooks/useAsyncCallback';
-import { CutoutCard } from '../../../components/cutout-card';
-import { replaceSpaceWithDash } from '../../../utils/common';
-import { useAlive } from '../../../hooks/useAlive';
-import { StateEvent } from '../../../../types/matrix/room';
-import { RoomPermissionsAPI } from '../../../hooks/useRoomPermissions';
-import { getMxIdServer } from '../../../utils/matrix';
+} from '$hooks/useRoomAliases';
+import { AsyncStatus, useAsyncCallback } from '$hooks/useAsyncCallback';
+import { CutoutCard } from '$components/cutout-card';
+import { replaceSpaceWithDash } from '$appUtils/common';
+import { useAlive } from '$hooks/useAlive';
+import { StateEvent } from '$types/matrix/room';
+import { RoomPermissionsAPI } from '$hooks/useRoomPermissions';
+import { getMxIdServer } from '$appUtils/matrix';
 
 type RoomPublishedAddressesProps = {
   permissions: RoomPermissionsAPI;

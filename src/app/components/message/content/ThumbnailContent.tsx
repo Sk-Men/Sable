@@ -1,10 +1,10 @@
 import { ReactNode, useCallback, useEffect } from 'react';
-import { IThumbnailContent } from '../../../../types/matrix/common';
-import { useMatrixClient } from '../../../hooks/useMatrixClient';
-import { AsyncStatus, useAsyncCallback } from '../../../hooks/useAsyncCallback';
-import { decryptFile, downloadEncryptedMedia, mxcUrlToHttp } from '../../../utils/matrix';
-import { useMediaAuthentication } from '../../../hooks/useMediaAuthentication';
-import { FALLBACK_MIMETYPE } from '../../../utils/mimeTypes';
+import { IThumbnailContent } from '$types/matrix/common';
+import { useMatrixClient } from '$hooks/useMatrixClient';
+import { AsyncStatus, useAsyncCallback } from '$hooks/useAsyncCallback';
+import { decryptFile, downloadEncryptedMedia, mxcUrlToHttp } from '$appUtils/matrix';
+import { useMediaAuthentication } from '$hooks/useMediaAuthentication';
+import { FALLBACK_MIMETYPE } from '$appUtils/mimeTypes';
 
 export type ThumbnailContentProps = {
   info: IThumbnailContent;

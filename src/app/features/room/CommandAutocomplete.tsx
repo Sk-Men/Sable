@@ -2,18 +2,18 @@ import React, { KeyboardEvent as ReactKeyboardEvent, useCallback, useEffect, use
 import { Editor } from 'slate';
 import { Box, config, MenuItem, Text } from 'folds';
 import { Room } from '$types/matrix-sdk';
-import { Command, useCommands } from '../../hooks/useCommands';
+import { Command, useCommands } from '$hooks/useCommands';
 import {
   AutocompleteMenu,
   AutocompleteQuery,
   createCommandElement,
   moveCursor,
   replaceWithElement,
-} from '../../components/editor';
-import { UseAsyncSearchOptions, useAsyncSearch } from '../../hooks/useAsyncSearch';
-import { useMatrixClient } from '../../hooks/useMatrixClient';
-import { useKeyDown } from '../../hooks/useKeyDown';
-import { onTabPress } from '../../utils/keyboard';
+} from '$components/editor';
+import { UseAsyncSearchOptions, useAsyncSearch } from '$hooks/useAsyncSearch';
+import { useMatrixClient } from '$hooks/useMatrixClient';
+import { useKeyDown } from '$hooks/useKeyDown';
+import { onTabPress } from '$appUtils/keyboard';
 
 type CommandAutoCompleteHandler = (commandName: string) => void;
 

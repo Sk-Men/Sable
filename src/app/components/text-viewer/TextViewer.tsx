@@ -4,9 +4,9 @@ import classNames from 'classnames';
 import { Box, Chip, Header, Icon, IconButton, Icons, Scroll, Text, as } from 'folds';
 import { ErrorBoundary } from 'react-error-boundary';
 import * as css from './TextViewer.css';
-import { copyToClipboard } from '../../utils/dom';
+import { copyToClipboard } from '$appUtils/dom';
 
-const ReactPrism = lazy(() => import('../../plugins/react-prism/ReactPrism'));
+const ReactPrism = lazy(() => import('$plugins/react-prism/ReactPrism'));
 
 type TextViewerContentProps = {
   text: string;

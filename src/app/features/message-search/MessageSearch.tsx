@@ -5,24 +5,24 @@ import { useVirtualizer } from '@tanstack/react-virtual';
 import { useInfiniteQuery } from '@tanstack/react-query';
 import { useSearchParams } from 'react-router-dom';
 import { SearchOrderBy } from '$types/matrix-sdk';
-import { PageHero, PageHeroEmpty, PageHeroSection } from '../../components/page';
-import { useMatrixClient } from '../../hooks/useMatrixClient';
-import { _SearchPathSearchParams } from '../../pages/paths';
-import { useSetting } from '../../state/hooks/settings';
-import { settingsAtom } from '../../state/settings';
-import { SequenceCard } from '../../components/sequence-card';
-import { useRoomNavigate } from '../../hooks/useRoomNavigate';
-import { ScrollTopContainer } from '../../components/scroll-top-container';
-import { ContainerColor } from '../../styles/ContainerColor.css';
-import { decodeSearchParamValueArray, encodeSearchParamValueArray } from '../../pages/pathUtils';
-import { useRooms } from '../../state/hooks/roomList';
-import { allRoomsAtom } from '../../state/room-list/roomList';
-import { mDirectAtom } from '../../state/mDirectList';
+import { PageHero, PageHeroEmpty, PageHeroSection } from '$components/page';
+import { useMatrixClient } from '$hooks/useMatrixClient';
+import { _SearchPathSearchParams } from '$pages/paths';
+import { useSetting } from '$state/hooks/settings';
+import { settingsAtom } from '$state/settings';
+import { SequenceCard } from '$components/sequence-card';
+import { useRoomNavigate } from '$hooks/useRoomNavigate';
+import { ScrollTopContainer } from '$components/scroll-top-container';
+import { ContainerColor } from '$styles/ContainerColor.css';
+import { decodeSearchParamValueArray, encodeSearchParamValueArray } from '$pages/pathUtils';
+import { useRooms } from '$state/hooks/roomList';
+import { allRoomsAtom } from '$state/room-list/roomList';
+import { mDirectAtom } from '$state/mDirectList';
 import { MessageSearchParams, useMessageSearch } from './useMessageSearch';
 import { SearchResultGroup } from './SearchResultGroup';
 import { SearchInput } from './SearchInput';
 import { SearchFilters } from './SearchFilters';
-import { VirtualTile } from '../../components/virtualizer';
+import { VirtualTile } from '$components/virtualizer';
 
 const useSearchPathSearchParams = (searchParams: URLSearchParams): _SearchPathSearchParams =>
   useMemo(

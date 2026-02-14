@@ -24,11 +24,11 @@ import {
   getUnreadInfo,
   getUnreadInfos,
   isNotificationEvent,
-} from '../../utils/room';
+} from '$appUtils/room';
 import { roomToParentsAtom } from './roomToParents';
-import { useStateEventCallback } from '../../hooks/useStateEventCallback';
-import { useSyncState } from '../../hooks/useSyncState';
-import { useRoomsNotificationPreferencesContext } from '../../hooks/useRoomsNotificationPreferences';
+import { useStateEventCallback } from '$hooks/useStateEventCallback';
+import { useSyncState } from '$hooks/useSyncState';
+import { useRoomsNotificationPreferencesContext } from '$hooks/useRoomsNotificationPreferences';
 
 export type RoomToUnreadAction =
   | {

@@ -2,7 +2,7 @@ import React, { ReactNode } from 'react';
 import {
   RoomsNotificationPreferencesProvider,
   useRoomsNotificationPreferences,
-} from '../../hooks/useRoomsNotificationPreferences';
+} from '$hooks/useRoomsNotificationPreferences';
 
 export function ClientRoomsNotificationPreferences({ children }: { children: ReactNode }) {
   const preferences = useRoomsNotificationPreferences();

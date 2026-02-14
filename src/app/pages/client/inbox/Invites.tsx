@@ -29,10 +29,10 @@ import {
   PageHero,
   PageHeroEmpty,
   PageHeroSection,
-} from '../../../components/page';
-import { useMatrixClient } from '../../../hooks/useMatrixClient';
-import { allInvitesAtom } from '../../../state/room-list/inviteList';
-import { SequenceCard } from '../../../components/sequence-card';
+} from '$components/page';
+import { useMatrixClient } from '$hooks/useMatrixClient';
+import { allInvitesAtom } from '$state/room-list/inviteList';
+import { SequenceCard } from '$components/sequence-card';
 import {
   bannedInRooms,
   getCommonRooms,
@@ -42,31 +42,31 @@ import {
   getStateEvent,
   isDirectInvite,
   isSpace,
-} from '../../../utils/room';
-import { nameInitials } from '../../../utils/common';
-import { RoomAvatar } from '../../../components/room-avatar';
+} from '$appUtils/room';
+import { nameInitials } from '$appUtils/common';
+import { RoomAvatar } from '$components/room-avatar';
 import {
   addRoomIdToMDirect,
   getMxIdLocalPart,
   guessDmRoomUserId,
   rateLimitedActions,
-} from '../../../utils/matrix';
-import { Time } from '../../../components/message';
-import { useElementSizeObserver } from '../../../hooks/useElementSizeObserver';
-import { onEnterOrSpace, stopPropagation } from '../../../utils/keyboard';
-import { RoomTopicViewer } from '../../../components/room-topic-viewer';
-import { AsyncStatus, useAsyncCallback } from '../../../hooks/useAsyncCallback';
-import { useRoomNavigate } from '../../../hooks/useRoomNavigate';
-import { ScreenSize, useScreenSizeContext } from '../../../hooks/useScreenSize';
-import { BackRouteHandler } from '../../../components/BackRouteHandler';
-import { useMediaAuthentication } from '../../../hooks/useMediaAuthentication';
-import { StateEvent } from '../../../../types/matrix/room';
-import { testBadWords } from '../../../plugins/bad-words';
-import { allRoomsAtom } from '../../../state/room-list/roomList';
-import { useIgnoredUsers } from '../../../hooks/useIgnoredUsers';
-import { useReportRoomSupported } from '../../../hooks/useReportRoomSupported';
-import { useSetting } from '../../../state/hooks/settings';
-import { settingsAtom } from '../../../state/settings';
+} from '$appUtils/matrix';
+import { Time } from '$components/message';
+import { useElementSizeObserver } from '$hooks/useElementSizeObserver';
+import { onEnterOrSpace, stopPropagation } from '$appUtils/keyboard';
+import { RoomTopicViewer } from '$components/room-topic-viewer';
+import { AsyncStatus, useAsyncCallback } from '$hooks/useAsyncCallback';
+import { useRoomNavigate } from '$hooks/useRoomNavigate';
+import { ScreenSize, useScreenSizeContext } from '$hooks/useScreenSize';
+import { BackRouteHandler } from '$components/BackRouteHandler';
+import { useMediaAuthentication } from '$hooks/useMediaAuthentication';
+import { StateEvent } from '$types/matrix/room';
+import { testBadWords } from '$plugins/bad-words';
+import { allRoomsAtom } from '$state/room-list/roomList';
+import { useIgnoredUsers } from '$hooks/useIgnoredUsers';
+import { useReportRoomSupported } from '$hooks/useReportRoomSupported';
+import { useSetting } from '$state/hooks/settings';
+import { settingsAtom } from '$state/settings';
 
 const COMPACT_CARD_WIDTH = 548;
 

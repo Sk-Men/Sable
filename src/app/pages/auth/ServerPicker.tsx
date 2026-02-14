@@ -21,8 +21,8 @@ import {
 } from 'folds';
 import FocusTrap from 'focus-trap-react';
 
-import { useDebounce } from '../../hooks/useDebounce';
-import { stopPropagation } from '../../utils/keyboard';
+import { useDebounce } from '$hooks/useDebounce';
+import { stopPropagation } from '$appUtils/keyboard';
 
 export function ServerPicker({
   server,

@@ -45,40 +45,40 @@ import {
   Time,
   Username,
   UsernameBold,
-} from '../../../components/message';
+} from '$components/message';
 import {
   canEditEvent,
   getEventEdits,
   getMemberAvatarMxc,
   getMemberDisplayName,
-} from '../../../utils/room';
+} from '$appUtils/room';
 import {
   getCanonicalAliasOrRoomId,
   getMxIdLocalPart,
   isRoomAlias,
   mxcUrlToHttp,
-} from '../../../utils/matrix';
-import { MessageLayout, MessageSpacing } from '../../../state/settings';
-import { useMatrixClient } from '../../../hooks/useMatrixClient';
-import { useRecentEmoji } from '../../../hooks/useRecentEmoji';
+} from '$appUtils/matrix';
+import { MessageLayout, MessageSpacing } from '$state/settings';
+import { useMatrixClient } from '$hooks/useMatrixClient';
+import { useRecentEmoji } from '$hooks/useRecentEmoji';
 import * as css from './styles.css';
-import { EventReaders } from '../../../components/event-readers';
-import { TextViewer } from '../../../components/text-viewer';
-import { AsyncStatus, useAsyncCallback } from '../../../hooks/useAsyncCallback';
-import { EmojiBoard } from '../../../components/emoji-board';
+import { EventReaders } from '$components/event-readers';
+import { TextViewer } from '$components/text-viewer';
+import { AsyncStatus, useAsyncCallback } from '$hooks/useAsyncCallback';
+import { EmojiBoard } from '$components/emoji-board';
 import { ReactionViewer } from '../reaction-viewer';
 import { MessageEditor } from './MessageEditor';
-import { UserAvatar } from '../../../components/user-avatar';
-import { copyToClipboard } from '../../../utils/dom';
-import { stopPropagation } from '../../../utils/keyboard';
-import { getMatrixToRoomEvent } from '../../../plugins/matrix-to';
-import { getViaServers } from '../../../plugins/via-servers';
-import { useMediaAuthentication } from '../../../hooks/useMediaAuthentication';
-import { useRoomPinnedEvents } from '../../../hooks/useRoomPinnedEvents';
-import { MemberPowerTag, StateEvent } from '../../../../types/matrix/room';
-import { PowerIcon } from '../../../components/power';
-import colorMXID from '../../../../util/colorMXID';
-import { getPowerTagIconSrc } from '../../../hooks/useMemberPowerTag';
+import { UserAvatar } from '$components/user-avatar';
+import { copyToClipboard } from '$appUtils/dom';
+import { stopPropagation } from '$appUtils/keyboard';
+import { getMatrixToRoomEvent } from '$plugins/matrix-to';
+import { getViaServers } from '$plugins/via-servers';
+import { useMediaAuthentication } from '$hooks/useMediaAuthentication';
+import { useRoomPinnedEvents } from '$hooks/useRoomPinnedEvents';
+import { MemberPowerTag, StateEvent } from '$types/matrix/room';
+import { PowerIcon } from '$components/power';
+import colorMXID from '$util/colorMXID';
+import { getPowerTagIconSrc } from '$hooks/useMemberPowerTag';
 
 export type ReactionHandler = (keyOrMxc: string, shortcode: string) => void;
 

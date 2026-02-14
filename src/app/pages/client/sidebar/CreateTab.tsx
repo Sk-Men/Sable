@@ -2,20 +2,20 @@ import React, { MouseEventHandler, useState } from 'react';
 import { Box, config, Icon, Icons, Menu, PopOut, RectCords, Text } from 'folds';
 import FocusTrap from 'focus-trap-react';
 import { useNavigate } from 'react-router-dom';
-import { SidebarAvatar, SidebarItem, SidebarItemTooltip } from '../../../components/sidebar';
-import { stopPropagation } from '../../../utils/keyboard';
-import { SequenceCard } from '../../../components/sequence-card';
-import { SettingTile } from '../../../components/setting-tile';
-import { ContainerColor } from '../../../styles/ContainerColor.css';
+import { SidebarAvatar, SidebarItem, SidebarItemTooltip } from '$components/sidebar';
+import { stopPropagation } from '$appUtils/keyboard';
+import { SequenceCard } from '$components/sequence-card';
+import { SettingTile } from '$components/setting-tile';
+import { ContainerColor } from '$styles/ContainerColor.css';
 import {
   encodeSearchParamValueArray,
   getCreatePath,
   getSpacePath,
   withSearchParam,
-} from '../../pathUtils';
-import { useCreateSelected } from '../../../hooks/router/useCreateSelected';
-import { JoinAddressPrompt } from '../../../components/join-address-prompt';
-import { _RoomSearchParams } from '../../paths';
+} from '$pages/pathUtils';
+import { useCreateSelected } from '$hooks/router/useCreateSelected';
+import { JoinAddressPrompt } from '$components/join-address-prompt';
+import { _RoomSearchParams } from '$pages/paths';
 
 export function CreateTab() {
   const createSelected = useCreateSelected();

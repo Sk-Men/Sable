@@ -5,18 +5,18 @@ import {
   SidebarItem,
   SidebarItemBadge,
   SidebarItemTooltip,
-} from '../../../components/sidebar';
-import { useDeviceIds, useDeviceList, useSplitCurrentDevice } from '../../../hooks/useDeviceList';
-import { useMatrixClient } from '../../../hooks/useMatrixClient';
+} from '$components/sidebar';
+import { useDeviceIds, useDeviceList, useSplitCurrentDevice } from '$hooks/useDeviceList';
+import { useMatrixClient } from '$hooks/useMatrixClient';
 import * as css from './UnverifiedTab.css';
 import {
   useDeviceVerificationStatus,
   useUnverifiedDeviceCount,
   VerificationStatus,
-} from '../../../hooks/useDeviceVerificationStatus';
-import { useCrossSigningActive } from '../../../hooks/useCrossSigning';
-import { Modal500 } from '../../../components/Modal500';
-import { Settings, SettingsPages } from '../../../features/settings';
+} from '$hooks/useDeviceVerificationStatus';
+import { useCrossSigningActive } from '$hooks/useCrossSigning';
+import { Modal500 } from '$components/Modal500';
+import { Settings, SettingsPages } from '$features/settings';
 
 function UnverifiedIndicator() {
   const mx = useMatrixClient();

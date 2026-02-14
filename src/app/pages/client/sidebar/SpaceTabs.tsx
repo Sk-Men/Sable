@@ -43,11 +43,11 @@ import {
   useOrphanSpaces,
   useRecursiveChildScopeFactory,
   useSpaceChildren,
-} from '../../../state/hooks/roomList';
-import { useMatrixClient } from '../../../hooks/useMatrixClient';
-import { roomToParentsAtom } from '../../../state/room/roomToParents';
-import { allRoomsAtom } from '../../../state/room-list/roomList';
-import { getSpaceLobbyPath, getSpacePath, joinPathComponent } from '../../pathUtils';
+} from '$state/hooks/roomList';
+import { useMatrixClient } from '$hooks/useMatrixClient';
+import { roomToParentsAtom } from '$state/room/roomToParents';
+import { allRoomsAtom } from '$state/room-list/roomList';
+import { getSpaceLobbyPath, getSpacePath, joinPathComponent } from '$pages/pathUtils';
 import {
   SidebarAvatar,
   SidebarItem,
@@ -57,13 +57,13 @@ import {
   SidebarStackSeparator,
   SidebarFolder,
   SidebarFolderDropTarget,
-} from '../../../components/sidebar';
-import { RoomUnreadProvider, RoomsUnreadProvider } from '../../../components/RoomUnreadProvider';
-import { useSelectedSpace } from '../../../hooks/router/useSelectedSpace';
-import { UnreadBadge } from '../../../components/unread-badge';
-import { getCanonicalAliasOrRoomId, isRoomAlias } from '../../../utils/matrix';
-import { RoomAvatar } from '../../../components/room-avatar';
-import { nameInitials, randomStr } from '../../../utils/common';
+} from '$components/sidebar';
+import { RoomUnreadProvider, RoomsUnreadProvider } from '$components/RoomUnreadProvider';
+import { useSelectedSpace } from '$hooks/router/useSelectedSpace';
+import { UnreadBadge } from '$components/unread-badge';
+import { getCanonicalAliasOrRoomId, isRoomAlias } from '$appUtils/matrix';
+import { RoomAvatar } from '$components/room-avatar';
+import { nameInitials, randomStr } from '$appUtils/common';
 import {
   ISidebarFolder,
   SidebarItems,
@@ -72,27 +72,27 @@ import {
   parseSidebar,
   sidebarItemWithout,
   useSidebarItems,
-} from '../../../hooks/useSidebarItems';
-import { AccountDataEvent } from '../../../../types/matrix/accountData';
-import { ScreenSize, useScreenSizeContext } from '../../../hooks/useScreenSize';
-import { useNavToActivePathAtom } from '../../../state/hooks/navToActivePath';
-import { useOpenedSidebarFolderAtom } from '../../../state/hooks/openedSidebarFolder';
-import { usePowerLevels } from '../../../hooks/usePowerLevels';
-import { useRoomsUnread } from '../../../state/hooks/unread';
-import { roomToUnreadAtom } from '../../../state/room/roomToUnread';
-import { markAsRead } from '../../../utils/notifications';
-import { copyToClipboard } from '../../../utils/dom';
-import { stopPropagation } from '../../../utils/keyboard';
-import { getMatrixToRoom } from '../../../plugins/matrix-to';
-import { getViaServers } from '../../../plugins/via-servers';
-import { getRoomAvatarUrl } from '../../../utils/room';
-import { useMediaAuthentication } from '../../../hooks/useMediaAuthentication';
-import { useSetting } from '../../../state/hooks/settings';
-import { settingsAtom } from '../../../state/settings';
-import { useOpenSpaceSettings } from '../../../state/hooks/spaceSettings';
-import { useRoomCreators } from '../../../hooks/useRoomCreators';
-import { useRoomPermissions } from '../../../hooks/useRoomPermissions';
-import { InviteUserPrompt } from '../../../components/invite-user-prompt';
+} from '$hooks/useSidebarItems';
+import { AccountDataEvent } from '$types/matrix/accountData';
+import { ScreenSize, useScreenSizeContext } from '$hooks/useScreenSize';
+import { useNavToActivePathAtom } from '$state/hooks/navToActivePath';
+import { useOpenedSidebarFolderAtom } from '$state/hooks/openedSidebarFolder';
+import { usePowerLevels } from '$hooks/usePowerLevels';
+import { useRoomsUnread } from '$state/hooks/unread';
+import { roomToUnreadAtom } from '$state/room/roomToUnread';
+import { markAsRead } from '$appUtils/notifications';
+import { copyToClipboard } from '$appUtils/dom';
+import { stopPropagation } from '$appUtils/keyboard';
+import { getMatrixToRoom } from '$plugins/matrix-to';
+import { getViaServers } from '$plugins/via-servers';
+import { getRoomAvatarUrl } from '$appUtils/room';
+import { useMediaAuthentication } from '$hooks/useMediaAuthentication';
+import { useSetting } from '$state/hooks/settings';
+import { settingsAtom } from '$state/settings';
+import { useOpenSpaceSettings } from '$state/hooks/spaceSettings';
+import { useRoomCreators } from '$hooks/useRoomCreators';
+import { useRoomPermissions } from '$hooks/useRoomPermissions';
+import { InviteUserPrompt } from '$components/invite-user-prompt';
 
 type SpaceMenuProps = {
   room: Room;

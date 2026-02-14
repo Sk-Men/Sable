@@ -1,6 +1,6 @@
 import { style } from '@vanilla-extract/css';
 import { color, config, toRem } from 'folds';
-import { ContainerColor } from '../../styles/ContainerColor.css';
+import { ContainerColor } from '$styles/ContainerColor.css';
 
 export const ItemDraggableTarget = style([
   ContainerColor({ variant: 'SurfaceVariant' }),

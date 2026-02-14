@@ -14,15 +14,12 @@ import {
   Text,
 } from 'folds';
 import FocusTrap from 'focus-trap-react';
-import { useAllJoinedRoomsSet, useGetRoom } from '../../hooks/useGetRoom';
-import { SpaceProvider } from '../../hooks/useSpace';
+import { useAllJoinedRoomsSet, useGetRoom } from '$hooks/useGetRoom';
+import { SpaceProvider } from '$hooks/useSpace';
 import { CreateRoomForm } from './CreateRoom';
-import {
-  useCloseCreateRoomModal,
-  useCreateRoomModalState,
-} from '../../state/hooks/createRoomModal';
-import { CreateRoomModalState } from '../../state/createRoomModal';
-import { stopPropagation } from '../../utils/keyboard';
+import { useCloseCreateRoomModal, useCreateRoomModalState } from '$state/hooks/createRoomModal';
+import { CreateRoomModalState } from '$state/createRoomModal';
+import { stopPropagation } from '$appUtils/keyboard';
 
 type CreateRoomModalProps = {
   state: CreateRoomModalState;

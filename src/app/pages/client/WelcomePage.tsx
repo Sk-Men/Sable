@@ -1,7 +1,7 @@
 import React from 'react';
 import { Box, Button, Icon, Icons, Text, config, toRem } from 'folds';
-import { Page, PageHero, PageHeroSection } from '../../components/page';
-import CinnySVG from '../../../../public/res/svg/cinny.svg';
+import { Page, PageHero, PageHeroSection } from '$components/page';
+import CinnySVG from '$public/res/svg/cinny.svg';
 
 export function WelcomePage() {
   return (

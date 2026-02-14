@@ -1,10 +1,10 @@
 import React, { useRef } from 'react';
 import { Box, Icon, Icons, Text, Scroll, IconButton } from 'folds';
-import { Page, PageContent, PageContentCenter, PageHeader } from '../../../components/page';
-import { MessageSearch } from '../../../features/message-search';
+import { Page, PageContent, PageContentCenter, PageHeader } from '$components/page';
+import { MessageSearch } from '$features/message-search';
 import { useHomeRooms } from './useHomeRooms';
-import { ScreenSize, useScreenSizeContext } from '../../../hooks/useScreenSize';
-import { BackRouteHandler } from '../../../components/BackRouteHandler';
+import { ScreenSize, useScreenSizeContext } from '$hooks/useScreenSize';
+import { BackRouteHandler } from '$components/BackRouteHandler';
 
 export function HomeSearch() {
   const scrollRef = useRef<HTMLDivElement>(null);

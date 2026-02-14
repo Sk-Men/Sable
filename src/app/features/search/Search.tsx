@@ -28,37 +28,33 @@ import React, {
 import { isKeyHotkey } from 'is-hotkey';
 import { useAtom, useAtomValue } from 'jotai';
 import { Room } from '$types/matrix-sdk';
-import { useDirects, useOrphanSpaces, useRooms, useSpaces } from '../../state/hooks/roomList';
-import { useMatrixClient } from '../../hooks/useMatrixClient';
-import { mDirectAtom } from '../../state/mDirectList';
-import { allRoomsAtom } from '../../state/room-list/roomList';
-import {
-  SearchItemStrGetter,
-  useAsyncSearch,
-  UseAsyncSearchOptions,
-} from '../../hooks/useAsyncSearch';
-import { useAllJoinedRoomsSet, useGetRoom } from '../../hooks/useGetRoom';
-import { RoomAvatar, RoomIcon } from '../../components/room-avatar';
+import { useDirects, useOrphanSpaces, useRooms, useSpaces } from '$state/hooks/roomList';
+import { useMatrixClient } from '$hooks/useMatrixClient';
+import { mDirectAtom } from '$state/mDirectList';
+import { allRoomsAtom } from '$state/room-list/roomList';
+import { SearchItemStrGetter, useAsyncSearch, UseAsyncSearchOptions } from '$hooks/useAsyncSearch';
+import { useAllJoinedRoomsSet, useGetRoom } from '$hooks/useGetRoom';
+import { RoomAvatar, RoomIcon } from '$components/room-avatar';
 import {
   getAllParents,
   getDirectRoomAvatarUrl,
   getRoomAvatarUrl,
   guessPerfectParent,
-} from '../../utils/room';
-import { highlightText, makeHighlightRegex } from '../../plugins/react-custom-html-parser';
-import { factoryRoomIdByActivity } from '../../utils/sort';
-import { nameInitials } from '../../utils/common';
-import { useRoomNavigate } from '../../hooks/useRoomNavigate';
-import { useListFocusIndex } from '../../hooks/useListFocusIndex';
-import { getMxIdLocalPart, getMxIdServer, guessDmRoomUserId } from '../../utils/matrix';
-import { roomToParentsAtom } from '../../state/room/roomToParents';
-import { roomToUnreadAtom } from '../../state/room/roomToUnread';
-import { UnreadBadge, UnreadBadgeCenter } from '../../components/unread-badge';
-import { searchModalAtom } from '../../state/searchModal';
-import { useKeyDown } from '../../hooks/useKeyDown';
-import { useMediaAuthentication } from '../../hooks/useMediaAuthentication';
-import { KeySymbol } from '../../utils/key-symbol';
-import { isMacOS } from '../../utils/user-agent';
+} from '$appUtils/room';
+import { highlightText, makeHighlightRegex } from '$plugins/react-custom-html-parser';
+import { factoryRoomIdByActivity } from '$appUtils/sort';
+import { nameInitials } from '$appUtils/common';
+import { useRoomNavigate } from '$hooks/useRoomNavigate';
+import { useListFocusIndex } from '$hooks/useListFocusIndex';
+import { getMxIdLocalPart, getMxIdServer, guessDmRoomUserId } from '$appUtils/matrix';
+import { roomToParentsAtom } from '$state/room/roomToParents';
+import { roomToUnreadAtom } from '$state/room/roomToUnread';
+import { UnreadBadge, UnreadBadgeCenter } from '$components/unread-badge';
+import { searchModalAtom } from '$state/searchModal';
+import { useKeyDown } from '$hooks/useKeyDown';
+import { useMediaAuthentication } from '$hooks/useMediaAuthentication';
+import { KeySymbol } from '$appUtils/key-symbol';
+import { isMacOS } from '$appUtils/user-agent';
 
 enum SearchRoomType {
   Rooms = '#',

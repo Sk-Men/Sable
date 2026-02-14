@@ -4,9 +4,9 @@ import FileSaver from 'file-saver';
 import classNames from 'classnames';
 import { Box, Chip, Header, Icon, IconButton, Icons, Text, as } from 'folds';
 import * as css from './ImageViewer.css';
-import { useZoom } from '../../hooks/useZoom';
-import { usePan } from '../../hooks/usePan';
-import { downloadMedia } from '../../utils/matrix';
+import { useZoom } from '$hooks/useZoom';
+import { usePan } from '$hooks/usePan';
+import { downloadMedia } from '$appUtils/matrix';
 
 export type ImageViewerProps = {
   alt: string;

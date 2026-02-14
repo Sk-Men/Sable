@@ -3,7 +3,7 @@ import { Descendant, Text } from 'slate';
 import parse from 'html-dom-parser';
 import { ChildNode, Element, isText, isTag } from 'domhandler';
 
-import { sanitizeCustomHtml } from '../../utils/sanitize';
+import { sanitizeCustomHtml } from '$appUtils/sanitize';
 import { BlockType, MarkType } from './types';
 import {
   BlockQuoteElement,
@@ -24,12 +24,9 @@ import {
   parseMatrixToRoomEvent,
   parseMatrixToUser,
   testMatrixTo,
-} from '../../plugins/matrix-to';
-import { tryDecodeURIComponent } from '../../utils/dom';
-import {
-  escapeMarkdownInlineSequences,
-  escapeMarkdownBlockSequences,
-} from '../../plugins/markdown';
+} from '$plugins/matrix-to';
+import { tryDecodeURIComponent } from '$appUtils/dom';
+import { escapeMarkdownInlineSequences, escapeMarkdownBlockSequences } from '$plugins/markdown';
 
 type ProcessTextCallback = (text: string) => string;
 

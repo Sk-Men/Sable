@@ -16,18 +16,18 @@ import {
 } from 'folds';
 import { MatrixEvent, Room, RoomMember } from '$types/matrix-sdk';
 import { Relations } from 'matrix-js-sdk/lib/models/relations';
-import { getMemberDisplayName } from '../../../utils/room';
-import { eventWithShortcode, getMxIdLocalPart } from '../../../utils/matrix';
+import { getMemberDisplayName } from '$appUtils/room';
+import { eventWithShortcode, getMxIdLocalPart } from '$appUtils/matrix';
 import * as css from './ReactionViewer.css';
-import { useMatrixClient } from '../../../hooks/useMatrixClient';
-import { useRelations } from '../../../hooks/useRelations';
-import { Reaction } from '../../../components/message';
-import { getHexcodeForEmoji, getShortcodeFor } from '../../../plugins/emoji';
-import { UserAvatar } from '../../../components/user-avatar';
-import { useMediaAuthentication } from '../../../hooks/useMediaAuthentication';
-import { useOpenUserRoomProfile } from '../../../state/hooks/userRoomProfile';
-import { useSpaceOptionally } from '../../../hooks/useSpace';
-import { getMouseEventCords } from '../../../utils/dom';
+import { useMatrixClient } from '$hooks/useMatrixClient';
+import { useRelations } from '$hooks/useRelations';
+import { Reaction } from '$components/message';
+import { getHexcodeForEmoji, getShortcodeFor } from '$plugins/emoji';
+import { UserAvatar } from '$components/user-avatar';
+import { useMediaAuthentication } from '$hooks/useMediaAuthentication';
+import { useOpenUserRoomProfile } from '$state/hooks/userRoomProfile';
+import { useSpaceOptionally } from '$hooks/useSpace';
+import { getMouseEventCords } from '$appUtils/dom';
 
 export type ReactionViewerProps = {
   room: Room;

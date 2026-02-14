@@ -1,8 +1,8 @@
 import React from 'react';
 import { Box, Icon, IconButton, Icons, Scroll, Text } from 'folds';
-import { Page, PageContent, PageHeader } from '../../../components/page';
-import { usePowerLevels } from '../../../hooks/usePowerLevels';
-import { useRoom } from '../../../hooks/useRoom';
+import { Page, PageContent, PageHeader } from '$components/page';
+import { usePowerLevels } from '$hooks/usePowerLevels';
+import { useRoom } from '$hooks/useRoom';
 import {
   RoomProfile,
   RoomEncryption,
@@ -12,9 +12,9 @@ import {
   RoomPublishedAddresses,
   RoomPublish,
   RoomUpgrade,
-} from '../../common-settings/general';
-import { useRoomCreators } from '../../../hooks/useRoomCreators';
-import { useRoomPermissions } from '../../../hooks/useRoomPermissions';
+} from '$features/common-settings/general';
+import { useRoomCreators } from '$hooks/useRoomCreators';
+import { useRoomPermissions } from '$hooks/useRoomPermissions';
 
 type GeneralProps = {
   requestClose: () => void;
