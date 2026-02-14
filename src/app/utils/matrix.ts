@@ -104,16 +104,26 @@ export const getThumbnailContent = (thumbnailInfo: {
   return content;
 };
 
-export const encryptFile = async (
-  file: File | Blob
+const getUploadFileName = (content: File | Blob): string => {
+  if (content instanceof File) return content.name;
+
+  const mimeSuffix = content.type.split('/')[1]?.split('+')[0]?.toLowerCase();
+  const extension = mimeSuffix && /^[a-z0-9]+$/.test(mimeSuffix) ? mimeSuffix : undefined;
+
+  return `upload-${Date.now()}${extension ? `.${extension}` : ''}`;
+};
+
+export const encryptFile = async <T extends File | Blob>(
+  file: T
 ): Promise<{
   encInfo: EncryptedAttachmentInfo;
   file: File;
-  originalFile: File | Blob;
+  originalFile: T;
 }> => {
   const dataBuffer = await file.arrayBuffer();
   const encryptedAttachment = await encryptAttachment(dataBuffer);
-  const encFile = new File([encryptedAttachment.data], file.name, {
+  const fileName = getUploadFileName(file);
+  const encFile = new File([encryptedAttachment.data], fileName, {
     type: file.type,
   });
   return {
@@ -133,7 +143,7 @@ export const decryptFile = async (
   return blob;
 };
 
-export type TUploadContent = File | Blob;
+export type TUploadContent = File;
 
 export type ContentUploadOptions = {
   name?: string;
