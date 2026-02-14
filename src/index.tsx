@@ -37,8 +37,7 @@ const mountApp = () => {
   const rootContainer = document.getElementById('root');
 
   if (rootContainer === null) {
-    console.error('Root container element not found!');
-    return;
+    throw new Error('Root container element not found!');
   }
 
   const root = createRoot(rootContainer);

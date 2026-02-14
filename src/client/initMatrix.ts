@@ -1,4 +1,9 @@
-import { createClient, MatrixClient, IndexedDBStore, IndexedDBCryptoStore } from '$types/matrix-sdk';
+import {
+  createClient,
+  MatrixClient,
+  IndexedDBStore,
+  IndexedDBCryptoStore,
+} from '$types/matrix-sdk';
 
 import { cryptoCallbacks } from './secretStorageKeys';
 import { clearNavToActivePathStore } from '../app/state/navToActivePath';
