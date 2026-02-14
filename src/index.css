@@ -94,6 +94,7 @@ textarea {
   padding: 0;
   background-color: transparent;
   color: inherit;
+  /* eslint-disable-next-line css/font-family-fallbacks */
   font-family: inherit;
   font-size: inherit;
   font-weight: inherit;
@@ -127,5 +128,6 @@ textarea {
 }
 
 audio:not([controls]) {
+  /* eslint-disable-next-line css/no-important */
   display: none !important;
 }
