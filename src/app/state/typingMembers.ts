@@ -1,4 +1,4 @@
-import produce from 'immer';
+import { produce } from 'immer';
 import { atom, useSetAtom } from 'jotai';
 import { MatrixClient, RoomMemberEvent, RoomMemberEventHandlerMap } from '$types/matrix-sdk';
 import { useEffect } from 'react';

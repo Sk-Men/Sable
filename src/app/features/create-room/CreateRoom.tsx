@@ -65,7 +65,7 @@ export function CreateRoomForm({ defaultKind, space, onCreate }: CreateRoomFormP
   const allowRestricted = space && restrictedSupported(selectedRoomVersion);
 
   const [kind, setKind] = useState(
-    defaultKind ?? allowRestricted ? CreateRoomKind.Restricted : CreateRoomKind.Private
+    (defaultKind ?? allowRestricted) ? CreateRoomKind.Restricted : CreateRoomKind.Private
   );
   const allowAdditionalCreators = creatorsSupported(selectedRoomVersion);
   const { additionalCreators, addAdditionalCreator, removeAdditionalCreator } =

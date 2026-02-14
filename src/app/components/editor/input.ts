@@ -229,7 +229,7 @@ const parseCodeBlockNode = (node: Element): CodeBlockElement[] | ParagraphElemen
     }));
     const childCode = node.children[0];
     const className =
-      isTag(childCode) && childCode.tagName === 'code' ? childCode.attribs.class ?? '' : '';
+      isTag(childCode) && childCode.tagName === 'code' ? (childCode.attribs.class ?? '') : '';
     const prefix = { text: `${mdSequence}${className.replace('language-', '')}` };
     const suffix = { text: mdSequence };
     return [

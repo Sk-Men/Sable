@@ -67,7 +67,7 @@ export function RoomProfileEdit({
   const [roomAvatar, setRoomAvatar] = useState(avatar);
 
   const avatarUrl = roomAvatar
-    ? mxcUrlToHttp(mx, roomAvatar, useAuthentication) ?? undefined
+    ? (mxcUrlToHttp(mx, roomAvatar, useAuthentication) ?? undefined)
     : undefined;
 
   const [imageFile, setImageFile] = useState<File>();
@@ -280,7 +280,7 @@ export function RoomProfile({ permissions }: RoomProfileProps) {
   const canEdit = canEditAvatar || canEditName || canEditTopic;
 
   const avatarUrl = avatar
-    ? mxcUrlToHttp(mx, avatar, useAuthentication, 96, 96, 'crop') ?? undefined
+    ? (mxcUrlToHttp(mx, avatar, useAuthentication, 96, 96, 'crop') ?? undefined)
     : undefined;
 
   const [edit, setEdit] = useState(false);

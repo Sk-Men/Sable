@@ -120,7 +120,7 @@ import { useComposingCheck } from '../../hooks/useComposingCheck';
 
 interface RoomInputProps {
   editor: Editor;
-  fileDropContainerRef: RefObject<HTMLElement>;
+  fileDropContainerRef: RefObject<HTMLElement | null>;
   roomId: string;
   room: Room;
 }
@@ -166,7 +166,7 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
       roomUploadAtomFamily,
       selectedFiles.map((f) => f.file)
     );
-    const uploadBoardHandlers = useRef<UploadBoardImperativeHandlers>();
+    const uploadBoardHandlers = useRef<UploadBoardImperativeHandlers>(undefined);
 
     const imagePackRooms: Room[] = useImagePackRooms(roomId, roomToParents);
 
@@ -612,7 +612,7 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
                     anchor={
                       emojiBoardTab === undefined
                         ? undefined
-                        : emojiBtnRef.current?.getBoundingClientRect() ?? undefined
+                        : (emojiBtnRef.current?.getBoundingClientRect() ?? undefined)
                     }
                     content={
                       <EmojiBoard

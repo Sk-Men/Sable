@@ -4,7 +4,7 @@ export type {};
 declare const self: ServiceWorkerGlobalScope;
 
 self.addEventListener('install', () => {
-  self.skipWaiting();
+  void self.skipWaiting();
 });
 
 self.addEventListener('activate', (event: ExtendableEvent) => {
@@ -39,11 +39,13 @@ self.addEventListener('message', (event: ExtendableMessageEvent) => {
   const client = event.source as Client | null;
   if (!client) return;
 
-  const { type, accessToken, baseUrl } = event.data || {};
+  const data: unknown = event.data;
+  if (!data || typeof data !== 'object') return;
+  const { type, accessToken, baseUrl } = data as Record<string, unknown>;
 
   if (type !== 'setSession') return;
 
-  cleanupDeadClients();
+  void cleanupDeadClients();
 
   if (typeof accessToken === 'string' && typeof baseUrl === 'string') {
     sessions.set(client.id, { accessToken, baseUrl });

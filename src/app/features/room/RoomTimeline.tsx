@@ -226,7 +226,7 @@ export const getEventIdAbsoluteIndex = (
 type RoomTimelineProps = {
   room: Room;
   eventId?: string;
-  roomInputRef: RefObject<HTMLElement>;
+  roomInputRef: RefObject<HTMLElement | null>;
   editor: Editor;
 };
 
@@ -487,7 +487,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
   const imagePackRooms: Room[] = useImagePackRooms(room.roomId, roomToParents);
 
   const [unreadInfo, setUnreadInfo] = useState(() => getRoomUnreadInfo(room, true));
-  const readUptoEventIdRef = useRef<string>();
+  const readUptoEventIdRef = useRef<string>(undefined);
   if (unreadInfo) {
     readUptoEventIdRef.current = unreadInfo.readUptoEventId;
   }

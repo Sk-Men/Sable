@@ -1,8 +1,7 @@
-/* eslint-disable import/first */
 import React from 'react';
 import { createRoot } from 'react-dom/client';
 import { enableMapSet } from 'immer';
-import '@fontsource/inter/variable.css';
+import '@fontsource-variable/inter';
 import 'folds/dist/style.css';
 import { configClass, varsClass } from 'folds';
 
@@ -27,9 +26,9 @@ if ('serviceWorker' in navigator) {
       ? `${trimTrailingSlash(import.meta.env.BASE_URL)}/sw.js`
       : `/dev-sw.js?dev-sw`;
 
-  navigator.serviceWorker.register(swUrl).then(() => {
+  void navigator.serviceWorker.register(swUrl).then(() => {
     const session = getFallbackSession();
-    pushSessionToSW(session?.baseUrl, session?.accessToken);
+    void pushSessionToSW(session?.baseUrl, session?.accessToken);
   });
 }
 

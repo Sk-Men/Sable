@@ -286,7 +286,8 @@ export const getRoomAvatarUrl = (
 ): string | undefined => {
   const mxcUrl = room.getMxcAvatarUrl();
   return mxcUrl
-    ? mx.mxcUrlToHttp(mxcUrl, size, size, 'crop', undefined, false, useAuthentication) ?? undefined
+    ? (mx.mxcUrlToHttp(mxcUrl, size, size, 'crop', undefined, false, useAuthentication) ??
+        undefined)
     : undefined;
 };
 

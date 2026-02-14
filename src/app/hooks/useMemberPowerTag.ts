@@ -38,7 +38,7 @@ export const getPowerTagIconSrc = (
   icon: MemberPowerTagIcon
 ): string | undefined =>
   icon?.key?.startsWith('mxc://')
-    ? mx.mxcUrlToHttp(icon.key, 96, 96, 'scale', undefined, undefined, useAuthentication) ?? '🌻'
+    ? (mx.mxcUrlToHttp(icon.key, 96, 96, 'scale', undefined, undefined, useAuthentication) ?? '🌻')
     : icon?.key;
 
 export const useAccessiblePowerTagColors = (

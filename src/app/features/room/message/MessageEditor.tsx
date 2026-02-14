@@ -87,7 +87,7 @@ export const MessageEditor = as<'div', MessageEditorProps>(
     const getPrevBodyAndFormattedBody = useCallback((): [
       string | undefined,
       string | undefined,
-      IMentions | undefined
+      IMentions | undefined,
     ] => {
       const evtId = mEvent.getId();
       if (!evtId) return [undefined, undefined, undefined];

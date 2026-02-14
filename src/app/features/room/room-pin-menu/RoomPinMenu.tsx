@@ -198,8 +198,8 @@ function PinnedMessage({
               userId={sender}
               src={
                 senderAvatarMxc
-                  ? mxcUrlToHttp(mx, senderAvatarMxc, useAuthentication, 48, 48, 'crop') ??
-                    undefined
+                  ? (mxcUrlToHttp(mx, senderAvatarMxc, useAuthentication, 48, 48, 'crop') ??
+                    undefined)
                   : undefined
               }
               alt={displayName}

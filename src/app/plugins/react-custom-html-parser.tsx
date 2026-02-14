@@ -1,6 +1,7 @@
 /* eslint-disable jsx-a11y/alt-text */
 import React, {
   ComponentPropsWithoutRef,
+  JSX,
   ReactEventHandler,
   Suspense,
   lazy,
@@ -301,7 +302,7 @@ export function CodeBlock({
         hideTrack
       >
         <div id="code-block-content" className={css.CodeBlockInternal}>
-          {domToReact(children, opts)}
+          {domToReact(children as any, opts)}
         </div>
       </Scroll>
       {largeCodeBlock && !expanded && <Box className={css.CodeBlockBottomShadow} />}
@@ -324,12 +325,13 @@ export const getReactCustomHtmlParser = (
     replace: (domNode) => {
       if (domNode instanceof Element && 'name' in domNode) {
         const { name, attribs, children, parent } = domNode;
+        const renderChildren = () => domToReact(children as any, opts);
         const props = attributesToProps(attribs);
 
         if (name === 'h1') {
           return (
             <Text {...props} className={css.Heading} size="H2">
-              {domToReact(children, opts)}
+              {renderChildren()}
             </Text>
           );
         }
@@ -337,7 +339,7 @@ export const getReactCustomHtmlParser = (
         if (name === 'h2') {
           return (
             <Text {...props} className={css.Heading} size="H3">
-              {domToReact(children, opts)}
+              {renderChildren()}
             </Text>
           );
         }
@@ -345,7 +347,7 @@ export const getReactCustomHtmlParser = (
         if (name === 'h3') {
           return (
             <Text {...props} className={css.Heading} size="H4">
-              {domToReact(children, opts)}
+              {renderChildren()}
             </Text>
           );
         }
@@ -353,7 +355,7 @@ export const getReactCustomHtmlParser = (
         if (name === 'h4') {
           return (
             <Text {...props} className={css.Heading} size="H4">
-              {domToReact(children, opts)}
+              {renderChildren()}
             </Text>
           );
         }
@@ -361,7 +363,7 @@ export const getReactCustomHtmlParser = (
         if (name === 'h5') {
           return (
             <Text {...props} className={css.Heading} size="H5">
-              {domToReact(children, opts)}
+              {renderChildren()}
             </Text>
           );
         }
@@ -369,7 +371,7 @@ export const getReactCustomHtmlParser = (
         if (name === 'h6') {
           return (
             <Text {...props} className={css.Heading} size="H6">
-              {domToReact(children, opts)}
+              {renderChildren()}
             </Text>
           );
         }
@@ -377,7 +379,7 @@ export const getReactCustomHtmlParser = (
         if (name === 'p') {
           return (
             <Text {...props} className={classNames(css.Paragraph, css.MarginSpaced)} size="Inherit">
-              {domToReact(children, opts)}
+              {renderChildren()}
             </Text>
           );
         }
@@ -389,7 +391,7 @@ export const getReactCustomHtmlParser = (
         if (name === 'blockquote') {
           return (
             <Text {...props} size="Inherit" as="blockquote" className={css.BlockQuote}>
-              {domToReact(children, opts)}
+              {renderChildren()}
             </Text>
           );
         }
@@ -397,23 +399,23 @@ export const getReactCustomHtmlParser = (
         if (name === 'ul') {
           return (
             <ul {...props} className={css.List}>
-              {domToReact(children, opts)}
+              {renderChildren()}
             </ul>
           );
         }
         if (name === 'ol') {
           return (
             <ol {...props} className={css.List}>
-              {domToReact(children, opts)}
+              {renderChildren()}
             </ol>
           );
         }
 
         if (name === 'code') {
           if (parent && 'name' in parent && parent.name === 'pre') {
-            const codeReact = domToReact(children, opts);
+            const codeReact = renderChildren();
             if (typeof codeReact === 'string') {
-              let lang = props.className;
+              let lang = typeof props.className === 'string' ? props.className : undefined;
               if (lang === 'language-rs') lang = 'language-rust';
               else if (lang === 'language-js') lang = 'language-javascript';
               else if (lang === 'language-ts') lang = 'language-typescript';
@@ -434,13 +436,17 @@ export const getReactCustomHtmlParser = (
           } else {
             return (
               <Text as="code" size="T300" className={css.Code} {...props}>
-                {domToReact(children, opts)}
+                {renderChildren()}
               </Text>
             );
           }
         }
 
-        if (name === 'a' && testMatrixTo(tryDecodeURIComponent(props.href))) {
+        if (
+          name === 'a' &&
+          typeof props.href === 'string' &&
+          testMatrixTo(tryDecodeURIComponent(props.href))
+        ) {
           const content = children.find((child) => !(child instanceof DOMText))
             ? undefined
             : children.map((c) => (c instanceof DOMText ? c.data : '')).join();
@@ -467,14 +473,15 @@ export const getReactCustomHtmlParser = (
               aria-pressed
               style={{ cursor: 'pointer' }}
             >
-              {domToReact(children, opts)}
+              {renderChildren()}
             </span>
           );
         }
 
         if (name === 'img') {
-          const htmlSrc = mxcUrlToHttp(mx, props.src, params.useAuthentication);
-          if (htmlSrc && props.src.startsWith('mxc://') === false) {
+          const src = typeof props.src === 'string' ? props.src : undefined;
+          const htmlSrc = src ? mxcUrlToHttp(mx, src, params.useAuthentication) : undefined;
+          if (htmlSrc && src && src.startsWith('mxc://') === false) {
             return (
               <a href={htmlSrc} target="_blank" rel="noreferrer noopener">
                 {props.alt || props.title || htmlSrc}

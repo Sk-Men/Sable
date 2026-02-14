@@ -400,8 +400,8 @@ export const RoomItemCard = as<'div', RoomItemCardProps>(
                   topic={summary.topic}
                   avatarUrl={
                     summary?.avatar_url
-                      ? mxcUrlToHttp(mx, summary.avatar_url, useAuthentication, 96, 96, 'crop') ??
-                        undefined
+                      ? (mxcUrlToHttp(mx, summary.avatar_url, useAuthentication, 96, 96, 'crop') ??
+                        undefined)
                       : undefined
                   }
                   memberCount={summary.num_joined_members}

@@ -1,90 +1,94 @@
-import { fileURLToPath } from 'node:url';
-import path from 'node:path';
 import js from '@eslint/js';
-import { FlatCompat } from '@eslint/eslintrc';
+import { defineConfig } from 'eslint/config';
 import css from '@eslint/css';
+import tseslint from 'typescript-eslint';
+import react from 'eslint-plugin-react';
+import reactHooks from 'eslint-plugin-react-hooks';
+import importPlugin from 'eslint-plugin-import';
+import eslintConfigPrettier from 'eslint-config-prettier';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const sourceFiles = ['**/*.{js,jsx,ts,tsx,mjs,cjs,mts,cts}'];
+const tsSourceFiles = ['**/*.{ts,tsx,mts,cts}'];
+const jsSourceFiles = ['**/*.{js,jsx,mjs,cjs}'];
+const scopedRecommendedTsConfigs = tseslint.configs.recommended.map((config) =>
+  config.files ? config : { ...config, files: sourceFiles }
+);
+const scopedRecommendedTypeCheckedTsConfigs = tseslint.configs.recommendedTypeChecked.map(
+  (config) => (config.files ? config : { ...config, files: sourceFiles })
+);
 
-const compat = new FlatCompat({
-  baseDirectory: __dirname,
-  recommendedConfig: js.configs.recommended,
-  allConfig: js.configs.all,
-});
-
-export default [
+export default defineConfig(
   {
     files: ['**/*.css'],
     plugins: { css },
     language: 'css/css',
     rules: css.configs.recommended.rules,
   },
-  ...compat
-    .config({
-      env: {
-        browser: true,
-        es2021: true,
-      },
-      extends: [
-        'eslint:recommended',
-        'plugin:react/recommended',
-        'plugin:react-hooks/recommended',
-        'plugin:@typescript-eslint/eslint-recommended',
-        'plugin:@typescript-eslint/recommended',
-        'airbnb',
-        'prettier',
-      ],
-      parser: '@typescript-eslint/parser',
+  {
+    files: sourceFiles,
+    languageOptions: {
+      ecmaVersion: 'latest',
+      sourceType: 'module',
       parserOptions: {
-        ecmaFeatures: {
-          jsx: true,
-        },
-        ecmaVersion: 'latest',
-        sourceType: 'module',
+        projectService: true,
+        tsconfigRootDir: import.meta.dirname,
       },
       globals: {
         JSX: 'readonly',
       },
-      plugins: ['react', '@typescript-eslint'],
-      rules: {
-        'linebreak-style': 0,
-        'no-unused-vars': 'off',
-        'no-underscore-dangle': 0,
-        'no-shadow': 'off',
-        'import/prefer-default-export': 'off',
-        'import/extensions': 'off',
-        'import/no-unresolved': 'off',
-        'import/no-extraneous-dependencies': [
-          'error',
-          {
-            devDependencies: true,
-          },
-        ],
-        'react/no-unstable-nested-components': ['error', { allowAsProps: true }],
-        'react/jsx-filename-extension': [
-          'error',
-          {
-            extensions: ['.tsx', '.jsx'],
-          },
-        ],
-        'react/require-default-props': 'off',
-        'react/jsx-props-no-spreading': 'off',
-        'react-hooks/rules-of-hooks': 'error',
-        'react-hooks/exhaustive-deps': 'error',
-        '@typescript-eslint/no-unused-vars': 'error',
-        '@typescript-eslint/no-shadow': 'error',
+    },
+    settings: {
+      react: {
+        version: 'detect',
       },
-      overrides: [
+    },
+  },
+  { ...js.configs.recommended, files: sourceFiles },
+  ...scopedRecommendedTsConfigs,
+  ...scopedRecommendedTypeCheckedTsConfigs,
+  { ...importPlugin.flatConfigs.recommended, files: sourceFiles },
+  { ...importPlugin.flatConfigs.typescript, files: tsSourceFiles },
+  { ...react.configs.flat.recommended, files: sourceFiles },
+  { ...react.configs.flat['jsx-runtime'], files: sourceFiles },
+  { ...reactHooks.configs.flat.recommended, files: sourceFiles },
+  { ...tseslint.configs.disableTypeChecked, files: jsSourceFiles },
+  { ...eslintConfigPrettier, files: sourceFiles },
+  {
+    files: sourceFiles,
+    rules: {
+      'linebreak-style': 'off',
+      'no-unused-vars': 'off',
+      'no-underscore-dangle': 'off',
+      'no-shadow': 'off',
+      'react/no-unstable-nested-components': ['error', { allowAsProps: true }],
+      'react/jsx-filename-extension': [
+        'error',
         {
-          files: ['*.ts'],
-          rules: {
-            'no-undef': 'off',
-          },
+          extensions: ['.tsx', '.jsx'],
         },
       ],
-    })
-    .map((config) =>
-      config.files ? config : { ...config, files: ['**/*.{js,jsx,ts,tsx,mjs,cjs}'] }
-    ),
-];
+      'react/require-default-props': 'off',
+      'react/jsx-props-no-spreading': 'off',
+      'react-hooks/exhaustive-deps': 'error',
+      'import/no-extraneous-dependencies': [
+        'error',
+        {
+          devDependencies: true,
+        },
+      ],
+      '@typescript-eslint/no-unused-vars': [
+        'error',
+        {
+          varsIgnorePattern: '^React$',
+        },
+      ],
+      '@typescript-eslint/no-shadow': 'error',
+    },
+  },
+  {
+    files: tsSourceFiles,
+    rules: {
+      'no-undef': 'off',
+    },
+  }
+);
