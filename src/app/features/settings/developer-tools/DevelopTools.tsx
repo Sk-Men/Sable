@@ -7,12 +7,15 @@ import { SettingTile } from '../../../components/setting-tile';
 import { useSetting } from '../../../state/hooks/settings';
 import { settingsAtom } from '../../../state/settings';
 import { useMatrixClient } from '../../../hooks/useMatrixClient';
+import { AccountDataEvents } from '$types/matrix-sdk';
 import {
   AccountDataEditor,
   AccountDataSubmitCallback,
 } from '../../../components/AccountDataEditor';
 import { copyToClipboard } from '../../../utils/dom';
 import { AccountData } from './AccountData';
+
+type AccountDataEventType = Extract<keyof AccountDataEvents, string>;
 
 type DeveloperToolsProps = {
   requestClose: () => void;
@@ -21,9 +24,9 @@ export function DeveloperTools({ requestClose }: DeveloperToolsProps) {
   const mx = useMatrixClient();
   const [developerTools, setDeveloperTools] = useSetting(settingsAtom, 'developerTools');
   const [expand, setExpend] = useState(false);
-  const [accountDataType, setAccountDataType] = useState<string | null>();
+  const [accountDataType, setAccountDataType] = useState<AccountDataEventType | null>();
 
-  const submitAccountData: AccountDataSubmitCallback = useCallback(
+  const submitAccountData: AccountDataSubmitCallback<AccountDataEventType> = useCallback(
     async (type, content) => {
       await mx.setAccountData(type, content);
     },

@@ -1,5 +1,6 @@
 import React, { useCallback, useState } from 'react';
 import { Box, Text, Icon, Icons, Button, MenuItem } from 'folds';
+import { AccountDataEvents } from '$types/matrix-sdk';
 import { SequenceCard } from '../../../components/sequence-card';
 import { SequenceCardStyle } from '../styles.css';
 import { SettingTile } from '../../../components/setting-tile';
@@ -10,18 +11,22 @@ import { CutoutCard } from '../../../components/cutout-card';
 type AccountDataProps = {
   expand: boolean;
   onExpandToggle: (expand: boolean) => void;
-  onSelect: (type: string | null) => void;
+  onSelect: (type: Extract<keyof AccountDataEvents, string> | null) => void;
 };
 export function AccountData({ expand, onExpandToggle, onSelect }: AccountDataProps) {
   const mx = useMatrixClient();
-  const [accountDataTypes, setAccountDataKeys] = useState(() =>
-    Array.from(mx.store.accountData.keys())
+  const [accountDataTypes, setAccountDataKeys] = useState<
+    Array<Extract<keyof AccountDataEvents, string>>
+  >(
+    () => Array.from(mx.store.accountData.keys()) as Array<Extract<keyof AccountDataEvents, string>>
   );
 
   useAccountDataCallback(
     mx,
     useCallback(() => {
-      setAccountDataKeys(Array.from(mx.store.accountData.keys()));
+      setAccountDataKeys(
+        Array.from(mx.store.accountData.keys()) as Array<Extract<keyof AccountDataEvents, string>>
+      );
     }, [mx])
   );
 

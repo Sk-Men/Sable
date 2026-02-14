@@ -26,27 +26,30 @@ import { useTextAreaCodeEditor } from '../hooks/useTextAreaCodeEditor';
 
 const EDITOR_INTENT_SPACE_COUNT = 2;
 
-export type AccountDataSubmitCallback = (type: string, content: object) => Promise<void>;
+export type AccountDataSubmitCallback<T extends string = string> = (
+  type: T,
+  content: object
+) => Promise<void>;
 
-type AccountDataInfo = {
-  type: string;
+type AccountDataInfo<T extends string = string> = {
+  type: T;
   content: object;
 };
 
-type AccountDataEditProps = {
-  type: string;
+type AccountDataEditProps<T extends string = string> = {
+  type: T | '';
   defaultContent: string;
-  submitChange: AccountDataSubmitCallback;
+  submitChange: AccountDataSubmitCallback<T>;
   onCancel: () => void;
-  onSave: (info: AccountDataInfo) => void;
+  onSave: (info: AccountDataInfo<T>) => void;
 };
-function AccountDataEdit({
+function AccountDataEdit<T extends string = string>({
   type,
   defaultContent,
   submitChange,
   onCancel,
   onSave,
-}: AccountDataEditProps) {
+}: AccountDataEditProps<T>) {
   const alive = useAlive();
 
   const textAreaRef = useRef<HTMLTextAreaElement>(null);
@@ -57,7 +60,7 @@ function AccountDataEdit({
     EDITOR_INTENT_SPACE_COUNT
   );
 
-  const [submitState, submit] = useAsyncCallback<void, MatrixError, [string, object]>(submitChange);
+  const [submitState, submit] = useAsyncCallback<void, MatrixError, [T, object]>(submitChange);
   const submitting = submitState.status === AsyncStatus.Loading;
 
   const handleSubmit: FormEventHandler<HTMLFormElement> = (evt) => {
@@ -89,10 +92,11 @@ function AccountDataEdit({
       return;
     }
 
-    submit(typeStr, parsedContent).then(() => {
+    const eventType = typeStr as T;
+    submit(eventType, parsedContent).then(() => {
       if (alive()) {
         onSave({
-          type: typeStr,
+          type: eventType,
           content: parsedContent,
         });
       }
@@ -192,12 +196,16 @@ function AccountDataEdit({
   );
 }
 
-type AccountDataViewProps = {
-  type: string;
+type AccountDataViewProps<T extends string = string> = {
+  type: T;
   defaultContent: string;
   onEdit: () => void;
 };
-function AccountDataView({ type, defaultContent, onEdit }: AccountDataViewProps) {
+function AccountDataView<T extends string = string>({
+  type,
+  defaultContent,
+  onEdit,
+}: AccountDataViewProps<T>) {
   return (
     <Box
       direction="Column"
@@ -241,21 +249,21 @@ function AccountDataView({ type, defaultContent, onEdit }: AccountDataViewProps)
   );
 }
 
-export type AccountDataEditorProps = {
-  type?: string;
+export type AccountDataEditorProps<T extends string = string> = {
+  type?: T;
   content?: object;
-  submitChange: AccountDataSubmitCallback;
+  submitChange: AccountDataSubmitCallback<T>;
   requestClose: () => void;
 };
 
-export function AccountDataEditor({
+export function AccountDataEditor<T extends string = string>({
   type,
   content,
   submitChange,
   requestClose,
-}: AccountDataEditorProps) {
-  const [data, setData] = useState<AccountDataInfo>({
-    type: type ?? '',
+}: AccountDataEditorProps<T>) {
+  const [data, setData] = useState<AccountDataInfo<T>>({
+    type: (type ?? '') as T,
     content: content ?? {},
   });
 
@@ -269,7 +277,7 @@ export function AccountDataEditor({
     setEdit(false);
   }, [type, requestClose]);
 
-  const handleSave = useCallback((info: AccountDataInfo) => {
+  const handleSave = useCallback((info: AccountDataInfo<T>) => {
     setData(info);
     setEdit(false);
   }, []);

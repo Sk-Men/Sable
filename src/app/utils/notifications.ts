@@ -22,12 +22,19 @@ export async function markAsRead(mx: MatrixClient, roomId: string, privateReceip
   const latestEventId = latestEvent.getId();
   if (!latestEventId) return;
 
-  // Set both the read receipt AND the fully_read marker
-  // The fully_read marker is what persists your read position across sessions
-  await mx.setRoomReadMarkers(
-    roomId,
-    latestEventId, // m.fully_read marker
-    latestEvent,   // m.read receipt event
-    privateReceipt ? { receiptType: ReceiptType.ReadPrivate } : undefined
-  );
+  // Match Element Web behavior: send receipt and fully_read marker separately.
+  // Keep them independent so a failure in one does not block the other.
+  const receiptType = privateReceipt ? ReceiptType.ReadPrivate : undefined;
+
+  const [receiptResult, markerResult] = await Promise.allSettled([
+    mx.sendReadReceipt(latestEvent, receiptType),
+    mx.setRoomReadMarkers(roomId, latestEventId),
+  ]);
+
+  if (receiptResult.status === 'rejected') {
+    console.error('Failed to send read receipt', receiptResult.reason);
+  }
+  if (markerResult.status === 'rejected') {
+    console.error('Failed to send fully_read marker', markerResult.reason);
+  }
 }

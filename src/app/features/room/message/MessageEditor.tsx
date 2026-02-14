@@ -21,7 +21,16 @@ import {
 } from 'folds';
 import { Editor, Transforms } from 'slate';
 import { ReactEditor } from 'slate-react';
-import { IContent, IMentions, MatrixEvent, RelationType, Room } from '$types/matrix-sdk';
+import {
+  IContent,
+  IMentions,
+  MatrixEvent,
+  ReplacementEvent,
+  RelationType,
+  Room,
+  RoomMessageEventContent,
+  RoomMessageTextEventContent,
+} from '$types/matrix-sdk';
 import { isKeyHotkey } from 'is-hotkey';
 import {
   AUTOCOMPLETE_PREFIXES,
@@ -80,7 +89,8 @@ export const MessageEditor = as<'div', MessageEditorProps>(
       string | undefined,
       IMentions | undefined
     ] => {
-      const evtId = mEvent.getId()!;
+      const evtId = mEvent.getId();
+      if (!evtId) return [undefined, undefined, undefined];
       const evtTimeline = room.getTimelineForEvent(evtId);
       const editedEvent =
         evtTimeline && getEditedEvent(evtId, mEvent, evtTimeline.getTimelineSet());
@@ -111,6 +121,9 @@ export const MessageEditor = as<'div', MessageEditorProps>(
         const [prevBody, prevCustomHtml, prevMentions] = getPrevBodyAndFormattedBody();
 
         if (plainText === '') return undefined;
+        const eventId = mEvent.getId();
+        if (!eventId) return undefined;
+
         if (prevBody) {
           if (prevCustomHtml && trimReplyFromFormattedBody(prevCustomHtml) === customHtml) {
             return undefined;
@@ -124,9 +137,18 @@ export const MessageEditor = as<'div', MessageEditorProps>(
           }
         }
 
-        const newContent: IContent = {
-          msgtype: mEvent.getContent().msgtype,
+        const msgtype = mEvent.getContent().msgtype as RoomMessageTextEventContent['msgtype'];
+
+        const newContent: RoomMessageTextEventContent = {
+          msgtype,
           body: plainText,
+        };
+
+        const contentBody: RoomMessageTextEventContent &
+          Omit<ReplacementEvent<RoomMessageEventContent>, 'm.relates_to'> = {
+          msgtype,
+          body: `* ${plainText}`,
+          'm.new_content': newContent,
         };
 
         const mentionData = getMentions(mx, roomId, editor);
@@ -137,18 +159,19 @@ export const MessageEditor = as<'div', MessageEditorProps>(
 
         const mMentions = getMentionContent(Array.from(mentionData.users), mentionData.room);
         newContent['m.mentions'] = mMentions;
+        contentBody['m.mentions'] = mMentions;
 
         if (!customHtmlEqualsPlainText(customHtml, plainText)) {
           newContent.format = 'org.matrix.custom.html';
           newContent.formatted_body = customHtml;
+          contentBody.format = 'org.matrix.custom.html';
+          contentBody.formatted_body = `* ${customHtml}`;
         }
 
-        const content: IContent = {
-          ...newContent,
-          body: `* ${plainText}`,
-          'm.new_content': newContent,
+        const content: RoomMessageEventContent = {
+          ...contentBody,
           'm.relates_to': {
-            event_id: mEvent.getId(),
+            event_id: eventId,
             rel_type: RelationType.Replace,
           },
         };

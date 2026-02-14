@@ -11,7 +11,9 @@
     "paths": {
       "$types/*": ["src/types/*"]
     },
-    "moduleResolution": "Node",
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "noEmit": true,
     "resolveJsonModule": true,
     "outDir": "dist",
     "skipLibCheck": true,

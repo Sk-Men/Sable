@@ -31,6 +31,7 @@ export * from 'matrix-js-sdk/lib/crypto-api/index';
 export * from 'matrix-js-sdk/lib/@types/common';
 export * from 'matrix-js-sdk/lib/@types/uia';
 export * from 'matrix-js-sdk/lib/@types/event';
+export * from 'matrix-js-sdk/lib/@types/events';
 export * from 'matrix-js-sdk/lib/@types/PushRules';
 export * from 'matrix-js-sdk/lib/@types/partials';
 export * from 'matrix-js-sdk/lib/@types/requests';
