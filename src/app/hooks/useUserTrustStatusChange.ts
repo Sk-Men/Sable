@@ -1,4 +1,4 @@
-import { CryptoEvent, CryptoEventHandlerMap } from 'matrix-js-sdk/lib/crypto-api';
+import { CryptoEvent, CryptoEventHandlerMap } from '$types/matrix-sdk';
 import { useEffect } from 'react';
 import { useMatrixClient } from './useMatrixClient';
 

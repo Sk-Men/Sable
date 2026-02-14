@@ -1,4 +1,4 @@
-import { MatrixClient, MatrixEvent, Room } from 'matrix-js-sdk';
+import { MatrixClient, MatrixEvent, Room } from '$types/matrix-sdk';
 import { ImagePack } from './ImagePack';
 import { EmoteRoomsContent, ImageUsage } from './types';
 import { StateEvent } from '../../../types/matrix/room';

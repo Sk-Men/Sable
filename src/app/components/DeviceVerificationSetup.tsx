@@ -15,7 +15,7 @@ import {
 } from 'folds';
 import FileSaver from 'file-saver';
 import to from 'await-to-js';
-import { AuthDict, IAuthData, MatrixError, UIAuthCallback } from 'matrix-js-sdk';
+import { AuthDict, IAuthData, MatrixError, UIAuthCallback } from '$types/matrix-sdk';
 import { PasswordInput } from './password-input';
 import { ContainerColor } from '../styles/ContainerColor.css';
 import { copyToClipboard } from '../utils/dom';

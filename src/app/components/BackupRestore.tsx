@@ -1,6 +1,6 @@
 import React, { MouseEventHandler, useCallback, useState } from 'react';
 import { useAtom } from 'jotai';
-import { CryptoApi, KeyBackupInfo } from 'matrix-js-sdk/lib/crypto-api';
+import { CryptoApi, KeyBackupInfo } from '$types/matrix-sdk';
 import {
   Badge,
   Box,

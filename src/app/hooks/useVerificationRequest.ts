@@ -9,7 +9,7 @@ import {
   Verifier,
   VerifierEvent,
   VerifierEventHandlerMap,
-} from 'matrix-js-sdk/lib/crypto-api';
+} from '$types/matrix-sdk';
 import { useMatrixClient } from './useMatrixClient';
 
 export const useVerificationRequestReceived = (

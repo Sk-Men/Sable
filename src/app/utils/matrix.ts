@@ -12,7 +12,7 @@ import {
   RoomMember,
   UploadProgress,
   UploadResponse,
-} from 'matrix-js-sdk';
+} from '$types/matrix-sdk';
 import to from 'await-to-js';
 import { IImageInfo, IThumbnailContent, IVideoInfo } from '../../types/matrix/common';
 import { AccountDataEvent } from '../../types/matrix/accountData';

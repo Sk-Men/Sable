@@ -1,4 +1,4 @@
-import { IEvent, MatrixEvent, Room } from 'matrix-js-sdk';
+import { IEvent, MatrixEvent, Room } from '$types/matrix-sdk';
 import { useCallback, useMemo } from 'react';
 import to from 'await-to-js';
 import { CryptoBackend } from 'matrix-js-sdk/lib/common-crypto/CryptoBackend';

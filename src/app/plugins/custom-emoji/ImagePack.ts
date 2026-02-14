@@ -1,4 +1,4 @@
-import { MatrixEvent } from 'matrix-js-sdk';
+import { MatrixEvent } from '$types/matrix-sdk';
 import { PackAddress } from './PackAddress';
 import { PackImageReader } from './PackImageReader';
 import { PackImagesReader } from './PackImagesReader';

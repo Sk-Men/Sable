@@ -4,7 +4,7 @@ import {
   CryptoEvent,
   CryptoEventHandlerMap,
   KeyBackupInfo,
-} from 'matrix-js-sdk/lib/crypto-api';
+} from '$types/matrix-sdk';
 import { useCallback, useEffect, useState } from 'react';
 import { useMatrixClient } from './useMatrixClient';
 import { useAlive } from './useAlive';

@@ -8,8 +8,8 @@ import {
   Room,
   RoomMember,
   Visibility,
-} from 'matrix-js-sdk';
-import { RoomServerAclEventContent } from 'matrix-js-sdk/lib/types';
+} from '$types/matrix-sdk';
+import { RoomServerAclEventContent } from '$types/matrix-sdk';
 import { useMemo } from 'react';
 import {
   addRoomIdToMDirect,

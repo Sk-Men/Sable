@@ -1,4 +1,4 @@
-import { MatrixEvent, MatrixEventEvent, MatrixEventHandlerMap } from 'matrix-js-sdk';
+import { MatrixEvent, MatrixEventEvent, MatrixEventHandlerMap } from '$types/matrix-sdk';
 import React, { ReactNode, useEffect, useState } from 'react';
 import { MessageEvent } from '../../../../types/matrix/room';
 

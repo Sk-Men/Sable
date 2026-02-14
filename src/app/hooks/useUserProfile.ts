@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { UserEvent, UserEventHandlerMap } from 'matrix-js-sdk';
+import { UserEvent, UserEventHandlerMap } from '$types/matrix-sdk';
 import { useMatrixClient } from './useMatrixClient';
 
 export type UserProfile = {

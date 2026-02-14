@@ -5,7 +5,7 @@ import {
   MatrixError,
   RegisterRequest,
   RegisterResponse,
-} from 'matrix-js-sdk';
+} from '$types/matrix-sdk';
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { LoginPathSearchParams } from '../../paths';

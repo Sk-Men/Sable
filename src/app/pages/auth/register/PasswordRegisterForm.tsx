@@ -19,7 +19,7 @@ import {
   RegisterRequest,
   UIAFlow,
   createClient,
-} from 'matrix-js-sdk';
+} from '$types/matrix-sdk';
 import { PasswordInput } from '../../../components/password-input';
 import {
   getLoginTermUrl,

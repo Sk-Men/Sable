@@ -1,4 +1,4 @@
-import { AuthDict } from 'matrix-js-sdk';
+import { AuthDict } from '$types/matrix-sdk';
 import { AuthStageData } from '../../hooks/useUIAFlows';
 
 export type StageComponentProps = {

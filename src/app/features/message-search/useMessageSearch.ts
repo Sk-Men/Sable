@@ -5,7 +5,7 @@ import {
   ISearchResponse,
   ISearchResult,
   SearchOrderBy,
-} from 'matrix-js-sdk';
+} from '$types/matrix-sdk';
 import { useCallback } from 'react';
 import { useMatrixClient } from '../../hooks/useMatrixClient';
 

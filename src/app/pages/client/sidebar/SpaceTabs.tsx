@@ -25,7 +25,7 @@ import {
   toRem,
 } from 'folds';
 import { useAtom, useAtomValue } from 'jotai';
-import { Room } from 'matrix-js-sdk';
+import { Room } from '$types/matrix-sdk';
 import {
   draggable,
   dropTargetForElements,

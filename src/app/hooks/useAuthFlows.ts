@@ -1,5 +1,5 @@
 import { createContext, useContext } from 'react';
-import { IAuthData, MatrixError } from 'matrix-js-sdk';
+import { IAuthData, MatrixError } from '$types/matrix-sdk';
 import { ILoginFlowsResponse } from 'matrix-js-sdk/lib/@types/auth';
 
 export enum RegisterFlowStatus {

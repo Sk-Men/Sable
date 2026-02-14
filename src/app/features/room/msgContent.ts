@@ -1,4 +1,4 @@
-import { IContent, MatrixClient, MsgType } from 'matrix-js-sdk';
+import { IContent, MatrixClient, MsgType } from '$types/matrix-sdk';
 import to from 'await-to-js';
 import {
   IThumbnailContent,

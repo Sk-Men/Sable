@@ -1,4 +1,4 @@
-import { Room } from 'matrix-js-sdk';
+import { Room } from '$types/matrix-sdk';
 import { IPowerLevels } from '../hooks/usePowerLevels';
 import { creatorsSupported, getMxIdServer } from '../utils/matrix';
 import { IRoomCreateContent, StateEvent } from '../../types/matrix/room';

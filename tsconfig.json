@@ -7,6 +7,10 @@
     "allowJs": true,
     "strict": true,
     "esModuleInterop": true,
+    "baseUrl": ".",
+    "paths": {
+      "$types/*": ["src/types/*"]
+    },
     "moduleResolution": "Node",
     "resolveJsonModule": true,
     "outDir": "dist",

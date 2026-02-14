@@ -1,6 +1,6 @@
 import React, { useCallback, useMemo } from 'react';
 import { Badge, Box, Text } from 'folds';
-import { ConditionKind, IPushRules, PushRuleCondition, PushRuleKind, RuleId } from 'matrix-js-sdk';
+import { ConditionKind, IPushRules, PushRuleCondition, PushRuleKind, RuleId } from '$types/matrix-sdk';
 import { useAccountData } from '../../../hooks/useAccountData';
 import { AccountDataEvent } from '../../../../types/matrix/accountData';
 import { NotificationModeSwitcher } from './NotificationModeSwitcher';

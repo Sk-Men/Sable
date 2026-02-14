@@ -1,5 +1,5 @@
 import { useCallback, useMemo } from 'react';
-import { Room } from 'matrix-js-sdk';
+import { Room } from '$types/matrix-sdk';
 import { StateEvent } from '../../types/matrix/room';
 import { useForceUpdate } from './useForceUpdate';
 import { useStateEventCallback } from './useStateEventCallback';

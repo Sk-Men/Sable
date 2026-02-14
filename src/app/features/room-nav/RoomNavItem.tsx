@@ -1,5 +1,5 @@
 import React, { MouseEventHandler, forwardRef, useState } from 'react';
-import { Room } from 'matrix-js-sdk';
+import { Room } from '$types/matrix-sdk';
 import {
   Avatar,
   Box,

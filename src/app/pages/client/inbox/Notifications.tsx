@@ -22,7 +22,7 @@ import {
   Method,
   RelationType,
   Room,
-} from 'matrix-js-sdk';
+} from '$types/matrix-sdk';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { HTMLReactParserOptions } from 'html-react-parser';
 import { Opts as LinkifyOpts } from 'linkifyjs';

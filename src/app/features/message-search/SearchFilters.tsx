@@ -25,7 +25,7 @@ import {
   Badge,
   RectCords,
 } from 'folds';
-import { SearchOrderBy } from 'matrix-js-sdk';
+import { SearchOrderBy } from '$types/matrix-sdk';
 import FocusTrap from 'focus-trap-react';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { useMatrixClient } from '../../hooks/useMatrixClient';

@@ -7,7 +7,7 @@ import {
   Room,
   RoomEvent,
   RoomStateEvent,
-} from 'matrix-js-sdk';
+} from '$types/matrix-sdk';
 import { useEffect } from 'react';
 import { Membership, RoomToParents, StateEvent } from '../../../types/matrix/room';
 import {

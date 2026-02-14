@@ -5,7 +5,7 @@ import {
   PushRuleCondition,
   PushRuleKind,
   RuleId,
-} from 'matrix-js-sdk';
+} from '$types/matrix-sdk';
 import { useMemo } from 'react';
 
 export type PushRuleData = {

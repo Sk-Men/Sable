@@ -32,10 +32,10 @@ import React, {
 } from 'react';
 import FocusTrap from 'focus-trap-react';
 import { useHover, useFocusWithin } from 'react-aria';
-import { MatrixEvent, Room } from 'matrix-js-sdk';
+import { MatrixEvent, Room } from '$types/matrix-sdk';
 import { Relations } from 'matrix-js-sdk/lib/models/relations';
 import classNames from 'classnames';
-import { RoomPinnedEventsEventContent } from 'matrix-js-sdk/lib/types';
+import { RoomPinnedEventsEventContent } from '$types/matrix-sdk';
 import {
   AvatarBase,
   BubbleLayout,

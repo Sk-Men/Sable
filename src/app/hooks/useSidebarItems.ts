@@ -1,5 +1,5 @@
 import { Dispatch, SetStateAction, useCallback, useEffect, useState } from 'react';
-import { MatrixClient } from 'matrix-js-sdk';
+import { MatrixClient } from '$types/matrix-sdk';
 import { AccountDataEvent } from '../../types/matrix/accountData';
 import { useMatrixClient } from './useMatrixClient';
 import { getAccountData, isSpace } from '../utils/room';

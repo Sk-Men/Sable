@@ -1,5 +1,5 @@
 import { useSetAtom, WritableAtom } from 'jotai';
-import { ClientEvent, MatrixClient, Room, RoomEvent } from 'matrix-js-sdk';
+import { ClientEvent, MatrixClient, Room, RoomEvent } from '$types/matrix-sdk';
 import { useEffect } from 'react';
 import { Membership } from '../../../types/matrix/room';
 

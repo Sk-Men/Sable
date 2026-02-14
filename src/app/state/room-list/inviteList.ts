@@ -1,5 +1,5 @@
 import { atom, WritableAtom } from 'jotai';
-import { MatrixClient } from 'matrix-js-sdk';
+import { MatrixClient } from '$types/matrix-sdk';
 import { useMemo } from 'react';
 import { Membership } from '../../../types/matrix/room';
 import { RoomsAction, useBindRoomsWithMembershipsAtom } from './utils';

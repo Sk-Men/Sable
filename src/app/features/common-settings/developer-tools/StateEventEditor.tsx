@@ -13,7 +13,7 @@ import {
   Spinner,
   Button,
 } from 'folds';
-import { MatrixError } from 'matrix-js-sdk';
+import { MatrixError } from '$types/matrix-sdk';
 import { Page, PageHeader } from '../../../components/page';
 import { SequenceCard } from '../../../components/sequence-card';
 import { TextViewerContent } from '../../../components/text-viewer';

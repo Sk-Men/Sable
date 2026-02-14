@@ -1,4 +1,4 @@
-import { AuthType, IAuthData, MatrixError, UIAFlow } from 'matrix-js-sdk';
+import { AuthType, IAuthData, MatrixError, UIAFlow } from '$types/matrix-sdk';
 import { useCallback, useMemo } from 'react';
 import {
   getSupportedUIAFlows,

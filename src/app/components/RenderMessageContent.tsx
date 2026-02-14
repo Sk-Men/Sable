@@ -1,5 +1,5 @@
 import React from 'react';
-import { MsgType } from 'matrix-js-sdk';
+import { MsgType } from '$types/matrix-sdk';
 import { HTMLReactParserOptions } from 'html-react-parser';
 import { Opts } from 'linkifyjs';
 import { config } from 'folds';

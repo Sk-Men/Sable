@@ -22,7 +22,7 @@ import {
   Room,
   RoomEvent,
   RoomEventHandlerMap,
-} from 'matrix-js-sdk';
+} from '$types/matrix-sdk';
 import { HTMLReactParserOptions } from 'html-react-parser';
 import classNames from 'classnames';
 import { ReactEditor } from 'slate-react';

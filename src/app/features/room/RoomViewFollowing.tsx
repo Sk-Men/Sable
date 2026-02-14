@@ -11,7 +11,7 @@ import {
   as,
   config,
 } from 'folds';
-import { Room } from 'matrix-js-sdk';
+import { Room } from '$types/matrix-sdk';
 import classNames from 'classnames';
 import FocusTrap from 'focus-trap-react';
 

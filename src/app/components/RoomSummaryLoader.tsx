@@ -1,5 +1,5 @@
 import { ReactNode, useCallback, useState } from 'react';
-import { MatrixClient, Room } from 'matrix-js-sdk';
+import { MatrixClient, Room } from '$types/matrix-sdk';
 import { useQuery } from '@tanstack/react-query';
 import { IHierarchyRoom } from 'matrix-js-sdk/lib/@types/spaces';
 import { useMatrixClient } from '../hooks/useMatrixClient';

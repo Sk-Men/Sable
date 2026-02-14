@@ -19,7 +19,7 @@ import {
   PopOut,
   RectCords,
 } from 'folds';
-import { Direction, MatrixError } from 'matrix-js-sdk';
+import { Direction, MatrixError } from '$types/matrix-sdk';
 import { useMatrixClient } from '../../../hooks/useMatrixClient';
 import { AsyncStatus, useAsyncCallback } from '../../../hooks/useAsyncCallback';
 import { stopPropagation } from '../../../utils/keyboard';
