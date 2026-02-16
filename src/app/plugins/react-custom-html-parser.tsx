@@ -40,7 +40,7 @@ import {
   testMatrixTo,
 } from './matrix-to';
 import { onEnterOrSpace } from '../utils/keyboard';
-import { copyToClipboard, tryDecodeURIComponent } from '../utils/dom';
+import { copyToClipboard } from '../utils/dom';
 import { useTimeoutToggle } from '../hooks/useTimeoutToggle';
 
 const ReactPrism = lazy(() => import('./react-prism/ReactPrism'));
@@ -156,8 +156,11 @@ export const factoryRenderLinkifyWithMention = (
     attributes,
     content,
   }) => {
-    if (tagName === 'a' && testMatrixTo(tryDecodeURIComponent(attributes.href))) {
-      const mention = mentionRender(tryDecodeURIComponent(attributes.href));
+    const encodedHref = attributes.href;
+    const decodedHref = encodedHref && decodeURIComponent(encodedHref);
+
+    if (tagName === 'a' && decodedHref && testMatrixTo(decodedHref)) {
+      const mention = mentionRender(decodedHref);
       if (mention) return mention;
     }
 
@@ -442,11 +445,13 @@ export const getReactCustomHtmlParser = (
           }
         }
 
-        if (
-          name === 'a' &&
-          typeof props.href === 'string' &&
-          testMatrixTo(tryDecodeURIComponent(props.href))
-        ) {
+        if (name === 'a' && typeof props.href === 'string') {
+          const encodedHref = props.href;
+          const decodedHref = encodedHref && decodeURIComponent(encodedHref);
+          if (!decodedHref || !testMatrixTo(decodedHref)) {
+            return undefined;
+          }
+
           const content = children.find((child) => !(child instanceof DOMText))
             ? undefined
             : children.map((c) => (c instanceof DOMText ? c.data : '')).join();
@@ -454,7 +459,7 @@ export const getReactCustomHtmlParser = (
           const mention = renderMatrixMention(
             mx,
             roomId,
-            tryDecodeURIComponent(props.href),
+            decodedHref,
             makeMentionCustomProps(params.handleMentionClick, content)
           );
 

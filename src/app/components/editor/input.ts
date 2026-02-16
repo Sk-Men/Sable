@@ -25,7 +25,6 @@ import {
   parseMatrixToUser,
   testMatrixTo,
 } from '$plugins/matrix-to';
-import { tryDecodeURIComponent } from '$appUtils/dom';
 import { escapeMarkdownInlineSequences, escapeMarkdownBlockSequences } from '$plugins/markdown';
 
 type ProcessTextCallback = (text: string) => string;
@@ -98,8 +97,9 @@ const getInlineNonMarkElement = (node: Element): MentionElement | EmoticonElemen
     return createEmoticonElement(src, alt || 'Unknown Emoji');
   }
   if (node.name === 'a') {
-    const href = tryDecodeURIComponent(node.attribs.href);
-    if (typeof href !== 'string') return undefined;
+    const encodedHref = node.attribs.href;
+    const href = encodedHref && decodeURIComponent(encodedHref);
+    if (!href) return undefined;
     if (testMatrixTo(href)) {
       const userMention = parseMatrixToUser(href);
       if (userMention) {

@@ -68,7 +68,6 @@ import { Create } from './client/create';
 import { CreateSpaceModalRenderer } from '../features/create-space';
 import { SearchModalRenderer } from '../features/search';
 import { getFallbackSession } from '../state/sessions';
-import { tryDecodeURIComponent } from '../utils/dom';
 import { pushSessionToSW } from '../../sw-session';
 
 export const createRouter = (clientConfig: ClientConfig, screenSize: ScreenSize) => {
@@ -224,9 +223,12 @@ export const createRouter = (clientConfig: ClientConfig, screenSize: ScreenSize)
             <Route
               index
               loader={({ params }) => {
-                const { spaceIdOrAlias } = params;
-                if (spaceIdOrAlias) {
-                  return redirect(getSpaceLobbyPath(tryDecodeURIComponent(spaceIdOrAlias)));
+                const encodedSpaceIdOrAlias = params.spaceIdOrAlias;
+                const decodedSpaceIdOrAlias =
+                  encodedSpaceIdOrAlias && decodeURIComponent(encodedSpaceIdOrAlias);
+
+                if (decodedSpaceIdOrAlias) {
+                  return redirect(getSpaceLobbyPath(decodedSpaceIdOrAlias));
                 }
                 return null;
               }}

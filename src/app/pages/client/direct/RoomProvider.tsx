@@ -5,17 +5,14 @@ import { IsDirectRoomProvider, RoomProvider } from '$hooks/useRoom';
 import { useMatrixClient } from '$hooks/useMatrixClient';
 import { JoinBeforeNavigate } from '$features/join-before-navigate';
 import { useDirectRooms } from './useDirectRooms';
-import { tryDecodeURIComponent } from '$appUtils/dom';
 
 export function DirectRouteRoomProvider({ children }: { children: ReactNode }) {
   const mx = useMatrixClient();
   const rooms = useDirectRooms();
 
   const { roomIdOrAlias: encodedRoomIdOrAlias, eventId: encodedEventId } = useParams();
-  const roomIdOrAlias = encodedRoomIdOrAlias
-    ? tryDecodeURIComponent(encodedRoomIdOrAlias)
-    : undefined;
-  const eventId = encodedEventId ? tryDecodeURIComponent(encodedEventId) : undefined;
+  const roomIdOrAlias = encodedRoomIdOrAlias && decodeURIComponent(encodedRoomIdOrAlias);
+  const eventId = encodedEventId && decodeURIComponent(encodedEventId);
   const roomId = useSelectedRoom();
   const room = mx.getRoom(roomId);
 

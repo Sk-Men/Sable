@@ -9,7 +9,6 @@ import {
   useIntersectionObserver,
 } from '$hooks/useIntersectionObserver';
 import * as css from './UrlPreviewCard.css';
-import { tryDecodeURIComponent } from '$appUtils/dom';
 import { mxcUrlToHttp } from '$appUtils/matrix';
 import { useMediaAuthentication } from '$hooks/useMediaAuthentication';
 
@@ -28,6 +27,9 @@ export const UrlPreviewCard = as<'div', { url: string; ts: number }>(
     }, [loadPreview]);
 
     if (previewStatus.status === AsyncStatus.Error) return null;
+
+    const encodedUrl = url;
+    const decodedUrl = encodedUrl && decodeURIComponent(encodedUrl);
 
     const renderContent = (prev: IPreviewUrlResponse) => {
       const imgUrl = mxcUrlToHttp(
@@ -55,7 +57,7 @@ export const UrlPreviewCard = as<'div', { url: string; ts: number }>(
               priority="300"
             >
               {typeof prev['og:site_name'] === 'string' && `${prev['og:site_name']} | `}
-              {tryDecodeURIComponent(url)}
+              {decodedUrl || url}
             </Text>
             <Text truncate priority="400">
               <b>{prev['og:title']}</b>

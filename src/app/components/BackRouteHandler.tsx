@@ -8,7 +8,6 @@ import {
   getSpacePath,
 } from '../pages/pathUtils';
 import { DIRECT_PATH, EXPLORE_PATH, HOME_PATH, INBOX_PATH, SPACE_PATH } from '../pages/paths';
-import { tryDecodeURIComponent } from '../utils/dom';
 
 type BackRouteHandlerProps = {
   children: (onBack: () => void) => ReactNode;
