@@ -26,10 +26,24 @@ if ('serviceWorker' in navigator) {
       ? `${trimTrailingSlash(import.meta.env.BASE_URL)}/sw.js`
       : `/dev-sw.js?dev-sw`;
 
-  void navigator.serviceWorker.register(swUrl).then(() => {
+  const sendSessionToSW = () => {
     const session = getFallbackSession();
-    void pushSessionToSW(session?.baseUrl, session?.accessToken);
+    pushSessionToSW(session?.baseUrl, session?.accessToken);
+  };
+
+  navigator.serviceWorker.register(swUrl).then(sendSessionToSW);
+  navigator.serviceWorker.ready.then(sendSessionToSW);
+  window.addEventListener('load', sendSessionToSW);
+
+  // When returning from background
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') {
+      sendSessionToSW();
+    }
   });
+
+  // When restored from bfcache (important on iOS)
+  window.addEventListener('pageshow', sendSessionToSW);
 }
 
 const mountApp = () => {
