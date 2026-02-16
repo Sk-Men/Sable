@@ -1,4 +1,3 @@
-/* eslint-disable no-param-reassign */
 import { Descendant, Text } from 'slate';
 import parse from 'html-dom-parser';
 import { ChildNode, Element, isText, isTag } from 'domhandler';

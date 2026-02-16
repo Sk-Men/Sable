@@ -115,7 +115,7 @@ import { useComposingCheck } from '$hooks/useComposingCheck';
 
 interface RoomInputProps {
   editor: Editor;
-  fileDropContainerRef: RefObject<HTMLElement | null>;
+  fileDropContainerRef: RefObject<HTMLElement>;
   roomId: string;
   room: Room;
 }
@@ -161,7 +161,7 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
       roomUploadAtomFamily,
       selectedFiles.map((f) => f.file)
     );
-    const uploadBoardHandlers = useRef<UploadBoardImperativeHandlers>(undefined);
+    const uploadBoardHandlers = useRef<UploadBoardImperativeHandlers>();
 
     const imagePackRooms: Room[] = useImagePackRooms(roomId, roomToParents);
 

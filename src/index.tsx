@@ -31,8 +31,8 @@ if ('serviceWorker' in navigator) {
     pushSessionToSW(session?.baseUrl, session?.accessToken);
   };
 
-  navigator.serviceWorker.register(swUrl).then(sendSessionToSW);
-  navigator.serviceWorker.ready.then(sendSessionToSW);
+  await navigator.serviceWorker.register(swUrl).then(sendSessionToSW);
+  await navigator.serviceWorker.ready.then(sendSessionToSW);
   window.addEventListener('load', sendSessionToSW);
 
   // When returning from background

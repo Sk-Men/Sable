@@ -11,10 +11,10 @@ export const useFileDropHandler = (onDrop: (file: File[]) => void): DragEventHan
   );
 
 export const useFileDropZone = (
-  zoneRef: RefObject<HTMLElement | null>,
+  zoneRef: RefObject<HTMLElement>,
   onDrop: (file: File[]) => void
 ): boolean => {
-  const dragStateRef = useRef<'start' | 'leave' | 'over'>(undefined);
+  const dragStateRef = useRef<'start' | 'leave' | 'over'>();
   const [active, setActive] = useState(false);
 
   useEffect(() => {

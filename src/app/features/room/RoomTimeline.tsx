@@ -1,4 +1,3 @@
-/* eslint-disable react/destructuring-assignment */
 import React, {
   Dispatch,
   MouseEventHandler,
@@ -88,7 +87,7 @@ import { MessageLayout, settingsAtom } from '$state/settings';
 import { useMatrixEventRenderer } from '$hooks/useMatrixEventRenderer';
 import { Reactions, Message, Event, EncryptedContent } from './message';
 import { useMemberEventParser } from '$hooks/useMemberEventParser';
-import * as customHtmlCss from '$styles/CustomHtml.css';
+import * as customHtmlCss from '../../styles/CustomHtml.css';
 import { RoomIntro } from '$components/room-intro';
 import {
   getIntersectionObserverEntry,
@@ -226,7 +225,7 @@ export const getEventIdAbsoluteIndex = (
 type RoomTimelineProps = {
   room: Room;
   eventId?: string;
-  roomInputRef: RefObject<HTMLElement | null>;
+  roomInputRef: RefObject<HTMLElement>;
   editor: Editor;
 };
 
@@ -487,7 +486,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
   const imagePackRooms: Room[] = useImagePackRooms(room.roomId, roomToParents);
 
   const [unreadInfo, setUnreadInfo] = useState(() => getRoomUnreadInfo(room, true));
-  const readUptoEventIdRef = useRef<string>(undefined);
+  const readUptoEventIdRef = useRef<string>();
   if (unreadInfo) {
     readUptoEventIdRef.current = unreadInfo.readUptoEventId;
   }

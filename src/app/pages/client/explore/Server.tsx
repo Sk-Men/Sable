@@ -86,7 +86,7 @@ const FALLBACK_ROOMS_LIMIT = 24;
 type SearchProps = {
   active?: boolean;
   loading?: boolean;
-  searchInputRef: RefObject<HTMLInputElement | null>;
+  searchInputRef: RefObject<HTMLInputElement>;
   onSearch: (term: string) => void;
   onReset: () => void;
 };

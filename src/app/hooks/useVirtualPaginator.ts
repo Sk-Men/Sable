@@ -170,12 +170,12 @@ export const useVirtualPaginator = <TScrollElement extends HTMLElement>(
     scrollTop: number;
     anchorOffsetTop: number;
     anchorItem: number;
-  }>(undefined);
+  }>();
 
   const scrollToItemRef = useRef<{
     index: number;
     opts?: ScrollToOptions;
-  }>(undefined);
+  }>();
 
   const propRef = useRef({
     range,
