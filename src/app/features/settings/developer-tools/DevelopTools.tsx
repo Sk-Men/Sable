@@ -7,12 +7,9 @@ import { SettingTile } from '$components/setting-tile';
 import { useSetting } from '$state/hooks/settings';
 import { settingsAtom } from '$state/settings';
 import { useMatrixClient } from '$hooks/useMatrixClient';
-import { AccountDataEvents } from '$types/matrix-sdk';
 import { AccountDataEditor, AccountDataSubmitCallback } from '$components/AccountDataEditor';
 import { copyToClipboard } from '$appUtils/dom';
 import { AccountData } from './AccountData';
-
-type AccountDataEventType = Extract<keyof AccountDataEvents, string>;
 
 type DeveloperToolsProps = {
   requestClose: () => void;
@@ -21,11 +18,12 @@ export function DeveloperTools({ requestClose }: DeveloperToolsProps) {
   const mx = useMatrixClient();
   const [developerTools, setDeveloperTools] = useSetting(settingsAtom, 'developerTools');
   const [expand, setExpend] = useState(false);
-  const [accountDataType, setAccountDataType] = useState<AccountDataEventType | null>();
+  const [accountDataType, setAccountDataType] = useState<string | null>();
 
-  const submitAccountData: AccountDataSubmitCallback<AccountDataEventType> = useCallback(
+  const submitAccountData: AccountDataSubmitCallback = useCallback(
     async (type, content) => {
-      await mx.setAccountData(type, content);
+      // TODO: remove cast once account data typing is unified.
+      await mx.setAccountData(type as never, content as never);
     },
     [mx]
   );
@@ -34,7 +32,12 @@ export function DeveloperTools({ requestClose }: DeveloperToolsProps) {
     return (
       <AccountDataEditor
         type={accountDataType ?? undefined}
-        content={accountDataType ? mx.getAccountData(accountDataType)?.getContent() : undefined}
+        content={
+          accountDataType
+            ? // TODO: remove cast once account data typing is unified.
+              mx.getAccountData(accountDataType as never)?.getContent()
+            : undefined
+        }
         submitChange={submitAccountData}
         requestClose={() => setAccountDataType(undefined)}
       />
