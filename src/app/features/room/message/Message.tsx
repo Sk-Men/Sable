@@ -784,7 +784,15 @@ export const Message = as<'div', MessageProps>(
     const usernameColor = validLocalColor || validSpaceColor || (legacyUsernameColor ? colorMXID(senderId) : tagColor);
 
     const rawFont = localFont || spaceFont;
-    const usernameFont = rawFont ? `"${sanitizeFont(rawFont)}", var(--font-secondary) !important` : undefined;
+    let usernameFont: string | undefined;
+
+    if (rawFont) {
+      const cleanFont = sanitizeFont(rawFont);
+      // leave quotes off of single words, otherwise monospace or sans-serif dont work
+      usernameFont = cleanFont.includes(' ')
+        ? `"${cleanFont}", var(--font-secondary)`
+        : `${cleanFont}, var(--font-secondary)`;
+    }
 
     const headerJSX = !collapse && (
       <Box
