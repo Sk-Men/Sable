@@ -21,6 +21,10 @@ import { UserPresence } from '../../hooks/useUserPresence';
 import { AvatarPresence, PresenceBadge } from '../presence';
 import { ImageViewer } from '../image-viewer';
 import { stopPropagation } from '../../utils/keyboard';
+import { useMatrixClient } from '../../hooks/useMatrixClient';
+import { useRoom } from '../../hooks/useRoom';
+import { EventTimeline, EventTimelineSet } from 'matrix-js-sdk';
+import { StateEvent } from '../../../types/matrix/room';
 
 type UserHeroProps = {
   userId: string;
@@ -97,7 +101,61 @@ type UserHeroNameProps = {
   userId: string;
 };
 export function UserHeroName({ displayName, userId }: UserHeroNameProps) {
+  const mx = useMatrixClient();
+  const room = useRoom();
   const username = getMxIdLocalPart(userId);
+
+  // Sable cosmetic username colors and fonts
+  const isValidHex = (c: string) => /^#[0-9A-F]{6}$/i.test(c)
+  const sanitizeFont = (f: string) => f.replace(/[;{}<>]/g, '').slice(0, 32);
+
+  const localColor = room?.getLiveTimeline()
+    .getState(EventTimeline.FORWARDS)
+    ?.getStateEvents(StateEvent.RoomCosmeticsColor, userId)
+    ?.getContent()?.color;
+
+  const localFont = room?.getLiveTimeline()
+    .getState(EventTimeline.FORWARDS)
+    ?.getStateEvents(StateEvent.RoomCosmeticsFont, userId)
+    ?.getContent()?.font;
+
+  const parents = room?.getLiveTimeline()
+    .getState(EventTimeline.FORWARDS)
+    ?.getStateEvents(StateEvent.SpaceParent);
+
+  let spaceColor;
+  let spaceFont;
+
+  if (parents && parents.length > 0) {
+    const parentSpaceId = parents[0].getStateKey();
+    const parentSpace = mx.getRoom(parentSpaceId);
+
+    spaceColor = parentSpace?.getLiveTimeline()
+      .getState(EventTimeline.FORWARDS)
+      ?.getStateEvents(StateEvent.RoomCosmeticsColor, userId)
+      ?.getContent()?.color;
+
+    spaceFont = parentSpace?.getLiveTimeline()
+      .getState(EventTimeline.FORWARDS)
+      ?.getStateEvents(StateEvent.RoomCosmeticsFont, userId)
+      ?.getContent()?.font;
+  }
+
+  const validLocalColor = localColor && isValidHex(localColor) ? localColor : undefined;
+  const validSpaceColor = spaceColor && isValidHex(spaceColor) ? spaceColor : undefined;
+
+  const usernameColor = validLocalColor || validSpaceColor;
+
+  const rawFont = localFont || spaceFont;
+  let usernameFont: string | undefined;
+
+  if (rawFont) {
+    const cleanFont = sanitizeFont(rawFont);
+    // leave quotes off of single words, otherwise monospace or sans-serif dont work
+    usernameFont = cleanFont.includes(' ')
+      ? `"${cleanFont}", var(--font-secondary)`
+      : `${cleanFont}, var(--font-secondary)`;
+  }
 
   return (
     <Box grow="Yes" direction="Column" gap="0">
@@ -106,6 +164,10 @@ export function UserHeroName({ displayName, userId }: UserHeroNameProps) {
           size="H4"
           className={classNames(BreakWord, LineClamp3)}
           title={displayName ?? username}
+          style={{
+            color: usernameColor,
+            fontFamily: usernameFont
+          }}
         >
           {displayName ?? username ?? userId}
         </Text>
