@@ -41,7 +41,8 @@ export enum StateEvent {
   PowerLevelTags = 'in.cinny.room.power_level_tags',
 
   // Sable state events
-  RoomCosmeticsColor = 'moe.sable.room.color',
+  RoomCosmeticsColor = 'moe.sable.room.cosmetics.color',
+  RoomCosmeticsFont = 'moe.sable.room.cosmetics.font',
 }
 
 export enum MessageEvent {

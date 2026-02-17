@@ -164,7 +164,9 @@ export enum Command {
   Acl = 'acl',
   // Sable commands
   Color = 'color',
-  GColor = 'gcolor'
+  GColor = 'gcolor',
+  Font = 'font',
+  GFont = 'gfont',
 }
 
 export type CommandContent = {
@@ -606,19 +608,95 @@ export const useCommands = (mx: MatrixClient, room: Room): CommandRecord => {
           try {
             if (input === 'reset' || input === 'clear') {
               await mx.sendStateEvent(targetSpaceId as any, StateEvent.RoomCosmeticsColor as any, {}, userId);
-              sendFeedback('Global Space color reset.');
+              sendFeedback('Global space color reset.');
               return;
             }
 
             if (/^#[0-9A-F]{6}$/i.test(input)) {
               await mx.sendStateEvent(targetSpaceId as any, StateEvent.RoomCosmeticsColor as any, { color: input }, userId);
-              sendFeedback(`Global Space color set to ${input}.`);
+              sendFeedback(`Global space color set to ${input}.`);
             } else {
               sendFeedback('Invalid format. Use #RRGGBB.');
             }
           } catch (e: any) {
             if (e.errcode === 'M_FORBIDDEN') {
               sendFeedback('Permission Denied. An admin must enable "Space-Wide Colors" in Settings > Cosmetics in app.sable.moe or another supported client.');
+            }
+          }
+        },
+      },
+      [Command.Font]: {
+        name: Command.Font,
+        description: 'Set a room-specific font. Example: /font Courier New | /font reset',
+        exe: async (payload) => {
+          const input = payload.trim().replace(/[;{}<>]/g, '').slice(0, 32);
+          const userId = mx.getSafeUserId();
+
+          const sendFeedback = (msg: string) => {
+            const localNotice = new (window as any).matrixcs.MatrixEvent({
+              type: 'm.room.message',
+              content: { msgtype: 'm.notice', body: msg },
+              event_id: `~font-${Date.now()}`,
+              room_id: room.roomId,
+              sender: userId,
+            });
+            (room as any).addLiveEvents([localNotice], { duplicateStrategy: 'ignore' } as any);
+          };
+
+          try {
+            if (input.toLowerCase() === 'reset' || input === '') {
+              await mx.sendStateEvent(room.roomId, StateEvent.RoomCosmeticsFont as any, {}, userId);
+              sendFeedback('Room font reset.');
+              return;
+            }
+
+            await mx.sendStateEvent(room.roomId, StateEvent.RoomCosmeticsFont as any, { font: input }, userId);
+            sendFeedback(`Room font set to "${input}".`);
+          } catch (e: any) {
+            if (e.errcode === 'M_FORBIDDEN') {
+              sendFeedback('Permission Denied. An admin must enable "Room Fonts" in Settings > Cosmetics in app.sable.moe or another supported client.');
+            }
+          }
+        }
+      },
+      [Command.GFont]: {
+        name: Command.GFont,
+        description: 'Set a global font for the current Space. Example: /gfont Courier New | /gfont reset',
+        exe: async (payload) => {
+          const input = payload.trim().replace(/[;{}<>]/g, '').slice(0, 32);
+          const userId = mx.getSafeUserId();
+
+          const sendFeedback = (msg: string) => {
+            const localNotice = new (window as any).matrixcs.MatrixEvent({
+              type: 'm.room.message',
+              content: { msgtype: 'm.notice', body: msg },
+              event_id: `~gfont-${Date.now()}`,
+              room_id: room.roomId,
+              sender: userId,
+            });
+            (room as any).addLiveEvents([localNotice], { duplicateStrategy: 'ignore' } as any);
+          };
+
+          const parents = room.getLiveTimeline()
+            .getState(EventTimeline.FORWARDS)
+            ?.getStateEvents(StateEvent.SpaceParent);
+
+          const targetSpaceId = parents && parents.length > 0
+            ? parents[0].getStateKey()
+            : room.roomId;
+
+          try {
+            if (input.toLowerCase() === 'reset' || input === '') {
+              await mx.sendStateEvent(targetSpaceId as any, StateEvent.RoomCosmeticsFont as any, {}, userId);
+              sendFeedback('Space font reset.');
+              return;
+            }
+
+            await mx.sendStateEvent(targetSpaceId as any, StateEvent.RoomCosmeticsFont as any, { font: input }, userId);
+            sendFeedback(`Space font set to "${input}".`);
+          } catch (e: any) {
+            if (e.errcode === 'M_FORBIDDEN') {
+              sendFeedback('Permission Denied. An admin must enable "Space-Wide Fonts" in Settings > Cosmetics in app.sable.moe or another supported client.');
             }
           }
         },

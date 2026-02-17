@@ -247,9 +247,9 @@ export const MessageSourceCodeItem = as<
   const getContent = (evt: MatrixEvent) =>
     evt.isEncrypted()
       ? {
-          [`<== DECRYPTED_EVENT ==>`]: evt.getEffectiveEvent(),
-          [`<== ORIGINAL_EVENT ==>`]: evt.event,
-        }
+        [`<== DECRYPTED_EVENT ==>`]: evt.getEffectiveEvent(),
+        [`<== ORIGINAL_EVENT ==>`]: evt.event,
+      }
       : evt.event;
 
   const getText = (): string => {
@@ -742,27 +742,49 @@ export const Message = as<'div', MessageProps>(
       ? getPowerTagIconSrc(mx, useAuthentication, memberPowerTag.icon)
       : undefined;
 
-    // Sable cosmetic username colors
+    // Sable cosmetic username colors and fonts
+    const isValidHex = (c: string) => /^#[0-9A-F]{6}$/i.test(c)
+    const sanitizeFont = (f: string) => f.replace(/[;{}<>]/g, '').slice(0, 32);
+
     const localColor = room?.getLiveTimeline()
       .getState(EventTimeline.FORWARDS)
       ?.getStateEvents(StateEvent.RoomCosmeticsColor, senderId)
       ?.getContent()?.color;
+
+    const localFont = room?.getLiveTimeline()
+      .getState(EventTimeline.FORWARDS)
+      ?.getStateEvents(StateEvent.RoomCosmeticsFont, senderId)
+      ?.getContent()?.font;
 
     const parents = room?.getLiveTimeline()
       .getState(EventTimeline.FORWARDS)
       ?.getStateEvents(StateEvent.SpaceParent);
 
     let spaceColor;
+    let spaceFont;
+
     if (parents && parents.length > 0) {
       const parentSpaceId = parents[0].getStateKey();
       const parentSpace = mx.getRoom(parentSpaceId);
+
       spaceColor = parentSpace?.getLiveTimeline()
         .getState(EventTimeline.FORWARDS)
         ?.getStateEvents(StateEvent.RoomCosmeticsColor, senderId)
         ?.getContent()?.color;
+
+      spaceFont = parentSpace?.getLiveTimeline()
+        .getState(EventTimeline.FORWARDS)
+        ?.getStateEvents(StateEvent.RoomCosmeticsFont, senderId)
+        ?.getContent()?.font;
     }
 
-    const usernameColor = localColor || spaceColor || (legacyUsernameColor ? colorMXID(senderId) : tagColor);
+    const validLocalColor = localColor && isValidHex(localColor) ? localColor : undefined;
+    const validSpaceColor = spaceColor && isValidHex(spaceColor) ? spaceColor : undefined;
+
+    const usernameColor = validLocalColor || validSpaceColor || (legacyUsernameColor ? colorMXID(senderId) : tagColor);
+
+    const rawFont = localFont || spaceFont;
+    const usernameFont = rawFont ? `"${sanitizeFont(rawFont)}", var(--font-secondary) !important` : undefined;
 
     const headerJSX = !collapse && (
       <Box
@@ -775,7 +797,10 @@ export const Message = as<'div', MessageProps>(
         <Box alignItems="Center" gap="200">
           <Username
             as="button"
-            style={{ color: usernameColor }}
+            style={{
+              color: usernameColor,
+              fontFamily: usernameFont
+            }}
             data-user-id={senderId}
             onContextMenu={onUserClick}
             onClick={onUsernameClick}
@@ -1114,26 +1139,26 @@ export const Message = as<'div', MessageProps>(
                         </Box>
                         {((!mEvent.isRedacted() && canDelete) ||
                           mEvent.getSender() !== mx.getUserId()) && (
-                          <>
-                            <Line size="300" />
-                            <Box direction="Column" gap="100" className={css.MessageMenuGroup}>
-                              {!mEvent.isRedacted() && canDelete && (
-                                <MessageDeleteItem
-                                  room={room}
-                                  mEvent={mEvent}
-                                  onClose={closeMenu}
-                                />
-                              )}
-                              {mEvent.getSender() !== mx.getUserId() && (
-                                <MessageReportItem
-                                  room={room}
-                                  mEvent={mEvent}
-                                  onClose={closeMenu}
-                                />
-                              )}
-                            </Box>
-                          </>
-                        )}
+                            <>
+                              <Line size="300" />
+                              <Box direction="Column" gap="100" className={css.MessageMenuGroup}>
+                                {!mEvent.isRedacted() && canDelete && (
+                                  <MessageDeleteItem
+                                    room={room}
+                                    mEvent={mEvent}
+                                    onClose={closeMenu}
+                                  />
+                                )}
+                                {mEvent.getSender() !== mx.getUserId() && (
+                                  <MessageReportItem
+                                    room={room}
+                                    mEvent={mEvent}
+                                    onClose={closeMenu}
+                                  />
+                                )}
+                              </Box>
+                            </>
+                          )}
                       </Menu>
                     </FocusTrap>
                   }
@@ -1280,26 +1305,26 @@ export const Event = as<'div', EventProps>(
                         </Box>
                         {((!mEvent.isRedacted() && canDelete && !stateEvent) ||
                           (mEvent.getSender() !== mx.getUserId() && !stateEvent)) && (
-                          <>
-                            <Line size="300" />
-                            <Box direction="Column" gap="100" className={css.MessageMenuGroup}>
-                              {!mEvent.isRedacted() && canDelete && (
-                                <MessageDeleteItem
-                                  room={room}
-                                  mEvent={mEvent}
-                                  onClose={closeMenu}
-                                />
-                              )}
-                              {mEvent.getSender() !== mx.getUserId() && (
-                                <MessageReportItem
-                                  room={room}
-                                  mEvent={mEvent}
-                                  onClose={closeMenu}
-                                />
-                              )}
-                            </Box>
-                          </>
-                        )}
+                            <>
+                              <Line size="300" />
+                              <Box direction="Column" gap="100" className={css.MessageMenuGroup}>
+                                {!mEvent.isRedacted() && canDelete && (
+                                  <MessageDeleteItem
+                                    room={room}
+                                    mEvent={mEvent}
+                                    onClose={closeMenu}
+                                  />
+                                )}
+                                {mEvent.getSender() !== mx.getUserId() && (
+                                  <MessageReportItem
+                                    room={room}
+                                    mEvent={mEvent}
+                                    onClose={closeMenu}
+                                  />
+                                )}
+                              </Box>
+                            </>
+                          )}
                       </Menu>
                     </FocusTrap>
                   }
