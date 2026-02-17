@@ -33,23 +33,22 @@ export function Cosmetics({ requestClose }: CosmeticsProps) {
   const permissions = useRoomPermissions(creators, powerLevels);
   const canEditPermissions = permissions.stateEvent(StateEvent.RoomPowerLevels, mx.getSafeUserId());
 
-  const currentLevel = (powerLevels as any).events?.[StateEvent.RoomCosmeticsColor] ?? 50;
+  const getLevel = (eventType: string) => (powerLevels as any).events?.[eventType] ?? 50;
 
-  const handleToggle = useCallback(async (enabled: boolean) => {
+  const handleToggle = useCallback(async (eventType: string, enabled: boolean) => {
     const newLevel = enabled ? 0 : 50;
-
     const newContent = {
       ...powerLevels,
       events: {
         ...((powerLevels as any).events || {}),
-        [StateEvent.RoomCosmeticsColor]: newLevel,
+        [eventType]: newLevel,
       },
     };
 
     try {
       await mx.sendStateEvent(room.roomId, StateEvent.RoomPowerLevels as any, newContent, "");
     } catch (e) {
-      console.error("Failed to update cosmetic permissions:", e);
+      console.error(`Failed to update permissions for ${eventType}:`, e);
     }
   }, [mx, room.roomId, powerLevels]);
 
@@ -58,9 +57,7 @@ export function Cosmetics({ requestClose }: CosmeticsProps) {
       <PageHeader outlined={false}>
         <Box grow="Yes" gap="200">
           <Box grow="Yes" alignItems="Center" gap="200">
-            <Text size="H3" truncate>
-              Cosmetics
-            </Text>
+            <Text size="H3" truncate>Cosmetics</Text>
           </Box>
           <Box shrink="No">
             <IconButton onClick={requestClose} variant="Surface">
@@ -75,6 +72,7 @@ export function Cosmetics({ requestClose }: CosmeticsProps) {
             <Box direction="Column" gap="700">
               <Box direction="Column" gap="100">
                 <Text size="L400">Settings</Text>
+
                 <SequenceCard
                   className={SequenceCardStyle}
                   variant="SurfaceVariant"
@@ -83,22 +81,66 @@ export function Cosmetics({ requestClose }: CosmeticsProps) {
                 >
                   <SettingTile
                     title={isSpace ? "Space-Wide Colors" : "Room Colors"}
-                    description={
-                      isSpace
-                        ? "Allow everyone to use the /gcolor command to set their global identity for this Space."
-                        : "Allow everyone to use the /color command to set a unique color for this room."
-                    }
+                    description={isSpace ? "Allow everyone to use /gcolor in this space." : "Allow everyone to use /color in this room."}
                     after={
                       <Switch
                         variant="Primary"
-                        value={currentLevel === 0}
-                        onChange={handleToggle}
+                        value={getLevel(StateEvent.RoomCosmeticsColor) === 0}
+                        onChange={(enabled) => handleToggle(StateEvent.RoomCosmeticsColor, enabled)}
+                        disabled={!canEditPermissions}
+                      />
+                    }
+                  />
+                </SequenceCard>
+
+                <SequenceCard
+                  className={SequenceCardStyle}
+                  variant="SurfaceVariant"
+                  direction="Column"
+                  gap="400"
+                >
+                  <SettingTile
+                    title={isSpace ? "Space-Wide Fonts" : "Room Fonts"}
+                    description={isSpace ? "Allow everyone to use /gfont in this space." : "Allow everyone to use /font in this room."}
+                    after={
+                      <Switch
+                        variant="Primary"
+                        value={getLevel(StateEvent.RoomCosmeticsFont) === 0}
+                        onChange={(enabled) => handleToggle(StateEvent.RoomCosmeticsFont, enabled)}
                         disabled={!canEditPermissions}
                       />
                     }
                   />
                 </SequenceCard>
               </Box>
+
+              {/* --- COMMAND REFERENCE SECTION --- */}
+              <Box direction="Column" gap="100">
+                <Text size="L400">Commands</Text>
+                <SequenceCard
+                  className={SequenceCardStyle}
+                  variant="SurfaceVariant"
+                  direction="Column"
+                  gap="400"
+                  style={{ padding: '16px' }}
+                >
+                  <Box direction="Column" gap="200">
+                    <Box direction="Column">
+                      <Text size="T300">/color [hex]</Text>
+                      <Text size="T200" priority="300">Set room-specific name color. (e.g. /color #ff00ff)</Text>
+                    </Box>
+                    <Box direction="Column">
+                      <Text size="T300">/font [name]</Text>
+                      <Text size="T200" priority="300">Set room-specific name font. (e.g. /font monospace)</Text>
+                    </Box>
+                    <Box direction="Column">
+                      <Text size="T300">/gcolor | /gfont</Text>
+                      <Text size="T200" priority="300">Apply colors/fonts to the entire space.</Text>
+                    </Box>
+                  </Box>
+                </SequenceCard>
+              </Box>
+
             </Box>
           </PageContent>
         </Scroll>
