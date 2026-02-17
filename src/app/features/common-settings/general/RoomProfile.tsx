@@ -144,8 +144,6 @@ export function RoomProfileEdit({
       if (alive()) {
         onClose();
       }
-    }).catch((err) => {
-      console.error("Failed to reset DM name:", err);
     });
   }, [submit, alive, onClose]);
 
