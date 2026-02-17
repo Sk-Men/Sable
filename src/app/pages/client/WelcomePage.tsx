@@ -57,21 +57,21 @@ export function WelcomePage() {
                 </Button>
                 */}
               </Box>
-              <Box direction="Column" gap="200" alignItems="Center">
-                <Text size="T400" weight="Bold" priority="200">
-                  Cosmetic Features
+            </Box>
+            <Box direction="Column" gap="200" alignItems="Center">
+              <Text size="T400" weight="Bold" priority="200">
+                Cosmetic Features
+              </Text>
+              <Box direction="Column" gap="100" alignItems="Start">
+                <Text size="T200" priority="300">
+                  <b>/color #hex</b> — Set a color for a room
                 </Text>
-                <Box direction="Column" gap="100" alignItems="Center">
-                  <Text size="T200" priority="300">
-                    <b>/color #hex</b> — Set a color for a room
-                  </Text>
-                  <Text size="T200" priority="300">
-                    <b>/gcolor #hex</b> — Set a global color for a space
-                  </Text>
-                  <Text size="T200" priority="300">
-                    <b>Cosmetics Settings Tab</b> — Managed permissions per space/room
-                  </Text>
-                </Box>
+                <Text size="T200" priority="300">
+                  <b>/gcolor #hex</b> — Set a global color for a space
+                </Text>
+                <Text size="T200" priority="300">
+                  <b>Cosmetics Settings Tab</b> — Managed permissions per space/room
+                </Text>
               </Box>
             </Box>
           </PageHero>
