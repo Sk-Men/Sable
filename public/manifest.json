@@ -1,7 +1,7 @@
 {
-  "name": "Cinny",
-  "short_name": "Cinny",
-  "description": "Yet another matrix client",
+  "name": "Sable",
+  "short_name": "Sable",
+  "description": "Yet another matrix client fork",
   "dir": "auto",
   "lang": "en-US",
   "display": "standalone",

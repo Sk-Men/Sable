@@ -1,4 +1,5 @@
 export enum AccountDataEvent {
+  // Cinny and Matrix Account data
   PushRules = 'm.push_rules',
   Direct = 'm.direct',
   IgnoredUserList = 'm.ignored_user_list',
@@ -16,6 +17,7 @@ export enum AccountDataEvent {
   CrossSigningSelf = 'm.cross_signing.self',
   CrossSigningUser = 'm.cross_signing.user',
   MegolmBackupV1 = 'm.megolm_backup.v1',
+
 }
 
 export type MDirectContent = Record<string, string[]>;

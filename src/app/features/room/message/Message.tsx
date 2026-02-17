@@ -32,7 +32,7 @@ import React, {
 } from 'react';
 import FocusTrap from 'focus-trap-react';
 import { useHover, useFocusWithin } from 'react-aria';
-import { MatrixEvent, Room } from 'matrix-js-sdk';
+import { EventTimeline, MatrixEvent, Room } from 'matrix-js-sdk';
 import { Relations } from 'matrix-js-sdk/lib/models/relations';
 import classNames from 'classnames';
 import { RoomPinnedEventsEventContent } from 'matrix-js-sdk/lib/types';
@@ -79,6 +79,7 @@ import { MemberPowerTag, StateEvent } from '../../../../types/matrix/room';
 import { PowerIcon } from '../../../components/power';
 import colorMXID from '../../../../util/colorMXID';
 import { getPowerTagIconSrc } from '../../../hooks/useMemberPowerTag';
+import { AccountDataEvent } from '../../../../types/matrix/accountData';
 
 export type ReactionHandler = (keyOrMxc: string, shortcode: string) => void;
 
@@ -741,7 +742,27 @@ export const Message = as<'div', MessageProps>(
       ? getPowerTagIconSrc(mx, useAuthentication, memberPowerTag.icon)
       : undefined;
 
-    const usernameColor = legacyUsernameColor ? colorMXID(senderId) : tagColor;
+    // Sable cosmetic username colors
+    const localColor = room?.getLiveTimeline()
+      .getState(EventTimeline.FORWARDS)
+      ?.getStateEvents(StateEvent.RoomCosmeticsColor, senderId)
+      ?.getContent()?.color;
+
+    const parents = room?.getLiveTimeline()
+      .getState(EventTimeline.FORWARDS)
+      ?.getStateEvents(StateEvent.SpaceParent);
+
+    let spaceColor;
+    if (parents && parents.length > 0) {
+      const parentSpaceId = parents[0].getStateKey();
+      const parentSpace = mx.getRoom(parentSpaceId);
+      spaceColor = parentSpace?.getLiveTimeline()
+        .getState(EventTimeline.FORWARDS)
+        ?.getStateEvents(StateEvent.RoomCosmeticsColor, senderId)
+        ?.getContent()?.color;
+    }
+
+    const usernameColor = localColor || spaceColor || (legacyUsernameColor ? colorMXID(senderId) : tagColor);
 
     const headerJSX = !collapse && (
       <Box

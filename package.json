@@ -1,7 +1,7 @@
 {
   "name": "cinny",
   "version": "4.10.3",
-  "description": "Yet another matrix client",
+  "description": "Yet another matrix client fork",
   "main": "index.js",
   "type": "module",
   "engines": {

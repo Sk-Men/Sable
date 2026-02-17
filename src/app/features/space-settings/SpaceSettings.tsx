@@ -17,6 +17,7 @@ import { Members } from '../common-settings/members';
 import { DeveloperTools } from '../common-settings/developer-tools';
 import { General } from './general';
 import { Permissions } from './permissions';
+import { Cosmetics } from '../common-settings/cosmetics/Cosmetics';
 
 type SpaceSettingsMenuItem = {
   page: SpaceSettingsPage;
@@ -41,6 +42,11 @@ const useSpaceSettingsMenuItems = (): SpaceSettingsMenuItem[] =>
         page: SpaceSettingsPage.PermissionsPage,
         name: 'Permissions',
         icon: Icons.Lock,
+      },
+      {
+        page: SpaceSettingsPage.CosmeticsPage,
+        name: 'Cosmetics',
+        icon: Icons.Alphabet,
       },
       {
         page: SpaceSettingsPage.EmojisStickersPage,
@@ -161,6 +167,9 @@ export function SpaceSettings({ initialPage, requestClose }: SpaceSettingsProps)
       )}
       {activePage === SpaceSettingsPage.PermissionsPage && (
         <Permissions requestClose={handlePageRequestClose} />
+      )}
+      {activePage === SpaceSettingsPage.CosmeticsPage && (
+        <Cosmetics requestClose={handlePageRequestClose} />
       )}
       {activePage === SpaceSettingsPage.EmojisStickersPage && (
         <EmojisStickers requestClose={handlePageRequestClose} />

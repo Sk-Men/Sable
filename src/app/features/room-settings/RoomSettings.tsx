@@ -17,6 +17,7 @@ import { Permissions } from './permissions';
 import { RoomSettingsPage } from '../../state/roomSettings';
 import { useRoom } from '../../hooks/useRoom';
 import { DeveloperTools } from '../common-settings/developer-tools';
+import { Cosmetics } from '../common-settings/cosmetics/Cosmetics';
 
 type RoomSettingsMenuItem = {
   page: RoomSettingsPage;
@@ -41,6 +42,11 @@ const useRoomSettingsMenuItems = (): RoomSettingsMenuItem[] =>
         page: RoomSettingsPage.PermissionsPage,
         name: 'Permissions',
         icon: Icons.Lock,
+      },
+      {
+        page: RoomSettingsPage.CosmeticsPage,
+        name: 'Cosmetics',
+        icon: Icons.Alphabet,
       },
       {
         page: RoomSettingsPage.EmojisStickersPage,
@@ -160,6 +166,9 @@ export function RoomSettings({ initialPage, requestClose }: RoomSettingsProps) {
       )}
       {activePage === RoomSettingsPage.PermissionsPage && (
         <Permissions requestClose={handlePageRequestClose} />
+      )}
+      {activePage === RoomSettingsPage.CosmeticsPage && (
+        <Cosmetics requestClose={handlePageRequestClose} />
       )}
       {activePage === RoomSettingsPage.EmojisStickersPage && (
         <EmojisStickers requestClose={handlePageRequestClose} />

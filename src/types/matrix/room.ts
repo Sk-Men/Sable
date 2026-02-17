@@ -17,6 +17,7 @@ export type IMemberContent = {
 };
 
 export enum StateEvent {
+  // Cinny/Matrix state events
   RoomCanonicalAlias = 'm.room.canonical_alias',
   RoomCreate = 'm.room.create',
   RoomJoinRules = 'm.room.join_rules',
@@ -38,6 +39,9 @@ export enum StateEvent {
 
   PoniesRoomEmotes = 'im.ponies.room_emotes',
   PowerLevelTags = 'in.cinny.room.power_level_tags',
+
+  // Sable state events
+  RoomCosmeticsColor = 'moe.sable.room.color',
 }
 
 export enum MessageEvent {

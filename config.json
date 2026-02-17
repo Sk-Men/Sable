@@ -1,8 +1,9 @@
 {
   "defaultHomeserver": 1,
   "homeserverList": [
-    "converser.eu",
+    "sable.moe",
     "matrix.org",
+    "converser.eu",
     "mozilla.org",
     "unredacted.org",
     "xmr.se"
@@ -12,6 +13,7 @@
   "featuredCommunities": {
     "openAsDefault": false,
     "spaces": [
+      "#bdsystem:sable.moe",
       "#cinny-space:matrix.org",
       "#community:matrix.org",
       "#space:unredacted.org",
@@ -27,7 +29,7 @@
       "#PrivSec.dev:arcticfoxes.net",
       "#disroot:aria-net.org"
     ],
-    "servers": [ "matrix.org", "mozilla.org", "unredacted.org" ]
+    "servers": [ "sable.moe", "matrix.org", "mozilla.org", "unredacted.org" ]
   },
 
   "hashRouter": {
