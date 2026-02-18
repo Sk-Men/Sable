@@ -46,15 +46,15 @@ export function About({ requestClose }: AboutProps) {
                   <Box direction="Column" gap="100">
                     <Box gap="100" alignItems="End">
                       <Text size="H3">Sable</Text>
-                      <Text size="T200">v4.10.3</Text>
+                      <Text size="T200">v0.0.1</Text>
                     </Box>
-                    <Text>Yet another matrix client fork.</Text>
+                    <Text>Yet another matrix client fork(ed from cinny).</Text>
                   </Box>
 
                   <Box gap="200" wrap="Wrap">
                     <Button
                       as="a"
-                      href="https://github.com/cinnyapp/cinny"
+                      href="https://github.com/7w1/sable"
                       rel="noreferrer noopener"
                       target="_blank"
                       variant="Secondary"
@@ -67,7 +67,7 @@ export function About({ requestClose }: AboutProps) {
                     </Button>
                     <Button
                       as="a"
-                      href="https://cinny.in/#sponsor"
+                      href="https://github.com/7w1/sable"
                       rel="noreferrer noopener"
                       target="_blank"
                       variant="Critical"
@@ -124,6 +124,35 @@ export function About({ requestClose }: AboutProps) {
                       paddingLeft: config.space.S400,
                     }}
                   >
+                    <li>
+                      <Text size="T300">
+                        {' '}
+                        <a
+                          href="https://github.com/cinnyapp/cinny"
+                          rel="noreferrer noopener"
+                          target="_blank"
+                        >
+                          Cinny
+                        </a>{' '}
+                        is ©{' '}
+                        <a
+                          href="https://github.com/ajbura"
+                          rel="noreferrer noopener"
+                          target="_blank"
+                        >
+                          Ajay Bura
+                        </a>{' '}
+                        used under the terms of{' '}
+                        <a
+                          href="https://github.com/cinnyapp/cinny/blob/dev/LICENSE"
+                          rel="noreferrer noopener"
+                          target="_blank"
+                        >
+                          AGPL v3
+                        </a>
+                        .
+                      </Text>
+                    </li>
                     <li>
                       <Text size="T300">
                         The{' '}

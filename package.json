@@ -1,6 +1,6 @@
 {
-  "name": "cinny",
-  "version": "4.10.3",
+  "name": "sable",
+  "version": "0.0.1",
   "description": "Yet another matrix client fork",
   "main": "index.js",
   "type": "module",
@@ -17,7 +17,7 @@
     "typecheck": "tsc --noEmit"
   },
   "keywords": [],
-  "author": "Ajay Bura",
+  "author": "7w1",
   "license": "AGPL-3.0-only",
   "dependencies": {
     "@atlaskit/pragmatic-drag-and-drop": "1.1.6",
