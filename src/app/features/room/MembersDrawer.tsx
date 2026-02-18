@@ -127,7 +127,7 @@ function MemberItem({
     ? mx.mxcUrlToHttp(avatarMxcUrl, 100, 100, 'crop', undefined, false, useAuthentication)
     : undefined;
 
-  const { color, font } = useSableCosmetics(member.userId);
+  const { color, font } = useSableCosmetics(member.userId, room);
 
   return (
     <MenuItem

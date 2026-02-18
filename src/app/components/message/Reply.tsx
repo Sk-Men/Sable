@@ -80,7 +80,7 @@ export const Reply = as<'div', ReplyProps>(
     const { body } = replyEvent?.getContent() ?? {};
     const sender = replyEvent?.getSender();
 
-    const { color: usernameColor, font: usernameFont } = useSableCosmetics(sender ?? '');
+    const { color: usernameColor, font: usernameFont } = useSableCosmetics(sender ?? '', room);
 
     const fallbackBody = replyEvent?.isRedacted() ? (
       <MessageDeletedContent />

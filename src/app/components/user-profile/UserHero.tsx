@@ -105,7 +105,7 @@ export function UserHeroName({ displayName, userId }: UserHeroNameProps) {
   const username = getMxIdLocalPart(userId);
 
   // Sable username color and fonts
-  const { color, font } = useSableCosmetics(userId);
+  const { color, font } = useSableCosmetics(userId, useRoom());
 
   return (
     <Box grow="Yes" direction="Column" gap="0">

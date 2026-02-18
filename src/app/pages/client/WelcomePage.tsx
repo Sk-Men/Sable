@@ -24,7 +24,7 @@ export function WelcomePage() {
                   target="_blank"
                   rel="noreferrer noopener"
                 >
-                  v4.10.3
+                  v0.0.1
                 </a>
               </span>
             }
@@ -59,18 +59,12 @@ export function WelcomePage() {
               </Box>
             </Box>
             <Box direction="Column" gap="200" alignItems="Center">
-              <Text size="T400" weight="Bold" priority="200">
-                Cosmetic Features
+              <Text size="T400" priority="400">
+                Features
               </Text>
-              <Box direction="Column" gap="100" alignItems="Start">
-                <Text size="T200" priority="300">
-                  <b>/color #hex</b> — Set a color for a room
-                </Text>
-                <Text size="T200" priority="300">
-                  <b>/gcolor #hex</b> — Set a global color for a space
-                </Text>
-                <Text size="T200" priority="300">
-                  <b>Cosmetics Settings Tab</b> — Managed permissions per space/room
+              <Box direction="Column" gap="100" alignItems="Center">
+                <Text size="T200" priority="300" align="Center">
+                  a host of cosmetic features — check out the <b>Cosmetics</b> tab in space or room settings for details!
                 </Text>
               </Box>
             </Box>

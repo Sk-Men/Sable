@@ -108,14 +108,6 @@ import { ReplyLayout, ThreadIndicator } from '../../components/message';
 import { roomToParentsAtom } from '../../state/room/roomToParents';
 import { useMediaAuthentication } from '../../hooks/useMediaAuthentication';
 import { useImagePackRooms } from '../../hooks/useImagePackRooms';
-import { usePowerLevelsContext } from '../../hooks/usePowerLevels';
-import colorMXID from '../../../util/colorMXID';
-import { useIsDirectRoom } from '../../hooks/useRoom';
-import { useAccessiblePowerTagColors, useGetMemberPowerTag } from '../../hooks/useMemberPowerTag';
-import { useRoomCreators } from '../../hooks/useRoomCreators';
-import { useTheme } from '../../hooks/useTheme';
-import { useRoomCreatorsTag } from '../../hooks/useRoomCreatorsTag';
-import { usePowerLevelTags } from '../../hooks/usePowerLevelTags';
 import { useComposingCheck } from '../../hooks/useComposingCheck';
 import { useSableCosmetics } from '../../hooks/useSableCosmetics';
 
@@ -140,7 +132,7 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
     const [replyDraft, setReplyDraft] = useAtom(roomIdToReplyDraftAtomFamily(roomId));
     const replyUserID = replyDraft?.userId;
 
-    const { color: replyUsernameColor, font: replyUsernameFont } = useSableCosmetics(replyUserID);
+    const { color: replyUsernameColor, font: replyUsernameFont } = useSableCosmetics(replyUserID as any, room);
 
     const [uploadBoard, setUploadBoard] = useState(true);
     const [selectedFiles, setSelectedFiles] = useAtom(roomIdToUploadItemsAtomFamily(roomId));

@@ -736,7 +736,7 @@ export const Message = as<'div', MessageProps>(
       ? getPowerTagIconSrc(mx, useAuthentication, memberPowerTag.icon)
       : undefined;
 
-    const { color: usernameColor, font: usernameFont } = useSableCosmetics(senderId);
+    const { color: usernameColor, font: usernameFont } = useSableCosmetics(senderId, room);
 
     const headerJSX = !collapse && (
       <Box

@@ -1,7 +1,6 @@
 import { useMemo } from 'react';
-import { EventTimeline } from 'matrix-js-sdk';
+import { EventTimeline, Room } from 'matrix-js-sdk';
 import { useMatrixClient } from './useMatrixClient';
-import { useRoom } from './useRoom';
 import { StateEvent } from '../../types/matrix/room';
 import { usePowerLevels } from './usePowerLevels';
 import { useRoomCreators } from './useRoomCreators';
@@ -16,9 +15,8 @@ import { useTheme } from './useTheme';
 const isValidHex = (c: string) => /^#[0-9A-F]{6}$/i.test(c);
 const sanitizeFont = (f: string) => f.replace(/[;{}<>]/g, '').slice(0, 32);
 
-export function useSableCosmetics(userId: string) {
+export function useSableCosmetics(userId: string, room: Room) {
     const mx = useMatrixClient();
-    const room = useRoom();
     const theme = useTheme();
 
     const [legacyUsernameColor] = useSetting(settingsAtom, 'legacyUsernameColor');
