@@ -259,13 +259,13 @@ export function SearchResultGroup({
                         src={
                           senderAvatarMxc
                             ? mxcUrlToHttp(
-                                mx,
-                                senderAvatarMxc,
-                                useAuthentication,
-                                48,
-                                48,
-                                'crop'
-                              ) ?? undefined
+                              mx,
+                              senderAvatarMxc,
+                              useAuthentication,
+                              48,
+                              48,
+                              'crop'
+                            ) ?? undefined
                             : undefined
                         }
                         alt={displayName}
@@ -308,9 +308,6 @@ export function SearchResultGroup({
                     replyEventId={replyEventId}
                     threadRootId={threadRootId}
                     onClick={handleOpenClick}
-                    getMemberPowerTag={getMemberPowerTag}
-                    accessibleTagColors={accessibleTagColors}
-                    legacyUsernameColor={legacyUsernameColor}
                   />
                 )}
                 {renderMatrixEvent(event.type, false, event, displayName, getContent)}

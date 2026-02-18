@@ -80,6 +80,7 @@ import { PowerIcon } from '../../../components/power';
 import colorMXID from '../../../../util/colorMXID';
 import { getPowerTagIconSrc } from '../../../hooks/useMemberPowerTag';
 import { AccountDataEvent } from '../../../../types/matrix/accountData';
+import { useSableCosmetics } from '../../../hooks/useSableCosmetics';
 
 export type ReactionHandler = (keyOrMxc: string, shortcode: string) => void;
 
@@ -681,8 +682,6 @@ export type MessageProps = {
   hideReadReceipts?: boolean;
   showDeveloperTools?: boolean;
   memberPowerTag?: MemberPowerTag;
-  accessibleTagColors?: Map<string, string>;
-  legacyUsernameColor?: boolean;
   hour24Clock: boolean;
   dateFormatString: string;
 };
@@ -712,8 +711,6 @@ export const Message = as<'div', MessageProps>(
       hideReadReceipts,
       showDeveloperTools,
       memberPowerTag,
-      accessibleTagColors,
-      legacyUsernameColor,
       hour24Clock,
       dateFormatString,
       children,
@@ -735,64 +732,11 @@ export const Message = as<'div', MessageProps>(
       getMemberDisplayName(room, senderId) ?? getMxIdLocalPart(senderId) ?? senderId;
     const senderAvatarMxc = getMemberAvatarMxc(room, senderId);
 
-    const tagColor = memberPowerTag?.color
-      ? accessibleTagColors?.get(memberPowerTag.color)
-      : undefined;
     const tagIconSrc = memberPowerTag?.icon
       ? getPowerTagIconSrc(mx, useAuthentication, memberPowerTag.icon)
       : undefined;
 
-    // Sable cosmetic username colors and fonts
-    const isValidHex = (c: string) => /^#[0-9A-F]{6}$/i.test(c)
-    const sanitizeFont = (f: string) => f.replace(/[;{}<>]/g, '').slice(0, 32);
-
-    const localColor = room?.getLiveTimeline()
-      .getState(EventTimeline.FORWARDS)
-      ?.getStateEvents(StateEvent.RoomCosmeticsColor, senderId)
-      ?.getContent()?.color;
-
-    const localFont = room?.getLiveTimeline()
-      .getState(EventTimeline.FORWARDS)
-      ?.getStateEvents(StateEvent.RoomCosmeticsFont, senderId)
-      ?.getContent()?.font;
-
-    const parents = room?.getLiveTimeline()
-      .getState(EventTimeline.FORWARDS)
-      ?.getStateEvents(StateEvent.SpaceParent);
-
-    let spaceColor;
-    let spaceFont;
-
-    if (parents && parents.length > 0) {
-      const parentSpaceId = parents[0].getStateKey();
-      const parentSpace = mx.getRoom(parentSpaceId);
-
-      spaceColor = parentSpace?.getLiveTimeline()
-        .getState(EventTimeline.FORWARDS)
-        ?.getStateEvents(StateEvent.RoomCosmeticsColor, senderId)
-        ?.getContent()?.color;
-
-      spaceFont = parentSpace?.getLiveTimeline()
-        .getState(EventTimeline.FORWARDS)
-        ?.getStateEvents(StateEvent.RoomCosmeticsFont, senderId)
-        ?.getContent()?.font;
-    }
-
-    const validLocalColor = localColor && isValidHex(localColor) ? localColor : undefined;
-    const validSpaceColor = spaceColor && isValidHex(spaceColor) ? spaceColor : undefined;
-
-    const usernameColor = validLocalColor || validSpaceColor || (legacyUsernameColor ? colorMXID(senderId) : tagColor);
-
-    const rawFont = localFont || spaceFont;
-    let usernameFont: string | undefined;
-
-    if (rawFont) {
-      const cleanFont = sanitizeFont(rawFont);
-      // leave quotes off of single words, otherwise monospace or sans-serif dont work
-      usernameFont = cleanFont.includes(' ')
-        ? `"${cleanFont}", var(--font-secondary)`
-        : `${cleanFont}, var(--font-secondary)`;
-    }
+    const { color: usernameColor, font: usernameFont } = useSableCosmetics(senderId);
 
     const headerJSX = !collapse && (
       <Box

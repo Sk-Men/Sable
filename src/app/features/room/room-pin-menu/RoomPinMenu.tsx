@@ -199,7 +199,7 @@ function PinnedMessage({
               src={
                 senderAvatarMxc
                   ? mxcUrlToHttp(mx, senderAvatarMxc, useAuthentication, 48, 48, 'crop') ??
-                    undefined
+                  undefined
                   : undefined
               }
               alt={displayName}
@@ -233,9 +233,6 @@ function PinnedMessage({
           replyEventId={pinnedEvent.replyEventId}
           threadRootId={pinnedEvent.threadRootId}
           onClick={handleOpenClick}
-          getMemberPowerTag={getMemberPowerTag}
-          accessibleTagColors={accessibleTagColors}
-          legacyUsernameColor={legacyUsernameColor}
         />
       )}
       {renderContent(pinnedEvent.getType(), false, pinnedEvent, displayName, getContent)}

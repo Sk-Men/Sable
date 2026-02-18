@@ -117,6 +117,7 @@ import { useTheme } from '../../hooks/useTheme';
 import { useRoomCreatorsTag } from '../../hooks/useRoomCreatorsTag';
 import { usePowerLevelTags } from '../../hooks/usePowerLevelTags';
 import { useComposingCheck } from '../../hooks/useComposingCheck';
+import { useSableCosmetics } from '../../hooks/useSableCosmetics';
 
 interface RoomInputProps {
   editor: Editor;
@@ -131,34 +132,15 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
     const [enterForNewline] = useSetting(settingsAtom, 'enterForNewline');
     const [isMarkdown] = useSetting(settingsAtom, 'isMarkdown');
     const [hideActivity] = useSetting(settingsAtom, 'hideActivity');
-    const [legacyUsernameColor] = useSetting(settingsAtom, 'legacyUsernameColor');
-    const direct = useIsDirectRoom();
     const commands = useCommands(mx, room);
     const emojiBtnRef = useRef<HTMLButtonElement>(null);
     const roomToParents = useAtomValue(roomToParentsAtom);
-    const powerLevels = usePowerLevelsContext();
-    const creators = useRoomCreators(room);
 
     const [msgDraft, setMsgDraft] = useAtom(roomIdToMsgDraftAtomFamily(roomId));
     const [replyDraft, setReplyDraft] = useAtom(roomIdToReplyDraftAtomFamily(roomId));
     const replyUserID = replyDraft?.userId;
 
-    const powerLevelTags = usePowerLevelTags(room, powerLevels);
-    const creatorsTag = useRoomCreatorsTag();
-    const getMemberPowerTag = useGetMemberPowerTag(room, creators, powerLevels);
-    const theme = useTheme();
-    const accessibleTagColors = useAccessiblePowerTagColors(
-      theme.kind,
-      creatorsTag,
-      powerLevelTags
-    );
-
-    const replyPowerTag = replyUserID ? getMemberPowerTag(replyUserID) : undefined;
-    const replyPowerColor = replyPowerTag?.color
-      ? accessibleTagColors.get(replyPowerTag.color)
-      : undefined;
-    const replyUsernameColor =
-      legacyUsernameColor || direct ? colorMXID(replyUserID ?? '') : replyPowerColor;
+    const { color: replyUsernameColor, font: replyUsernameFont } = useSableCosmetics(replyUserID);
 
     const [uploadBoard, setUploadBoard] = useState(true);
     const [selectedFiles, setSelectedFiles] = useAtom(roomIdToUploadItemsAtomFamily(roomId));
@@ -564,7 +546,7 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
                     <ReplyLayout
                       userColor={replyUsernameColor}
                       username={
-                        <Text size="T300" truncate>
+                        <Text size="T300" truncate style={{ fontFamily: replyUsernameFont }}>
                           <b>
                             {getMemberDisplayName(room, replyDraft.userId) ??
                               getMxIdLocalPart(replyDraft.userId) ??

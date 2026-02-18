@@ -59,6 +59,7 @@ import { useSpaceOptionally } from '../../hooks/useSpace';
 import { ContainerColor } from '../../styles/ContainerColor.css';
 import { useFlattenPowerTagMembers, useGetMemberPowerTag } from '../../hooks/useMemberPowerTag';
 import { useRoomCreators } from '../../hooks/useRoomCreators';
+import { useSableCosmetics } from '../../hooks/useSableCosmetics';
 
 type MemberDrawerHeaderProps = {
   room: Room;
@@ -126,6 +127,8 @@ function MemberItem({
     ? mx.mxcUrlToHttp(avatarMxcUrl, 100, 100, 'crop', undefined, false, useAuthentication)
     : undefined;
 
+  const { color, font } = useSableCosmetics(member.userId);
+
   return (
     <MenuItem
       style={{ padding: `0 ${config.space.S200}` }}
@@ -153,7 +156,7 @@ function MemberItem({
       }
     >
       <Box grow="Yes">
-        <Text size="T400" truncate>
+        <Text size="T400" truncate style={{ color, fontFamily: font }}>
           {name}
         </Text>
       </Box>
@@ -347,9 +350,8 @@ export function MembersDrawer({ room, members }: MembersDrawerProps) {
                         }}
                         after={<Icon size="50" src={Icons.Cross} />}
                       >
-                        <Text size="B300">{`${result.items.length || 'No'} ${
-                          result.items.length === 1 ? 'Result' : 'Results'
-                        }`}</Text>
+                        <Text size="B300">{`${result.items.length || 'No'} ${result.items.length === 1 ? 'Result' : 'Results'
+                          }`}</Text>
                       </Chip>
                     )
                   }

@@ -302,9 +302,9 @@ const useTimelinePagination = (
         range:
           offsetRange > 0
             ? {
-                start: currentTimeline.range.start + offsetRange,
-                end: currentTimeline.range.end + offsetRange,
-              }
+              start: currentTimeline.range.start + offsetRange,
+              end: currentTimeline.range.end + offsetRange,
+            }
             : { ...currentTimeline.range },
       }));
     };
@@ -323,7 +323,7 @@ const useTimelinePagination = (
       if (
         !paginationToken &&
         getTimelinesEventsCount(lTimelines) !==
-          getTimelinesEventsCount(getLinkedTimelines(timelineToPaginate))
+        getTimelinesEventsCount(getLinkedTimelines(timelineToPaginate))
       ) {
         recalibratePagination(lTimelines, timelinesEventsCount, backwards);
         return;
@@ -436,8 +436,6 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
   const [hideActivity] = useSetting(settingsAtom, 'hideActivity');
   const [messageLayout] = useSetting(settingsAtom, 'messageLayout');
   const [messageSpacing] = useSetting(settingsAtom, 'messageSpacing');
-  const [legacyUsernameColor] = useSetting(settingsAtom, 'legacyUsernameColor');
-  const direct = useIsDirectRoom();
   const [hideMembershipEvents] = useSetting(settingsAtom, 'hideMembershipEvents');
   const [hideNickAvatarEvents] = useSetting(settingsAtom, 'hideNickAvatarEvents');
   const [mediaAutoLoad] = useSetting(settingsAtom, 'mediaAutoLoad');
@@ -505,10 +503,10 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
 
   const [focusItem, setFocusItem] = useState<
     | {
-        index: number;
-        scrollTo: boolean;
-        highlight: boolean;
-      }
+      index: number;
+      scrollTo: boolean;
+      highlight: boolean;
+    }
     | undefined
   >();
   const alive = useAlive();
@@ -1066,9 +1064,6 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
                   replyEventId={replyEventId}
                   threadRootId={threadRootId}
                   onClick={handleOpenReply}
-                  getMemberPowerTag={getMemberPowerTag}
-                  accessibleTagColors={accessiblePowerTagColors}
-                  legacyUsernameColor={legacyUsernameColor || direct}
                 />
               )
             }
@@ -1087,8 +1082,6 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
             hideReadReceipts={hideActivity}
             showDeveloperTools={showDeveloperTools}
             memberPowerTag={getMemberPowerTag(senderId)}
-            accessibleTagColors={accessiblePowerTagColors}
-            legacyUsernameColor={legacyUsernameColor || direct}
             hour24Clock={hour24Clock}
             dateFormatString={dateFormatString}
           >
@@ -1148,9 +1141,6 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
                   replyEventId={replyEventId}
                   threadRootId={threadRootId}
                   onClick={handleOpenReply}
-                  getMemberPowerTag={getMemberPowerTag}
-                  accessibleTagColors={accessiblePowerTagColors}
-                  legacyUsernameColor={legacyUsernameColor || direct}
                 />
               )
             }
@@ -1169,8 +1159,6 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
             hideReadReceipts={hideActivity}
             showDeveloperTools={showDeveloperTools}
             memberPowerTag={getMemberPowerTag(mEvent.getSender() ?? '')}
-            accessibleTagColors={accessiblePowerTagColors}
-            legacyUsernameColor={legacyUsernameColor || direct}
             hour24Clock={hour24Clock}
             dateFormatString={dateFormatString}
           >
@@ -1272,8 +1260,6 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
             hideReadReceipts={hideActivity}
             showDeveloperTools={showDeveloperTools}
             memberPowerTag={getMemberPowerTag(mEvent.getSender() ?? '')}
-            accessibleTagColors={accessiblePowerTagColors}
-            legacyUsernameColor={legacyUsernameColor || direct}
             hour24Clock={hour24Clock}
             dateFormatString={dateFormatString}
           >
@@ -1608,14 +1594,14 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
     const eventJSX = reactionOrEditEvent(mEvent)
       ? null
       : renderMatrixEvent(
-          mEvent.getType(),
-          typeof mEvent.getStateKey() === 'string',
-          mEventId,
-          mEvent,
-          item,
-          timelineSet,
-          collapsed
-        );
+        mEvent.getType(),
+        typeof mEvent.getStateKey() === 'string',
+        mEventId,
+        mEvent,
+        item,
+        timelineSet,
+        collapsed
+      );
     prevEvent = mEvent;
     isPrevRendered = !!eventJSX;
 
@@ -1697,9 +1683,8 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
           {!canPaginateBack && rangeAtStart && getItems().length > 0 && (
             <div
               style={{
-                padding: `${config.space.S700} ${config.space.S400} ${config.space.S600} ${
-                  messageLayout === MessageLayout.Compact ? config.space.S400 : toRem(64)
-                }`,
+                padding: `${config.space.S700} ${config.space.S400} ${config.space.S600} ${messageLayout === MessageLayout.Compact ? config.space.S400 : toRem(64)
+                  }`,
               }}
             >
               <RoomIntro room={room} />

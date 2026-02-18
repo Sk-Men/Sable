@@ -10,8 +10,7 @@ import * as css from './Reply.css';
 import { MessageBadEncryptedContent, MessageDeletedContent, MessageFailedContent } from './content';
 import { scaleSystemEmoji } from '../../plugins/react-custom-html-parser';
 import { useRoomEvent } from '../../hooks/useRoomEvent';
-import colorMXID from '../../../util/colorMXID';
-import { GetMemberPowerTag } from '../../hooks/useMemberPowerTag';
+import { useSableCosmetics } from '../../hooks/useSableCosmetics';
 
 type ReplyLayoutProps = {
   userColor?: string;
@@ -57,9 +56,6 @@ type ReplyProps = {
   replyEventId: string;
   threadRootId?: string | undefined;
   onClick?: MouseEventHandler | undefined;
-  getMemberPowerTag?: GetMemberPowerTag;
-  accessibleTagColors?: Map<string, string>;
-  legacyUsernameColor?: boolean;
 };
 
 export const Reply = as<'div', ReplyProps>(
@@ -70,9 +66,6 @@ export const Reply = as<'div', ReplyProps>(
       replyEventId,
       threadRootId,
       onClick,
-      getMemberPowerTag,
-      accessibleTagColors,
-      legacyUsernameColor,
       ...props
     },
     ref
@@ -86,10 +79,8 @@ export const Reply = as<'div', ReplyProps>(
 
     const { body } = replyEvent?.getContent() ?? {};
     const sender = replyEvent?.getSender();
-    const powerTag = sender ? getMemberPowerTag?.(sender) : undefined;
-    const tagColor = powerTag?.color ? accessibleTagColors?.get(powerTag.color) : undefined;
 
-    const usernameColor = legacyUsernameColor ? colorMXID(sender ?? replyEventId) : tagColor;
+    const { color: usernameColor, font: usernameFont } = useSableCosmetics(sender ?? '');
 
     const fallbackBody = replyEvent?.isRedacted() ? (
       <MessageDeletedContent />
@@ -110,7 +101,7 @@ export const Reply = as<'div', ReplyProps>(
           userColor={usernameColor}
           username={
             sender && (
-              <Text size="T300" truncate>
+              <Text size="T300" truncate style={{ fontFamily: usernameFont }}>
                 <b>{getMemberDisplayName(room, sender) ?? getMxIdLocalPart(sender)}</b>
               </Text>
             )
