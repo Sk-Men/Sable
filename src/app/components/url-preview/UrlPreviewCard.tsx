@@ -12,56 +12,188 @@ import * as css from './UrlPreviewCard.css';
 import { tryDecodeURIComponent } from '../../utils/dom';
 import { mxcUrlToHttp } from '../../utils/matrix';
 import { useMediaAuthentication } from '../../hooks/useMediaAuthentication';
+import { ImageViewer } from '../image-viewer';
+import { Image, Video } from '../media';
+import { ImageContent, VideoContent } from '../message';
 
 const linkStyles = { color: color.Success.Main };
+const TARGET_HEIGHT = 300;
 
-export const UrlPreviewCard = as<'div', { url: string; ts: number }>(
-  ({ url, ts, ...props }, ref) => {
+export const UrlPreviewCard = as<'div', { url: string; ts: number, mediaType?: string | null }>(
+  ({ url, ts, mediaType, ...props }, ref) => {
     const mx = useMatrixClient();
     const useAuthentication = useMediaAuthentication();
+
+    const isDirect = !!mediaType;
+
+    const [mediaDim, setMediaDim] = useState<{ w: number; h: number } | null>(null);
+    const calculatedWidth = mediaDim ? Math.ceil((TARGET_HEIGHT * mediaDim.w) / mediaDim.h) : undefined;
+
     const [previewStatus, loadPreview] = useAsyncCallback(
-      useCallback(() => mx.getUrlPreview(url, ts), [url, ts, mx])
+      useCallback(() => {
+        if (isDirect) return Promise.resolve(null);
+        return mx.getUrlPreview(url, ts);
+      }, [url, ts, mx, isDirect])
     );
 
     useEffect(() => {
       loadPreview();
-    }, [loadPreview]);
+    }, [url, loadPreview]);
 
     if (previewStatus.status === AsyncStatus.Error) return null;
 
-    const renderContent = (prev: IPreviewUrlResponse) => {
-      const imgUrl = mxcUrlToHttp(mx, prev['og:image'] || '', useAuthentication, 256, 256, 'scale', false);
+    const renderContent = (prev: IPreviewUrlResponse | null) => {
+      const imgUrl = isDirect
+        ? url
+        : mxcUrlToHttp(mx, prev?.['og:image'] || '', useAuthentication, 256, 256, 'scale', false);
+
+      if (!imgUrl) return null;
+
+      const title = prev?.['og:title'] || (isDirect ? 'Image Preview' : '');
+      const siteName = prev?.['og:site_name'];
+      const description = prev?.['og:description'];
+
+      if (isDirect) {
+        if (mediaType === 'video') {
+          return (
+            <VideoContent
+              body={title}
+              mimeType="video/mp4"
+              url={imgUrl}
+              info={{} as any}
+              autoPlay
+              style={{
+                display: 'block',
+                height: TARGET_HEIGHT,
+                width: calculatedWidth ? `${calculatedWidth}px` : 'auto',
+                minWidth: calculatedWidth ? 0 : 200,
+                position: 'relative',
+              }}
+              renderVideo={(p) => (
+                <Video
+                  {...p}
+                  src={p.src || imgUrl}
+                  autoPlay={true}
+                  muted={true}
+                  loop={true}
+                  controls={false}
+                  playsInline={true}
+                  onLoadedMetadata={(e: any) => {
+                    const vid = e.target;
+                    if (vid && vid.videoWidth && vid.videoHeight) {
+                      setMediaDim({ w: vid.videoWidth, h: vid.videoHeight });
+                    }
+                    if (p.onLoadedMetadata) p.onLoadedMetadata();
+                  }}
+                  style={{
+                    width: '100%',
+                    height: '100%',
+                    display: 'block',
+                    borderRadius: 8,
+                    objectFit: 'contain',
+                  }}
+                />
+              )}
+            />
+          );
+        }
+
+        return (
+          <ImageContent
+            body={title}
+            url={imgUrl}
+            autoPlay
+            style={{
+              display: 'block',
+              height: TARGET_HEIGHT,
+              width: calculatedWidth ? `${calculatedWidth}px` : 'auto',
+              minWidth: calculatedWidth ? 0 : 100,
+              position: 'relative',
+            }}
+            renderImage={(p) => (
+              <Image
+                {...p}
+                src={p.src || imgUrl}
+                loading="lazy"
+                onLoad={(e: any) => {
+                  const img = e.target;
+                  if (img && img.naturalWidth && img.naturalHeight) {
+                    setMediaDim({ w: img.naturalWidth, h: img.naturalHeight });
+                  }
+                  if (p.onLoad) p.onLoad();
+                }}
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  display: 'block',
+                  borderRadius: 8,
+                  objectFit: 'contain',
+                }}
+              />
+            )}
+            renderViewer={(p) => <ImageViewer {...p} src={p.src || imgUrl} />}
+          />
+        );
+      }
 
       return (
         <>
-          {imgUrl && <UrlPreviewImg src={imgUrl} alt={prev['og:title']} title={prev['og:title']} />}
+          <UrlPreviewImg
+            src={imgUrl}
+            alt="Media"
+            style={{
+              width: 'auto',
+              height: 'auto',
+              maxWidth: '100%',
+              maxHeight: '100px',
+              borderRadius: '8px',
+              objectFit: 'contain',
+              display: 'block',
+            }}
+          />
           <UrlPreviewContent>
-            <Text
-              style={linkStyles}
-              truncate
-              as="a"
-              href={url}
-              target="_blank"
-              rel="no-referrer"
-              size="T200"
-              priority="300"
-            >
-              {typeof prev['og:site_name'] === 'string' && `${prev['og:site_name']} | `}
+            <Text style={linkStyles} truncate as="a" href={url} target="_blank" rel="no-referrer" size="T200" priority="300">
+              {typeof siteName === 'string' && `${siteName} | `}
               {tryDecodeURIComponent(url)}
             </Text>
-            <Text truncate priority="400">
-              <b>{prev['og:title']}</b>
-            </Text>
-            <Text size="T200" priority="300">
-              <UrlPreviewDescription>{prev['og:description']}</UrlPreviewDescription>
-            </Text>
+            {title && (
+              <Text truncate priority="400">
+                <b>{title}</b>
+              </Text>
+            )}
+            {description && (
+              <Text size="T200" priority="300">
+                <UrlPreviewDescription>{description}</UrlPreviewDescription>
+              </Text>
+            )}
           </UrlPreviewContent>
         </>
       );
     };
 
     return (
-      <UrlPreview {...props} ref={ref}>
+      <UrlPreview
+        {...props}
+        ref={ref}
+        style={
+          isDirect
+            ? {
+              background: 'transparent',
+              border: 'none',
+              padding: 0,
+              boxShadow: 'none',
+              display: 'inline-block',
+              verticalAlign: 'middle',
+              width: calculatedWidth ? `${calculatedWidth}px` : 'max-content',
+              minWidth: 0,
+              maxWidth: '100%',
+              margin: 0,
+            }
+            : {
+              width: '600px',
+            }
+        }
+      >
         {previewStatus.status === AsyncStatus.Success ? (
           renderContent(previewStatus.data)
         ) : (

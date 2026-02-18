@@ -45,6 +45,18 @@ type RenderMessageContentProps = {
   linkifyOpts: Opts;
   outlineAttachment?: boolean;
 };
+
+// Checks for supported direct preview file types
+const getMediaType = (url: string) => {
+  const cleanUrl = url.toLowerCase();
+  if (cleanUrl.match(/\.(mp4|webm|ogg)$/i)) return 'video';
+  if (
+    cleanUrl.match(/\.(png|jpg|jpeg|gif|webp)$/i) ||
+    cleanUrl.match(/@(jpeg|webp|png|jpg)$/i)
+  ) return 'image';
+  return null;
+};
+
 export function RenderMessageContent({
   displayName,
   msgType,
@@ -61,10 +73,27 @@ export function RenderMessageContent({
   const renderUrlsPreview = (urls: string[]) => {
     const filteredUrls = urls.filter((url) => !testMatrixTo(url));
     if (filteredUrls.length === 0) return undefined;
+
+    const analyzed = filteredUrls.map(url => ({
+      url,
+      type: getMediaType(url)
+    }));
+
+    const mediaLinks = analyzed.filter(item => item.type !== null);
+
+    const toRender = mediaLinks.length > 0
+      ? mediaLinks
+      : [analyzed[0]];
+
     return (
       <UrlPreviewHolder>
-        {filteredUrls.map((url) => (
-          <UrlPreviewCard key={url} url={url} ts={ts} />
+        {toRender.map(({ url, type }) => (
+          <UrlPreviewCard
+            key={url}
+            url={url}
+            ts={ts}
+            mediaType={type}
+          />
         ))}
       </UrlPreviewHolder>
     );
@@ -217,13 +246,13 @@ export function RenderMessageContent({
               renderThumbnail={
                 mediaAutoLoad
                   ? () => (
-                      <ThumbnailContent
-                        info={info}
-                        renderImage={(src) => (
-                          <Image alt={body} title={body} src={src} loading="lazy" />
-                        )}
-                      />
-                    )
+                    <ThumbnailContent
+                      info={info}
+                      renderImage={(src) => (
+                        <Image alt={body} title={body} src={src} loading="lazy" />
+                      )}
+                    />
+                  )
                   : undefined
               }
               renderVideo={(p) => <Video {...p} />}
