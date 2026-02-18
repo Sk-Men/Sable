@@ -5,6 +5,7 @@ import { getMemberDisplayName } from '../../utils/room';
 import { getMxIdLocalPart } from '../../utils/matrix';
 import { UserAvatar } from '../user-avatar';
 import * as css from './style.css';
+import { useSableCosmetics } from '../../hooks/useSableCosmetics';
 
 const getName = (room: Room, member: RoomMember) =>
   getMemberDisplayName(room, member.userId) ?? getMxIdLocalPart(member.userId) ?? member.userId;
@@ -26,6 +27,10 @@ export const MemberTile = as<'button', MemberTileProps>(
       ? mx.mxcUrlToHttp(avatarMxcUrl, 100, 100, 'crop', undefined, false, useAuthentication)
       : undefined;
 
+
+    // Sable username color and fonts
+    const { color, font } = useSableCosmetics(member.userId, room);
+
     return (
       <AsMemberTile className={css.MemberTile} {...props} ref={ref}>
         <Avatar size="300" radii="400">
@@ -37,7 +42,8 @@ export const MemberTile = as<'button', MemberTileProps>(
           />
         </Avatar>
         <Box grow="Yes" as="span" direction="Column">
-          <Text as="span" size="T300" truncate>
+          <Text as="span" size="T300" truncate
+            style={{ color, fontFamily: font }}>
             <b>{name}</b>
           </Text>
           <Box alignItems="Center" justifyContent="SpaceBetween" gap="100">

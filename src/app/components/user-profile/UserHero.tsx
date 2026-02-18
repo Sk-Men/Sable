@@ -21,10 +21,7 @@ import { UserPresence } from '../../hooks/useUserPresence';
 import { AvatarPresence, PresenceBadge } from '../presence';
 import { ImageViewer } from '../image-viewer';
 import { stopPropagation } from '../../utils/keyboard';
-import { useMatrixClient } from '../../hooks/useMatrixClient';
 import { useRoom } from '../../hooks/useRoom';
-import { EventTimeline, EventTimelineSet } from 'matrix-js-sdk';
-import { StateEvent } from '../../../types/matrix/room';
 import { useSableCosmetics } from '../../hooks/useSableCosmetics';
 
 type UserHeroProps = {
