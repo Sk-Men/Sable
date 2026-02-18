@@ -117,15 +117,11 @@ import { useRoomNavigate } from '../../hooks/useRoomNavigate';
 import { useMediaAuthentication } from '../../hooks/useMediaAuthentication';
 import { useIgnoredUsers } from '../../hooks/useIgnoredUsers';
 import { useImagePackRooms } from '../../hooks/useImagePackRooms';
-import { useIsDirectRoom } from '../../hooks/useRoom';
 import { useOpenUserRoomProfile } from '../../state/hooks/userRoomProfile';
 import { useSpaceOptionally } from '../../hooks/useSpace';
 import { useRoomCreators } from '../../hooks/useRoomCreators';
 import { useRoomPermissions } from '../../hooks/useRoomPermissions';
-import { useAccessiblePowerTagColors, useGetMemberPowerTag } from '../../hooks/useMemberPowerTag';
-import { useTheme } from '../../hooks/useTheme';
-import { useRoomCreatorsTag } from '../../hooks/useRoomCreatorsTag';
-import { usePowerLevelTags } from '../../hooks/usePowerLevelTags';
+import { useGetMemberPowerTag } from '../../hooks/useMemberPowerTag';
 
 const TimelineFloat = as<'div', css.TimelineFloatVariants>(
   ({ position, className, ...props }, ref) => (
@@ -455,16 +451,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
   const powerLevels = usePowerLevelsContext();
   const creators = useRoomCreators(room);
 
-  const creatorsTag = useRoomCreatorsTag();
-  const powerLevelTags = usePowerLevelTags(room, powerLevels);
   const getMemberPowerTag = useGetMemberPowerTag(room, creators, powerLevels);
-
-  const theme = useTheme();
-  const accessiblePowerTagColors = useAccessiblePowerTagColors(
-    theme.kind,
-    creatorsTag,
-    powerLevelTags
-  );
 
   const permissions = useRoomPermissions(creators, powerLevels);
 
@@ -915,8 +902,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
       evt.stopPropagation();
       const userId = evt.currentTarget.getAttribute('data-user-id');
       if (!userId) {
-        console.warn('Button should have "data-user-id" attribute!');
-        return;
+        throw new Error('Button should have "data-user-id" attribute!');
       }
       openUserRoomProfile(
         room.roomId,
@@ -932,8 +918,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
       evt.preventDefault();
       const userId = evt.currentTarget.getAttribute('data-user-id');
       if (!userId) {
-        console.warn('Button should have "data-user-id" attribute!');
-        return;
+        throw new Error('Button should have "data-user-id" attribute!');
       }
       const name = getMemberDisplayName(room, userId) ?? getMxIdLocalPart(userId) ?? userId;
       editor.insertNode(
@@ -953,8 +938,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
     (evt, startThread = false) => {
       const replyId = evt.currentTarget.getAttribute('data-event-id');
       if (!replyId) {
-        console.warn('Button should have "data-event-id" attribute!');
-        return;
+        throw new Error('Button should have "data-event-id" attribute!');
       }
       const replyEvt = room.findEventById(replyId);
       if (!replyEvt) return;
