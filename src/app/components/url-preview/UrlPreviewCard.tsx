@@ -47,13 +47,12 @@ export const UrlPreviewCard = as<'div', { url: string; ts: number, mediaType?: s
         ? url
         : mxcUrlToHttp(mx, prev?.['og:image'] || '', useAuthentication, 256, 256, 'scale', false);
 
-      if (!imgUrl) return null;
-
       const title = prev?.['og:title'] || (isDirect ? 'Image Preview' : '');
       const siteName = prev?.['og:site_name'];
       const description = prev?.['og:description'];
 
       if (isDirect) {
+        if (!imgUrl) return null;
         if (mediaType === 'video') {
           return (
             <VideoContent
@@ -73,11 +72,11 @@ export const UrlPreviewCard = as<'div', { url: string; ts: number, mediaType?: s
                 <Video
                   {...p}
                   src={p.src || imgUrl}
-                  autoPlay={true}
-                  muted={true}
-                  loop={true}
+                  autoPlay
+                  muted
+                  loop
                   controls={false}
-                  playsInline={true}
+                  playsInline
                   onLoadedMetadata={(e: any) => {
                     const vid = e.target;
                     if (vid && vid.videoWidth && vid.videoHeight) {
@@ -138,19 +137,21 @@ export const UrlPreviewCard = as<'div', { url: string; ts: number, mediaType?: s
 
       return (
         <>
-          <UrlPreviewImg
-            src={imgUrl}
-            alt="Media"
-            style={{
-              width: 'auto',
-              height: 'auto',
-              maxWidth: '100%',
-              maxHeight: '100px',
-              borderRadius: '8px',
-              objectFit: 'contain',
-              display: 'block',
-            }}
-          />
+          {imgUrl && (
+            <UrlPreviewImg
+              src={imgUrl}
+              alt="Media"
+              style={{
+                width: 'auto',
+                height: 'auto',
+                maxWidth: '100%',
+                maxHeight: '100px',
+                borderRadius: '8px',
+                objectFit: 'contain',
+                display: 'block',
+              }}
+            />
+          )}
           <UrlPreviewContent>
             <Text style={linkStyles} truncate as="a" href={url} target="_blank" rel="no-referrer" size="T200" priority="300">
               {typeof siteName === 'string' && `${siteName} | `}
@@ -170,6 +171,7 @@ export const UrlPreviewCard = as<'div', { url: string; ts: number, mediaType?: s
         </>
       );
     };
+
 
     return (
       <UrlPreview
