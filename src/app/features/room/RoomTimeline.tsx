@@ -796,6 +796,45 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
     }
   }, []);
 
+  // Rescroll to bottom when images load at the start
+  useEffect(() => {
+    const scrollEl = scrollRef.current;
+    const contentEl = scrollEl?.firstElementChild as HTMLElement;
+    if (!scrollEl || !contentEl) return () => { };
+
+    let lastScrollTop = scrollEl.scrollTop;
+    let userIsScrollingUp = false;
+
+    // Track if user is scrolling up
+    const handleScroll = () => {
+      if (scrollEl.scrollTop < lastScrollTop) {
+        userIsScrollingUp = true;
+      } else if (scrollEl.scrollHeight - scrollEl.scrollTop <= scrollEl.clientHeight + 10) {
+        userIsScrollingUp = false;
+      }
+      lastScrollTop = scrollEl.scrollTop;
+    };
+
+    const forceScroll = () => {
+      // if the user isn't scrolling jump down to latest content
+      if (!userIsScrollingUp) {
+        scrollToBottom(scrollEl, 'instant');
+      }
+    };
+
+    const resizeObserver = new ResizeObserver(() => {
+      requestAnimationFrame(forceScroll);
+    });
+
+    scrollEl.addEventListener('scroll', handleScroll, { passive: true });
+    resizeObserver.observe(contentEl);
+
+    return () => {
+      resizeObserver.disconnect();
+      scrollEl.removeEventListener('scroll', handleScroll);
+    };
+  }, [room]);
+
   // if live timeline is linked and unreadInfo change
   // Scroll to last read message
   useLayoutEffect(() => {
