@@ -28,10 +28,10 @@ globalStyle(`
 });
 
 globalStyle(`
-    button[class*="styles_UserHeroAvatar"]:hover,
-    [class*="RoomPinMenu_PinMenuContent"] [class*="layout_AvatarBase"]:hover,
-    [class*="RoomPinMenu_PinMenuContent"] [class*="UserAvatar"]:hover,
-    [class*="RoomPinMenu_PinMenuContent"] button:has([class*="UserAvatar"]):hover
+    button[class*="_1684mq51"]:has(img):hover,
+    [data-index] [class*="_1r9nvaso"]:hover,
+    [data-index] [class*="_1r9nvaso"] *:hover,
+    [data-index] button:has(p):hover
 `, {
-    transform: 'none',
+    transform: 'none !important',
 });

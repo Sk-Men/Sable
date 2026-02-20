@@ -37,10 +37,10 @@ export const messageList = style({
   width: '100%',
 });
 
-globalStyle(`${messageList} [class*="layout_MessageBase"]`, {
-  transition: 'background-color 0.1s ease !important',
+globalStyle(`body ${messageList} [data-message-id]`, {
+  transition: 'background-color 0.1s ease-in-out !important',
 });
 
-globalStyle(`${messageList} [class*="layout_MessageBase"]:hover`, {
+globalStyle(`body ${messageList} [data-message-id]:hover`, {
   backgroundColor: 'var(--sable-surface-container-hover) !important',
 });
