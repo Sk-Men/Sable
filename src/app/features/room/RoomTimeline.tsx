@@ -1699,6 +1699,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
       )}
       <Scroll ref={scrollRef} visibility="Hover">
         <Box
+          className={css.messageList}
           direction="Column"
           justifyContent="End"
           style={{ minHeight: '100%', padding: `${config.space.S600} 0` }}

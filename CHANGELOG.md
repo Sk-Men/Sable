@@ -12,6 +12,7 @@
   - Reset's the dm room name to the name of the other user (on both ends).
   - Same as saving a blank room name.
 - New UI colors & fonts.
+- Lighten on currently hovered message.
 - Added Cosmetics tab to room and space settings.
 - New cosmetic commands, requires power level 50. Permission located in Cosmetics tab.
   - /color #ffffff -> change your name color for a room
