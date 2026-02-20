@@ -1,7 +1,12 @@
 # Sable Client Changelog
 
+## Version 0.0.2
+- In development
+
 ## Version 0.0.1
 
+- Releases provided in releases tab. Versions for Windows & Linux built via electron. Android build coming soon.
+- Merged voice & video calls from Cinny PR #2599
 - Client-side previews for some image and video formats.
   - Will attempt to preview all image/video links in a message, if there are none, it generates a standard preview, forwarding the request to the homeserver.
   - Bug fix for images/links/anything that loads after room is opened, properly shifting the scroll to the bottom.
@@ -12,6 +17,7 @@
   - Reset's the dm room name to the name of the other user (on both ends).
   - Same as saving a blank room name.
 - New UI colors & fonts.
+- Fixed background & header for PWA on iOS devices.
 - Lighten on currently hovered message.
 - Added Cosmetics tab to room and space settings.
 - New cosmetic commands, requires power level 50. Permission located in Cosmetics tab.
