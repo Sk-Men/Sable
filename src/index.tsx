@@ -48,6 +48,26 @@ if ('serviceWorker' in navigator) {
   window.addEventListener('pageshow', sendSessionToSW);
 }
 
+const injectIOSMetaTags = () => {
+  const metaTags = [
+    { name: 'theme-color', content: '#0C0B0F' },
+    { name: 'apple-mobile-web-app-capable', content: 'yes' },
+    { name: 'apple-mobile-web-app-status-bar-style', content: 'black-translucent' },
+  ];
+
+  metaTags.forEach((tag) => {
+    let element = document.querySelector(`meta[name="${tag.name}"]`);
+    if (!element) {
+      element = document.createElement('meta');
+      element.setAttribute('name', tag.name);
+      document.head.appendChild(element);
+    }
+    element.setAttribute('content', tag.content);
+  });
+};
+
+injectIOSMetaTags();
+
 const mountApp = () => {
   const rootContainer = document.getElementById('root');
 

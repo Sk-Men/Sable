@@ -53,6 +53,7 @@ body {
   font-family: var(--font-secondary);
   font-size: 16px;
   font-weight: 400;
+  background-color: var(--sable-bg-container);
 }
 #root {
   width: 100%;
