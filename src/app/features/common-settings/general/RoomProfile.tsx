@@ -210,7 +210,7 @@ export function RoomProfileEdit({
               alt={name}
               renderFallback={() => (
                 <RoomIcon
-                  space={room.isSpaceRoom()}
+                  roomType={room.getType()}
                   size="400"
                   joinRule={joinRule?.join_rule ?? JoinRule.Invite}
                   filled
@@ -375,7 +375,7 @@ export function RoomProfile({ permissions }: RoomProfileProps) {
                   alt={name}
                   renderFallback={() => (
                     <RoomIcon
-                      space={room.isSpaceRoom()}
+                      roomType={room.getType()}
                       size="400"
                       joinRule={joinRule?.join_rule ?? JoinRule.Invite}
                       filled

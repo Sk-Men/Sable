@@ -109,7 +109,7 @@ export function SpaceSettings({ initialPage, requestClose }: SpaceSettingsProps)
                     alt={roomName}
                     renderFallback={() => (
                       <RoomIcon
-                        space
+                        roomType={room.getType()}
                         size="50"
                         joinRule={joinRuleContent?.join_rule ?? JoinRule.Invite}
                         filled
