@@ -9,6 +9,8 @@ export enum MessageLayout {
   Bubble = 2,
 }
 
+export type JumboEmojiSize = 'none' | 'extraSmall' | 'small' | 'normal' | 'large' | 'extraLarge';
+
 export interface Settings {
   themeId?: string;
   useSystemTheme: boolean;
@@ -41,6 +43,9 @@ export interface Settings {
   dateFormatString: string;
 
   developerTools: boolean;
+
+  // Cosmetics!
+  jumboEmojiSize: JumboEmojiSize;
 }
 
 const defaultSettings: Settings = {
@@ -75,6 +80,9 @@ const defaultSettings: Settings = {
   dateFormatString: 'D MMM YYYY',
 
   developerTools: false,
+
+  // Cosmetics!
+  jumboEmojiSize: 'normal'
 };
 
 export const getSettings = () => {
