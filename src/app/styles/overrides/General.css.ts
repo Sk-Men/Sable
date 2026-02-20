@@ -26,3 +26,12 @@ globalStyle(`
 `, {
     transform: 'translateY(-1px)',
 });
+
+globalStyle(`
+    button[class*="styles_UserHeroAvatar"]:hover,
+    [class*="RoomPinMenu_PinMenuContent"] [class*="layout_AvatarBase"]:hover,
+    [class*="RoomPinMenu_PinMenuContent"] [class*="UserAvatar"]:hover,
+    [class*="RoomPinMenu_PinMenuContent"] button:has([class*="UserAvatar"]):hover
+`, {
+    transform: 'none',
+});
