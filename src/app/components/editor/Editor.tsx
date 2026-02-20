@@ -16,6 +16,7 @@ import {
   RenderLeafProps,
   RenderElementProps,
   RenderPlaceholderProps,
+  ReactEditor,
 } from 'slate-react';
 import { withHistory } from 'slate-history';
 import { BlockType } from './types';
@@ -23,6 +24,7 @@ import { RenderElement, RenderLeaf } from './Elements';
 import { CustomElement } from './slate';
 import * as css from './Editor.css';
 import { toggleKeyboardShortcut } from './keyboard';
+import { mobileOrTablet } from '../../utils/user-agent';
 
 const initialValue: CustomElement[] = [
   {
@@ -99,7 +101,13 @@ export const CustomEditor = forwardRef<HTMLDivElement, CustomEditorProps>(
 
     const handleKeydown: KeyboardEventHandler = useCallback(
       (evt) => {
+        // mobile ignores config option
+        if (mobileOrTablet() && evt.key === 'Enter' && !evt.shiftKey) {
+          return;
+        }
+
         onKeyDown?.(evt);
+
         const shortcutToggled = toggleKeyboardShortcut(editor, evt);
         if (shortcutToggled) evt.preventDefault();
       },
@@ -146,6 +154,8 @@ export const CustomEditor = forwardRef<HTMLDivElement, CustomEditorProps>(
                 onKeyDown={handleKeydown}
                 onKeyUp={onKeyUp}
                 onPaste={onPaste}
+                // keeps focus after pressing send.
+                onBlur={() => { if (mobileOrTablet()) ReactEditor.focus(editor); }}
               />
             </Scroll>
             {after && (
