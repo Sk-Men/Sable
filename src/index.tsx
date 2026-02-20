@@ -8,6 +8,8 @@ import { configClass, varsClass } from 'folds';
 enableMapSet();
 
 import './index.css';
+import './app/styles/themes.css';
+import './app/styles/overrides/General.css';
 
 import { trimTrailingSlash } from './app/utils/common';
 import App from './app/pages/App';

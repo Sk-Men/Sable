@@ -54,6 +54,7 @@ import { useMatrixClient } from '../../../hooks/useMatrixClient';
 import { getEditedEvent, getMentionContent, trimReplyFromFormattedBody } from '../../../utils/room';
 import { mobileOrTablet } from '../../../utils/user-agent';
 import { useComposingCheck } from '../../../hooks/useComposingCheck';
+import { floatingEditor } from '../../../styles/overrides/Composer.css';
 
 type MessageEditorProps = {
   roomId: string;
@@ -230,7 +231,7 @@ export const MessageEditor = as<'div', MessageEditorProps>(
     }, [saveState, onCancel]);
 
     return (
-      <div {...props} ref={ref}>
+      <div {...props} ref={ref} className={`${props.className || ''} ${floatingEditor}`.trim()}>
         {autocompleteQuery?.prefix === AutocompletePrefix.RoomMention && (
           <RoomMentionAutocomplete
             roomId={roomId}
