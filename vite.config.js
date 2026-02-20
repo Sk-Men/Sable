@@ -10,6 +10,7 @@ import { VitePWA } from 'vite-plugin-pwa';
 import fs from 'fs';
 import path from 'path';
 import buildConfig from './build.config';
+import svgr from 'vite-plugin-svgr';
 
 const copyFiles = {
   targets: [
@@ -98,6 +99,9 @@ export default defineConfig({
     vanillaExtractPlugin(),
     wasm(),
     react(),
+    svgr({
+      exportAsDefault: true
+    }),
     VitePWA({
       srcDir: 'src',
       filename: 'sw.ts',
