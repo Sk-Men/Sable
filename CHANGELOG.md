@@ -4,6 +4,9 @@
 
 - Client-side previews for some image and video formats.
   - Will attempt to preview all image/video links in a message, if there are none, it generates a standard preview, forwarding the request to the homeserver.
+  - Bug fix for images/links/anything that loads after room is opened, properly shifting the scroll to the bottom.
+- Inline editor for editing messages
+- More reactive UI (literally just buttons shifting up and shrinking on click)
 - Added name colors and fonts to the member list sidebar.
 - Added a reset button to the room name input box for dms.
   - Reset's the dm room name to the name of the other user (on both ends).
