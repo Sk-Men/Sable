@@ -150,6 +150,8 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
 
     const sendTypingStatus = useTypingStatusUpdater(mx, roomId);
 
+    const [inputKey, setInputKey] = useState(0);
+
     const handleFiles = useCallback(
       async (files: File[]) => {
         setUploadBoard(true);
@@ -349,8 +351,12 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
         }
       }
       mx.sendMessage(roomId, content as any);
+
       resetEditor(editor);
       resetEditorHistory(editor);
+
+      setInputKey(prev => prev + 1);
+
       setReplyDraft(undefined);
       sendTypingStatus(false);
     }, [mx, roomId, editor, replyDraft, sendTypingStatus, setReplyDraft, isMarkdown, commands]);
@@ -515,6 +521,7 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
         <CustomEditor
           editableName="RoomInput"
           editor={editor}
+          key={inputKey}
           placeholder="Send a message..."
           onKeyDown={handleKeyDown}
           onKeyUp={handleKeyUp}
