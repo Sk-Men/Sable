@@ -25,6 +25,8 @@ import { useRoomPermissions } from '../../hooks/useRoomPermissions';
 import { useRoomCreators } from '../../hooks/useRoomCreators';
 import { usePowerLevelsContext } from '../../hooks/usePowerLevels';
 import { useRoomName } from '../../hooks/useRoomMeta';
+import { useAtomValue } from 'jotai';
+import { nicknamesAtom } from '../../state/nicknames';
 
 type OriginalStyles = {
   position?: string;
@@ -81,8 +83,9 @@ export function CallView({ room }: { room: Room }) {
   const callIsCurrentAndReady = isActiveCallRoom && isActiveCallReady;
   const callMembers = useCallMembers(mx, room.roomId);
 
+  const nicknames = useAtomValue(nicknamesAtom);
   const getName = (userId: string) =>
-    getMemberDisplayName(room, userId) ?? getMxIdLocalPart(userId);
+    getMemberDisplayName(room, userId, nicknames) ?? getMxIdLocalPart(userId);
 
   const memberDisplayNames = callMembers.map((callMembership) =>
     getName(callMembership.sender ?? '')

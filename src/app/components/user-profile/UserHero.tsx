@@ -23,6 +23,7 @@ import { ImageViewer } from '../image-viewer';
 import { stopPropagation } from '../../utils/keyboard';
 import { useRoom } from '../../hooks/useRoom';
 import { useSableCosmetics } from '../../hooks/useSableCosmetics';
+import { useNickname } from '../../hooks/useNickname';
 
 type UserHeroProps = {
   userId: string;
@@ -100,9 +101,12 @@ type UserHeroNameProps = {
 };
 export function UserHeroName({ displayName, userId }: UserHeroNameProps) {
   const username = getMxIdLocalPart(userId);
+  const nick = useNickname(userId);
 
   // Sable username color and fonts
   const { color, font } = useSableCosmetics(userId, useRoom());
+
+  const shownName = nick ?? displayName ?? username ?? userId;
 
   return (
     <Box grow="Yes" direction="Column" gap="0">
@@ -110,11 +114,16 @@ export function UserHeroName({ displayName, userId }: UserHeroNameProps) {
         <Text
           size="H4"
           className={classNames(BreakWord, LineClamp3)}
-          title={displayName ?? username}
+          title={shownName}
           style={{ color, fontFamily: font }}
         >
-          {displayName ?? username ?? userId}
+          {shownName}
         </Text>
+        {nick && (
+          <Text size="T200" priority="300" title={`Nickname (real: ${displayName ?? username})`}>
+            (nick)
+          </Text>
+        )}
       </Box>
       <Box alignItems="Center" gap="100" wrap="Wrap">
         <Text size="T200" className={classNames(BreakWord, LineClamp3)} title={username}>

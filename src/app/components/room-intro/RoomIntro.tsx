@@ -4,6 +4,7 @@ import { Room } from 'matrix-js-sdk';
 import { useAtomValue } from 'jotai';
 import { IRoomCreateContent, Membership, StateEvent } from '../../../types/matrix/room';
 import { getMemberDisplayName, getStateEvent } from '../../utils/room';
+import { nicknamesAtom } from '../../state/nicknames';
 import { useMatrixClient } from '../../hooks/useMatrixClient';
 import { getMxIdLocalPart, mxcUrlToHttp } from '../../utils/matrix';
 import { AsyncStatus, useAsyncCallback } from '../../hooks/useAsyncCallback';
@@ -27,6 +28,7 @@ export const RoomIntro = as<'div', RoomIntroProps>(({ room, ...props }, ref) => 
   const useAuthentication = useMediaAuthentication();
   const { navigateRoom } = useRoomNavigate();
   const mDirects = useAtomValue(mDirectAtom);
+  const nicknames = useAtomValue(nicknamesAtom);
   const [invitePrompt, setInvitePrompt] = useState(false);
 
   const createEvent = getStateEvent(room, StateEvent.RoomCreate);
@@ -39,7 +41,7 @@ export const RoomIntro = as<'div', RoomIntroProps>(({ room, ...props }, ref) => 
   const ts = createEvent?.getTs();
   const creatorId = createEvent?.getSender();
   const creatorName =
-    creatorId && (getMemberDisplayName(room, creatorId) ?? getMxIdLocalPart(creatorId));
+    creatorId && (getMemberDisplayName(room, creatorId, nicknames) ?? getMxIdLocalPart(creatorId));
   const prevRoomId = createContent?.predecessor?.room_id;
 
   const [prevRoomState, joinPrevRoom] = useAsyncCallback(

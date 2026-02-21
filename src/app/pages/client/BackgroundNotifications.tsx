@@ -1,5 +1,4 @@
-import { useEffect, useRef } from 'react';
-import { createClient, MatrixClient, MatrixEvent, Room, RoomEvent } from 'matrix-js-sdk';
+import { useEffect, useRef } from 'react';import { createClient, MatrixClient, MatrixEvent, Room, RoomEvent } from 'matrix-js-sdk';
 import { useAtomValue } from 'jotai';
 import { sessionsAtom, activeSessionIdAtom, Session } from '../../state/sessions';
 import { notificationPermission } from '../../utils/dom';
@@ -10,6 +9,7 @@ import { getMemberDisplayName, getNotificationType, isNotificationEvent } from '
 import { NotificationType } from '../../../types/matrix/room';
 import { createLogger } from '../../utils/debug';
 import LogoSVG from '../../../../public/res/svg/cinny.svg';
+import { nicknamesAtom } from '../../state/nicknames';
 
 const log = createLogger('BackgroundNotifications');
 
@@ -29,6 +29,9 @@ export function BackgroundNotifications() {
   const sessions = useAtomValue(sessionsAtom);
   const activeSessionId = useAtomValue(activeSessionIdAtom);
   const [showNotifications] = useSetting(settingsAtom, 'showNotifications');
+  const nicknames = useAtomValue(nicknamesAtom);
+  const nicknamesRef = useRef(nicknames);
+  nicknamesRef.current = nicknames;
   const clientsRef = useRef<Map<string, MatrixClient>>(new Map());
 
   const inactiveSessions = sessions.filter(
@@ -73,7 +76,7 @@ export function BackgroundNotifications() {
             if (!sender || sender === mx.getUserId()) return;
 
             const senderName =
-              getMemberDisplayName(room, sender) ?? getMxIdLocalPart(sender) ?? sender;
+              getMemberDisplayName(room, sender, nicknamesRef.current) ?? getMxIdLocalPart(sender) ?? sender;
             const accountLabel = getMxIdLocalPart(session.userId) ?? session.userId;
 
             const noti = new window.Notification(`${room.name ?? 'Unknown'} (${accountLabel})`, {

@@ -7,6 +7,8 @@ import { UserAvatar } from '../../components/user-avatar';
 import { useMatrixClient } from '../../hooks/useMatrixClient';
 import { getMxIdLocalPart } from '../../utils/matrix';
 import { getMemberAvatarMxc, getMemberDisplayName } from '../../utils/room';
+import { useAtomValue } from 'jotai';
+import { nicknamesAtom } from '../../state/nicknames';
 import { useMediaAuthentication } from '../../hooks/useMediaAuthentication';
 import { useOpenUserRoomProfile } from '../../state/hooks/userRoomProfile';
 import { useSpaceOptionally } from '../../hooks/useSpace';
@@ -43,7 +45,8 @@ export function CallViewUser({ room, callMembership }: CallViewUserProps) {
   const avatarUrl = avatarMxcUrl
     ? mx.mxcUrlToHttp(avatarMxcUrl, 32, 32, 'crop', undefined, false, useAuthentication)
     : undefined;
-  const getName = getMemberDisplayName(room, userId) ?? getMxIdLocalPart(userId);
+  const nicknames = useAtomValue(nicknamesAtom);
+  const getName = getMemberDisplayName(room, userId, nicknames) ?? getMxIdLocalPart(userId);
 
   const handleUserClick: React.MouseEventHandler<HTMLButtonElement> = (evt) => {
     openProfile(room.roomId, space?.roomId, userId, evt.currentTarget.getBoundingClientRect());

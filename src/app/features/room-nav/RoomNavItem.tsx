@@ -60,6 +60,8 @@ import { useRoomNavigate } from '../../hooks/useRoomNavigate';
 import { ScreenSize, useScreenSizeContext } from '../../hooks/useScreenSize';
 import { RoomNavUser } from './RoomNavUser';
 import { useRoomName } from '../../hooks/useRoomMeta';
+import { useAtomValue } from 'jotai';
+import { nicknamesAtom } from '../../state/nicknames';
 
 type RoomNavItemMenuProps = {
   room: Room;
@@ -260,7 +262,10 @@ export function RoomNavItem({
 
   const powerLevels = usePowerLevels(room);
   const creators = useRoomCreators(room);
-  const roomName = useRoomName(room);
+  const nicknames = useAtomValue(nicknamesAtom);
+  const dmUserId = direct ? room.getAvatarFallbackMember()?.userId : undefined;
+  const matrixRoomName = useRoomName(room);
+  const roomName = (dmUserId && nicknames[dmUserId]) || matrixRoomName;
 
   const permissions = useRoomPermissions(creators, powerLevels);
   const canJoinCall = permissions.event(EventType.GroupCallMemberPrefix, mx.getSafeUserId());

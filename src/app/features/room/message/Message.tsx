@@ -59,6 +59,8 @@ import {
   mxcUrlToHttp,
 } from '../../../utils/matrix';
 import { MessageLayout, MessageSpacing } from '../../../state/settings';
+import { nicknamesAtom, setNicknameAtom } from '../../../state/nicknames';
+import { useAtomValue, useSetAtom } from 'jotai';
 import { useMatrixClient } from '../../../hooks/useMatrixClient';
 import { useRecentEmoji } from '../../../hooks/useRecentEmoji';
 import * as css from './styles.css';
@@ -727,9 +729,13 @@ export const Message = as<'div', MessageProps>(
     const { focusWithinProps } = useFocusWithin({ onFocusWithinChange: setHover });
     const [menuAnchor, setMenuAnchor] = useState<RectCords>();
     const [emojiBoardAnchor, setEmojiBoardAnchor] = useState<RectCords>();
+    const [nickEditOpen, setNickEditOpen] = useState(false);
+    const [nickDraft, setNickDraft] = useState('');
+    const nicknames = useAtomValue(nicknamesAtom);
+    const setNickname = useSetAtom(setNicknameAtom);
 
     const senderDisplayName =
-      getMemberDisplayName(room, senderId) ?? getMxIdLocalPart(senderId) ?? senderId;
+      getMemberDisplayName(room, senderId, nicknames) ?? getMxIdLocalPart(senderId) ?? senderId;
     const senderAvatarMxc = getMemberAvatarMxc(room, senderId);
 
     const tagIconSrc = memberPowerTag?.icon
@@ -855,6 +861,7 @@ export const Message = as<'div', MessageProps>(
 
     const closeMenu = () => {
       setMenuAnchor(undefined);
+      setNickEditOpen(false);
     };
 
     const handleOpenEmojiBoard: MouseEventHandler<HTMLButtonElement> = (evt) => {
@@ -1087,6 +1094,63 @@ export const Message = as<'div', MessageProps>(
                           <MessageCopyLinkItem room={room} mEvent={mEvent} onClose={closeMenu} />
                           {canPinEvent && (
                             <MessagePinItem room={room} mEvent={mEvent} onClose={closeMenu} />
+                          )}
+                          {senderId !== mx.getUserId() && (
+                            nickEditOpen ? (
+                              <Box direction="Column" gap="100" style={{ padding: `${config.space.S100} ${config.space.S200}` }}>
+                                <Text size="L400">Nickname</Text>
+                                <input
+                                  // eslint-disable-next-line jsx-a11y/no-autofocus
+                                  autoFocus
+                                  value={nickDraft}
+                                  onChange={(e) => setNickDraft(e.target.value)}
+                                  placeholder={senderDisplayName}
+                                  onKeyDown={(e) => {
+                                    if (e.key === 'Enter') {
+                                      setNickname(senderId, nickDraft || undefined);
+                                      closeMenu();
+                                    }
+                                    if (e.key === 'Escape') closeMenu();
+                                  }}
+                                  style={{
+                                    background: 'var(--mx-c-surface)',
+                                    color: 'var(--mx-c-on-surface)',
+                                    border: '1px solid var(--mx-c-outline)',
+                                    borderRadius: '6px',
+                                    padding: '4px 8px',
+                                    fontSize: '14px',
+                                    width: '100%',
+                                    outline: 'none',
+                                  }}
+                                />
+                                <Box gap="200">
+                                  <MenuItem size="300" radii="300" variant="Success" fill="None"
+                                    onClick={() => { setNickname(senderId, nickDraft || undefined); closeMenu(); }}>
+                                    <Text size="B300">Save</Text>
+                                  </MenuItem>
+                                  {nicknames[senderId] && (
+                                    <MenuItem size="300" radii="300" variant="Critical" fill="None"
+                                      onClick={() => { setNickname(senderId, undefined); closeMenu(); }}>
+                                      <Text size="B300">Clear</Text>
+                                    </MenuItem>
+                                  )}
+                                </Box>
+                              </Box>
+                            ) : (
+                              <MenuItem
+                                size="300"
+                                after={<Icon size="100" src={Icons.Pencil} />}
+                                radii="300"
+                                onClick={() => {
+                                  setNickDraft(nicknames[senderId] ?? '');
+                                  setNickEditOpen(true);
+                                }}
+                              >
+                                <Text className={css.MessageMenuItemText} as="span" size="T300" truncate>
+                                  {nicknames[senderId] ? 'Edit Nickname' : 'Set Nickname'}
+                                </Text>
+                              </MenuItem>
+                            )
                           )}
                         </Box>
                         {((!mEvent.isRedacted() && canDelete) ||

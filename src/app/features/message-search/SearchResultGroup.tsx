@@ -33,6 +33,8 @@ import { ImageViewer } from '../../components/image-viewer';
 import * as customHtmlCss from '../../styles/CustomHtml.css';
 import { RoomAvatar, RoomIcon } from '../../components/room-avatar';
 import { getMemberAvatarMxc, getMemberDisplayName, getRoomAvatarUrl } from '../../utils/room';
+import { useAtomValue } from 'jotai';
+import { nicknamesAtom } from '../../state/nicknames';
 import { ResultItem } from './useMessageSearch';
 import { SequenceCard } from '../../components/sequence-card';
 import { UserAvatar } from '../../components/user-avatar';
@@ -87,6 +89,7 @@ export function SearchResultGroup({
 
   const theme = useTheme();
   const accessibleTagColors = useAccessiblePowerTagColors(theme.kind, creatorsTag, powerLevelTags);
+  const nicknames = useAtomValue(nicknamesAtom);
 
   const mentionClickHandler = useMentionClickHandler(room.roomId);
   const spoilerClickHandler = useSpoilerClickHandler();
@@ -217,7 +220,7 @@ export function SearchResultGroup({
           const { event } = item;
 
           const displayName =
-            getMemberDisplayName(room, event.sender) ??
+            getMemberDisplayName(room, event.sender, nicknames) ??
             getMxIdLocalPart(event.sender) ??
             event.sender;
           const senderAvatarMxc = getMemberAvatarMxc(room, event.sender);
