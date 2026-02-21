@@ -1,6 +1,6 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { flushSync } from 'react-dom';
-import { useAlive } from './useAlive';
+import React, {useCallback, useEffect, useRef, useState} from 'react';
+import {flushSync} from 'react-dom';
+import {useAlive} from './useAlive';
 
 export enum AsyncStatus {
   Idle = 'idle',
@@ -42,29 +42,41 @@ export const useAsync = <TData, TError, TArgs extends unknown[]>(
   // we will throw all old request's response after they resolved.
   const reqNumberRef = useRef(0);
 
-  const callback: AsyncCallback<TArgs, TData> = useCallback(
-    async (...args) => {
-      queueMicrotask(() => {
-        // Warning: flushSync was called from inside a lifecycle method.
-        // React cannot flush when React is already rendering.
-        // Consider moving this call to a scheduler task or micro task.
-        flushSync(() => {
-          // flushSync because
-          // https://github.com/facebook/react/issues/26713#issuecomment-1872085134
-          onStateChange({
-            status: AsyncStatus.Loading,
+  return useCallback(
+      async (...args) => {
+        queueMicrotask(() => {
+          // Warning: flushSync was called from inside a lifecycle method.
+          // React cannot flush when React is already rendering.
+          // Consider moving this call to a scheduler task or micro task.
+          flushSync(() => {
+            // flushSync because
+            // https://github.com/facebook/react/issues/26713#issuecomment-1872085134
+            onStateChange({
+              status: AsyncStatus.Loading,
+            });
           });
         });
-      });
 
-      reqNumberRef.current += 1;
+        reqNumberRef.current += 1;
 
-      const currentReqNumber = reqNumberRef.current;
-      try {
-        const data = await asyncCallback(...args);
-        if (currentReqNumber !== reqNumberRef.current) {
-          throw new Error('AsyncCallbackHook: Request replaced!');
+        const currentReqNumber = reqNumberRef.current;
+        let data: TData;
+        try {
+          data = await asyncCallback(...args);
+        } catch (e) {
+          if (currentReqNumber !== reqNumberRef.current) return undefined as never;
+          if (alive()) {
+            queueMicrotask(() => {
+              onStateChange({
+                status: AsyncStatus.Error,
+                error: e as TError,
+              });
+            });
+          }
+          throw e;
         }
+
+        if (currentReqNumber !== reqNumberRef.current) return undefined as never;
         if (alive()) {
           queueMicrotask(() => {
             onStateChange({
@@ -74,38 +86,21 @@ export const useAsync = <TData, TError, TArgs extends unknown[]>(
           });
         }
         return data;
-      } catch (e) {
-        if (currentReqNumber !== reqNumberRef.current) {
-          throw new Error('AsyncCallbackHook: Request replaced!');
-        }
-
-        if (alive()) {
-          queueMicrotask(() => {
-            onStateChange({
-              status: AsyncStatus.Error,
-              error: e as TError,
-            });
-          });
-        }
-        throw e;
-      }
-    },
-    [asyncCallback, alive, onStateChange]
+      },
+      [asyncCallback, alive, onStateChange]
   );
-
-  return callback;
 };
 
 export const useAsyncCallback = <TData, TError, TArgs extends unknown[]>(
   asyncCallback: AsyncCallback<TArgs, TData>
-): [AsyncState<TData, TError>, AsyncCallback<TArgs, TData>] => {
+): [AsyncState<TData, TError>, AsyncCallback<TArgs, TData>, React.Dispatch<React.SetStateAction<AsyncState<TData, TError>>>] => {
   const [state, setState] = useState<AsyncState<TData, TError>>({
     status: AsyncStatus.Idle,
   });
 
   const callback = useAsync(asyncCallback, setState);
 
-  return [state, callback];
+  return [state, callback, setState];
 };
 
 export const useAsyncCallbackValue = <TData, TError>(

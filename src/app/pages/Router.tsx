@@ -67,9 +67,28 @@ import { HomeCreateRoom } from './client/home/CreateRoom';
 import { Create } from './client/create';
 import { CreateSpaceModalRenderer } from '../features/create-space';
 import { SearchModalRenderer } from '../features/search';
+import { getFallbackSession, MATRIX_SESSIONS_KEY, Sessions } from '../state/sessions';
+import { getLocalStorageItem } from '../state/utils/atomWithLocalStorage';
 import { getFallbackSession } from '../state/sessions';
 import { CallProvider } from './client/call/CallProvider';
 import { PersistentCallContainer } from './client/call/PersistentCallContainer';
+
+/**
+ * Returns true if there is at least one stored session.
+ * Reads localStorage directly — safe to call outside React (in route loaders).
+ */
+const hasStoredSession = (): boolean => {
+  const sessions = getLocalStorageItem<Sessions>(MATRIX_SESSIONS_KEY, []);
+  if (sessions.length > 0) return true;
+  return !!getFallbackSession();
+};
+
+/** Returns the first available session for the SW push. */
+const getFirstSession = () => {
+  const sessions = getLocalStorageItem<Sessions>(MATRIX_SESSIONS_KEY, []);
+  if (sessions.length > 0) return sessions[0];
+  return getFallbackSession();
+};
 
 export const createRouter = (clientConfig: ClientConfig, screenSize: ScreenSize) => {
   const { hashRouter } = clientConfig;
@@ -80,18 +99,18 @@ export const createRouter = (clientConfig: ClientConfig, screenSize: ScreenSize)
       <Route
         index
         loader={() => {
-          if (getFallbackSession()) return redirect(getHomePath());
+          if (hasStoredSession()) return redirect(getHomePath());
           const afterLoginPath = getAppPathFromHref(getOriginBaseUrl(), window.location.href);
           if (afterLoginPath) setAfterLoginRedirectPath(afterLoginPath);
           return redirect(getLoginPath());
         }}
       />
       <Route
-        loader={() => {
-          if (getFallbackSession()) {
-            return redirect(getHomePath());
-          }
-
+        loader={({ request }) => {
+          // Allow reaching the login page with ?addAccount=1 even when already logged in
+          const url = new URL(request.url);
+          if (url.searchParams.get('addAccount') === '1') return null;
+          if (hasStoredSession()) return redirect(getHomePath());
           return null;
         }}
         element={
@@ -108,7 +127,7 @@ export const createRouter = (clientConfig: ClientConfig, screenSize: ScreenSize)
 
       <Route
         loader={() => {
-          const session = getFallbackSession();
+          const session = getFirstSession();
           if (!session) {
             const afterLoginPath = getAppPathFromHref(
               getOriginBaseUrl(hashRouter),

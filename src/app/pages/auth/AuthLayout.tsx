@@ -7,6 +7,7 @@ import {
   useLocation,
   useNavigate,
   useParams,
+  useSearchParams,
 } from 'react-router-dom';
 import classNames from 'classnames';
 
@@ -69,6 +70,9 @@ export function AuthLayout() {
   const navigate = useNavigate();
   const location = useLocation();
   const { server: urlEncodedServer } = useParams();
+  const [searchParams] = useSearchParams();
+
+  const isAddingAccount = searchParams.get('addAccount') === '1';
 
   const clientConfig = useClientConfig();
 
@@ -93,17 +97,16 @@ export function AuthLayout() {
     if (server) discoverServer(server);
   }, [discoverServer, server]);
 
-  // if server is mismatches with path server, update path
+  // if server is mismatched with path server, update path — preserve all search params
   useEffect(() => {
     if (!urlEncodedServer || tryDecodeURIComponent(urlEncodedServer) !== server) {
-      navigate(
-        generatePath(currentAuthPath(location.pathname), {
-          server: encodeURIComponent(server),
-        }),
-        { replace: true }
-      );
+      const basePath = generatePath(currentAuthPath(location.pathname), {
+        server: encodeURIComponent(server),
+      });
+      const search = searchParams.toString();
+      navigate(`${basePath}${search ? `?${search}` : ''}`, { replace: true });
     }
-  }, [urlEncodedServer, navigate, location, server]);
+  }, [urlEncodedServer, navigate, location, server, searchParams]);
 
   const selectServer = useCallback(
     (newServer: string) => {
@@ -112,11 +115,13 @@ export function AuthLayout() {
         discoverServer(server);
         return;
       }
-      navigate(
-        generatePath(currentAuthPath(location.pathname), { server: encodeURIComponent(newServer) })
-      );
+      const basePath = generatePath(currentAuthPath(location.pathname), {
+        server: encodeURIComponent(newServer),
+      });
+      const search = searchParams.toString();
+      navigate(`${basePath}${search ? `?${search}` : ''}`);
     },
-    [navigate, location, discoveryState, server, discoverServer]
+    [navigate, location, discoveryState, server, discoverServer, searchParams]
   );
 
   const [autoDiscoveryError, autoDiscoveryInfo] =
@@ -137,6 +142,11 @@ export function AuthLayout() {
               <img className={css.AuthLogo} src={CinnySVG} alt="Cinny Logo" />
               <Text size="H3">Sable</Text>
             </Box>
+            {isAddingAccount && (
+              <Text size="T200" priority="300" style={{ marginLeft: 'auto', marginRight: 4 }}>
+                Adding account
+              </Text>
+            )}
           </Header>
           <Box className={css.AuthCardContent} direction="Column">
             <Box direction="Column" gap="100">
