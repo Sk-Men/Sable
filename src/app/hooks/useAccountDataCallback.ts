@@ -2,10 +2,11 @@ import { ClientEvent, ClientEventHandlerMap, MatrixClient } from 'matrix-js-sdk'
 import { useEffect } from 'react';
 
 export const useAccountDataCallback = (
-  mx: MatrixClient,
+  mx: MatrixClient | undefined,
   onAccountData: ClientEventHandlerMap[ClientEvent.AccountData]
 ) => {
   useEffect(() => {
+    if (!mx) return undefined;
     mx.on(ClientEvent.AccountData, onAccountData);
     return () => {
       mx.removeListener(ClientEvent.AccountData, onAccountData);

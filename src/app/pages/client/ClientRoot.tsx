@@ -41,6 +41,7 @@ import { sessionsAtom, activeSessionIdAtom, Session, SessionsAction } from '../.
 import { getHomePath } from '../pathUtils';
 import { createLogger } from '../../utils/debug';
 import { pushSessionToSW } from '../../../sw-session';
+import { useSyncNicknames } from '../../hooks/useNickname';
 
 const log = createLogger('ClientRoot');
 
@@ -216,6 +217,7 @@ export function ClientRoot({ children }: ClientRootProps) {
     window.location.reload();
   }, [mx, activeSession, sessions, setSessions, setActiveSessionId]);
 
+  useSyncNicknames(mx);
   useLogoutListener(mx);
 
   useEffect(() => {

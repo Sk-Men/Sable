@@ -1,6 +1,6 @@
 import { useAtomValue, useSetAtom } from 'jotai';
 import { useCallback, useEffect } from 'react';
-import { MatrixClient } from 'matrix-js-sdk';
+import { ClientEvent, MatrixClient, MatrixEvent } from 'matrix-js-sdk';
 import { nicknamesAtom, setNicknameAtom } from '../state/nicknames';
 import { AccountDataEvent } from '../../types/matrix/accountData';
 import { useAccountDataCallback } from './useAccountDataCallback';
@@ -23,11 +23,12 @@ export const useSetNickname = () => {
   );
 };
 
-export const useSyncNicknames = (mx: MatrixClient) => {
+export const useSyncNicknames = (mx?: MatrixClient) => {
   const setNicknames = useSetAtom(nicknamesAtom);
 
   useEffect(() => {
-    const event = mx.getAccountData(AccountDataEvent.SableNicknames);
+    if (!mx) return;
+    const event = mx.getAccountData(AccountDataEvent.SableNicknames as any);
     if (event) {
       setNicknames(event.getContent() || {});
     }
@@ -35,10 +36,13 @@ export const useSyncNicknames = (mx: MatrixClient) => {
 
   useAccountDataCallback(
     mx,
-    (mEvent) => {
-      if (mEvent.getType() === AccountDataEvent.SableNicknames) {
-        setNicknames(mEvent.getContent() || {});
-      }
-    }
-  )
+    useCallback(
+      (mEvent) => {
+        if (mEvent.getType() === AccountDataEvent.SableNicknames) {
+          setNicknames(mEvent.getContent() || {});
+        }
+      },
+      [setNicknames]
+    )
+  );
 }
