@@ -22,6 +22,8 @@ import { useMemberPowerCompare } from '../../hooks/useMemberPowerCompare';
 import { CreatorChip } from './CreatorChip';
 import { getDirectCreatePath, withSearchParam } from '../../pages/pathUtils';
 import { DirectCreateSearchParams } from '../../pages/paths';
+import { useAtomValue } from 'jotai';
+import { nicknamesAtom } from '../../state/nicknames';
 
 type UserRoomProfileProps = {
   userId: string;
@@ -53,7 +55,8 @@ export function UserRoomProfile({ userId }: UserRoomProfileProps) {
   const membership = useMembership(room, userId);
 
   const server = getMxIdServer(userId);
-  const displayName = getMemberDisplayName(room, userId);
+  const nicknames = useAtomValue(nicknamesAtom);
+  const displayName = getMemberDisplayName(room, userId, nicknames);
   const avatarMxc = getMemberAvatarMxc(room, userId);
   const avatarUrl = (avatarMxc && mxcUrlToHttp(mx, avatarMxc, useAuthentication)) ?? undefined;
 

@@ -86,6 +86,8 @@ import {
   useGetMemberPowerTag,
 } from '../../../hooks/useMemberPowerTag';
 import { useRoomCreatorsTag } from '../../../hooks/useRoomCreatorsTag';
+import { useAtomValue } from 'jotai';
+import { nicknamesAtom } from '../../../state/nicknames';
 
 type PinnedMessageProps = {
   room: Room;
@@ -114,6 +116,7 @@ function PinnedMessage({
   const pinnedEvent = useRoomEvent(room, eventId);
   const useAuthentication = useMediaAuthentication();
   const mx = useMatrixClient();
+  const nicknames = useAtomValue(nicknamesAtom);
 
   const [unpinState, unpin] = useAsyncCallback(
     useCallback(() => {
@@ -175,7 +178,7 @@ function PinnedMessage({
     );
 
   const sender = pinnedEvent.getSender()!;
-  const displayName = getMemberDisplayName(room, sender) ?? getMxIdLocalPart(sender) ?? sender;
+  const displayName = getMemberDisplayName(room, sender, nicknames) ?? getMxIdLocalPart(sender) ?? sender;
   const senderAvatarMxc = getMemberAvatarMxc(room, sender);
   const getContent = (() => pinnedEvent.getContent()) as GetContentCallback;
 

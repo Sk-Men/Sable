@@ -11,6 +11,8 @@ import { MessageBadEncryptedContent, MessageDeletedContent, MessageFailedContent
 import { scaleSystemEmoji } from '../../plugins/react-custom-html-parser';
 import { useRoomEvent } from '../../hooks/useRoomEvent';
 import { useSableCosmetics } from '../../hooks/useSableCosmetics';
+import { useAtomValue } from 'jotai';
+import { nicknamesAtom } from '../../state/nicknames';
 
 type ReplyLayoutProps = {
   userColor?: string;
@@ -81,6 +83,7 @@ export const Reply = as<'div', ReplyProps>(
     const sender = replyEvent?.getSender();
 
     const { color: usernameColor, font: usernameFont } = useSableCosmetics(sender ?? '', room);
+    const nicknames = useAtomValue(nicknamesAtom);
 
     const fallbackBody = replyEvent?.isRedacted() ? (
       <MessageDeletedContent />
@@ -102,7 +105,7 @@ export const Reply = as<'div', ReplyProps>(
           username={
             sender && (
               <Text size="T300" truncate style={{ fontFamily: usernameFont }}>
-                <b>{getMemberDisplayName(room, sender) ?? getMxIdLocalPart(sender)}</b>
+                <b>{getMemberDisplayName(room, sender, nicknames) ?? getMxIdLocalPart(sender)}</b>
               </Text>
             )
           }

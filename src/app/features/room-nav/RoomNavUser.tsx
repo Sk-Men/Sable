@@ -11,6 +11,8 @@ import { getMemberAvatarMxc, getMemberDisplayName } from '../../utils/room';
 import { useMediaAuthentication } from '../../hooks/useMediaAuthentication';
 import { useOpenUserRoomProfile } from '../../state/hooks/userRoomProfile';
 import { useSpaceOptionally } from '../../hooks/useSpace';
+import { useAtomValue } from 'jotai';
+import { nicknamesAtom } from '../../state/nicknames';
 
 type RoomNavUserProps = {
   room: Room;
@@ -28,7 +30,8 @@ export function RoomNavUser({ room, callMembership }: RoomNavUserProps) {
   const avatarUrl = avatarMxcUrl
     ? mx.mxcUrlToHttp(avatarMxcUrl, 32, 32, 'crop', undefined, false, useAuthentication)
     : undefined;
-  const name = getMemberDisplayName(room, userId) ?? getMxIdLocalPart(userId);
+  const nicknames = useAtomValue(nicknamesAtom);
+  const name = getMemberDisplayName(room, userId, nicknames) ?? getMxIdLocalPart(userId);
   const isCallParticipant = isActiveCall && userId !== mx.getUserId();
 
   const handleNavUserClick: React.MouseEventHandler<HTMLButtonElement> = (evt) => {

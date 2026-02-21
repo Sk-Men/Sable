@@ -23,47 +23,33 @@ import {
   RoomEvent,
   RoomEventHandlerMap,
 } from 'matrix-js-sdk';
-import { HTMLReactParserOptions } from 'html-react-parser';
+import {HTMLReactParserOptions} from 'html-react-parser';
 import classNames from 'classnames';
-import { ReactEditor } from 'slate-react';
-import { Editor } from 'slate';
+import {ReactEditor} from 'slate-react';
+import {Editor} from 'slate';
 import to from 'await-to-js';
-import { useAtomValue, useSetAtom } from 'jotai';
+import {useAtomValue, useSetAtom} from 'jotai';
+import {as, Badge, Box, Chip, color, config, ContainerColor, Icon, Icons, Line, Scroll, Text, toRem,} from 'folds';
+import {isKeyHotkey} from 'is-hotkey';
+import {Opts as LinkifyOpts} from 'linkifyjs';
+import {useTranslation} from 'react-i18next';
+import {eventWithShortcode, factoryEventSentBy, getMxIdLocalPart} from '../../utils/matrix';
+import {useMatrixClient} from '../../hooks/useMatrixClient';
+import {ItemRange, useVirtualPaginator} from '../../hooks/useVirtualPaginator';
+import {useAlive} from '../../hooks/useAlive';
+import {editableActiveElement, scrollToBottom} from '../../utils/dom';
 import {
-  Badge,
-  Box,
-  Chip,
-  ContainerColor,
-  Icon,
-  Icons,
-  Line,
-  Scroll,
-  Text,
-  as,
-  color,
-  config,
-  toRem,
-} from 'folds';
-import { isKeyHotkey } from 'is-hotkey';
-import { Opts as LinkifyOpts } from 'linkifyjs';
-import { useTranslation } from 'react-i18next';
-import { eventWithShortcode, factoryEventSentBy, getMxIdLocalPart } from '../../utils/matrix';
-import { useMatrixClient } from '../../hooks/useMatrixClient';
-import { useVirtualPaginator, ItemRange } from '../../hooks/useVirtualPaginator';
-import { useAlive } from '../../hooks/useAlive';
-import { editableActiveElement, scrollToBottom } from '../../utils/dom';
-import {
-  DefaultPlaceholder,
   CompactPlaceholder,
-  Reply,
-  MessageBase,
-  MessageUnsupportedContent,
-  Time,
-  MessageNotDecryptedContent,
-  RedactedContent,
-  MSticker,
-  ImageContent,
+  DefaultPlaceholder,
   EventContent,
+  ImageContent,
+  MessageBase,
+  MessageNotDecryptedContent,
+  MessageUnsupportedContent,
+  MSticker,
+  RedactedContent,
+  Reply,
+  Time,
 } from '../../components/message';
 import {
   factoryRenderLinkifyWithMention,
@@ -83,45 +69,43 @@ import {
   isMembershipChanged,
   reactionOrEditEvent,
 } from '../../utils/room';
-import { useSetting } from '../../state/hooks/settings';
-import { MessageLayout, settingsAtom } from '../../state/settings';
-import { useMatrixEventRenderer } from '../../hooks/useMatrixEventRenderer';
-import { Reactions, Message, Event, EncryptedContent } from './message';
-import { useMemberEventParser } from '../../hooks/useMemberEventParser';
+import {useSetting} from '../../state/hooks/settings';
+import {MessageLayout, settingsAtom} from '../../state/settings';
+import {nicknamesAtom} from '../../state/nicknames';
+import {useMatrixEventRenderer} from '../../hooks/useMatrixEventRenderer';
+import {EncryptedContent, Event, Message, Reactions} from './message';
+import {useMemberEventParser} from '../../hooks/useMemberEventParser';
 import * as customHtmlCss from '../../styles/CustomHtml.css';
-import { RoomIntro } from '../../components/room-intro';
-import {
-  getIntersectionObserverEntry,
-  useIntersectionObserver,
-} from '../../hooks/useIntersectionObserver';
-import { markAsRead } from '../../utils/notifications';
-import { useDebounce } from '../../hooks/useDebounce';
-import { getResizeObserverEntry, useResizeObserver } from '../../hooks/useResizeObserver';
+import {RoomIntro} from '../../components/room-intro';
+import {getIntersectionObserverEntry, useIntersectionObserver,} from '../../hooks/useIntersectionObserver';
+import {markAsRead} from '../../utils/notifications';
+import {useDebounce} from '../../hooks/useDebounce';
+import {getResizeObserverEntry, useResizeObserver} from '../../hooks/useResizeObserver';
 import * as css from './RoomTimeline.css';
-import { inSameDay, minuteDifference, timeDayMonthYear, today, yesterday } from '../../utils/time';
-import { createMentionElement, isEmptyEditor, moveCursor } from '../../components/editor';
-import { roomIdToReplyDraftAtomFamily } from '../../state/room/roomInputDrafts';
-import { usePowerLevelsContext } from '../../hooks/usePowerLevels';
-import { GetContentCallback, MessageEvent, StateEvent } from '../../../types/matrix/room';
-import { useKeyDown } from '../../hooks/useKeyDown';
-import { useDocumentFocusChange } from '../../hooks/useDocumentFocusChange';
-import { RenderMessageContent } from '../../components/RenderMessageContent';
-import { Image } from '../../components/media';
-import { ImageViewer } from '../../components/image-viewer';
-import { roomToParentsAtom } from '../../state/room/roomToParents';
-import { useRoomUnread } from '../../state/hooks/unread';
-import { roomToUnreadAtom } from '../../state/room/roomToUnread';
-import { useMentionClickHandler } from '../../hooks/useMentionClickHandler';
-import { useSpoilerClickHandler } from '../../hooks/useSpoilerClickHandler';
-import { useRoomNavigate } from '../../hooks/useRoomNavigate';
-import { useMediaAuthentication } from '../../hooks/useMediaAuthentication';
-import { useIgnoredUsers } from '../../hooks/useIgnoredUsers';
-import { useImagePackRooms } from '../../hooks/useImagePackRooms';
-import { useOpenUserRoomProfile } from '../../state/hooks/userRoomProfile';
-import { useSpaceOptionally } from '../../hooks/useSpace';
-import { useRoomCreators } from '../../hooks/useRoomCreators';
-import { useRoomPermissions } from '../../hooks/useRoomPermissions';
-import { useGetMemberPowerTag } from '../../hooks/useMemberPowerTag';
+import {inSameDay, minuteDifference, timeDayMonthYear, today, yesterday} from '../../utils/time';
+import {createMentionElement, isEmptyEditor, moveCursor} from '../../components/editor';
+import {roomIdToReplyDraftAtomFamily} from '../../state/room/roomInputDrafts';
+import {usePowerLevelsContext} from '../../hooks/usePowerLevels';
+import {GetContentCallback, MessageEvent, StateEvent} from '../../../types/matrix/room';
+import {useKeyDown} from '../../hooks/useKeyDown';
+import {useDocumentFocusChange} from '../../hooks/useDocumentFocusChange';
+import {RenderMessageContent} from '../../components/RenderMessageContent';
+import {Image} from '../../components/media';
+import {ImageViewer} from '../../components/image-viewer';
+import {roomToParentsAtom} from '../../state/room/roomToParents';
+import {useRoomUnread} from '../../state/hooks/unread';
+import {roomToUnreadAtom} from '../../state/room/roomToUnread';
+import {useMentionClickHandler} from '../../hooks/useMentionClickHandler';
+import {useSpoilerClickHandler} from '../../hooks/useSpoilerClickHandler';
+import {useRoomNavigate} from '../../hooks/useRoomNavigate';
+import {useMediaAuthentication} from '../../hooks/useMediaAuthentication';
+import {useIgnoredUsers} from '../../hooks/useIgnoredUsers';
+import {useImagePackRooms} from '../../hooks/useImagePackRooms';
+import {useOpenUserRoomProfile} from '../../state/hooks/userRoomProfile';
+import {useSpaceOptionally} from '../../hooks/useSpace';
+import {useRoomCreators} from '../../hooks/useRoomCreators';
+import {useRoomPermissions} from '../../hooks/useRoomPermissions';
+import {useGetMemberPowerTag} from '../../hooks/useMemberPowerTag';
 
 const TimelineFloat = as<'div', css.TimelineFloatVariants>(
   ({ position, className, ...props }, ref) => (
@@ -191,8 +175,8 @@ export const getTimelineAndBaseIndex = (
   let uptoTimelineLen = 0;
   const timeline = timelines.find((t) => {
     uptoTimelineLen += t.getEvents().length;
-    if (index < uptoTimelineLen) return true;
-    return false;
+    return index < uptoTimelineLen;
+
   });
   if (!timeline) return [undefined, 0];
   return [timeline, uptoTimelineLen - timeline.getEvents().length];
@@ -239,29 +223,27 @@ const useEventTimelineLoader = (
   onLoad: (eventId: string, linkedTimelines: EventTimeline[], evtAbsIndex: number) => void,
   onError: (err: Error | null) => void
 ) => {
-  const loadEventTimeline = useCallback(
-    async (eventId: string) => {
-      const [err, replyEvtTimeline] = await to(
-        mx.getEventTimeline(room.getUnfilteredTimelineSet(), eventId)
-      );
-      if (!replyEvtTimeline) {
-        onError(err ?? null);
-        return;
-      }
-      const linkedTimelines = getLinkedTimelines(replyEvtTimeline);
-      const absIndex = getEventIdAbsoluteIndex(linkedTimelines, replyEvtTimeline, eventId);
+  return useCallback(
+      async (eventId: string) => {
+        const [err, replyEvtTimeline] = await to(
+            mx.getEventTimeline(room.getUnfilteredTimelineSet(), eventId)
+        );
+        if (!replyEvtTimeline) {
+          onError(err ?? null);
+          return;
+        }
+        const linkedTimelines = getLinkedTimelines(replyEvtTimeline);
+        const absIndex = getEventIdAbsoluteIndex(linkedTimelines, replyEvtTimeline, eventId);
 
-      if (absIndex === undefined) {
-        onError(err ?? null);
-        return;
-      }
+        if (absIndex === undefined) {
+          onError(err ?? null);
+          return;
+        }
 
-      onLoad(eventId, linkedTimelines, absIndex);
-    },
-    [mx, room, onLoad, onError]
+        onLoad(eventId, linkedTimelines, absIndex);
+      },
+      [mx, room, onLoad, onError]
   );
-
-  return loadEventTimeline;
 };
 
 const useTimelinePagination = (
@@ -274,13 +256,13 @@ const useTimelinePagination = (
   timelineRef.current = timeline;
   const alive = useAlive();
 
-  const handleTimelinePagination = useMemo(() => {
+  return useMemo(() => {
     let fetching = false;
 
     const recalibratePagination = (
-      linkedTimelines: EventTimeline[],
-      timelinesEventsCount: number[],
-      backwards: boolean
+        linkedTimelines: EventTimeline[],
+        timelinesEventsCount: number[],
+        backwards: boolean
     ) => {
       const topTimeline = linkedTimelines[0];
       const timelineMatch = (mt: EventTimeline) => (t: EventTimeline) => t === mt;
@@ -290,36 +272,36 @@ const useTimelinePagination = (
       const topAddedTm = topTmIndex === -1 ? [] : newLTimelines.slice(0, topTmIndex);
 
       const topTmAddedEvt =
-        timelineToEventsCount(newLTimelines[topTmIndex]) - timelinesEventsCount[0];
+          timelineToEventsCount(newLTimelines[topTmIndex]) - timelinesEventsCount[0];
       const offsetRange = getTimelinesEventsCount(topAddedTm) + (backwards ? topTmAddedEvt : 0);
 
       setTimeline((currentTimeline) => ({
         linkedTimelines: newLTimelines,
         range:
-          offsetRange > 0
-            ? {
-              start: currentTimeline.range.start + offsetRange,
-              end: currentTimeline.range.end + offsetRange,
-            }
-            : { ...currentTimeline.range },
+            offsetRange > 0
+                ? {
+                  start: currentTimeline.range.start + offsetRange,
+                  end: currentTimeline.range.end + offsetRange,
+                }
+                : {...currentTimeline.range},
       }));
     };
 
     return async (backwards: boolean) => {
       if (fetching) return;
-      const { linkedTimelines: lTimelines } = timelineRef.current;
+      const {linkedTimelines: lTimelines} = timelineRef.current;
       const timelinesEventsCount = lTimelines.map(timelineToEventsCount);
 
       const timelineToPaginate = backwards ? lTimelines[0] : lTimelines[lTimelines.length - 1];
       if (!timelineToPaginate) return;
 
       const paginationToken = timelineToPaginate.getPaginationToken(
-        backwards ? Direction.Backward : Direction.Forward
+          backwards ? Direction.Backward : Direction.Forward
       );
       if (
-        !paginationToken &&
-        getTimelinesEventsCount(lTimelines) !==
-        getTimelinesEventsCount(getLinkedTimelines(timelineToPaginate))
+          !paginationToken &&
+          getTimelinesEventsCount(lTimelines) !==
+          getTimelinesEventsCount(getLinkedTimelines(timelineToPaginate))
       ) {
         recalibratePagination(lTimelines, timelinesEventsCount, backwards);
         return;
@@ -327,19 +309,19 @@ const useTimelinePagination = (
 
       fetching = true;
       const [err] = await to(
-        mx.paginateEventTimeline(timelineToPaginate, {
-          backwards,
-          limit,
-        })
+          mx.paginateEventTimeline(timelineToPaginate, {
+            backwards,
+            limit,
+          })
       );
       if (err) {
         // TODO: handle pagination error.
         return;
       }
       const fetchedTimeline =
-        timelineToPaginate.getNeighbouringTimeline(
-          backwards ? Direction.Backward : Direction.Forward
-        ) ?? timelineToPaginate;
+          timelineToPaginate.getNeighbouringTimeline(
+              backwards ? Direction.Backward : Direction.Forward
+          ) ?? timelineToPaginate;
       // Decrypt all event ahead of render cycle
       const roomId = fetchedTimeline.getRoomId();
       const room = roomId ? mx.getRoom(roomId) : null;
@@ -354,7 +336,6 @@ const useTimelinePagination = (
       }
     };
   }, [mx, alive, setTimeline, limit]);
-  return handleTimelinePagination;
 };
 
 const useLiveEventArrive = (room: Room, onArrive: (mEvent: MatrixEvent) => void) => {
@@ -446,6 +427,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
 
   const ignoredUsersList = useIgnoredUsers();
   const ignoredUsersSet = useMemo(() => new Set(ignoredUsersList), [ignoredUsersList]);
+  const nicknames = useAtomValue(nicknamesAtom);
 
   const setReplyDraft = useSetAtom(roomIdToReplyDraftAtomFamily(room.roomId));
   const powerLevels = usePowerLevelsContext();
@@ -959,7 +941,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
       if (!userId) {
         throw new Error('Button should have "data-user-id" attribute!');
       }
-      const name = getMemberDisplayName(room, userId) ?? getMxIdLocalPart(userId) ?? userId;
+      const name = getMemberDisplayName(room, userId, nicknames) ?? getMxIdLocalPart(userId) ?? userId;
       editor.insertNode(
         createMentionElement(
           userId,
@@ -1055,7 +1037,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
 
         const senderId = mEvent.getSender() ?? '';
         const senderDisplayName =
-          getMemberDisplayName(room, senderId) ?? getMxIdLocalPart(senderId) ?? senderId;
+          getMemberDisplayName(room, senderId, nicknames) ?? getMxIdLocalPart(senderId) ?? senderId;
 
         return (
           <Message
@@ -1210,7 +1192,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
 
                   const senderId = mEvent.getSender() ?? '';
                   const senderDisplayName =
-                    getMemberDisplayName(room, senderId) ?? getMxIdLocalPart(senderId) ?? senderId;
+                    getMemberDisplayName(room, senderId, nicknames) ?? getMxIdLocalPart(senderId) ?? senderId;
                   return (
                     <RenderMessageContent
                       displayName={senderDisplayName}
@@ -1352,7 +1334,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
       [StateEvent.RoomName]: (mEventId, mEvent, item) => {
         const highlighted = focusItem?.index === item && focusItem.highlight;
         const senderId = mEvent.getSender() ?? '';
-        const senderName = getMemberDisplayName(room, senderId) || getMxIdLocalPart(senderId);
+        const senderName = getMemberDisplayName(room, senderId, nicknames) || getMxIdLocalPart(senderId);
 
         const timeJSX = (
           <Time
@@ -1395,7 +1377,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
       [StateEvent.RoomTopic]: (mEventId, mEvent, item) => {
         const highlighted = focusItem?.index === item && focusItem.highlight;
         const senderId = mEvent.getSender() ?? '';
-        const senderName = getMemberDisplayName(room, senderId) || getMxIdLocalPart(senderId);
+        const senderName = getMemberDisplayName(room, senderId, nicknames) || getMxIdLocalPart(senderId);
 
         const timeJSX = (
           <Time
@@ -1438,7 +1420,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
       [StateEvent.RoomAvatar]: (mEventId, mEvent, item) => {
         const highlighted = focusItem?.index === item && focusItem.highlight;
         const senderId = mEvent.getSender() ?? '';
-        const senderName = getMemberDisplayName(room, senderId) || getMxIdLocalPart(senderId);
+        const senderName = getMemberDisplayName(room, senderId, nicknames) || getMxIdLocalPart(senderId);
 
         const timeJSX = (
           <Time
@@ -1483,7 +1465,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
       if (!showHiddenEvents) return null;
       const highlighted = focusItem?.index === item && focusItem.highlight;
       const senderId = mEvent.getSender() ?? '';
-      const senderName = getMemberDisplayName(room, senderId) || getMxIdLocalPart(senderId);
+      const senderName = getMemberDisplayName(room, senderId, nicknames) || getMxIdLocalPart(senderId);
 
       const timeJSX = (
         <Time
@@ -1533,7 +1515,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
 
       const highlighted = focusItem?.index === item && focusItem.highlight;
       const senderId = mEvent.getSender() ?? '';
-      const senderName = getMemberDisplayName(room, senderId) || getMxIdLocalPart(senderId);
+      const senderName = getMemberDisplayName(room, senderId, nicknames) || getMxIdLocalPart(senderId);
 
       const timeJSX = (
         <Time

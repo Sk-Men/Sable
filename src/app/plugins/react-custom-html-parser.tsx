@@ -1,46 +1,25 @@
 /* eslint-disable jsx-a11y/alt-text */
-import React, {
-  ComponentPropsWithoutRef,
-  ReactEventHandler,
-  Suspense,
-  lazy,
-  useMemo,
-  useState,
-} from 'react';
-import {
-  Element,
-  Text as DOMText,
-  HTMLReactParserOptions,
-  attributesToProps,
-  domToReact,
-} from 'html-react-parser';
-import { MatrixClient } from 'matrix-js-sdk';
+import React, {ComponentPropsWithoutRef, lazy, ReactEventHandler, Suspense, useMemo, useState,} from 'react';
+import {attributesToProps, domToReact, Element, HTMLReactParserOptions, Text as DOMText,} from 'html-react-parser';
+import {MatrixClient} from 'matrix-js-sdk';
 import classNames from 'classnames';
-import { Box, Chip, config, Header, Icon, IconButton, Icons, Scroll, Text, toRem } from 'folds';
-import { IntermediateRepresentation, Opts as LinkifyOpts, OptFn } from 'linkifyjs';
+import {Box, Chip, config, Header, Icon, IconButton, Icons, Scroll, Text, toRem} from 'folds';
+import {IntermediateRepresentation, OptFn, Opts as LinkifyOpts} from 'linkifyjs';
 import Linkify from 'linkify-react';
-import { ErrorBoundary } from 'react-error-boundary';
-import { ChildNode } from 'domhandler';
+import {ErrorBoundary} from 'react-error-boundary';
+import {ChildNode} from 'domhandler';
 import * as css from '../styles/CustomHtml.css';
-import {
-  getMxIdLocalPart,
-  getCanonicalAliasRoomId,
-  isRoomAlias,
-  mxcUrlToHttp,
-} from '../utils/matrix';
-import { getMemberDisplayName } from '../utils/room';
-import { EMOJI_PATTERN, sanitizeForRegex, URL_NEG_LB } from '../utils/regex';
-import { getHexcodeForEmoji, getShortcodeFor } from './emoji';
-import { findAndReplace } from '../utils/findAndReplace';
-import {
-  parseMatrixToRoom,
-  parseMatrixToRoomEvent,
-  parseMatrixToUser,
-  testMatrixTo,
-} from './matrix-to';
-import { onEnterOrSpace } from '../utils/keyboard';
-import { copyToClipboard, tryDecodeURIComponent } from '../utils/dom';
-import { useTimeoutToggle } from '../hooks/useTimeoutToggle';
+import {getCanonicalAliasRoomId, getMxIdLocalPart, isRoomAlias, mxcUrlToHttp,} from '../utils/matrix';
+import {getMemberDisplayName} from '../utils/room';
+import {NICKNAMES_KEY} from '../state/nicknames';
+import {getLocalStorageItem} from '../state/utils/atomWithLocalStorage';
+import {EMOJI_PATTERN, sanitizeForRegex, URL_NEG_LB} from '../utils/regex';
+import {getHexcodeForEmoji, getShortcodeFor} from './emoji';
+import {findAndReplace} from '../utils/findAndReplace';
+import {parseMatrixToRoom, parseMatrixToRoomEvent, parseMatrixToUser, testMatrixTo,} from './matrix-to';
+import {onEnterOrSpace} from '../utils/keyboard';
+import {copyToClipboard, tryDecodeURIComponent} from '../utils/dom';
+import {useTimeoutToggle} from '../hooks/useTimeoutToggle';
 
 const ReactPrism = lazy(() => import('./react-prism/ReactPrism'));
 
@@ -89,7 +68,7 @@ export const renderMatrixMention = (
         data-mention-id={userId}
       >
         {`@${
-          (currentRoom && getMemberDisplayName(currentRoom, userId)) ?? getMxIdLocalPart(userId)
+          (currentRoom && getMemberDisplayName(currentRoom, userId, getLocalStorageItem(NICKNAMES_KEY, {}))) ?? getMxIdLocalPart(userId)
         }`}
       </a>
     );
@@ -150,11 +129,11 @@ export const renderMatrixMention = (
 export const factoryRenderLinkifyWithMention = (
   mentionRender: (href: string) => JSX.Element | undefined
 ): OptFn<(ir: IntermediateRepresentation) => any> => {
-  const render: OptFn<(ir: IntermediateRepresentation) => any> = ({
-    tagName,
-    attributes,
-    content,
-  }) => {
+  return ({
+            tagName,
+            attributes,
+            content,
+          }) => {
     if (tagName === 'a' && testMatrixTo(tryDecodeURIComponent(attributes.href))) {
       const mention = mentionRender(tryDecodeURIComponent(attributes.href));
       if (mention) return mention;
@@ -162,7 +141,6 @@ export const factoryRenderLinkifyWithMention = (
 
     return <a {...attributes}>{content}</a>;
   };
-  return render;
 };
 
 export const scaleSystemEmoji = (text: string): (string | JSX.Element)[] =>
@@ -474,7 +452,7 @@ export const getReactCustomHtmlParser = (
 
         if (name === 'img') {
           const htmlSrc = mxcUrlToHttp(mx, props.src, params.useAuthentication);
-          if (htmlSrc && props.src.startsWith('mxc://') === false) {
+          if (htmlSrc && !props.src.startsWith('mxc://')) {
             return (
               <a href={htmlSrc} target="_blank" rel="noreferrer noopener">
                 {props.alt || props.title || htmlSrc}

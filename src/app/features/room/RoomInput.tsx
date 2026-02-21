@@ -1,115 +1,92 @@
-import React, {
-  KeyboardEventHandler,
-  RefObject,
-  forwardRef,
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-} from 'react';
-import { useAtom, useAtomValue } from 'jotai';
-import { isKeyHotkey } from 'is-hotkey';
-import { EventType, IContent, MsgType, RelationType, Room } from 'matrix-js-sdk';
-import { ReactEditor } from 'slate-react';
-import { Transforms, Editor } from 'slate';
+import React, {forwardRef, KeyboardEventHandler, RefObject, useCallback, useEffect, useRef, useState,} from 'react';
+import {useAtom, useAtomValue} from 'jotai';
+import {isKeyHotkey} from 'is-hotkey';
+import {EventType, IContent, MsgType, RelationType, Room} from 'matrix-js-sdk';
+import {ReactEditor} from 'slate-react';
+import {Editor, Transforms} from 'slate';
 import {
-  Box,
-  Dialog,
-  Icon,
-  IconButton,
-  Icons,
-  Line,
-  Overlay,
-  OverlayBackdrop,
-  OverlayCenter,
-  PopOut,
-  Scroll,
-  Text,
-  config,
-  toRem,
+    Box,
+    config,
+    Dialog,
+    Icon,
+    IconButton,
+    Icons,
+    Line,
+    Overlay,
+    OverlayBackdrop,
+    OverlayCenter,
+    PopOut,
+    Scroll,
+    Text,
+    toRem,
 } from 'folds';
 
-import { useMatrixClient } from '../../hooks/useMatrixClient';
+import {useMatrixClient} from '../../hooks/useMatrixClient';
 import {
-  CustomEditor,
-  Toolbar,
-  toMatrixCustomHTML,
-  toPlainText,
-  AUTOCOMPLETE_PREFIXES,
-  AutocompletePrefix,
-  AutocompleteQuery,
-  getAutocompleteQuery,
-  getPrevWorldRange,
-  resetEditor,
-  RoomMentionAutocomplete,
-  UserMentionAutocomplete,
-  EmoticonAutocomplete,
-  createEmoticonElement,
-  moveCursor,
-  resetEditorHistory,
-  customHtmlEqualsPlainText,
-  trimCustomHtml,
-  isEmptyEditor,
-  getBeginCommand,
-  trimCommand,
-  getMentions,
+    AUTOCOMPLETE_PREFIXES,
+    AutocompletePrefix,
+    AutocompleteQuery,
+    createEmoticonElement,
+    CustomEditor,
+    customHtmlEqualsPlainText,
+    EmoticonAutocomplete,
+    getAutocompleteQuery,
+    getBeginCommand,
+    getMentions,
+    getPrevWorldRange,
+    isEmptyEditor,
+    moveCursor,
+    resetEditor,
+    resetEditorHistory,
+    RoomMentionAutocomplete,
+    toMatrixCustomHTML,
+    Toolbar,
+    toPlainText,
+    trimCommand,
+    trimCustomHtml,
+    UserMentionAutocomplete,
 } from '../../components/editor';
-import { EmojiBoard, EmojiBoardTab } from '../../components/emoji-board';
-import { UseStateProvider } from '../../components/UseStateProvider';
+import {EmojiBoard, EmojiBoardTab} from '../../components/emoji-board';
+import {UseStateProvider} from '../../components/UseStateProvider';
+import {encryptFile, getImageInfo, getMxIdLocalPart, mxcUrlToHttp, TUploadContent,} from '../../utils/matrix';
+import {useTypingStatusUpdater} from '../../hooks/useTypingStatusUpdater';
+import {useFilePicker} from '../../hooks/useFilePicker';
+import {useFilePasteHandler} from '../../hooks/useFilePasteHandler';
+import {useFileDropZone} from '../../hooks/useFileDrop';
 import {
-  TUploadContent,
-  encryptFile,
-  getImageInfo,
-  getMxIdLocalPart,
-  mxcUrlToHttp,
-} from '../../utils/matrix';
-import { useTypingStatusUpdater } from '../../hooks/useTypingStatusUpdater';
-import { useFilePicker } from '../../hooks/useFilePicker';
-import { useFilePasteHandler } from '../../hooks/useFilePasteHandler';
-import { useFileDropZone } from '../../hooks/useFileDrop';
-import {
-  TUploadItem,
-  TUploadMetadata,
-  roomIdToMsgDraftAtomFamily,
-  roomIdToReplyDraftAtomFamily,
-  roomIdToUploadItemsAtomFamily,
-  roomUploadAtomFamily,
+    roomIdToMsgDraftAtomFamily,
+    roomIdToReplyDraftAtomFamily,
+    roomIdToUploadItemsAtomFamily,
+    roomUploadAtomFamily,
+    TUploadItem,
+    TUploadMetadata,
 } from '../../state/room/roomInputDrafts';
-import { UploadCardRenderer } from '../../components/upload-card';
+import {UploadCardRenderer} from '../../components/upload-card';
 import {
-  UploadBoard,
-  UploadBoardContent,
-  UploadBoardHeader,
-  UploadBoardImperativeHandlers,
+    UploadBoard,
+    UploadBoardContent,
+    UploadBoardHeader,
+    UploadBoardImperativeHandlers,
 } from '../../components/upload-board';
-import {
-  Upload,
-  UploadStatus,
-  UploadSuccess,
-  createUploadFamilyObserverAtom,
-} from '../../state/upload';
-import { getImageUrlBlob, loadImageElement } from '../../utils/dom';
-import { safeFile } from '../../utils/mimeTypes';
-import { fulfilledPromiseSettledResult } from '../../utils/common';
-import { useSetting } from '../../state/hooks/settings';
-import { settingsAtom } from '../../state/settings';
-import {
-  getAudioMsgContent,
-  getFileMsgContent,
-  getImageMsgContent,
-  getVideoMsgContent,
-} from './msgContent';
-import { getMemberDisplayName, getMentionContent, trimReplyFromBody } from '../../utils/room';
-import { CommandAutocomplete } from './CommandAutocomplete';
-import { Command, SHRUG, TABLEFLIP, UNFLIP, useCommands } from '../../hooks/useCommands';
-import { mobileOrTablet } from '../../utils/user-agent';
-import { useElementSizeObserver } from '../../hooks/useElementSizeObserver';
-import { ReplyLayout, ThreadIndicator } from '../../components/message';
-import { roomToParentsAtom } from '../../state/room/roomToParents';
-import { useMediaAuthentication } from '../../hooks/useMediaAuthentication';
-import { useImagePackRooms } from '../../hooks/useImagePackRooms';
-import { useComposingCheck } from '../../hooks/useComposingCheck';
-import { useSableCosmetics } from '../../hooks/useSableCosmetics';
+import {createUploadFamilyObserverAtom, Upload, UploadStatus, UploadSuccess,} from '../../state/upload';
+import {getImageUrlBlob, loadImageElement} from '../../utils/dom';
+import {safeFile} from '../../utils/mimeTypes';
+import {fulfilledPromiseSettledResult} from '../../utils/common';
+import {useSetting} from '../../state/hooks/settings';
+import {settingsAtom} from '../../state/settings';
+import {getAudioMsgContent, getFileMsgContent, getImageMsgContent, getVideoMsgContent,} from './msgContent';
+import {getMemberDisplayName, getMentionContent, trimReplyFromBody} from '../../utils/room';
+import {nicknamesAtom} from '../../state/nicknames';
+import {CommandAutocomplete} from './CommandAutocomplete';
+import {Command, SHRUG, TABLEFLIP, UNFLIP, useCommands} from '../../hooks/useCommands';
+import {mobileOrTablet} from '../../utils/user-agent';
+import {useElementSizeObserver} from '../../hooks/useElementSizeObserver';
+import {ReplyLayout, ThreadIndicator} from '../../components/message';
+import {roomToParentsAtom} from '../../state/room/roomToParents';
+import {useMediaAuthentication} from '../../hooks/useMediaAuthentication';
+import {useImagePackRooms} from '../../hooks/useImagePackRooms';
+import {useComposingCheck} from '../../hooks/useComposingCheck';
+import {useSableCosmetics} from '../../hooks/useSableCosmetics';
 
 interface RoomInputProps {
   editor: Editor;
@@ -127,6 +104,7 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
     const commands = useCommands(mx, room);
     const emojiBtnRef = useRef<HTMLButtonElement>(null);
     const roomToParents = useAtomValue(roomToParentsAtom);
+    const nicknames = useAtomValue(nicknamesAtom);
 
     const [msgDraft, setMsgDraft] = useAtom(roomIdToMsgDraftAtomFamily(roomId));
     const [replyDraft, setReplyDraft] = useAtom(roomIdToReplyDraftAtomFamily(roomId));
@@ -331,8 +309,7 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
         mentionData.users.add(replyDraft.userId);
       }
 
-      const mMentions = getMentionContent(Array.from(mentionData.users), mentionData.room);
-      content['m.mentions'] = mMentions;
+      content['m.mentions'] = getMentionContent(Array.from(mentionData.users), mentionData.room);
 
       if (replyDraft || !customHtmlEqualsPlainText(formattedBody, body)) {
         content.format = 'org.matrix.custom.html';
@@ -549,7 +526,7 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
                       username={
                         <Text size="T300" truncate style={{ fontFamily: replyUsernameFont }}>
                           <b>
-                            {getMemberDisplayName(room, replyDraft.userId) ??
+                            {getMemberDisplayName(room, replyDraft.userId, nicknames) ??
                               getMxIdLocalPart(replyDraft.userId) ??
                               replyDraft.userId}
                           </b>

@@ -1,4 +1,4 @@
-import { IconName, IconSrc } from 'folds';
+import {IconName, IconSrc} from 'folds';
 
 import {
   EventTimeline,
@@ -17,8 +17,8 @@ import {
   Room,
   RoomMember,
 } from 'matrix-js-sdk';
-import { CryptoBackend } from 'matrix-js-sdk/lib/common-crypto/CryptoBackend';
-import { AccountDataEvent } from '../../types/matrix/accountData';
+import {CryptoBackend} from 'matrix-js-sdk/lib/common-crypto/CryptoBackend';
+import {AccountDataEvent} from '../../types/matrix/accountData';
 import {
   IRoomCreateContent,
   Membership,
@@ -152,11 +152,9 @@ export const getRoomToParents = (mx: MatrixClient): RoomToParents => {
 
 export const getOrphanParents = (roomToParents: RoomToParents, roomId: string): string[] => {
   const parents = getAllParents(roomToParents, roomId);
-  const orphanParents = Array.from(parents).filter(
-    (parentRoomId) => !roomToParents.has(parentRoomId)
+  return Array.from(parents).filter(
+      (parentRoomId) => !roomToParents.has(parentRoomId)
   );
-
-  return orphanParents;
 };
 
 export const isMutedRule = (rule: IPushRule) =>
@@ -202,9 +200,9 @@ export const isNotificationEvent = (mEvent: MatrixEvent) => {
   if (eType === 'm.room.member') return false;
 
   if (mEvent.isRedacted()) return false;
-  if (mEvent.getRelation()?.rel_type === 'm.replace') return false;
+  return mEvent.getRelation()?.rel_type !== 'm.replace';
 
-  return true;
+
 };
 
 export const roomHaveNotification = (room: Room): boolean => {
@@ -244,7 +242,7 @@ export const getUnreadInfo = (room: Room): UnreadInfo => {
 };
 
 export const getUnreadInfos = (mx: MatrixClient): UnreadInfo[] => {
-  const unreadInfos = mx.getRooms().reduce<UnreadInfo[]>((unread, room) => {
+  return mx.getRooms().reduce<UnreadInfo[]>((unread, room) => {
     if (room.isSpaceRoom()) return unread;
     if (room.getMyMembership() !== 'join') return unread;
     if (getNotificationType(mx, room.roomId) === NotificationType.Mute) return unread;
@@ -255,7 +253,6 @@ export const getUnreadInfos = (mx: MatrixClient): UnreadInfo[] => {
 
     return unread;
   }, []);
-  return unreadInfos;
 };
 
 export const getRoomIconSrc = (
@@ -359,7 +356,12 @@ export const parseReplyFormattedBody = (
   return `<mx-reply><blockquote>${replyToLink}${userLink}<br />${formattedBody}</blockquote></mx-reply>`;
 };
 
-export const getMemberDisplayName = (room: Room, userId: string): string | undefined => {
+export const getMemberDisplayName = (
+  room: Room,
+  userId: string,
+  nicknames?: Record<string, string>
+): string | undefined => {
+  if (nicknames?.[userId]) return nicknames[userId];
   const member = room.getMember(userId);
   const name = member?.rawDisplayName;
   if (name === userId) return undefined;
@@ -499,8 +501,7 @@ export const bannedInRooms = (mx: MatrixClient, rooms: string[], otherUserId: st
     const room = mx.getRoom(roomId);
     if (!room || room.getMyMembership() !== Membership.Join) return false;
 
-    const banned = room.hasMembershipState(otherUserId, Membership.Ban);
-    return banned;
+    return room.hasMembershipState(otherUserId, Membership.Ban);
   });
 
 export const getAllVersionsRoomCreator = (room: Room): Set<string> => {
@@ -513,7 +514,7 @@ export const getAllVersionsRoomCreator = (room: Room): Set<string> => {
 
   if (createContent && Array.isArray(createContent.additional_creators)) {
     createContent.additional_creators.forEach((c) => {
-      if (typeof c === 'string') creators.add(c);
+      creators.add(c);
     });
   }
 
