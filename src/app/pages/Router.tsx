@@ -69,7 +69,6 @@ import { CreateSpaceModalRenderer } from '../features/create-space';
 import { SearchModalRenderer } from '../features/search';
 import { getFallbackSession, MATRIX_SESSIONS_KEY, Sessions } from '../state/sessions';
 import { getLocalStorageItem } from '../state/utils/atomWithLocalStorage';
-import { getFallbackSession } from '../state/sessions';
 import { CallProvider } from './client/call/CallProvider';
 import { PersistentCallContainer } from './client/call/PersistentCallContainer';
 
