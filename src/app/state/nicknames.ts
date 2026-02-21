@@ -1,19 +1,22 @@
 import { atom } from 'jotai';
-import { atomWithLocalStorage, getLocalStorageItem, setLocalStorageItem } from './utils/atomWithLocalStorage';
+import { MatrixClient } from 'matrix-js-sdk';
+import { AccountDataEvent } from '../../types/matrix/accountData';
+
+declare module 'matrix-js-sdk' {
+  interface AccountDataEvents {
+    [AccountDataEvent.SableNicknames]: Record<string, string>;
+  }
+}
 
 export const NICKNAMES_KEY = 'sableNicknames';
 
 export type Nicknames = Record<string, string>;
 
-export const nicknamesAtom = atomWithLocalStorage<Nicknames>(
-  NICKNAMES_KEY,
-  (key) => getLocalStorageItem<Nicknames>(key, {}),
-  (key, value) => setLocalStorageItem(key, value)
-);
+export const nicknamesAtom = atom<Nicknames>({});
 
-export const setNicknameAtom = atom<null, [userId: string, nick: string | undefined], void>(
+export const setNicknameAtom = atom<null, [userId: string, nick: string | undefined, mx: MatrixClient], void>(
   null,
-  (get, set, userId, nick) => {
+  (get, set, userId, nick, mx) => {
     const prev = get(nicknamesAtom);
     const next = { ...prev };
     if (nick === undefined || nick.trim() === '') {
@@ -22,6 +25,8 @@ export const setNicknameAtom = atom<null, [userId: string, nick: string | undefi
       next[userId] = nick.trim();
     }
     set(nicknamesAtom, next);
+
+    mx.setAccountData(AccountDataEvent.SableNicknames, next);
   }
 );
 
