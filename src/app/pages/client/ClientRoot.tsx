@@ -40,6 +40,7 @@ import { AuthMetadataProvider } from '../../hooks/useAuthMetadata';
 import { sessionsAtom, activeSessionIdAtom, Session, SessionsAction } from '../../state/sessions';
 import { getHomePath } from '../pathUtils';
 import { createLogger } from '../../utils/debug';
+import { pushSessionToSW } from '../../../sw-session';
 
 const log = createLogger('ClientRoot');
 
@@ -181,6 +182,7 @@ export function ClientRoot({ children }: ClientRootProps) {
       log.log('initClient for', activeSession.userId);
       const newMx = await initClient(activeSession);
       loadedUserIdRef.current = activeSession.userId;
+      pushSessionToSW(activeSession.baseUrl, activeSession.accessToken);
       return newMx;
     }, [activeSession, activeSessionId, setActiveSessionId])
   );
@@ -193,6 +195,8 @@ export function ClientRoot({ children }: ClientRootProps) {
     if (!activeSession) return;
     if (loadedUserIdRef.current && loadedUserIdRef.current !== activeSession.userId) {
       log.log('session changed from', loadedUserIdRef.current, '→', activeSession.userId, '— reloading client');
+      // Update the SW immediately so media requests use the new account's token
+      pushSessionToSW(activeSession.baseUrl, activeSession.accessToken);
       if (mx?.clientRunning) {
         mx.stopClient();
       }
