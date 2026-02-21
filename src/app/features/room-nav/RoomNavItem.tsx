@@ -264,7 +264,8 @@ export function RoomNavItem({
   const creators = useRoomCreators(room);
   const nicknames = useAtomValue(nicknamesAtom);
   const dmUserId = direct ? room.getAvatarFallbackMember()?.userId : undefined;
-  const roomName = (dmUserId && nicknames[dmUserId]) || useRoomName(room);
+  const matrixRoomName = useRoomName(room);
+  const roomName = (dmUserId && nicknames[dmUserId]) || matrixRoomName;
 
   const permissions = useRoomPermissions(creators, powerLevels);
   const canJoinCall = permissions.event(EventType.GroupCallMemberPrefix, mx.getSafeUserId());
