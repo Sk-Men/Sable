@@ -17,7 +17,8 @@ import App from './app/pages/App';
 // import i18n (needs to be bundled ;))
 import './app/i18n';
 import { pushSessionToSW } from './sw-session';
-import { getFallbackSession } from './app/state/sessions';
+import { getFallbackSession, MATRIX_SESSIONS_KEY, Sessions, ACTIVE_SESSION_KEY } from './app/state/sessions';
+import { getLocalStorageItem } from './app/state/utils/atomWithLocalStorage';
 
 document.body.classList.add(configClass, varsClass);
 
@@ -29,8 +30,11 @@ if ('serviceWorker' in navigator) {
       : `/dev-sw.js?dev-sw`;
 
   const sendSessionToSW = () => {
-    const session = getFallbackSession();
-    pushSessionToSW(session?.baseUrl, session?.accessToken);
+    // Use the active session from the new multi-session store, fall back to legacy
+    const sessions = getLocalStorageItem<Sessions>(MATRIX_SESSIONS_KEY, []);
+    const activeId = getLocalStorageItem<string | undefined>(ACTIVE_SESSION_KEY, undefined);
+    const active = sessions.find((s) => s.userId === activeId) ?? sessions[0] ?? getFallbackSession();
+    pushSessionToSW(active?.baseUrl, active?.accessToken);
   };
 
   navigator.serviceWorker.register(swUrl).then(sendSessionToSW);
