@@ -28,7 +28,7 @@ import { logoutClient, initClient } from '../../../../client/initMatrix';
 import { useMatrixClient } from '../../../hooks/useMatrixClient';
 import { useUserProfile } from '../../../hooks/useUserProfile';
 import { useMediaAuthentication } from '../../../hooks/useMediaAuthentication';
-import { useSessionProfiles } from '../../../hooks/useSessionProfiles';import { Settings } from '../../../features/settings';
+import { useSessionProfiles } from '../../../hooks/useSessionProfiles'; import { Settings } from '../../../features/settings';
 import { Modal500 } from '../../../components/Modal500';
 import { createLogger } from '../../../utils/debug';
 
@@ -57,12 +57,11 @@ function AccountRow({
 
   return (
     <MenuItem
-      size="300"
+      size="400"
       radii="300"
       style={{
-        paddingRight: config.space.S200,
-        outline: isActive ? `2px solid currentColor` : undefined,
         opacity: isBusy ? 0.6 : undefined,
+        height: 'auto',
       }}
       before={
         <SidebarAvatar size="200" style={{ width: toRem(28), height: toRem(28) }}>
@@ -77,9 +76,11 @@ function AccountRow({
       after={
         <Box gap="200" alignItems="Center" shrink="No">
           {isActive && (
-            <Text size="L400" style={{ color: 'var(--mx-c-success)' }}>
-              ●
-            </Text>
+            <Icon
+              size="200"
+              src={Icons.Check}
+              style={{ color: 'var(--mx-c-success)' }}
+            />
           )}
           {isBusy ? (
             <Spinner size="200" variant="Secondary" />
@@ -101,7 +102,11 @@ function AccountRow({
       }
       onClick={() => !isActive && !isBusy && onSwitch(session)}
     >
-      <Box direction="Column" grow="Yes">
+      <Box direction="Column" grow="Yes" style={{
+        paddingTop: config.space.S100,
+        paddingBottom: config.space.S100,
+        justifyContent: 'Center'
+      }}>
         <Text size="T300" truncate>
           {label}
         </Text>
