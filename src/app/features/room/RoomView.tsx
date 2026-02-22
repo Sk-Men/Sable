@@ -118,7 +118,6 @@ export function RoomView({ room, eventId }: { room: Room; eventId?: string }) {
           <SwipeableChatWrapper
             onOpenSidebar={onBack}
             onOpenMembers={handleOpenMembers}
-            onReply={() => console.log('Reply placeholder')}
           >
             <Box grow="Yes" direction="Column">
               <RoomTimeline

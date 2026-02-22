@@ -6,9 +6,9 @@ import { settingsAtom, RightSwipeAction } from '../state/settings';
 
 interface SwipeableChatWrapperProps {
     children: ReactNode;
-    onOpenSidebar: () => void;
-    onOpenMembers: () => void;
-    onReply: () => void;
+    onOpenSidebar?: () => void;
+    onOpenMembers?: () => void;
+    onReply?: () => void;
 }
 
 export function SwipeableChatWrapper({
@@ -31,12 +31,12 @@ export function SwipeableChatWrapper({
             const velocityThreshold = 0.5;
 
             if (mx > swipeThreshold || (vx > velocityThreshold && dx > 0)) {
-                onOpenSidebar();
+                onOpenSidebar?.();
             } else if (mx < -swipeThreshold || (vx > velocityThreshold && dx < 0)) {
                 if (settings.rightSwipeAction === RightSwipeAction.Members) {
-                    onOpenMembers();
+                    onOpenMembers?.();
                 } else {
-                    onReply();
+                    onReply?.();
                 }
             }
             x.set(0);
