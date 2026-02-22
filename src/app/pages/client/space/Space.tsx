@@ -90,6 +90,7 @@ import { SwipeableChatWrapper } from '../../../components/SwipeableChatWrapper';
 import { mobileOrTablet } from '../../../utils/user-agent';
 import { useNavigate } from 'react-router-dom';
 import { lastVisitedRoomIdAtom } from '../../../state/room/lastRoom';
+import { SwipeableOverlayWrapper } from '../../../components/SwipeableOverlayWrapper';
 
 type SpaceMenuProps = {
   room: Room;
@@ -465,7 +466,7 @@ export function Space() {
 
   return (
     <PageNav>
-      <SwipeableChatWrapper onOpenMembers={handleSwipeToRoom}>
+      <SwipeableOverlayWrapper direction="left" onClose={handleSwipeToRoom}>
         <SpaceHeader />
         <PageNavContent scrollRef={scrollRef}>
           <Box direction="Column" gap="300">
@@ -561,7 +562,7 @@ export function Space() {
           </Box>
         </PageNavContent>
         <CallNavStatus />
-      </SwipeableChatWrapper>
+      </SwipeableOverlayWrapper>
     </PageNav >
   );
 }

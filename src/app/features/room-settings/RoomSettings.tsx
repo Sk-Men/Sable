@@ -19,6 +19,7 @@ import { useRoom } from '../../hooks/useRoom';
 import { DeveloperTools } from '../common-settings/developer-tools';
 import { Cosmetics } from '../common-settings/cosmetics/Cosmetics';
 import { SwipeableChatWrapper } from '../../components/SwipeableChatWrapper';
+import { SwipeableOverlayWrapper } from '../../components/SwipeableOverlayWrapper';
 
 type RoomSettingsMenuItem = {
   page: RoomSettingsPage;
@@ -103,9 +104,7 @@ export function RoomSettings({ initialPage, requestClose }: RoomSettingsProps) {
   };
 
   return (
-    <SwipeableChatWrapper
-      onOpenSidebar={handleSwipeBack}
-    >
+    <SwipeableOverlayWrapper direction="right" onClose={handleSwipeBack}>
       <PageRoot
         nav={
           screenSize === ScreenSize.Mobile && activePage !== undefined ? undefined : (
@@ -187,6 +186,6 @@ export function RoomSettings({ initialPage, requestClose }: RoomSettingsProps) {
           <DeveloperTools requestClose={handlePageRequestClose} />
         )}
       </PageRoot>
-    </SwipeableChatWrapper>
+    </SwipeableOverlayWrapper>
   );
 }
