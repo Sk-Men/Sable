@@ -2,17 +2,19 @@ import { Box, Icon, Icons, Text, as, color, toRem } from 'folds';
 import { EventTimelineSet, Room } from 'matrix-js-sdk';
 import React, { MouseEventHandler, ReactNode, useCallback, useMemo } from 'react';
 import classNames from 'classnames';
-import { getMemberDisplayName, trimReplyFromBody } from '../../utils/room';
+import parse from 'html-react-parser';
+import { useAtomValue } from 'jotai';
+import { getMemberDisplayName, trimReplyFromBody, trimReplyFromFormattedBody } from '../../utils/room';
 import { getMxIdLocalPart } from '../../utils/matrix';
 import { LinePlaceholder } from './placeholder';
 import { randomNumberBetween } from '../../utils/common';
 import * as css from './Reply.css';
 import { MessageBadEncryptedContent, MessageDeletedContent, MessageFailedContent } from './content';
-import { scaleSystemEmoji } from '../../plugins/react-custom-html-parser';
+import { getReactCustomHtmlParser, scaleSystemEmoji, LINKIFY_OPTS } from '../../plugins/react-custom-html-parser';
 import { useRoomEvent } from '../../hooks/useRoomEvent';
 import { useSableCosmetics } from '../../hooks/useSableCosmetics';
-import { useAtomValue } from 'jotai';
 import { nicknamesAtom } from '../../state/nicknames';
+import { useMatrixClient } from '../../hooks/useMatrixClient';
 
 type ReplyLayoutProps = {
   userColor?: string;
@@ -79,7 +81,10 @@ export const Reply = as<'div', ReplyProps>(
     );
     const replyEvent = useRoomEvent(room, replyEventId, getFromLocalTimeline);
 
-    const { body } = replyEvent?.getContent() ?? {};
+    const mx = useMatrixClient();
+
+    // eslint-disable-next-line camelcase
+    const { body, formatted_body, format } = replyEvent?.getContent() ?? {};
     const sender = replyEvent?.getSender();
 
     const { color: usernameColor, font: usernameFont } = useSableCosmetics(sender ?? '', room);
@@ -92,7 +97,18 @@ export const Reply = as<'div', ReplyProps>(
     );
 
     const badEncryption = replyEvent?.getContent().msgtype === 'm.bad.encrypted';
-    const bodyJSX = body ? scaleSystemEmoji(trimReplyFromBody(body)) : fallbackBody;
+    let bodyJSX: ReactNode = fallbackBody;
+
+    // eslint-disable-next-line camelcase
+    if (format === 'org.matrix.custom.html' && formatted_body) {
+      const strippedHtml = trimReplyFromFormattedBody(formatted_body);
+      const parserOpts = getReactCustomHtmlParser(mx, room.roomId, {
+        linkifyOpts: LINKIFY_OPTS
+      });
+      bodyJSX = parse(strippedHtml, parserOpts) as JSX.Element;
+    } else if (body) {
+      bodyJSX = scaleSystemEmoji(trimReplyFromBody(body));
+    }
 
     return (
       <Box direction="Row" gap="200" alignItems="Center" {...props} ref={ref}>
