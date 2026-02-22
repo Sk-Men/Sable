@@ -86,6 +86,10 @@ import { BreakWord } from '../../../styles/Text.css';
 import { InviteUserPrompt } from '../../../components/invite-user-prompt';
 import { CallNavStatus } from '../../../features/room-nav/RoomCallNavStatus';
 import { useCallState } from '../call/CallProvider';
+import { SwipeableChatWrapper } from '../../../components/SwipeableChatWrapper';
+import { mobileOrTablet } from '../../../utils/user-agent';
+import { useNavigate } from 'react-router-dom';
+import { lastVisitedRoomIdAtom } from '../../../state/room/lastRoom';
 
 type SpaceMenuProps = {
   room: Room;
@@ -350,7 +354,7 @@ export function SpaceTombstone({ roomId, replacementRoomId }: SpaceTombstoneProp
       </Box>
       <Box direction="Column" shrink="No">
         {replacementRoom?.getMyMembership() === Membership.Join ||
-        joinState.status === AsyncStatus.Success ? (
+          joinState.status === AsyncStatus.Success ? (
           <Button onClick={handleOpen} size="300" variant="Success" fill="Solid" radii="300">
             <Text size="B300">Open New Space</Text>
           </Button>
@@ -449,103 +453,115 @@ export function Space() {
   const getToLink = (roomId: string) =>
     getSpaceRoomPath(spaceIdOrAlias, getCanonicalAliasOrRoomId(mx, roomId));
 
+  const navigate = useNavigate();
+  const lastRoomId = useAtomValue(lastVisitedRoomIdAtom);
+
+  const handleSwipeToRoom = useCallback(() => {
+    if (mobileOrTablet() && lastRoomId) {
+      const roomAliasOrId = getCanonicalAliasOrRoomId(mx, lastRoomId);
+      navigate(getSpaceRoomPath(spaceIdOrAlias, roomAliasOrId));
+    }
+  }, [lastRoomId, spaceIdOrAlias, mx, navigate]);
+
   return (
     <PageNav>
-      <SpaceHeader />
-      <PageNavContent scrollRef={scrollRef}>
-        <Box direction="Column" gap="300">
-          {tombstoneEvent && (
-            <SpaceTombstone
-              roomId={space.roomId}
-              replacementRoomId={tombstoneEvent.getContent().replacement_room}
-            />
-          )}
-          <NavCategory>
-            <NavItem variant="Background" radii="400" aria-selected={lobbySelected}>
-              <NavLink to={getSpaceLobbyPath(getCanonicalAliasOrRoomId(mx, space.roomId))}>
-                <NavItemContent>
-                  <Box as="span" grow="Yes" alignItems="Center" gap="200">
-                    <Avatar size="200" radii="400">
-                      <Icon src={Icons.Flag} size="100" filled={lobbySelected} />
-                    </Avatar>
-                    <Box as="span" grow="Yes">
-                      <Text as="span" size="Inherit" truncate>
-                        Lobby
-                      </Text>
+      <SwipeableChatWrapper onOpenMembers={handleSwipeToRoom}>
+        <SpaceHeader />
+        <PageNavContent scrollRef={scrollRef}>
+          <Box direction="Column" gap="300">
+            {tombstoneEvent && (
+              <SpaceTombstone
+                roomId={space.roomId}
+                replacementRoomId={tombstoneEvent.getContent().replacement_room}
+              />
+            )}
+            <NavCategory>
+              <NavItem variant="Background" radii="400" aria-selected={lobbySelected}>
+                <NavLink to={getSpaceLobbyPath(getCanonicalAliasOrRoomId(mx, space.roomId))}>
+                  <NavItemContent>
+                    <Box as="span" grow="Yes" alignItems="Center" gap="200">
+                      <Avatar size="200" radii="400">
+                        <Icon src={Icons.Flag} size="100" filled={lobbySelected} />
+                      </Avatar>
+                      <Box as="span" grow="Yes">
+                        <Text as="span" size="Inherit" truncate>
+                          Lobby
+                        </Text>
+                      </Box>
                     </Box>
-                  </Box>
-                </NavItemContent>
-              </NavLink>
-            </NavItem>
-            <NavItem variant="Background" radii="400" aria-selected={searchSelected}>
-              <NavLink to={getSpaceSearchPath(getCanonicalAliasOrRoomId(mx, space.roomId))}>
-                <NavItemContent>
-                  <Box as="span" grow="Yes" alignItems="Center" gap="200">
-                    <Avatar size="200" radii="400">
-                      <Icon src={Icons.Search} size="100" filled={searchSelected} />
-                    </Avatar>
-                    <Box as="span" grow="Yes">
-                      <Text as="span" size="Inherit" truncate>
-                        Message Search
-                      </Text>
+                  </NavItemContent>
+                </NavLink>
+              </NavItem>
+              <NavItem variant="Background" radii="400" aria-selected={searchSelected}>
+                <NavLink to={getSpaceSearchPath(getCanonicalAliasOrRoomId(mx, space.roomId))}>
+                  <NavItemContent>
+                    <Box as="span" grow="Yes" alignItems="Center" gap="200">
+                      <Avatar size="200" radii="400">
+                        <Icon src={Icons.Search} size="100" filled={searchSelected} />
+                      </Avatar>
+                      <Box as="span" grow="Yes">
+                        <Text as="span" size="Inherit" truncate>
+                          Message Search
+                        </Text>
+                      </Box>
                     </Box>
-                  </Box>
-                </NavItemContent>
-              </NavLink>
-            </NavItem>
-          </NavCategory>
-          <NavCategory
-            style={{
-              height: virtualizer.getTotalSize(),
-              position: 'relative',
-            }}
-          >
-            {virtualizer.getVirtualItems().map((vItem) => {
-              const { roomId } = hierarchy[vItem.index] ?? {};
-              const room = mx.getRoom(roomId);
-              if (!room) return null;
+                  </NavItemContent>
+                </NavLink>
+              </NavItem>
+            </NavCategory>
+            <NavCategory
+              style={{
+                height: virtualizer.getTotalSize(),
+                position: 'relative',
+              }}
+            >
+              {virtualizer.getVirtualItems().map((vItem) => {
+                const { roomId } = hierarchy[vItem.index] ?? {};
+                const room = mx.getRoom(roomId);
+                if (!room) return null;
 
-              if (room.isSpaceRoom()) {
-                const categoryId = makeNavCategoryId(space.roomId, roomId);
+                if (room.isSpaceRoom()) {
+                  const categoryId = makeNavCategoryId(space.roomId, roomId);
+
+                  return (
+                    <VirtualTile
+                      virtualItem={vItem}
+                      key={vItem.index}
+                      ref={virtualizer.measureElement}
+                    >
+                      <div style={{ paddingTop: vItem.index === 0 ? undefined : config.space.S400 }}>
+                        <NavCategoryHeader>
+                          <RoomNavCategoryButton
+                            data-category-id={categoryId}
+                            onClick={handleCategoryClick}
+                            closed={closedCategories.has(categoryId)}
+                          >
+                            {roomId === space.roomId ? 'Rooms' : room?.name}
+                          </RoomNavCategoryButton>
+                        </NavCategoryHeader>
+                      </div>
+                    </VirtualTile>
+                  );
+                }
 
                 return (
-                  <VirtualTile
-                    virtualItem={vItem}
-                    key={vItem.index}
-                    ref={virtualizer.measureElement}
-                  >
-                    <div style={{ paddingTop: vItem.index === 0 ? undefined : config.space.S400 }}>
-                      <NavCategoryHeader>
-                        <RoomNavCategoryButton
-                          data-category-id={categoryId}
-                          onClick={handleCategoryClick}
-                          closed={closedCategories.has(categoryId)}
-                        >
-                          {roomId === space.roomId ? 'Rooms' : room?.name}
-                        </RoomNavCategoryButton>
-                      </NavCategoryHeader>
-                    </div>
+                  <VirtualTile virtualItem={vItem} key={vItem.index} ref={virtualizer.measureElement}>
+                    <RoomNavItem
+                      room={room}
+                      selected={selectedRoomId === roomId}
+                      showAvatar={mDirects.has(roomId)}
+                      direct={mDirects.has(roomId)}
+                      linkPath={getToLink(roomId)}
+                      notificationMode={getRoomNotificationMode(notificationPreferences, room.roomId)}
+                    />
                   </VirtualTile>
                 );
-              }
-
-              return (
-                <VirtualTile virtualItem={vItem} key={vItem.index} ref={virtualizer.measureElement}>
-                  <RoomNavItem
-                    room={room}
-                    selected={selectedRoomId === roomId}
-                    showAvatar={mDirects.has(roomId)}
-                    direct={mDirects.has(roomId)}
-                    linkPath={getToLink(roomId)}
-                    notificationMode={getRoomNotificationMode(notificationPreferences, room.roomId)}
-                  />
-                </VirtualTile>
-              );
-            })}
-          </NavCategory>
-        </Box>
-      </PageNavContent>
-      <CallNavStatus />
-    </PageNav>
+              })}
+            </NavCategory>
+          </Box>
+        </PageNavContent>
+        <CallNavStatus />
+      </SwipeableChatWrapper>
+    </PageNav >
   );
 }

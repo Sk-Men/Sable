@@ -1,4 +1,5 @@
 import { ReactNode, useCallback } from 'react';
+import { useSetAtom } from 'jotai';
 import { matchPath, useLocation, useNavigate } from 'react-router-dom';
 import {
   getDirectPath,
@@ -7,7 +8,8 @@ import {
   getInboxPath,
   getSpacePath,
 } from '../pages/pathUtils';
-import { DIRECT_PATH, EXPLORE_PATH, HOME_PATH, INBOX_PATH, SPACE_PATH } from '../pages/paths';
+import { DIRECT_PATH, EXPLORE_PATH, HOME_PATH, INBOX_PATH, SPACE_PATH, HOME_ROOM_PATH, DIRECT_ROOM_PATH, SPACE_ROOM_PATH } from '../pages/paths';
+import { lastVisitedRoomIdAtom } from '../state/room/lastRoom';
 
 type BackRouteHandlerProps = {
   children: (onBack: () => void) => ReactNode;
@@ -15,8 +17,20 @@ type BackRouteHandlerProps = {
 export function BackRouteHandler({ children }: BackRouteHandlerProps) {
   const navigate = useNavigate();
   const location = useLocation();
+  const setLastRoomId = useSetAtom(lastVisitedRoomIdAtom);
 
   const goBack = useCallback(() => {
+    const roomPaths = [HOME_ROOM_PATH, DIRECT_ROOM_PATH, SPACE_ROOM_PATH];
+
+    const roomMatch = roomPaths
+      .map((path) => matchPath({ path, end: false }, location.pathname))
+      .find((match) => match !== null);
+
+    const currentRoomIdOrAlias = roomMatch?.params.roomIdOrAlias;
+    if (currentRoomIdOrAlias) {
+      setLastRoomId(decodeURIComponent(currentRoomIdOrAlias));
+    }
+
     if (
       matchPath(
         {
