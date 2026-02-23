@@ -1,16 +1,16 @@
 # Sable Client Changelog
 
-## Version 0.0.2
+## Version 1.0.0
 
-- In development
-
-## Version 0.0.1
-
-- Releases provided in releases tab. Versions for Windows & Linux built via electron. Android build coming soon.
-- Merged voice & video calls from Cinny PR #2599
+- Releases provided in releases tab. Versions for Windows & Linux built via electron.
+- Account switcher made by TastelessVoid. PR #1
+- Gestures for mobile.
+- Notifications jump to location instead of inbox.
+- Merged voice & video calls from Cinny PR #2599.
 - Client-side previews for some image and video formats.
   - Will attempt to preview all image/video links in a message, if there are none, it generates a standard preview, forwarding the request to the homeserver.
   - Bug fix for images/links/anything that loads after room is opened, properly shifting the scroll to the bottom.
+- Client-side nicknames for other users. PR #3
 - Inline editor for editing messages.
 - Pressing send on mobile no longer closes keyboard.
   - Pressing enter on mobile will always provide a newline, ignores the setting for desktop.
