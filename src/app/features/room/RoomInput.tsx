@@ -188,15 +188,21 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
     let replyBodyJSX: React.ReactNode = replyDraft ? trimReplyFromBody(replyDraft.body) : null;
 
     if (replyFormat === 'org.matrix.custom.html' && replyFormattedBody) {
-      const strippedHtml = trimReplyFromFormattedBody(replyFormattedBody);
+      const strippedHtml = trimReplyFromFormattedBody(formatted_body)
+        .replace(/<br\s*\/?>/gi, ' ')
+        .replace(/<\/p>\s*<p[^>]*>/gi, ' ')
+        .replace(/<\/?p[^>]*>/gi, '')
+        .replace(/(?:\r\n|\r|\n)/g, ' ');
       const parserOpts = getReactCustomHtmlParser(mx, roomId, {
         linkifyOpts: LINKIFY_OPTS,
       });
       replyBodyJSX = parse(strippedHtml, parserOpts);
     } else if (replyBody) {
-      replyBodyJSX = scaleSystemEmoji(trimReplyFromBody(replyBody));
+      const strippedBody = trimReplyFromBody(replyBody).replace(/(?:\r\n|\r|\n)/g, ' ');
+      replyBodyJSX = scaleSystemEmoji(trimReplyFromBody(strippedBody));
     } else if (replyDraft) {
-      replyBodyJSX = scaleSystemEmoji(trimReplyFromBody(replyDraft.body));
+      const strippedBody = trimReplyFromBody(replyDraft.body).replace(/(?:\r\n|\r|\n)/g, ' ');
+      replyBodyJSX = scaleSystemEmoji(trimReplyFromBody(strippedBody));
     }
 
     useEffect(() => {

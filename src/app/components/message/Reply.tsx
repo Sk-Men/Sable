@@ -101,13 +101,18 @@ export const Reply = as<'div', ReplyProps>(
 
     // eslint-disable-next-line camelcase
     if (format === 'org.matrix.custom.html' && formatted_body) {
-      const strippedHtml = trimReplyFromFormattedBody(formatted_body);
+      const strippedHtml = trimReplyFromFormattedBody(formatted_body)
+        .replace(/<br\s*\/?>/gi, ' ')
+        .replace(/<\/p>\s*<p[^>]*>/gi, ' ')
+        .replace(/<\/?p[^>]*>/gi, '')
+        .replace(/(?:\r\n|\r|\n)/g, ' ');
       const parserOpts = getReactCustomHtmlParser(mx, room.roomId, {
         linkifyOpts: LINKIFY_OPTS
       });
       bodyJSX = parse(strippedHtml, parserOpts) as JSX.Element;
     } else if (body) {
-      bodyJSX = scaleSystemEmoji(trimReplyFromBody(body));
+      const strippedBody = trimReplyFromBody(body).replace(/(?:\r\n|\r|\n)/g, ' ');
+      bodyJSX = scaleSystemEmoji(strippedBody);
     }
 
     return (
