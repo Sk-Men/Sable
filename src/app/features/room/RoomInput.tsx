@@ -188,7 +188,7 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
     let replyBodyJSX: React.ReactNode = replyDraft ? trimReplyFromBody(replyDraft.body) : null;
 
     if (replyFormat === 'org.matrix.custom.html' && replyFormattedBody) {
-      const strippedHtml = trimReplyFromFormattedBody(formatted_body)
+      const strippedHtml = trimReplyFromFormattedBody(replyFormattedBody)
         .replace(/<br\s*\/?>/gi, ' ')
         .replace(/<\/p>\s*<p[^>]*>/gi, ' ')
         .replace(/<\/?p[^>]*>/gi, '')
