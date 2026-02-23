@@ -35,5 +35,4 @@
   - Room Color > Space Color > Role Color > Default
   - Room Font > Space Font > Default
     - _Note, if the room font is invaild it will fallback directly to default, not the space font._
-- Includes all features in Cinny v4.10.3
-- So much refractoring... so much pain...
+- Includes all features in Cinny v4.10.5
