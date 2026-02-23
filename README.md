@@ -1,8 +1,6 @@
 # Sable
 
-A Matrix client built to enhance the user experience with quality-of-life features, cosmetics, and utilites. Forked from [Cinny](https://github.com/cinnyapp/cinny/).
-
-<img align="center" src="https://raw.githubusercontent.com/cinnyapp/cinny-site/main/assets/preview2-light.png" height="380">
+A Matrix client built to enhance the user experience with quality-of-life features, cosmetics, utilites, and sheer usability. Forked from [Cinny](https://github.com/cinnyapp/cinny/).
 
 ## Getting started
 The web app is available at [app.sable.moe](https://app.sable.moe/) and gets updated on frequently, as soon as a feature is deemed stable.
