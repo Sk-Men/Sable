@@ -1,6 +1,6 @@
-import {atom} from 'jotai';
-import {atomWithLocalStorage, getLocalStorageItem, setLocalStorageItem,} from './utils/atomWithLocalStorage';
-import {createLogger} from '../utils/debug';
+import { atom } from 'jotai';
+import { atomWithLocalStorage, getLocalStorageItem, setLocalStorageItem, } from './utils/atomWithLocalStorage';
+import { createLogger } from '../utils/debug';
 
 const log = createLogger('sessions');
 
@@ -107,13 +107,13 @@ const baseSessionsAtom = atomWithLocalStorage<Sessions>(
 
 export type SessionsAction =
   | {
-      type: 'PUT';
-      session: Session;
-    }
+    type: 'PUT';
+    session: Session;
+  }
   | {
-      type: 'DELETE';
-      session: Session;
-    };
+    type: 'DELETE';
+    session: Session;
+  };
 
 export const sessionsAtom = atom<Sessions, [SessionsAction], void>(
   (get) => get(baseSessionsAtom),
@@ -157,3 +157,5 @@ export const activeSessionIdAtom = atom<string | undefined, [string | undefined]
     set(baseActiveSessionAtom, value);
   }
 );
+
+export const pendingNotificationAtom = atom<{ roomId: string; eventId: string } | null>(null);

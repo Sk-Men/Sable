@@ -9,17 +9,19 @@ import {
   SyncState,
 } from 'matrix-js-sdk';
 import { PushProcessor } from 'matrix-js-sdk/lib/pushprocessor';
-import { useAtomValue } from 'jotai';
-import { sessionsAtom, activeSessionIdAtom, Session } from '../../state/sessions';
+import { useAtomValue, useSetAtom } from 'jotai';
+import { useNavigate } from 'react-router-dom';
+import { sessionsAtom, activeSessionIdAtom, Session, pendingNotificationAtom } from '../../state/sessions';
 import { useSetting } from '../../state/hooks/settings';
 import { settingsAtom } from '../../state/settings';
-import { getMxIdLocalPart } from '../../utils/matrix';
+import { getMxIdLocalPart, mxcUrlToHttp } from '../../utils/matrix';
 import { getMemberDisplayName, getNotificationType, isNotificationEvent } from '../../utils/room';
 import { NotificationType } from '../../../types/matrix/room';
 import { createLogger } from '../../utils/debug';
 import LogoSVG from '../../../../public/res/svg/cinny.svg';
 import { nicknamesAtom } from '../../state/nicknames';
 import { useMatrixClient } from '../../hooks/useMatrixClient';
+import { useRoomNavigate } from '../../hooks/useRoomNavigate';
 
 const log = createLogger('BackgroundNotifications');
 
@@ -58,6 +60,7 @@ const waitForSync = (mx: MatrixClient): Promise<void> =>
 export function BackgroundNotifications() {
   const sessions = useAtomValue(sessionsAtom);
   const activeSessionId = useAtomValue(activeSessionIdAtom);
+  const setActiveSessionId = useSetAtom(activeSessionIdAtom);
   const [showNotifications] = useSetting(settingsAtom, 'showNotifications');
   const activeMx = useMatrixClient();
   const nicknames = useAtomValue(nicknamesAtom);
@@ -65,6 +68,8 @@ export function BackgroundNotifications() {
   nicknamesRef.current = nicknames;
   const clientsRef = useRef<Map<string, MatrixClient>>(new Map());
   const notifiedEventsRef = useRef<Set<string>>(new Set());
+  const { navigateRoom } = useRoomNavigate();
+  const setPending = useSetAtom(pendingNotificationAtom);
 
   const inactiveSessions = sessions.filter(
     (s) => s.userId !== (activeSessionId ?? sessions[0]?.userId)
@@ -164,6 +169,11 @@ export function BackgroundNotifications() {
               getMemberDisplayName(room, sender, nicknamesRef.current) ?? getMxIdLocalPart(sender) ?? sender;
             const accountLabel = getMxIdLocalPart(session.userId) ?? session.userId;
 
+            const avatarMxc = room.getAvatarFallbackMember()?.getMxcAvatarUrl() ?? room.getMxcAvatarUrl();
+            const roomAvatar = avatarMxc
+              ? mxcUrlToHttp(mx, avatarMxc, false, 96, 96, 'crop') ?? undefined
+              : LogoSVG;
+
             const isHighlight = pushActions.tweaks?.highlight === true;
 
             notifiedEventsRef.current.add(eventId);
@@ -175,11 +185,18 @@ export function BackgroundNotifications() {
 
             sendNotification({
               title: `${room.name ?? 'Unknown'} (${accountLabel})`,
-              icon: LogoSVG,
+              icon: roomAvatar,
               body: `${senderName}: new message`,
               silent: !isHighlight,
               onClick: () => {
-                // TODO: Handle notification click
+                window.focus();
+                setPending({ roomId: room.roomId, eventId });
+                if (session.userId !== activeSessionId) {
+                  setActiveSessionId(session.userId);
+                } else {
+                  navigateRoom(room.roomId, eventId);
+                  setPending(null);
+                }
               },
             });
           };
@@ -195,7 +212,7 @@ export function BackgroundNotifications() {
       current.forEach((mx) => mx.stopClient());
       current.clear();
     };
-  }, [inactiveSessions, showNotifications, activeMx]);
+  }, [inactiveSessions, showNotifications, activeMx, activeSessionId, setActiveSessionId, setPending, navigateRoom]);
 
   return null;
 }

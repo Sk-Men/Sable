@@ -71,6 +71,7 @@ import { getFallbackSession, MATRIX_SESSIONS_KEY, Sessions } from '../state/sess
 import { getLocalStorageItem } from '../state/utils/atomWithLocalStorage';
 import { CallProvider } from './client/call/CallProvider';
 import { PersistentCallContainer } from './client/call/PersistentCallContainer';
+import { NotificationJumper } from '../hooks/useNotificationJumper';
 
 /**
  * Returns true if there is at least one stored session.
@@ -144,6 +145,7 @@ export const createRouter = (clientConfig: ClientConfig, screenSize: ScreenSize)
                 <ClientRoomsNotificationPreferences>
                   <ClientBindAtoms>
                     <ClientNonUIFeatures>
+                      <NotificationJumper />
                       <CallProvider>
                         <ClientLayout
                           nav={

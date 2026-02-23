@@ -1,4 +1,4 @@
-import { useAtomValue } from 'jotai';
+import { useAtomValue, useSetAtom } from 'jotai';
 import React, { ReactNode, useCallback, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { RoomEvent, RoomEventHandlerMap } from 'matrix-js-sdk';
@@ -15,7 +15,7 @@ import { nicknamesAtom } from '../../state/nicknames';
 import { allInvitesAtom } from '../../state/room-list/inviteList';
 import { usePreviousValue } from '../../hooks/usePreviousValue';
 import { useMatrixClient } from '../../hooks/useMatrixClient';
-import { getInboxInvitesPath, getInboxNotificationsPath } from '../pathUtils';
+import { getInboxInvitesPath } from '../pathUtils';
 import {
   getMemberDisplayName,
   getNotificationType,
@@ -28,6 +28,7 @@ import { useSelectedRoom } from '../../hooks/router/useSelectedRoom';
 import { useInboxNotificationsSelected } from '../../hooks/router/useInbox';
 import { useMediaAuthentication } from '../../hooks/useMediaAuthentication';
 import { BackgroundNotifications } from './BackgroundNotifications';
+import { pendingNotificationAtom } from '../../state/sessions';
 
 function SystemEmojiFeature() {
   const [twitterEmoji] = useSetting(settingsAtom, 'twitterEmoji');
@@ -142,15 +143,17 @@ function MessageNotifications() {
   const nicknamesRef = useRef(nicknames);
   nicknamesRef.current = nicknames;
 
-  const navigate = useNavigate();
-  const notificationSelected = useInboxNotificationsSelected();
+  const setPending = useSetAtom(pendingNotificationAtom);
   const selectedRoomId = useSelectedRoom();
+  const notificationSelected = useInboxNotificationsSelected();
 
   const notify = useCallback(
     ({
       roomName,
       roomAvatar,
       username,
+      roomId,
+      eventId,
     }: {
       roomName: string;
       roomAvatar?: string;
@@ -161,12 +164,14 @@ function MessageNotifications() {
       const noti = new window.Notification(roomName, {
         icon: roomAvatar,
         badge: roomAvatar,
-        body: `New inbox notification from ${username}`,
+        body: `${username}: new message`,
         silent: true,
       });
 
       noti.onclick = () => {
-        if (!window.closed) navigate(getInboxNotificationsPath());
+        window.focus();
+        setPending({ roomId, eventId });
+
         noti.close();
         notifRef.current = undefined;
       };
@@ -174,7 +179,7 @@ function MessageNotifications() {
       notifRef.current?.close();
       notifRef.current = noti;
     },
-    [navigate]
+    [setPending]
   );
 
   const playSound = useCallback(() => {
