@@ -1,6 +1,6 @@
 {
   "name": "sable",
-  "version": "0.0.1",
+  "version": "1.0.0",
   "description": "Yet another matrix client fork",
   "main": "index.js",
   "type": "module",
