@@ -195,6 +195,7 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
         .replace(/(?:\r\n|\r|\n)/g, ' ');
       const parserOpts = getReactCustomHtmlParser(mx, roomId, {
         linkifyOpts: LINKIFY_OPTS,
+        nicknames,
       });
       replyBodyJSX = parse(strippedHtml, parserOpts);
     } else if (replyBody) {
@@ -655,7 +656,7 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
                   </PopOut>
                 )}
               </UseStateProvider>
-              <IconButton onClick={submit} onMouseDown={(e) => e.preventDefault()} variant="SurfaceVariant" size="300" radii="300">
+              <IconButton onClick={submit} onMouseDown={(e: React.MouseEvent) => e.preventDefault()} variant="SurfaceVariant" size="300" radii="300">
                 <Icon src={Icons.Send} />
               </IconButton>
             </>

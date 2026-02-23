@@ -2,7 +2,7 @@ import { Box, Button, config, Icon, Icons, Scroll, Text } from 'folds';
 import React, { useCallback, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAtomValue } from 'jotai';
-import { Opts as LinkifyOpts, Opts } from 'linkifyjs';
+import { Opts as LinkifyOpts } from 'linkifyjs';
 import { HTMLReactParserOptions } from 'html-react-parser';
 import { UserHero, UserHeroName } from './UserHero';
 import { getMxIdServer, mxcUrlToHttp } from '../../utils/matrix';
@@ -201,14 +201,14 @@ export function UserRoomProfile({ userId }: UserRoomProfileProps) {
     e.preventDefault();
   }, []);
 
-  const linkifyOpts = useMemo<Opts>(
+  const linkifyOpts = useMemo<LinkifyOpts>(
     () => ({
       ...LINKIFY_OPTS,
       render: factoryRenderLinkifyWithMention((href) =>
-        renderMatrixMention(mx, room.roomId, href, makeMentionCustomProps(mentionClickHandler))
+        renderMatrixMention(mx, room.roomId, href, makeMentionCustomProps(mentionClickHandler), nicknames)
       ),
     }),
-    [mx, room, mentionClickHandler]
+    [mx, room, mentionClickHandler, nicknames]
   );
 
   const spoilerClickHandler = useSpoilerClickHandler();

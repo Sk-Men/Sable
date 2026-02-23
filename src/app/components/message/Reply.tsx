@@ -107,7 +107,8 @@ export const Reply = as<'div', ReplyProps>(
         .replace(/<\/?p[^>]*>/gi, '')
         .replace(/(?:\r\n|\r|\n)/g, ' ');
       const parserOpts = getReactCustomHtmlParser(mx, room.roomId, {
-        linkifyOpts: LINKIFY_OPTS
+        linkifyOpts: LINKIFY_OPTS,
+        nicknames,
       });
       bodyJSX = parse(strippedHtml, parserOpts) as JSX.Element;
     } else if (body) {

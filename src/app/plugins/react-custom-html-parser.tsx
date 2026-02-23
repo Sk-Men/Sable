@@ -1,27 +1,27 @@
 /* eslint-disable jsx-a11y/alt-text */
-import React, {ComponentPropsWithoutRef, lazy, ReactEventHandler, Suspense, useMemo, useState,} from 'react';
-import {attributesToProps, domToReact, Element, HTMLReactParserOptions, Text as DOMText,} from 'html-react-parser';
-import {MatrixClient} from 'matrix-js-sdk';
+import React, { ComponentPropsWithoutRef, lazy, ReactEventHandler, Suspense, useMemo, useState, } from 'react';
+import { attributesToProps, domToReact, Element, HTMLReactParserOptions, Text as DOMText, } from 'html-react-parser';
+import { MatrixClient } from 'matrix-js-sdk';
 import classNames from 'classnames';
-import {Box, Chip, config, Header, Icon, IconButton, Icons, Scroll, Text, toRem} from 'folds';
-import {IntermediateRepresentation, OptFn, Opts as LinkifyOpts} from 'linkifyjs';
+import { Box, Chip, config, Header, Icon, IconButton, Icons, Scroll, Text, toRem } from 'folds';
+import { IntermediateRepresentation, OptFn, Opts as LinkifyOpts } from 'linkifyjs';
 import Linkify from 'linkify-react';
-import {ErrorBoundary} from 'react-error-boundary';
-import {ChildNode} from 'domhandler';
+import { ErrorBoundary } from 'react-error-boundary';
+import { ChildNode } from 'domhandler';
 import * as css from '../styles/CustomHtml.css';
-import {getCanonicalAliasRoomId, getMxIdLocalPart, isRoomAlias, mxcUrlToHttp,} from '../utils/matrix';
-import {getMemberDisplayName} from '../utils/room';
-import {NICKNAMES_KEY} from '../state/nicknames';
-import {getLocalStorageItem} from '../state/utils/atomWithLocalStorage';
-import {EMOJI_PATTERN, sanitizeForRegex, URL_NEG_LB} from '../utils/regex';
-import {getHexcodeForEmoji, getShortcodeFor} from './emoji';
-import {findAndReplace} from '../utils/findAndReplace';
-import {parseMatrixToRoom, parseMatrixToRoomEvent, parseMatrixToUser, testMatrixTo,} from './matrix-to';
-import {onEnterOrSpace} from '../utils/keyboard';
-import {copyToClipboard, tryDecodeURIComponent} from '../utils/dom';
-import {useTimeoutToggle} from '../hooks/useTimeoutToggle';
+import { getCanonicalAliasRoomId, getMxIdLocalPart, isRoomAlias, mxcUrlToHttp, } from '../utils/matrix';
+import { getMemberDisplayName } from '../utils/room';
+import { Nicknames } from '../state/nicknames';
+import { EMOJI_PATTERN, sanitizeForRegex, URL_NEG_LB } from '../utils/regex';
+import { getHexcodeForEmoji, getShortcodeFor } from './emoji';
+import { findAndReplace } from '../utils/findAndReplace';
+import { parseMatrixToRoom, parseMatrixToRoomEvent, parseMatrixToUser, testMatrixTo, } from './matrix-to';
+import { onEnterOrSpace } from '../utils/keyboard';
+import { copyToClipboard, tryDecodeURIComponent } from '../utils/dom';
+import { useTimeoutToggle } from '../hooks/useTimeoutToggle';
 
 const ReactPrism = lazy(() => import('./react-prism/ReactPrism'));
+
 
 const EMOJI_REG_G = new RegExp(`${URL_NEG_LB}(${EMOJI_PATTERN})`, 'g');
 
@@ -54,7 +54,8 @@ export const renderMatrixMention = (
   mx: MatrixClient,
   currentRoomId: string | undefined,
   href: string,
-  customProps: ComponentPropsWithoutRef<'a'>
+  customProps: ComponentPropsWithoutRef<'a'>,
+  nicknames?: Nicknames
 ) => {
   const userId = parseMatrixToUser(href);
   if (userId) {
@@ -67,9 +68,8 @@ export const renderMatrixMention = (
         className={css.Mention({ highlight: mx.getUserId() === userId })}
         data-mention-id={userId}
       >
-        {`@${
-          (currentRoom && getMemberDisplayName(currentRoom, userId, getLocalStorageItem(NICKNAMES_KEY, {}))) ?? getMxIdLocalPart(userId)
-        }`}
+        {`@${(currentRoom && getMemberDisplayName(currentRoom, userId, nicknames)) ?? getMxIdLocalPart(userId)
+          }`}
       </a>
     );
   }
@@ -129,11 +129,12 @@ export const renderMatrixMention = (
 export const factoryRenderLinkifyWithMention = (
   mentionRender: (href: string) => JSX.Element | undefined
 ): OptFn<(ir: IntermediateRepresentation) => any> => {
-  return ({
-            tagName,
-            attributes,
-            content,
-          }) => {
+
+  const renderLink: OptFn<(ir: IntermediateRepresentation) => any> = ({
+    tagName,
+    attributes,
+    content,
+  }) => {
     if (tagName === 'a' && testMatrixTo(tryDecodeURIComponent(attributes.href))) {
       const mention = mentionRender(tryDecodeURIComponent(attributes.href));
       if (mention) return mention;
@@ -141,6 +142,8 @@ export const factoryRenderLinkifyWithMention = (
 
     return <a {...attributes}>{content}</a>;
   };
+
+  return renderLink;
 };
 
 export const scaleSystemEmoji = (text: string): (string | JSX.Element)[] =>
@@ -296,6 +299,7 @@ export const getReactCustomHtmlParser = (
     handleSpoilerClick?: ReactEventHandler<HTMLElement>;
     handleMentionClick?: ReactEventHandler<HTMLElement>;
     useAuthentication?: boolean;
+    nicknames?: Nicknames;
   }
 ): HTMLReactParserOptions => {
   const opts: HTMLReactParserOptions = {
@@ -427,7 +431,8 @@ export const getReactCustomHtmlParser = (
             mx,
             roomId,
             tryDecodeURIComponent(props.href),
-            makeMentionCustomProps(params.handleMentionClick, content)
+            makeMentionCustomProps(params.handleMentionClick, content),
+            params.nicknames
           );
 
           if (mention) return mention;

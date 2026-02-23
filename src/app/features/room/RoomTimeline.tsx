@@ -17,6 +17,7 @@ import {
   EventTimelineSet,
   EventTimelineSetHandlerMap,
   IContent,
+  IRoomTimelineData,
   MatrixClient,
   MatrixEvent,
   Room,
@@ -195,7 +196,7 @@ export const getEventIdAbsoluteIndex = (
 ): number | undefined => {
   const timelineIndex = timelines.findIndex((t) => t === eventTimeline);
   if (timelineIndex === -1) return undefined;
-  const eventIndex = eventTimeline.getEvents().findIndex((evt) => evt.getId() === eventId);
+  const eventIndex = eventTimeline.getEvents().findIndex((evt: MatrixEvent) => evt.getId() === eventId);
   if (eventIndex === -1) return undefined;
   const baseIndex = timelines
     .slice(0, timelineIndex)
@@ -341,16 +342,16 @@ const useTimelinePagination = (
 const useLiveEventArrive = (room: Room, onArrive: (mEvent: MatrixEvent) => void) => {
   useEffect(() => {
     const handleTimelineEvent: EventTimelineSetHandlerMap[RoomEvent.Timeline] = (
-      mEvent,
-      eventRoom,
-      toStartOfTimeline,
-      removed,
-      data
+      mEvent: MatrixEvent,
+      eventRoom: Room | undefined,
+      toStartOfTimeline: boolean | undefined,
+      removed: boolean,
+      data: IRoomTimelineData
     ) => {
       if (eventRoom?.roomId !== room.roomId || !data.liveEvent) return;
       onArrive(mEvent);
     };
-    const handleRedaction: RoomEventHandlerMap[RoomEvent.Redaction] = (mEvent, eventRoom) => {
+    const handleRedaction: RoomEventHandlerMap[RoomEvent.Redaction] = (mEvent: MatrixEvent, eventRoom: Room | undefined) => {
       if (eventRoom?.roomId !== room.roomId) return;
       onArrive(mEvent);
     };
@@ -366,7 +367,7 @@ const useLiveEventArrive = (room: Room, onArrive: (mEvent: MatrixEvent) => void)
 
 const useLiveTimelineRefresh = (room: Room, onRefresh: () => void) => {
   useEffect(() => {
-    const handleTimelineRefresh: RoomEventHandlerMap[RoomEvent.TimelineRefresh] = (r) => {
+    const handleTimelineRefresh: RoomEventHandlerMap[RoomEvent.TimelineRefresh] = (r: Room) => {
       if (r.roomId !== room.roomId) return;
       onRefresh();
     };
@@ -484,10 +485,10 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
     () => ({
       ...LINKIFY_OPTS,
       render: factoryRenderLinkifyWithMention((href) =>
-        renderMatrixMention(mx, room.roomId, href, makeMentionCustomProps(mentionClickHandler))
+        renderMatrixMention(mx, room.roomId, href, makeMentionCustomProps(mentionClickHandler), nicknames)
       ),
     }),
-    [mx, room, mentionClickHandler]
+    [mx, room, mentionClickHandler, nicknames]
   );
   const htmlReactParserOptions = useMemo<HTMLReactParserOptions>(
     () =>
@@ -496,8 +497,9 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
         useAuthentication,
         handleSpoilerClick: spoilerClickHandler,
         handleMentionClick: mentionClickHandler,
+        nicknames,
       }),
-    [mx, room, linkifyOpts, spoilerClickHandler, mentionClickHandler, useAuthentication]
+    [mx, room, linkifyOpts, spoilerClickHandler, mentionClickHandler, useAuthentication, nicknames]
   );
   const parseMemberEvent = useMemberEventParser();
 
@@ -591,7 +593,9 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
           }
 
           scrollToBottomRef.current.count += 1;
-          scrollToBottomRef.current.smooth = true;
+          // Use instant scroll when the current user sent the message
+          // to avoid Android WebView smooth-scroll not reaching bottom.
+          scrollToBottomRef.current.smooth = mEvt.getSender() !== mx.getUserId();
 
           setTimeline((ct) => ({
             ...ct,
@@ -860,8 +864,17 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
   useLayoutEffect(() => {
     if (scrollToBottomCount > 0) {
       const scrollEl = scrollRef.current;
-      if (scrollEl)
-        scrollToBottom(scrollEl, scrollToBottomRef.current.smooth ? 'smooth' : 'instant');
+      if (scrollEl) {
+        const behavior = scrollToBottomRef.current.smooth ? 'smooth' : 'instant';
+        scrollToBottom(scrollEl, behavior);
+        // On Android WebView, layout may still settle after the initial scroll.
+        // Fire a second instant scroll after a short delay to guarantee we
+        // reach the true bottom (e.g. after images finish loading or the
+        // virtual keyboard shifts the viewport).
+        if (behavior === 'instant') {
+          setTimeout(() => scrollToBottom(scrollEl, 'instant'), 80);
+        }
+      }
     }
   }, [scrollToBottomCount]);
 
@@ -992,17 +1005,17 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
     (targetEventId: string, key: string, shortcode?: string) => {
       const relations = getEventReactions(room.getUnfilteredTimelineSet(), targetEventId);
       const allReactions = relations?.getSortedAnnotationsByKey() ?? [];
-      const [, reactionsSet] = allReactions.find(([k]) => k === key) ?? [];
-      const reactions = reactionsSet ? Array.from(reactionsSet) : [];
+      const [, reactionsSet] = allReactions.find(([k]: [string, any]) => k === key) ?? [];
+      const reactions: MatrixEvent[] = reactionsSet ? Array.from(reactionsSet) : [];
       const myReaction = reactions.find(factoryEventSentBy(mx.getUserId()!));
 
-      if (myReaction && !!myReaction?.isRelation()) {
-        mx.redactEvent(room.roomId, myReaction.getId()!);
+      if (myReaction && !!(myReaction as any)?.isRelation()) {
+        mx.redactEvent(room.roomId, (myReaction as any).getId()!);
         return;
       }
       const rShortcode =
         shortcode ||
-        (reactions.find(eventWithShortcode)?.getContent().shortcode as string | undefined);
+        ((reactions.find(eventWithShortcode) as any)?.getContent().shortcode as string | undefined);
       mx.sendEvent(
         room.roomId,
         MessageEvent.Reaction as any,

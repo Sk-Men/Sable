@@ -123,7 +123,7 @@ function PinnedMessage({
       const pinEvent = getStateEvent(room, StateEvent.RoomPinnedEvents);
       const content = pinEvent?.getContent<RoomPinnedEventsEventContent>() ?? { pinned: [] };
       const newContent: RoomPinnedEventsEventContent = {
-        pinned: content.pinned.filter((id) => id !== eventId),
+        pinned: content.pinned.filter((id: string) => id !== eventId),
       };
 
       return mx.sendStateEvent(room.roomId, StateEvent.RoomPinnedEvents as any, newContent);
@@ -251,6 +251,7 @@ export const RoomPinMenu = forwardRef<HTMLDivElement, RoomPinMenuProps>(
   ({ room, requestClose }, ref) => {
     const mx = useMatrixClient();
     const userId = mx.getUserId()!;
+    const nicknames = useAtomValue(nicknamesAtom);
     const powerLevels = usePowerLevelsContext();
     const creators = useRoomCreators(room);
 
@@ -297,10 +298,10 @@ export const RoomPinMenu = forwardRef<HTMLDivElement, RoomPinMenuProps>(
       () => ({
         ...LINKIFY_OPTS,
         render: factoryRenderLinkifyWithMention((href) =>
-          renderMatrixMention(mx, room.roomId, href, makeMentionCustomProps(mentionClickHandler))
+          renderMatrixMention(mx, room.roomId, href, makeMentionCustomProps(mentionClickHandler), nicknames)
         ),
       }),
-      [mx, room, mentionClickHandler]
+      [mx, room, mentionClickHandler, nicknames]
     );
     const htmlReactParserOptions = useMemo<HTMLReactParserOptions>(
       () =>
@@ -309,8 +310,9 @@ export const RoomPinMenu = forwardRef<HTMLDivElement, RoomPinMenuProps>(
           useAuthentication,
           handleSpoilerClick: spoilerClickHandler,
           handleMentionClick: mentionClickHandler,
+          nicknames,
         }),
-      [mx, room, linkifyOpts, mentionClickHandler, spoilerClickHandler, useAuthentication]
+      [mx, room, linkifyOpts, mentionClickHandler, spoilerClickHandler, useAuthentication, nicknames]
     );
 
     const renderMatrixEvent = useMatrixEventRenderer<[MatrixEvent, string, GetContentCallback]>(
@@ -341,7 +343,7 @@ export const RoomPinMenu = forwardRef<HTMLDivElement, RoomPinMenuProps>(
           const eventId = event.getId()!;
           const evtTimeline = room.getTimelineForEvent(eventId);
 
-          const mEvent = evtTimeline?.getEvents().find((e) => e.getId() === eventId);
+          const mEvent = evtTimeline?.getEvents().find((e: MatrixEvent) => e.getId() === eventId);
 
           if (!mEvent || !evtTimeline) {
             return (

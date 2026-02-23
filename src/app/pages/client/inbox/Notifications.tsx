@@ -245,10 +245,10 @@ function RoomNotificationsGroupComp({
     () => ({
       ...LINKIFY_OPTS,
       render: factoryRenderLinkifyWithMention((href) =>
-        renderMatrixMention(mx, room.roomId, href, makeMentionCustomProps(mentionClickHandler))
+        renderMatrixMention(mx, room.roomId, href, makeMentionCustomProps(mentionClickHandler), nicknames)
       ),
     }),
-    [mx, room, mentionClickHandler]
+    [mx, room, mentionClickHandler, nicknames]
   );
   const htmlReactParserOptions = useMemo<HTMLReactParserOptions>(
     () =>
@@ -257,8 +257,9 @@ function RoomNotificationsGroupComp({
         useAuthentication,
         handleSpoilerClick: spoilerClickHandler,
         handleMentionClick: mentionClickHandler,
+        nicknames,
       }),
-    [mx, room, linkifyOpts, mentionClickHandler, spoilerClickHandler, useAuthentication]
+    [mx, room, linkifyOpts, mentionClickHandler, spoilerClickHandler, useAuthentication, nicknames]
   );
 
   const renderMatrixEvent = useMatrixEventRenderer<[IRoomEvent, string, GetContentCallback]>(
@@ -285,7 +286,7 @@ function RoomNotificationsGroupComp({
       [MessageEvent.RoomMessageEncrypted]: (evt, displayName) => {
         const evtTimeline = room.getTimelineForEvent(evt.event_id);
 
-        const mEvent = evtTimeline?.getEvents().find((e) => e.getId() === evt.event_id);
+        const mEvent = evtTimeline?.getEvents().find((e: any) => e.getId() === evt.event_id);
 
         if (!mEvent || !evtTimeline) {
           return (
