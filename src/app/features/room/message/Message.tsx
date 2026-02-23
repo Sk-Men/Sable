@@ -28,13 +28,16 @@ import React, {
   MouseEventHandler,
   ReactNode,
   useCallback,
+  useRef,
   useState,
+  useEffect,
 } from 'react';
 import FocusTrap from 'focus-trap-react';
 import { useHover, useFocusWithin } from 'react-aria';
-import { EventTimeline, MatrixEvent, Room } from 'matrix-js-sdk';
+import { MatrixEvent, Room } from 'matrix-js-sdk';
 import { Relations } from 'matrix-js-sdk/lib/models/relations';
 import classNames from 'classnames';
+import { useAtomValue, useSetAtom } from 'jotai';
 import { RoomPinnedEventsEventContent } from 'matrix-js-sdk/lib/types';
 import {
   AvatarBase,
@@ -60,7 +63,6 @@ import {
 } from '../../../utils/matrix';
 import { MessageLayout, MessageSpacing } from '../../../state/settings';
 import { nicknamesAtom, setNicknameAtom } from '../../../state/nicknames';
-import { useAtomValue, useSetAtom } from 'jotai';
 import { useMatrixClient } from '../../../hooks/useMatrixClient';
 import { useRecentEmoji } from '../../../hooks/useRecentEmoji';
 import * as css from './styles.css';
@@ -79,11 +81,10 @@ import { useMediaAuthentication } from '../../../hooks/useMediaAuthentication';
 import { useRoomPinnedEvents } from '../../../hooks/useRoomPinnedEvents';
 import { MemberPowerTag, StateEvent } from '../../../../types/matrix/room';
 import { PowerIcon } from '../../../components/power';
-import colorMXID from '../../../../util/colorMXID';
 import { getPowerTagIconSrc } from '../../../hooks/useMemberPowerTag';
-import { AccountDataEvent } from '../../../../types/matrix/accountData';
 import { useSableCosmetics } from '../../../hooks/useSableCosmetics';
 import { SwipeableMessageWrapper } from '../../../components/SwipeableMessageWrapper';
+import { mobileOrTablet } from '../../../utils/user-agent';
 
 export type ReactionHandler = (keyOrMxc: string, shortcode: string) => void;
 
@@ -688,6 +689,40 @@ export type MessageProps = {
   hour24Clock: boolean;
   dateFormatString: string;
 };
+
+function useMobileLongPress(callback: (e: React.PointerEvent<HTMLElement>) => void, delay = 700) {
+  const timerRef = useRef<NodeJS.Timeout>();
+  const startPos = useRef<{ x: number; y: number } | null>(null);
+
+  const start = useCallback((e: React.PointerEvent<HTMLElement>) => {
+    if (!mobileOrTablet()) return;
+    startPos.current = { x: e.clientX, y: e.clientY };
+    timerRef.current = setTimeout(() => {
+      callback(e);
+      startPos.current = null;
+    }, delay);
+  }, [callback, delay]);
+
+  const clear = useCallback(() => {
+    if (timerRef.current) clearTimeout(timerRef.current);
+    startPos.current = null;
+  }, []);
+
+  const move = useCallback((e: React.PointerEvent<HTMLElement>) => {
+    if (!startPos.current) return;
+    const dx = Math.abs(e.clientX - startPos.current.x);
+    const dy = Math.abs(e.clientY - startPos.current.y);
+    if (dx > 10 || dy > 10) clear();
+  }, [clear]);
+
+  return {
+    onPointerDown: start,
+    onPointerMove: move,
+    onPointerUp: clear,
+    onPointerCancel: clear,
+  };
+}
+
 export const Message = as<'div', MessageProps>(
   (
     {
@@ -725,9 +760,14 @@ export const Message = as<'div', MessageProps>(
     const useAuthentication = useMediaAuthentication();
     const senderId = mEvent.getSender() ?? '';
 
-    const [hover, setHover] = useState(false);
-    const { hoverProps } = useHover({ onHoverChange: setHover });
-    const { focusWithinProps } = useFocusWithin({ onFocusWithinChange: setHover });
+    const [isDesktopHover, setIsDesktopHover] = useState(false);
+    const { hoverProps } = useHover({
+      onHoverChange: (h) => { if (!mobileOrTablet()) setIsDesktopHover(h); }
+    });
+    const { focusWithinProps } = useFocusWithin({
+      onFocusWithinChange: (f) => { if (!mobileOrTablet()) setIsDesktopHover(f); }
+    });
+
     const [menuAnchor, setMenuAnchor] = useState<RectCords>();
     const [emojiBoardAnchor, setEmojiBoardAnchor] = useState<RectCords>();
     const [nickEditOpen, setNickEditOpen] = useState(false);
@@ -744,6 +784,20 @@ export const Message = as<'div', MessageProps>(
       : undefined;
 
     const { color: usernameColor, font: usernameFont } = useSableCosmetics(senderId, room);
+
+    const [mobileOptionsOpen, setMobileOptionsOpen] = useState(false);
+    const optionsRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+      if (!mobileOptionsOpen) return undefined;
+      const handleClickOutside = (e: globalThis.Event) => {
+        if (optionsRef.current && !optionsRef.current.contains(e.target as Node)) {
+          setMobileOptionsOpen(false);
+        }
+      };
+      document.addEventListener('pointerdown', handleClickOutside, { capture: true });
+      return () => document.removeEventListener('pointerdown', handleClickOutside, { capture: true });
+    }, [mobileOptionsOpen]);
 
     const headerJSX = !collapse && (
       <Box
@@ -775,7 +829,7 @@ export const Message = as<'div', MessageProps>(
           {tagIconSrc && <PowerIcon size="100" iconSrc={tagIconSrc} />}
         </Box>
         <Box shrink="No" gap="100">
-          {messageLayout === MessageLayout.Modern && hover && (
+          {messageLayout === MessageLayout.Modern && isDesktopHover && (
             <>
               <Text as="span" size="T200" priority="300">
                 {senderId}
@@ -843,6 +897,11 @@ export const Message = as<'div', MessageProps>(
     );
 
     const handleContextMenu: MouseEventHandler<HTMLDivElement> = (evt) => {
+      if (mobileOrTablet()) {
+        evt.preventDefault();
+        return;
+      }
+
       if (evt.altKey || !window.getSelection()?.isCollapsed || edit) return;
       const tag = (evt.target as any).tagName;
       if (typeof tag === 'string' && tag.toLowerCase() === 'a') return;
@@ -863,18 +922,17 @@ export const Message = as<'div', MessageProps>(
     const closeMenu = () => {
       setMenuAnchor(undefined);
       setNickEditOpen(false);
+      setMobileOptionsOpen(false);
     };
 
     const handleOpenEmojiBoard: MouseEventHandler<HTMLButtonElement> = (evt) => {
       const target = evt.currentTarget.parentElement?.parentElement ?? evt.currentTarget;
       setEmojiBoardAnchor(target.getBoundingClientRect());
     };
+
     const handleAddReactions: MouseEventHandler<HTMLButtonElement> = () => {
       const rect = menuAnchor;
       closeMenu();
-      // open it with timeout because closeMenu
-      // FocusTrap will return focus from emojiBoard
-
       setTimeout(() => {
         setEmojiBoardAnchor(rect);
       }, 100);
@@ -889,6 +947,10 @@ export const Message = as<'div', MessageProps>(
 
       onReplyClick(mockEvent);
     };
+
+    const bindLongPress = useMobileLongPress(() => {
+      setMobileOptionsOpen(true);
+    }, 700);
 
     const isThreadedMessage = mEvent.threadRootId !== undefined;
 
@@ -907,8 +969,8 @@ export const Message = as<'div', MessageProps>(
         {...focusWithinProps}
         ref={ref}
       >
-        {!edit && (hover || !!menuAnchor || !!emojiBoardAnchor) && (
-          <div className={css.MessageOptionsBase}>
+        {!edit && (isDesktopHover || !!menuAnchor || !!emojiBoardAnchor || mobileOptionsOpen) && (
+          <div className={css.MessageOptionsBase} ref={optionsRef}>
             <Menu className={css.MessageOptionsBar} variant="SurfaceVariant">
               <Box gap="100">
                 {canSendReaction && (
@@ -925,10 +987,12 @@ export const Message = as<'div', MessageProps>(
                         onEmojiSelect={(key) => {
                           onReactionToggle(mEvent.getId()!, key);
                           setEmojiBoardAnchor(undefined);
+                          setMobileOptionsOpen(false);
                         }}
                         onCustomEmojiSelect={(mxc, shortcode) => {
                           onReactionToggle(mEvent.getId()!, mxc, shortcode);
                           setEmojiBoardAnchor(undefined);
+                          setMobileOptionsOpen(false);
                         }}
                         requestClose={() => {
                           setEmojiBoardAnchor(undefined);
@@ -948,7 +1012,10 @@ export const Message = as<'div', MessageProps>(
                   </PopOut>
                 )}
                 <IconButton
-                  onClick={onReplyClick}
+                  onClick={(ev) => {
+                    onReplyClick(ev);
+                    setMobileOptionsOpen(false);
+                  }}
                   data-event-id={mEvent.getId()}
                   variant="SurfaceVariant"
                   size="300"
@@ -958,7 +1025,10 @@ export const Message = as<'div', MessageProps>(
                 </IconButton>
                 {!isThreadedMessage && (
                   <IconButton
-                    onClick={(ev) => onReplyClick(ev, true)}
+                    onClick={(ev) => {
+                      onReplyClick(ev, true);
+                      setMobileOptionsOpen(false);
+                    }}
                     data-event-id={mEvent.getId()}
                     variant="SurfaceVariant"
                     size="300"
@@ -969,7 +1039,10 @@ export const Message = as<'div', MessageProps>(
                 )}
                 {canEditEvent(mx, mEvent) && onEditId && (
                   <IconButton
-                    onClick={() => onEditId(mEvent.getId())}
+                    onClick={() => {
+                      onEditId(mEvent.getId());
+                      setMobileOptionsOpen(false);
+                    }}
                     variant="SurfaceVariant"
                     size="300"
                     radii="300"
@@ -1118,7 +1191,7 @@ export const Message = as<'div', MessageProps>(
                                   placeholder={senderDisplayName}
                                   onKeyDown={(e) => {
                                     if (e.key === 'Enter') {
-                                      setNickname(senderId, nickDraft || undefined);
+                                      setNickname(senderId, nickDraft || undefined, mx);
                                       closeMenu();
                                     }
                                     if (e.key === 'Escape') closeMenu();
@@ -1136,12 +1209,12 @@ export const Message = as<'div', MessageProps>(
                                 />
                                 <Box gap="200">
                                   <MenuItem size="300" radii="300" variant="Success" fill="None"
-                                    onClick={() => { setNickname(senderId, nickDraft || undefined); closeMenu(); }}>
+                                    onClick={() => { setNickname(senderId, nickDraft || undefined, mx); closeMenu(); }}>
                                     <Text size="B300">Save</Text>
                                   </MenuItem>
                                   {nicknames[senderId] && (
                                     <MenuItem size="300" radii="300" variant="Critical" fill="None"
-                                      onClick={() => { setNickname(senderId, undefined); closeMenu(); }}>
+                                      onClick={() => { setNickname(senderId, undefined, mx); closeMenu(); }}>
                                       <Text size="B300">Clear</Text>
                                     </MenuItem>
                                   )}
@@ -1207,7 +1280,9 @@ export const Message = as<'div', MessageProps>(
         {messageLayout === MessageLayout.Compact && (
           <SwipeableMessageWrapper onReply={handleSwipeReply}>
             <CompactLayout before={headerJSX} onContextMenu={handleContextMenu}>
-              {msgContentJSX}
+              <div {...bindLongPress}>
+                {msgContentJSX}
+              </div>
             </CompactLayout>
           </SwipeableMessageWrapper>
         )
@@ -1215,7 +1290,9 @@ export const Message = as<'div', MessageProps>(
         {messageLayout === MessageLayout.Bubble && (
           <SwipeableMessageWrapper onReply={handleSwipeReply}>
             <BubbleLayout before={avatarJSX} header={headerJSX} onContextMenu={handleContextMenu}>
-              {msgContentJSX}
+              <div {...bindLongPress}>
+                {msgContentJSX}
+              </div>
             </BubbleLayout>
           </SwipeableMessageWrapper>
         )}
@@ -1223,8 +1300,10 @@ export const Message = as<'div', MessageProps>(
           messageLayout !== MessageLayout.Compact && messageLayout !== MessageLayout.Bubble && (
             <SwipeableMessageWrapper onReply={handleSwipeReply}>
               <ModernLayout before={avatarJSX} onContextMenu={handleContextMenu}>
-                {headerJSX}
-                {msgContentJSX}
+                <div {...bindLongPress}>
+                  {headerJSX}
+                  {msgContentJSX}
+                </div>
               </ModernLayout>
             </SwipeableMessageWrapper>
           )
@@ -1260,13 +1339,17 @@ export const Event = as<'div', EventProps>(
     ref
   ) => {
     const mx = useMatrixClient();
-    const [hover, setHover] = useState(false);
-    const { hoverProps } = useHover({ onHoverChange: setHover });
-    const { focusWithinProps } = useFocusWithin({ onFocusWithinChange: setHover });
-    const [menuAnchor, setMenuAnchor] = useState<RectCords>();
     const stateEvent = typeof mEvent.getStateKey() === 'string';
 
+    const [menuAnchor, setMenuAnchor] = useState<RectCords>();
+    const [mobileOptionsOpen, setMobileOptionsOpen] = useState(false);
+
     const handleContextMenu: MouseEventHandler<HTMLDivElement> = (evt) => {
+      if (mobileOrTablet()) {
+        evt.preventDefault();
+        return;
+      }
+
       if (evt.altKey || !window.getSelection()?.isCollapsed) return;
       const tag = (evt.target as any).tagName;
       if (typeof tag === 'string' && tag.toLowerCase() === 'a') return;
@@ -1286,7 +1369,33 @@ export const Event = as<'div', EventProps>(
 
     const closeMenu = () => {
       setMenuAnchor(undefined);
+      setMobileOptionsOpen(false);
     };
+
+    const [isDesktopHover, setIsDesktopHover] = useState(false);
+    const { hoverProps } = useHover({
+      onHoverChange: (h) => { if (!mobileOrTablet()) setIsDesktopHover(h); }
+    });
+    const { focusWithinProps } = useFocusWithin({
+      onFocusWithinChange: (f) => { if (!mobileOrTablet()) setIsDesktopHover(f); }
+    });
+
+    const optionsRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+      if (!mobileOptionsOpen) return undefined;
+      const handleClick = (e: globalThis.Event) => {
+        if (optionsRef.current && !optionsRef.current.contains(e.target as Node)) {
+          setMobileOptionsOpen(false);
+        }
+      };
+      document.addEventListener('pointerdown', handleClick, { capture: true });
+      return () => document.removeEventListener('pointerdown', handleClick, { capture: true });
+    }, [mobileOptionsOpen]);
+
+    const bindLongPress = useMobileLongPress(() => {
+      setMobileOptionsOpen(true);
+    }, 700);
 
     return (
       <MessageBase
@@ -1301,85 +1410,89 @@ export const Event = as<'div', EventProps>(
         {...focusWithinProps}
         ref={ref}
       >
-        {(hover || !!menuAnchor) && (
-          <div className={css.MessageOptionsBase}>
+        {(isDesktopHover || !!menuAnchor || mobileOptionsOpen) && (
+          <div className={css.MessageOptionsBase} ref={optionsRef}>
             <Menu className={css.MessageOptionsBar} variant="SurfaceVariant">
               <Box gap="100">
-                <PopOut
-                  anchor={menuAnchor}
-                  position="Bottom"
-                  align={menuAnchor?.width === 0 ? 'Start' : 'End'}
-                  offset={menuAnchor?.width === 0 ? 0 : undefined}
-                  content={
-                    <FocusTrap
-                      focusTrapOptions={{
-                        initialFocus: false,
-                        onDeactivate: () => setMenuAnchor(undefined),
-                        clickOutsideDeactivates: true,
-                        isKeyForward: (evt: KeyboardEvent) => evt.key === 'ArrowDown',
-                        isKeyBackward: (evt: KeyboardEvent) => evt.key === 'ArrowUp',
-                        escapeDeactivates: stopPropagation,
-                      }}
-                    >
-                      <Menu {...props} ref={ref}>
-                        <Box direction="Column" gap="100" className={css.MessageMenuGroup}>
-                          {!hideReadReceipts && (
-                            <MessageReadReceiptItem
-                              room={room}
-                              eventId={mEvent.getId() ?? ''}
-                              onClose={closeMenu}
-                            />
-                          )}
-                          {showDeveloperTools && (
-                            <MessageSourceCodeItem
-                              room={room}
-                              mEvent={mEvent}
-                              onClose={closeMenu}
-                            />
-                          )}
-                          <MessageCopyLinkItem room={room} mEvent={mEvent} onClose={closeMenu} />
-                        </Box>
-                        {((!mEvent.isRedacted() && canDelete && !stateEvent) ||
-                          (mEvent.getSender() !== mx.getUserId() && !stateEvent)) && (
-                            <>
-                              <Line size="300" />
-                              <Box direction="Column" gap="100" className={css.MessageMenuGroup}>
-                                {!mEvent.isRedacted() && canDelete && (
-                                  <MessageDeleteItem
-                                    room={room}
-                                    mEvent={mEvent}
-                                    onClose={closeMenu}
-                                  />
-                                )}
-                                {mEvent.getSender() !== mx.getUserId() && (
-                                  <MessageReportItem
-                                    room={room}
-                                    mEvent={mEvent}
-                                    onClose={closeMenu}
-                                  />
-                                )}
-                              </Box>
-                            </>
-                          )}
-                      </Menu>
-                    </FocusTrap>
-                  }
-                >
-                  <IconButton
-                    variant="SurfaceVariant"
-                    size="300"
-                    radii="300"
-                    onClick={handleOpenMenu}
-                    aria-pressed={!!menuAnchor}
+                {!mobileOrTablet() && (
+                  <PopOut
+                    anchor={menuAnchor}
+                    position="Bottom"
+                    align={menuAnchor?.width === 0 ? 'Start' : 'End'}
+                    offset={menuAnchor?.width === 0 ? 0 : undefined}
+                    content={
+                      <FocusTrap
+                        focusTrapOptions={{
+                          initialFocus: false,
+                          onDeactivate: () => setMenuAnchor(undefined),
+                          clickOutsideDeactivates: true,
+                          isKeyForward: (evt: KeyboardEvent) => evt.key === 'ArrowDown',
+                          isKeyBackward: (evt: KeyboardEvent) => evt.key === 'ArrowUp',
+                          escapeDeactivates: stopPropagation,
+                        }}
+                      >
+                        <Menu {...props} ref={ref}>
+                          <Box direction="Column" gap="100" className={css.MessageMenuGroup}>
+                            {!hideReadReceipts && (
+                              <MessageReadReceiptItem
+                                room={room}
+                                eventId={mEvent.getId() ?? ''}
+                                onClose={closeMenu}
+                              />
+                            )}
+                            {showDeveloperTools && (
+                              <MessageSourceCodeItem
+                                room={room}
+                                mEvent={mEvent}
+                                onClose={closeMenu}
+                              />
+                            )}
+                            <MessageCopyLinkItem room={room} mEvent={mEvent} onClose={closeMenu} />
+                          </Box>
+                          {((!mEvent.isRedacted() && canDelete && !stateEvent) ||
+                            (mEvent.getSender() !== mx.getUserId() && !stateEvent)) && (
+                              <>
+                                <Line size="300" />
+                                <Box direction="Column" gap="100" className={css.MessageMenuGroup}>
+                                  {!mEvent.isRedacted() && canDelete && (
+                                    <MessageDeleteItem
+                                      room={room}
+                                      mEvent={mEvent}
+                                      onClose={closeMenu}
+                                    />
+                                  )}
+                                  {mEvent.getSender() !== mx.getUserId() && (
+                                    <MessageReportItem
+                                      room={room}
+                                      mEvent={mEvent}
+                                      onClose={closeMenu}
+                                    />
+                                  )}
+                                </Box>
+                              </>
+                            )}
+                        </Menu>
+                      </FocusTrap>
+                    }
                   >
-                    <Icon src={Icons.VerticalDots} size="100" />
-                  </IconButton>
-                </PopOut>
+                    <IconButton
+                      variant="SurfaceVariant"
+                      size="300"
+                      radii="300"
+                      onClick={handleOpenMenu}
+                      aria-pressed={!!menuAnchor}
+                    >
+                      <Icon src={Icons.VerticalDots} size="100" />
+                    </IconButton>
+                  </PopOut>
+                )}
               </Box>
             </Menu>
           </div>
         )}
-        <div onContextMenu={handleContextMenu}>{children}</div>
+        <div onContextMenu={handleContextMenu} {...bindLongPress}>
+          {children}
+        </div>
       </MessageBase>
     );
   }
