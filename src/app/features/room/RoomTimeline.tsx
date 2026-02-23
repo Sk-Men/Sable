@@ -106,7 +106,6 @@ import { useSpaceOptionally } from '../../hooks/useSpace';
 import { useRoomCreators } from '../../hooks/useRoomCreators';
 import { useRoomPermissions } from '../../hooks/useRoomPermissions';
 import { useGetMemberPowerTag } from '../../hooks/useMemberPowerTag';
-import { SwipeableMessageWrapper } from '../../components/SwipeableMessageWrapper';
 
 const TimelineFloat = as<'div', css.TimelineFloatVariants>(
   ({ position, className, ...props }, ref) => (
@@ -1045,79 +1044,73 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
           getMemberDisplayName(room, senderId, nicknames) ?? getMxIdLocalPart(senderId) ?? senderId;
 
         return (
-          <SwipeableMessageWrapper
-            messageId={mEventId}
-            itemIndex={item}
-            onReply={() => triggerReply(mEventId)}
-          >
-            <Message
-              key={mEvent.getId()}
-              data-message-item={item}
-              data-message-id={mEventId}
-              room={room}
-              mEvent={mEvent}
-              messageSpacing={messageSpacing}
-              messageLayout={messageLayout}
-              collapse={collapse}
-              highlight={highlighted}
-              edit={editId === mEventId}
-              canDelete={canRedact || (canDeleteOwn && mEvent.getSender() === mx.getUserId())}
-              canSendReaction={canSendReaction}
-              canPinEvent={canPinEvent}
-              imagePackRooms={imagePackRooms}
-              relations={hasReactions ? reactionRelations : undefined}
-              onUserClick={handleUserClick}
-              onUsernameClick={handleUsernameClick}
-              onReplyClick={handleReplyClick}
-              onReactionToggle={handleReactionToggle}
-              onEditId={handleEdit}
-              reply={
-                replyEventId && (
-                  <Reply
-                    room={room}
-                    timelineSet={timelineSet}
-                    replyEventId={replyEventId}
-                    threadRootId={threadRootId}
-                    onClick={handleOpenReply}
-                  />
-                )
-              }
-              reactions={
-                reactionRelations && (
-                  <Reactions
-                    style={{ marginTop: config.space.S200 }}
-                    room={room}
-                    relations={reactionRelations}
-                    mEventId={mEventId}
-                    canSendReaction={canSendReaction}
-                    onReactionToggle={handleReactionToggle}
-                  />
-                )
-              }
-              hideReadReceipts={hideActivity}
-              showDeveloperTools={showDeveloperTools}
-              memberPowerTag={getMemberPowerTag(senderId)}
-              hour24Clock={hour24Clock}
-              dateFormatString={dateFormatString}
-            >
-              {mEvent.isRedacted() ? (
-                <RedactedContent reason={mEvent.getUnsigned().redacted_because?.content.reason} />
-              ) : (
-                <RenderMessageContent
-                  displayName={senderDisplayName}
-                  msgType={mEvent.getContent().msgtype ?? ''}
-                  ts={mEvent.getTs()}
-                  edited={!!editedEvent}
-                  getContent={getContent}
-                  mediaAutoLoad={mediaAutoLoad}
-                  urlPreview={showUrlPreview}
-                  htmlReactParserOptions={htmlReactParserOptions}
-                  linkifyOpts={linkifyOpts}
-                  outlineAttachment={messageLayout === MessageLayout.Bubble}
+          <Message
+            key={mEvent.getId()}
+            data-message-item={item}
+            data-message-id={mEventId}
+            room={room}
+            mEvent={mEvent}
+            messageSpacing={messageSpacing}
+            messageLayout={messageLayout}
+            collapse={collapse}
+            highlight={highlighted}
+            edit={editId === mEventId}
+            canDelete={canRedact || (canDeleteOwn && mEvent.getSender() === mx.getUserId())}
+            canSendReaction={canSendReaction}
+            canPinEvent={canPinEvent}
+            imagePackRooms={imagePackRooms}
+            relations={hasReactions ? reactionRelations : undefined}
+            onUserClick={handleUserClick}
+            onUsernameClick={handleUsernameClick}
+            onReplyClick={handleReplyClick}
+            onReactionToggle={handleReactionToggle}
+            onEditId={handleEdit}
+            reply={
+              replyEventId && (
+                <Reply
+                  room={room}
+                  timelineSet={timelineSet}
+                  replyEventId={replyEventId}
+                  threadRootId={threadRootId}
+                  onClick={handleOpenReply}
                 />
-              )}
-            </Message>
-          </SwipeableMessageWrapper>
+              )
+            }
+            reactions={
+              reactionRelations && (
+                <Reactions
+                  style={{ marginTop: config.space.S200 }}
+                  room={room}
+                  relations={reactionRelations}
+                  mEventId={mEventId}
+                  canSendReaction={canSendReaction}
+                  onReactionToggle={handleReactionToggle}
+                />
+              )
+            }
+            hideReadReceipts={hideActivity}
+            showDeveloperTools={showDeveloperTools}
+            memberPowerTag={getMemberPowerTag(senderId)}
+            hour24Clock={hour24Clock}
+            dateFormatString={dateFormatString}
+          >
+            {mEvent.isRedacted() ? (
+              <RedactedContent reason={mEvent.getUnsigned().redacted_because?.content.reason} />
+            ) : (
+              <RenderMessageContent
+                displayName={senderDisplayName}
+                msgType={mEvent.getContent().msgtype ?? ''}
+                ts={mEvent.getTs()}
+                edited={!!editedEvent}
+                getContent={getContent}
+                mediaAutoLoad={mediaAutoLoad}
+                urlPreview={showUrlPreview}
+                htmlReactParserOptions={htmlReactParserOptions}
+                linkifyOpts={linkifyOpts}
+                outlineAttachment={messageLayout === MessageLayout.Bubble}
+              />
+            )}
+          </Message>
         );
       },
       [MessageEvent.RoomMessageEncrypted]: (mEventId, mEvent, item, timelineSet, collapse) => {

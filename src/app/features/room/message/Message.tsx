@@ -83,6 +83,7 @@ import colorMXID from '../../../../util/colorMXID';
 import { getPowerTagIconSrc } from '../../../hooks/useMemberPowerTag';
 import { AccountDataEvent } from '../../../../types/matrix/accountData';
 import { useSableCosmetics } from '../../../hooks/useSableCosmetics';
+import { SwipeableMessageWrapper } from '../../../components/SwipeableMessageWrapper';
 
 export type ReactionHandler = (keyOrMxc: string, shortcode: string) => void;
 
@@ -879,6 +880,16 @@ export const Message = as<'div', MessageProps>(
       }, 100);
     };
 
+    const handleSwipeReply = () => {
+      const mockEvent = {
+        currentTarget: {
+          getAttribute: (attr: string) => (attr === 'data-event-id' ? mEvent.getId() : null),
+        },
+      } as unknown as React.MouseEvent<HTMLButtonElement>;
+
+      onReplyClick(mockEvent);
+    };
+
     const isThreadedMessage = mEvent.threadRootId !== undefined;
 
     return (
@@ -1194,22 +1205,31 @@ export const Message = as<'div', MessageProps>(
           </div>
         )}
         {messageLayout === MessageLayout.Compact && (
-          <CompactLayout before={headerJSX} onContextMenu={handleContextMenu}>
-            {msgContentJSX}
-          </CompactLayout>
-        )}
+          <SwipeableMessageWrapper onReply={handleSwipeReply}>
+            <CompactLayout before={headerJSX} onContextMenu={handleContextMenu}>
+              {msgContentJSX}
+            </CompactLayout>
+          </SwipeableMessageWrapper>
+        )
+        }
         {messageLayout === MessageLayout.Bubble && (
-          <BubbleLayout before={avatarJSX} header={headerJSX} onContextMenu={handleContextMenu}>
-            {msgContentJSX}
-          </BubbleLayout>
+          <SwipeableMessageWrapper onReply={handleSwipeReply}>
+            <BubbleLayout before={avatarJSX} header={headerJSX} onContextMenu={handleContextMenu}>
+              {msgContentJSX}
+            </BubbleLayout>
+          </SwipeableMessageWrapper>
         )}
-        {messageLayout !== MessageLayout.Compact && messageLayout !== MessageLayout.Bubble && (
-          <ModernLayout before={avatarJSX} onContextMenu={handleContextMenu}>
-            {headerJSX}
-            {msgContentJSX}
-          </ModernLayout>
-        )}
-      </MessageBase>
+        {
+          messageLayout !== MessageLayout.Compact && messageLayout !== MessageLayout.Bubble && (
+            <SwipeableMessageWrapper onReply={handleSwipeReply}>
+              <ModernLayout before={avatarJSX} onContextMenu={handleContextMenu}>
+                {headerJSX}
+                {msgContentJSX}
+              </ModernLayout>
+            </SwipeableMessageWrapper>
+          )
+        }
+      </MessageBase >
     );
   }
 );

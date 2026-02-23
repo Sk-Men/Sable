@@ -8,14 +8,10 @@ import { RightSwipeAction, settingsAtom } from '../state/settings';
 
 export function SwipeableMessageWrapper({
     children,
-    onReply,
-    messageId,
-    itemIndex
+    onReply
 }: {
     children: React.ReactNode;
     onReply: () => void;
-    messageId: string;
-    itemIndex: number;
 }) {
     const settings = useAtomValue(settingsAtom);
     const x = useMotionValue(0);
@@ -38,7 +34,6 @@ export function SwipeableMessageWrapper({
             setIsReady(mx < -50);
         } else {
             if (mx < -50) {
-                if ('vibrate' in navigator) navigator.vibrate(10);
                 onReply();
             }
             x.set(0);
@@ -48,23 +43,16 @@ export function SwipeableMessageWrapper({
         axis: 'x',
         bounds: { right: 0 },
         rubberband: true,
-        filterTaps: true,
-        pointer: { capture: true }
+        filterTaps: true
     });
 
-    if (!settings.mobileGestures || !mobileOrTablet()) {
-        return (
-            <div data-message-id={messageId} data-message-item={itemIndex}>
-                {children}
-            </div>
-        );
+    if (!isSwipeToReplyEnabled) {
+        return <>{children}</>;
     }
 
     return (
         <div
             {...bind()}
-            data-message-id={messageId}
-            data-message-item={itemIndex}
             style={{ position: 'relative', touchAction: 'pan-y' }}
         >
             <div style={{
@@ -89,12 +77,7 @@ export function SwipeableMessageWrapper({
                 </motion.div>
             </div>
 
-            <motion.div style={{
-                x: springX,
-                background: 'var(--sable-surface-container)',
-                position: 'relative',
-                zIndex: 1
-            }}>
+            <motion.div style={{ x: springX, position: 'relative', zIndex: 1 }}>
                 {children}
             </motion.div>
         </div>
