@@ -1,7 +1,16 @@
-import { useEffect, useRef } from 'react';import { createClient, MatrixClient, MatrixEvent, Room, RoomEvent } from 'matrix-js-sdk';
+import { useEffect, useRef } from 'react';
+import {
+  ClientEvent,
+  createClient,
+  MatrixClient,
+  MatrixEvent,
+  Room,
+  RoomEvent,
+  SyncState,
+} from 'matrix-js-sdk';
+import { PushProcessor } from 'matrix-js-sdk/lib/pushprocessor';
 import { useAtomValue } from 'jotai';
 import { sessionsAtom, activeSessionIdAtom, Session } from '../../state/sessions';
-import { notificationPermission } from '../../utils/dom';
 import { useSetting } from '../../state/hooks/settings';
 import { settingsAtom } from '../../state/settings';
 import { getMxIdLocalPart } from '../../utils/matrix';
@@ -10,6 +19,7 @@ import { NotificationType } from '../../../types/matrix/room';
 import { createLogger } from '../../utils/debug';
 import LogoSVG from '../../../../public/res/svg/cinny.svg';
 import { nicknamesAtom } from '../../state/nicknames';
+import { useMatrixClient } from '../../hooks/useMatrixClient';
 
 const log = createLogger('BackgroundNotifications');
 
@@ -25,24 +35,83 @@ const startBackgroundClient = async (session: Session): Promise<MatrixClient> =>
   return mx;
 };
 
+/**
+ * Wait for the background client to finish its initial sync so that
+ * push rules and account data are available before processing events.
+ */
+const waitForSync = (mx: MatrixClient): Promise<void> =>
+  new Promise((resolve) => {
+    const state = mx.getSyncState();
+    if (state === SyncState.Syncing) {
+      resolve();
+      return;
+    }
+    const onSync = (newState: SyncState) => {
+      if (newState === SyncState.Syncing) {
+        mx.removeListener(ClientEvent.Sync, onSync);
+        resolve();
+      }
+    };
+    mx.on(ClientEvent.Sync, onSync);
+  });
+
 export function BackgroundNotifications() {
   const sessions = useAtomValue(sessionsAtom);
   const activeSessionId = useAtomValue(activeSessionIdAtom);
   const [showNotifications] = useSetting(settingsAtom, 'showNotifications');
+  const activeMx = useMatrixClient();
   const nicknames = useAtomValue(nicknamesAtom);
   const nicknamesRef = useRef(nicknames);
   nicknamesRef.current = nicknames;
   const clientsRef = useRef<Map<string, MatrixClient>>(new Map());
+  const notifiedEventsRef = useRef<Set<string>>(new Set());
 
   const inactiveSessions = sessions.filter(
     (s) => s.userId !== (activeSessionId ?? sessions[0]?.userId)
   );
 
-  useEffect(() => {
-    if (!showNotifications || !notificationPermission('granted')) return;
+  interface NotifyOptions {
+    /** Title shown in the notification banner. */
+    title: string;
+    /** Body text. */
+    body?: string;
+    /** URL to an icon (browser) – ignored on native where the app icon is used. */
+    icon?: string;
+    /** If `true` the notification plays no sound. */
+    silent?: boolean;
+    /** Callback when the user taps/clicks the notification. */
+    onClick?: () => void;
+  }
 
-    const current = clientsRef.current;
+  useEffect(() => {
+    if (!showNotifications) return undefined;
+
+    const { current } = clientsRef;
     const activeIds = new Set(inactiveSessions.map((s) => s.userId));
+
+    async function sendNotification(
+      opts: NotifyOptions
+    ): Promise<Notification | undefined> {
+
+      if ('Notification' in window && window.Notification.permission === 'granted') {
+        const noti = new window.Notification(opts.title, {
+          icon: opts.icon,
+          badge: opts.icon,
+          body: opts.body,
+          silent: opts.silent ?? false,
+        });
+        if (opts.onClick) {
+          const cb = opts.onClick;
+          noti.onclick = () => {
+            cb();
+            noti.close();
+          };
+        }
+        return noti;
+      }
+
+      return undefined;
+    }
 
     current.forEach((mx, userId) => {
       if (!activeIds.has(userId)) {
@@ -57,8 +126,13 @@ export function BackgroundNotifications() {
 
       log.log('starting background client for', session.userId);
       startBackgroundClient(session)
-        .then((mx) => {
+        .then(async (mx) => {
           current.set(session.userId, mx);
+
+          await waitForSync(mx);
+          log.log('background client synced for', session.userId);
+
+          const pushProcessor = new PushProcessor(mx);
 
           const handleTimeline = (
             mEvent: MatrixEvent,
@@ -70,22 +144,44 @@ export function BackgroundNotifications() {
             if (mx.getSyncState() !== 'SYNCING') return;
             if (!room || !data?.liveEvent || room.isSpaceRoom()) return;
             if (!isNotificationEvent(mEvent)) return;
-            if (getNotificationType(mx, room.roomId) === NotificationType.Mute) return;
+
+            const notifType = getNotificationType(mx, room.roomId);
+            if (notifType === NotificationType.Mute) return;
+
+            const activeRoom = activeMx.getRoom(room.roomId);
+            if (activeRoom?.getMyMembership() === 'join') return;
+
+            const eventId = mEvent.getId();
+            if (!eventId || notifiedEventsRef.current.has(eventId)) return;
 
             const sender = mEvent.getSender();
             if (!sender || sender === mx.getUserId()) return;
+
+            const pushActions = pushProcessor.actionsForEvent(mEvent);
+            if (!pushActions?.notify) return;
 
             const senderName =
               getMemberDisplayName(room, sender, nicknamesRef.current) ?? getMxIdLocalPart(sender) ?? sender;
             const accountLabel = getMxIdLocalPart(session.userId) ?? session.userId;
 
-            const noti = new window.Notification(`${room.name ?? 'Unknown'} (${accountLabel})`, {
+            const isHighlight = pushActions.tweaks?.highlight === true;
+
+            notifiedEventsRef.current.add(eventId);
+            // Cap the set so it doesn't grow unbounded
+            if (notifiedEventsRef.current.size > 200) {
+              const first = notifiedEventsRef.current.values().next().value;
+              if (first) notifiedEventsRef.current.delete(first);
+            }
+
+            sendNotification({
+              title: `${room.name ?? 'Unknown'} (${accountLabel})`,
               icon: LogoSVG,
-              badge: LogoSVG,
               body: `${senderName}: new message`,
-              silent: true,
+              silent: !isHighlight,
+              onClick: () => {
+                // TODO: Handle notification click
+              },
             });
-            noti.onclick = () => noti.close();
           };
 
           mx.on(RoomEvent.Timeline, handleTimeline as unknown as (...args: unknown[]) => void);
@@ -99,10 +195,7 @@ export function BackgroundNotifications() {
       current.forEach((mx) => mx.stopClient());
       current.clear();
     };
-  }, [
-    inactiveSessions.map((s) => s.userId).join('\x00'),
-    showNotifications,
-  ]);
+  }, [inactiveSessions, showNotifications, activeMx]);
 
   return null;
 }
