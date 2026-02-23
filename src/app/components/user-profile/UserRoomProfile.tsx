@@ -1,6 +1,7 @@
 import { Box, Button, config, Icon, Icons, Text } from 'folds';
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAtomValue } from 'jotai';
 import { UserHero, UserHeroName } from './UserHero';
 import { getMxIdServer, mxcUrlToHttp } from '../../utils/matrix';
 import { getMemberAvatarMxc, getMemberDisplayName } from '../../utils/room';
@@ -22,8 +23,84 @@ import { useMemberPowerCompare } from '../../hooks/useMemberPowerCompare';
 import { CreatorChip } from './CreatorChip';
 import { getDirectCreatePath, withSearchParam } from '../../pages/pathUtils';
 import { DirectCreateSearchParams } from '../../pages/paths';
-import { useAtomValue } from 'jotai';
 import { nicknamesAtom } from '../../state/nicknames';
+import { UserProfile, useUserProfile } from '../../hooks/useUserProfile';
+
+
+function UserExtendedSection({ profile }: { profile: UserProfile }) {
+  const clamp = (str: string, len: number) => str.length > len ? `${str.slice(0, len)}...` : str;
+  const [showMore, setShowMore] = useState(false);
+
+  const pronouns = profile.pronouns?.map((p: any) => clamp(p.summary, 20)).join("/");
+  const timezone = profile.timezone ? clamp(profile.timezone, 64) : null;
+  const localTime = timezone ? new Intl.DateTimeFormat([], {
+    hour: 'numeric',
+    minute: '2-digit',
+    timeZone: timezone,
+  }).format(new Date()) : null;
+
+  const unknownFields = Object.entries(profile.extended || {}).filter(([, value]) =>
+    typeof value === 'string' || typeof value === 'number');
+
+  if (!pronouns && !localTime && unknownFields.length === 0) return null;
+
+  return (
+    <Box direction="Column" gap="200" style={{ marginBottom: config.space.S100 }}>
+      {pronouns && (
+        <Box alignItems="Center" gap="200">
+          <Icon size="100" src={Icons.User} style={{ opacity: 0.5 }} />
+          <Text size="T300" priority="400">{pronouns}</Text>
+        </Box>
+      )}
+
+      {localTime && (
+        <Box alignItems="Center" gap="200">
+          <Icon size="100" src={Icons.Clock} style={{ opacity: 0.5 }} />
+          <Box direction="Column">
+            <Text size="T200" priority="400">{localTime}</Text>
+            <Text size="T200" priority="300">Local Time ({profile.timezone})</Text>
+          </Box>
+        </Box>
+      )}
+
+      {unknownFields.length > 0 && (
+        <Box direction="Column" gap="100" style={{ marginTop: config.space.S100 }}>
+          <Button
+            variant="Secondary"
+            size="300"
+            fill="None"
+            onClick={() => setShowMore(!showMore)}
+            after={<Icon size="50" src={showMore ? Icons.ChevronTop : Icons.ChevronBottom} />}
+            style={{ padding: '1rem', justifyContent: 'flex-start', width: 'fit-content' }}
+          >
+            <Text size="T200" priority="400">{showMore ? "Show less" : `+ ${unknownFields.length} more info`}</Text>
+          </Button>
+
+          {showMore && (
+            <Box
+              direction="Column"
+              style={{
+                padding: config.space.S200,
+                backgroundColor: 'var(--sable-surface-var-container)',
+                borderRadius: config.radii.R400
+              }}
+            >
+              {unknownFields.map(([key, value]) => (
+                <Box key={key} direction="Column">
+                  <Text size="T200" priority="400" style={{ letterSpacing: '0.05em' }}>
+                    {clamp(key, 64).split('.').pop()?.replace(/_/g, ' ')}
+                  </Text>
+                  <Text size="T200" priority="300">{String(clamp(value, 64))}</Text>
+                </Box>
+              ))}
+            </Box>
+          )}
+        </Box>
+      )}
+    </Box>
+  );
+}
+
 
 type UserRoomProfileProps = {
   userId: string;
@@ -70,6 +147,8 @@ export function UserRoomProfile({ userId }: UserRoomProfileProps) {
     navigate(withSearchParam(getDirectCreatePath(), directSearchParam));
   };
 
+  const extendedProfile = useUserProfile(userId);
+
   return (
     <Box direction="Column">
       <UserHero
@@ -96,6 +175,7 @@ export function UserRoomProfile({ userId }: UserRoomProfileProps) {
               </Box>
             )}
           </Box>
+          <UserExtendedSection profile={extendedProfile} />
           <Box alignItems="Center" gap="200" wrap="Wrap">
             {server && <ServerChip server={server} />}
             <ShareChip userId={userId} />

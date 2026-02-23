@@ -5,7 +5,12 @@ import { useMatrixClient } from './useMatrixClient';
 export type UserProfile = {
   avatarUrl?: string;
   displayName?: string;
+
+  pronouns?: any[]; // io.fsky.nyx.pronouns
+  timezone?: string; // us.cloke.msc4175.tz
+  extended?: Record<string, any>; // any other fields
 };
+
 export const useUserProfile = (userId: string): UserProfile => {
   const mx = useMatrixClient();
 
@@ -32,15 +37,34 @@ export const useUserProfile = (userId: string): UserProfile => {
       }));
     };
 
-    mx.getProfileInfo(userId).then((info) =>
-      setProfile({
+    mx.getProfileInfo(userId).then((info: any) => {
+      const normalized: UserProfile = {
         avatarUrl: info.avatar_url,
         displayName: info.displayname,
-      })
-    );
+        pronouns: info['io.fsky.nyx.pronouns'],
+        timezone: info['us.cloke.msc4175.tz'],
+        extended: {},
+      };
+
+      const knownKeys = [
+        'avatar_url',
+        'displayname',
+        'io.fsky.nyx.pronouns',
+        'us.cloke.msc4175.tz',
+        'm.tz'
+      ];
+      Object.keys(info).forEach((key) => {
+        if (!knownKeys.includes(key) && !key.startsWith('m.')) {
+          normalized.extended![key] = info[key];
+        }
+      });
+
+      setProfile(normalized);
+    });
 
     user?.on(UserEvent.AvatarUrl, onAvatarChange);
     user?.on(UserEvent.DisplayName, onDisplayNameChange);
+
     return () => {
       user?.removeListener(UserEvent.AvatarUrl, onAvatarChange);
       user?.removeListener(UserEvent.DisplayName, onDisplayNameChange);

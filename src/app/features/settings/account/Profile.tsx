@@ -25,6 +25,7 @@ import {
   Spinner,
 } from 'folds';
 import FocusTrap from 'focus-trap-react';
+import { MatrixClient } from 'matrix-js-sdk';
 import { SequenceCard } from '../../../components/sequence-card';
 import { SequenceCardStyle } from '../styles.css';
 import { SettingTile } from '../../../components/setting-tile';
@@ -43,6 +44,13 @@ import { ModalWide } from '../../../styles/Modal.css';
 import { createUploadAtom, UploadSuccess } from '../../../state/upload';
 import { CompactUploadCardRenderer } from '../../../components/upload-card';
 import { useCapabilities } from '../../../hooks/useCapabilities';
+import { TimezoneEditor } from './TimezoneEditor';
+import { PronounEditor } from './PronounEditor';
+
+type PronounSet = {
+  summary: string;
+  language?: string;
+};
 
 type ProfileProps = {
   profile: UserProfile;
@@ -303,23 +311,86 @@ function ProfileDisplayName({ profile, userId }: ProfileProps) {
   );
 }
 
+function ProfileExtended({ profile, userId }: ProfileProps) {
+  const mx = useMatrixClient();
+
+  const pronouns = (profile.pronouns as PronounSet[]) || [];
+
+  // Unknown fields / unimplemented non-matrix-spec fields
+  // Only renders them, can't edit or set
+  const extendedFields = Object.entries(profile.extended || {});
+
+  const handleSaveField = useCallback((key: string, value: any) => {
+    (mx as MatrixClient).setExtendedProfileProperty?.(key, value);
+  }, [mx]);
+
+  return (
+    <Box direction="Column" gap="100">
+      <Text size="L400">Extended Profile</Text>
+      <SequenceCard className={SequenceCardStyle} variant="SurfaceVariant" direction="Column" gap="400">
+        <TimezoneEditor
+          current={profile.timezone}
+          onSave={(tz) => {
+            handleSaveField("us.cloke.msc4175.tz", tz);
+          }}
+        />
+      </SequenceCard>
+      <SequenceCard className={SequenceCardStyle} variant="SurfaceVariant" direction="Column" gap="400">
+        <PronounEditor
+          current={pronouns}
+          onSave={(p) => handleSaveField("io.fsky.nyx.pronouns", p)}
+        />
+      </SequenceCard>
+
+      {extendedFields.length > 0 && extendedFields.map(([key, value]) => {
+        if (typeof value !== 'string' && typeof value !== 'number' && typeof value !== 'boolean') {
+          return null;
+        }
+
+        const strVal = String(value);
+        if (
+          (typeof value !== 'string' && typeof value !== 'number' && typeof value !== 'boolean') ||
+          strVal.length > 256
+        ) {
+          return null;
+        }
+
+        return (
+          <SequenceCard className={SequenceCardStyle} variant="SurfaceVariant" direction="Column" gap="400">
+            <SettingTile
+              key={key}
+              title={key.split('.').pop() || key}
+              description={key}
+              after={<Text size="T300" truncate>{strVal}</Text>}
+            />
+          </SequenceCard>
+        );
+      })}
+    </Box >
+  );
+}
+
+
 export function Profile() {
   const mx = useMatrixClient();
   const userId = mx.getUserId()!;
   const profile = useUserProfile(userId);
 
   return (
-    <Box direction="Column" gap="100">
-      <Text size="L400">Profile</Text>
-      <SequenceCard
-        className={SequenceCardStyle}
-        variant="SurfaceVariant"
-        direction="Column"
-        gap="400"
-      >
-        <ProfileAvatar userId={userId} profile={profile} />
-        <ProfileDisplayName userId={userId} profile={profile} />
-      </SequenceCard>
+    <Box direction="Column" gap="700">
+      <Box direction="Column" gap="100">
+        <Text size="L400">Profile</Text>
+        <SequenceCard
+          className={SequenceCardStyle}
+          variant="SurfaceVariant"
+          direction="Column"
+          gap="400"
+        >
+          <ProfileAvatar userId={userId} profile={profile} />
+          <ProfileDisplayName userId={userId} profile={profile} />
+        </SequenceCard>
+      </Box>
+      <ProfileExtended userId={userId} profile={profile} />
     </Box>
   );
 }
