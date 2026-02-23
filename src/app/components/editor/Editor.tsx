@@ -73,6 +73,8 @@ type CustomEditorProps = {
   onKeyUp?: KeyboardEventHandler;
   onChange?: EditorChangeHandler;
   onPaste?: ClipboardEventHandler;
+  className?: string;
+  variant?: "Surface" | "SurfaceVariant" | "Background";
 };
 export const CustomEditor = forwardRef<HTMLDivElement, CustomEditorProps>(
   (
@@ -89,6 +91,8 @@ export const CustomEditor = forwardRef<HTMLDivElement, CustomEditorProps>(
       onKeyUp,
       onChange,
       onPaste,
+      className,
+      variant = "SurfaceVariant",
     },
     ref
   ) => {
@@ -127,7 +131,7 @@ export const CustomEditor = forwardRef<HTMLDivElement, CustomEditorProps>(
     );
 
     return (
-      <div className={css.Editor} ref={ref}>
+      <div className={`${css.Editor} ${className || ''}`} ref={ref}>
         <Slate editor={editor} initialValue={initialValue} onChange={onChange}>
           {top}
           <Box alignItems="Start">
@@ -138,10 +142,10 @@ export const CustomEditor = forwardRef<HTMLDivElement, CustomEditorProps>(
             )}
             <Scroll
               className={css.EditorTextareaScroll}
-              variant="SurfaceVariant"
+              variant={variant}
               style={{ maxHeight }}
               size="300"
-              visibility="Hover"
+              visibility="Always"
               hideTrack
             >
               <Editable

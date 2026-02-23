@@ -12,7 +12,7 @@
   - Bug fix for images/links/anything that loads after room is opened, properly shifting the scroll to the bottom.
 - Client-side nicknames for other users. PR #3
 - Inline editor for editing messages.
-- Pronouns and timezones.
+- Pronouns, bios, and timezones.
 - Pressing send on mobile no longer closes keyboard.
   - Pressing enter on mobile will always provide a newline, ignores the setting for desktop.
 - More reactive UI (literally just buttons shifting up and shrinking on click)

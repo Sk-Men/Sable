@@ -46,6 +46,7 @@ import { CompactUploadCardRenderer } from '../../../components/upload-card';
 import { useCapabilities } from '../../../hooks/useCapabilities';
 import { TimezoneEditor } from './TimezoneEditor';
 import { PronounEditor } from './PronounEditor';
+import { BioEditor } from './BioEditor';
 
 type PronounSet = {
   summary: string;
@@ -328,17 +329,24 @@ function ProfileExtended({ profile, userId }: ProfileProps) {
     <Box direction="Column" gap="100">
       <Text size="L400">Extended Profile</Text>
       <SequenceCard className={SequenceCardStyle} variant="SurfaceVariant" direction="Column" gap="400">
+        <PronounEditor
+          current={pronouns}
+          onSave={(p) => handleSaveField("io.fsky.nyx.pronouns", p)}
+        />
+      </SequenceCard>
+      <SequenceCard className={SequenceCardStyle} variant="SurfaceVariant" direction="Column" gap="400">
         <TimezoneEditor
           current={profile.timezone}
           onSave={(tz) => {
             handleSaveField("us.cloke.msc4175.tz", tz);
+            handleSaveField("m.tz", tz);
           }}
         />
       </SequenceCard>
       <SequenceCard className={SequenceCardStyle} variant="SurfaceVariant" direction="Column" gap="400">
-        <PronounEditor
-          current={pronouns}
-          onSave={(p) => handleSaveField("io.fsky.nyx.pronouns", p)}
+        <BioEditor
+          value={profile.extended?.["moe.sable.app.bio"] || profile.bio}
+          onSave={(htmlBio) => handleSaveField("moe.sable.app.bio", htmlBio)}
         />
       </SequenceCard>
 

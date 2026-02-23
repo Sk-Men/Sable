@@ -1,7 +1,9 @@
-import { Box, Button, config, Icon, Icons, Text } from 'folds';
-import React, { useState } from 'react';
+import { Box, Button, config, Icon, Icons, Scroll, Text } from 'folds';
+import React, { useCallback, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAtomValue } from 'jotai';
+import { Opts as LinkifyOpts, Opts } from 'linkifyjs';
+import { HTMLReactParserOptions } from 'html-react-parser';
 import { UserHero, UserHeroName } from './UserHero';
 import { getMxIdServer, mxcUrlToHttp } from '../../utils/matrix';
 import { getMemberAvatarMxc, getMemberDisplayName } from '../../utils/room';
@@ -25,9 +27,17 @@ import { getDirectCreatePath, withSearchParam } from '../../pages/pathUtils';
 import { DirectCreateSearchParams } from '../../pages/paths';
 import { nicknamesAtom } from '../../state/nicknames';
 import { UserProfile, useUserProfile } from '../../hooks/useUserProfile';
+import { RenderBody } from '../message';
+import { factoryRenderLinkifyWithMention, getReactCustomHtmlParser, LINKIFY_OPTS, makeMentionCustomProps, renderMatrixMention } from '../../plugins/react-custom-html-parser';
+import { useSpoilerClickHandler } from '../../hooks/useSpoilerClickHandler';
 
+type UserExtendedSectionProps = {
+  profile: UserProfile;
+  htmlReactParserOptions: HTMLReactParserOptions;
+  linkifyOpts: LinkifyOpts;
+};
 
-function UserExtendedSection({ profile }: { profile: UserProfile }) {
+function UserExtendedSection({ profile, htmlReactParserOptions, linkifyOpts }: UserExtendedSectionProps) {
   const clamp = (str: string, len: number) => str.length > len ? `${str.slice(0, len)}...` : str;
   const [showMore, setShowMore] = useState(false);
 
@@ -39,13 +49,25 @@ function UserExtendedSection({ profile }: { profile: UserProfile }) {
     timeZone: timezone,
   }).format(new Date()) : null;
 
+  const bioContent = useMemo(() => {
+    const rawBio = profile.extended?.["moe.sable.app.bio"] || profile.bio;
+    if (!rawBio) return null;
+
+    const safetyTrim = rawBio.length > 2048 ? rawBio.slice(0, 2048) : rawBio;
+
+    const visibleText = safetyTrim.replace(/<[^>]*>?/gm, '');
+    const VISIBLE_LIMIT = 512;
+
+    if (visibleText.length <= VISIBLE_LIMIT) return safetyTrim;
+
+    return safetyTrim;
+  }, [profile]);
+
   const unknownFields = Object.entries(profile.extended || {}).filter(([, value]) =>
     typeof value === 'string' || typeof value === 'number');
 
-  if (!pronouns && !localTime && unknownFields.length === 0) return null;
-
   return (
-    <Box direction="Column" gap="200" style={{ marginBottom: config.space.S100 }}>
+    <Box direction="Column" gap="400" style={{ marginBottom: config.space.S100 }}>
       {pronouns && (
         <Box alignItems="Center" gap="200">
           <Icon size="100" src={Icons.User} style={{ opacity: 0.5 }} />
@@ -63,8 +85,40 @@ function UserExtendedSection({ profile }: { profile: UserProfile }) {
         </Box>
       )}
 
+      {bioContent && (
+        <Box direction="Column" gap="200">
+          <Box alignItems="Center" gap="200">
+            <Icon size="100" src={Icons.Pencil} style={{ opacity: 0.5 }} />
+            <Text size="T200" priority="300">About me</Text>
+          </Box>
+
+          <Scroll
+            direction="Vertical"
+            variant="SurfaceVariant"
+            visibility="Always"
+            size="300"
+            style={{
+              backgroundColor: 'var(--sable-bg-container)',
+              borderRadius: config.radii.R500,
+              maxHeight: '200px',
+            }}
+          >
+            <Box style={{ padding: config.space.S300, wordBreak: 'break-word' }}>
+              <Text size="T200" priority="400" as="div">
+                <RenderBody
+                  body={bioContent}
+                  customBody={bioContent}
+                  htmlReactParserOptions={htmlReactParserOptions}
+                  linkifyOpts={linkifyOpts}
+                />
+              </Text>
+            </Box>
+          </Scroll>
+        </Box>
+      )}
+
       {unknownFields.length > 0 && (
-        <Box direction="Column" gap="100" style={{ marginTop: config.space.S100 }}>
+        <Box direction="Column" gap="200">
           <Button
             variant="Secondary"
             size="300"
@@ -77,16 +131,9 @@ function UserExtendedSection({ profile }: { profile: UserProfile }) {
           </Button>
 
           {showMore && (
-            <Box
-              direction="Column"
-              style={{
-                padding: config.space.S200,
-                backgroundColor: 'var(--sable-surface-var-container)',
-                borderRadius: config.radii.R400
-              }}
-            >
+            <Box direction="Column" style={{ padding: config.space.S200, backgroundColor: 'var(--sable-surface-container)', borderRadius: config.radii.R400 }}>
               {unknownFields.map(([key, value]) => (
-                <Box key={key} direction="Column">
+                <Box key={key} direction="Column" style={{ marginBottom: config.space.S100 }}>
                   <Text size="T200" priority="400" style={{ letterSpacing: '0.05em' }}>
                     {clamp(key, 64).split('.').pop()?.replace(/_/g, ' ')}
                   </Text>
@@ -149,6 +196,33 @@ export function UserRoomProfile({ userId }: UserRoomProfileProps) {
 
   const extendedProfile = useUserProfile(userId);
 
+  // Todo eventually maybe
+  const mentionClickHandler = useCallback((e: React.SyntheticEvent<HTMLElement>) => {
+    e.preventDefault();
+  }, []);
+
+  const linkifyOpts = useMemo<Opts>(
+    () => ({
+      ...LINKIFY_OPTS,
+      render: factoryRenderLinkifyWithMention((href) =>
+        renderMatrixMention(mx, room.roomId, href, makeMentionCustomProps(mentionClickHandler))
+      ),
+    }),
+    [mx, room, mentionClickHandler]
+  );
+
+  const spoilerClickHandler = useSpoilerClickHandler();
+
+  const htmlReactParserOptions = useMemo<HTMLReactParserOptions>(
+    () =>
+      getReactCustomHtmlParser(mx, room.roomId, {
+        linkifyOpts,
+        useAuthentication,
+        handleSpoilerClick: spoilerClickHandler,
+      }),
+    [mx, room, linkifyOpts, useAuthentication, spoilerClickHandler]
+  );
+
   return (
     <Box direction="Column">
       <UserHero
@@ -175,7 +249,11 @@ export function UserRoomProfile({ userId }: UserRoomProfileProps) {
               </Box>
             )}
           </Box>
-          <UserExtendedSection profile={extendedProfile} />
+          <UserExtendedSection
+            profile={extendedProfile}
+            htmlReactParserOptions={htmlReactParserOptions}
+            linkifyOpts={linkifyOpts}
+          />
           <Box alignItems="Center" gap="200" wrap="Wrap">
             {server && <ServerChip server={server} />}
             <ShareChip userId={userId} />

@@ -8,6 +8,7 @@ export type UserProfile = {
 
   pronouns?: any[]; // io.fsky.nyx.pronouns
   timezone?: string; // us.cloke.msc4175.tz
+  bio?: string; // moe.sable.app.bio
   extended?: Record<string, any>; // any other fields
 };
 
@@ -42,7 +43,8 @@ export const useUserProfile = (userId: string): UserProfile => {
         avatarUrl: info.avatar_url,
         displayName: info.displayname,
         pronouns: info['io.fsky.nyx.pronouns'],
-        timezone: info['us.cloke.msc4175.tz'],
+        timezone: info['us.cloke.msc4175.tz'] || info['m.tz'],
+        bio: info['moe.sable.app.bio'],
         extended: {},
       };
 
@@ -51,10 +53,11 @@ export const useUserProfile = (userId: string): UserProfile => {
         'displayname',
         'io.fsky.nyx.pronouns',
         'us.cloke.msc4175.tz',
-        'm.tz'
+        'm.tz',
+        'moe.sable.app.bio'
       ];
       Object.keys(info).forEach((key) => {
-        if (!knownKeys.includes(key) && !key.startsWith('m.')) {
+        if (!knownKeys.includes(key)) {
           normalized.extended![key] = info[key];
         }
       });
