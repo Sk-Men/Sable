@@ -82,7 +82,7 @@ const useSettingsMenuItems = (): SettingsMenuItem[] =>
       },
       {
         page: SettingsPages.CosmeticsPage,
-        name: 'Cosmetics',
+        name: 'Apperance',
         icon: Icons.Alphabet,
       },
       {

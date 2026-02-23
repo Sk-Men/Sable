@@ -22,6 +22,8 @@
 - New UI colors & fonts.
 - Fixed background & header for PWA on iOS devices.
 - Lighten on currently hovered message.
+- Privacy blur options in Appearance tab in user settings.
+- Jumbo emoji size selector in Appearance tab in user settings.
 - Added Cosmetics tab to room and space settings.
 - New cosmetic commands, requires power level 50. Permission located in Cosmetics tab.
   - /color #ffffff -> change your name color for a room

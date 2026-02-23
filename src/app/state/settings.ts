@@ -51,6 +51,9 @@ export interface Settings {
 
   // Cosmetics!
   jumboEmojiSize: JumboEmojiSize;
+  privacyBlur: boolean;
+  privacyBlurAvatars: boolean;
+  privacyBlurEmotes: boolean;
 
   // Sable features!
   mobileGestures: boolean;
@@ -92,6 +95,9 @@ const defaultSettings: Settings = {
 
   // Cosmetics!
   jumboEmojiSize: 'normal',
+  privacyBlur: false,
+  privacyBlurAvatars: false,
+  privacyBlurEmotes: false,
 
   // Sable features!
   mobileGestures: true,

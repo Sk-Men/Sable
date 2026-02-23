@@ -11,6 +11,7 @@ import {
     PopOut,
     RectCords,
     Scroll,
+    Switch,
     Text,
 } from 'folds';
 import FocusTrap from 'focus-trap-react';
@@ -112,6 +113,42 @@ function JumboEmoji() {
     );
 }
 
+function Privacy() {
+    const [privacyBlur, setPrivacyBlur] = useSetting(settingsAtom, 'privacyBlur');
+    const [privacyBlurAvatars, setPrivacyBlurAvatars] = useSetting(settingsAtom, 'privacyBlurAvatars');
+    const [privacyBlurEmotes, setPrivacyBlurEmotes] = useSetting(settingsAtom, 'privacyBlurEmotes');
+
+    return (
+        <Box direction="Column" gap="100">
+            <Text size="L400">Privacy & Security</Text>
+
+            <SequenceCard className={SequenceCardStyle} variant="SurfaceVariant" direction="Column">
+                <SettingTile
+                    title="Blur Media"
+                    description="Blurs images and videos in the timeline."
+                    after={<Switch variant="Primary" value={privacyBlur} onChange={setPrivacyBlur} />}
+                />
+            </SequenceCard>
+
+            <SequenceCard className={SequenceCardStyle} variant="SurfaceVariant" direction="Column">
+                <SettingTile
+                    title="Blur Avatars"
+                    description="Blurs user profile pictures and room icons."
+                    after={<Switch variant="Primary" value={privacyBlurAvatars} onChange={setPrivacyBlurAvatars} />}
+                />
+            </SequenceCard>
+
+            <SequenceCard className={SequenceCardStyle} variant="SurfaceVariant" direction="Column">
+                <SettingTile
+                    title="Blur Emotes"
+                    description="Blurs emoticons within messages."
+                    after={<Switch variant="Primary" value={privacyBlurEmotes} onChange={setPrivacyBlurEmotes} />}
+                />
+            </SequenceCard>
+        </Box>
+    );
+}
+
 type CosmeticsProps = {
     requestClose: () => void;
 };
@@ -123,7 +160,7 @@ export function Cosmetics({ requestClose }: CosmeticsProps) {
                 <Box grow="Yes" gap="200">
                     <Box grow="Yes" alignItems="Center" gap="200">
                         <Text size="H3" truncate>
-                            Cosmetics
+                            Appearance
                         </Text>
                     </Box>
                     <Box shrink="No">
@@ -138,6 +175,7 @@ export function Cosmetics({ requestClose }: CosmeticsProps) {
                     <PageContent>
                         <Box direction="Column" gap="700">
                             <JumboEmoji />
+                            <Privacy />
                         </Box>
                     </PageContent>
                 </Scroll>

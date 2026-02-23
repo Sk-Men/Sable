@@ -263,6 +263,20 @@ function MessageNotifications() {
   );
 }
 
+function PrivacyBlurFeature() {
+  const [blurMedia] = useSetting(settingsAtom, 'privacyBlur');
+  const [blurAvatars] = useSetting(settingsAtom, 'privacyBlurAvatars');
+  const [blurEmotes] = useSetting(settingsAtom, 'privacyBlurEmotes');
+
+  useEffect(() => {
+    document.body.classList.toggle('sable-blur-media', blurMedia);
+    document.body.classList.toggle('sable-blur-avatars', blurAvatars);
+    document.body.classList.toggle('sable-blur-emotes', blurEmotes);
+  }, [blurMedia, blurAvatars, blurEmotes]);
+
+  return null;
+}
+
 type ClientNonUIFeaturesProps = {
   children: ReactNode;
 };
@@ -272,6 +286,7 @@ export function ClientNonUIFeatures({ children }: ClientNonUIFeaturesProps) {
     <>
       <SystemEmojiFeature />
       <PageZoomFeature />
+      <PrivacyBlurFeature />
       <FaviconUpdater />
       <InviteNotifications />
       <MessageNotifications />

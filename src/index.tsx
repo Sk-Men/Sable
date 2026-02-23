@@ -10,6 +10,7 @@ enableMapSet();
 import './index.css';
 import './app/styles/themes.css';
 import './app/styles/overrides/General.css';
+import './app/styles/overrides/Privacy.css';
 
 import { trimTrailingSlash } from './app/utils/common';
 import App from './app/pages/App';
