@@ -9,6 +9,11 @@ export enum MessageLayout {
   Bubble = 2,
 }
 
+export enum RightSwipeAction {
+  Members = 'members',
+  Reply = 'reply',
+}
+
 export type JumboEmojiSize = 'none' | 'extraSmall' | 'small' | 'normal' | 'large' | 'extraLarge';
 
 export interface Settings {
@@ -46,6 +51,10 @@ export interface Settings {
 
   // Cosmetics!
   jumboEmojiSize: JumboEmojiSize;
+
+  // Sable features!
+  mobileGestures: boolean;
+  rightSwipeAction: RightSwipeAction;
 }
 
 const defaultSettings: Settings = {
@@ -82,7 +91,11 @@ const defaultSettings: Settings = {
   developerTools: false,
 
   // Cosmetics!
-  jumboEmojiSize: 'normal'
+  jumboEmojiSize: 'normal',
+
+  // Sable features!
+  mobileGestures: true,
+  rightSwipeAction: RightSwipeAction.Reply,
 };
 
 export const getSettings = () => {

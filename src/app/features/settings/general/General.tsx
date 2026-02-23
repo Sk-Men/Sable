@@ -32,10 +32,10 @@ import FocusTrap from 'focus-trap-react';
 import { Page, PageContent, PageHeader } from '../../../components/page';
 import { SequenceCard } from '../../../components/sequence-card';
 import { useSetting } from '../../../state/hooks/settings';
-import { DateFormat, MessageLayout, MessageSpacing, settingsAtom } from '../../../state/settings';
+import { DateFormat, MessageLayout, MessageSpacing, RightSwipeAction, settingsAtom } from '../../../state/settings';
 import { SettingTile } from '../../../components/setting-tile';
 import { KeySymbol } from '../../../utils/key-symbol';
-import { isMacOS } from '../../../utils/user-agent';
+import { isMacOS, mobileOrTablet } from '../../../utils/user-agent';
 import {
   DarkTheme,
   LightTheme,
@@ -707,7 +707,7 @@ function DateAndTime() {
   );
 }
 
-function Editor() {
+function Editor({ isMobile }: { isMobile: boolean }) {
   const [enterForNewline, setEnterForNewline] = useSetting(settingsAtom, 'enterForNewline');
   const [isMarkdown, setIsMarkdown] = useSetting(settingsAtom, 'isMarkdown');
   const [hideActivity, setHideActivity] = useSetting(settingsAtom, 'hideActivity');
@@ -715,12 +715,11 @@ function Editor() {
   return (
     <Box direction="Column" gap="100">
       <Text size="L400">Editor</Text>
-      <SequenceCard className={SequenceCardStyle} variant="SurfaceVariant" direction="Column">
+      <SequenceCard className={SequenceCardStyle} variant="SurfaceVariant" direction="Column" style={{ opacity: isMobile ? 0.5 : 1 }}>
         <SettingTile
           title="ENTER for Newline"
-          description={`Use ${isMacOS() ? KeySymbol.Command : 'Ctrl'
-            } + ENTER to send message and ENTER for newline. Ignored on mobile.`}
-          after={<Switch variant="Primary" value={enterForNewline} onChange={setEnterForNewline} />}
+          description={`Use ${isMacOS() ? KeySymbol.Command : 'Ctrl'} + ENTER to send message. ${isMobile ? '(Disabled on Mobile)' : ''}`}
+          after={<Switch variant="Primary" value={enterForNewline} onChange={setEnterForNewline} disabled={isMobile} />}
         />
       </SequenceCard>
       <SequenceCard className={SequenceCardStyle} variant="SurfaceVariant" direction="Column">
@@ -878,6 +877,111 @@ function SelectMessageSpacing() {
   );
 }
 
+function SelectRightSwipeAction({ disabled }: { disabled?: boolean }) {
+  const [menuCords, setMenuCords] = useState<RectCords>();
+  const [action, setAction] = useSetting(settingsAtom, 'rightSwipeAction');
+
+  const options = [
+    { id: RightSwipeAction.Reply, name: 'Reply to Message' },
+    { id: RightSwipeAction.Members, name: 'Open Member List' },
+  ];
+
+  const handleMenu: MouseEventHandler<HTMLButtonElement> = (evt) => {
+    setMenuCords(evt.currentTarget.getBoundingClientRect());
+  };
+
+  const handleSelect = (val: RightSwipeAction) => {
+    setAction(val);
+    setMenuCords(undefined);
+  };
+
+  return (
+    <>
+      <Button
+        size="300"
+        variant="Secondary"
+        outlined
+        fill="Soft"
+        radii="300"
+        disabled={disabled}
+        after={<Icon size="300" src={Icons.ChevronBottom} />}
+        onClick={handleMenu}
+      >
+        <Text size="T300">
+          {options.find((o) => o.id === action)?.name ?? action}
+        </Text>
+      </Button>
+      <PopOut
+        anchor={menuCords}
+        offset={5}
+        position="Bottom"
+        align="End"
+        content={
+          <FocusTrap
+            focusTrapOptions={{
+              initialFocus: false,
+              onDeactivate: () => setMenuCords(undefined),
+              clickOutsideDeactivates: true,
+              escapeDeactivates: stopPropagation,
+            }}
+          >
+            <Menu>
+              <Box direction="Column" gap="100" style={{ padding: config.space.S100 }}>
+                {options.map((option) => (
+                  <MenuItem
+                    key={option.id}
+                    size="300"
+                    variant={action === option.id ? 'Primary' : 'Surface'}
+                    radii="300"
+                    onClick={() => handleSelect(option.id)}
+                  >
+                    <Text size="T300">{option.name}</Text>
+                  </MenuItem>
+                ))}
+              </Box>
+            </Menu>
+          </FocusTrap>
+        }
+      />
+    </>
+  );
+}
+
+function Gestures({ isMobile }: { isMobile: boolean }) {
+  const [mobileGestures, setMobileGestures] = useSetting(settingsAtom, 'mobileGestures');
+
+  return (
+    <Box direction="Column" gap="100" style={{ opacity: isMobile ? 1 : 0.5 }}>
+      <Text size="L400">Gestures {!isMobile && "(Mobile Only)"}</Text>
+      <SequenceCard className={SequenceCardStyle} variant="SurfaceVariant" direction="Column">
+        <SettingTile
+          title="Enable Swiping"
+          description="Swipe left for rooms, swipe right for actions."
+          after={
+            <Switch
+              variant="Primary"
+              value={mobileGestures}
+              onChange={setMobileGestures}
+              disabled={!isMobile}
+            />
+          }
+        />
+      </SequenceCard>
+      <SequenceCard className={SequenceCardStyle} variant="SurfaceVariant" direction="Column">
+        <SettingTile
+          title="Right Swipe Action"
+          description="What happens when you swipe right on a message."
+          after={
+            <SelectRightSwipeAction
+              disabled={!isMobile || !mobileGestures}
+            />
+          }
+        />
+      </SequenceCard>
+    </Box>
+  );
+}
+
 function Messages() {
   const [legacyUsernameColor, setLegacyUsernameColor] = useSetting(
     settingsAtom,
@@ -1003,7 +1107,8 @@ export function General({ requestClose }: GeneralProps) {
             <Box direction="Column" gap="700">
               <Appearance />
               <DateAndTime />
-              <Editor />
+              <Gestures isMobile={mobileOrTablet()} />
+              <Editor isMobile={mobileOrTablet()} />
               <Messages />
             </Box>
           </PageContent>
