@@ -153,7 +153,16 @@ export const UrlPreviewCard = as<'div', { url: string; ts: number, mediaType?: s
             />
           )}
           <UrlPreviewContent>
-            <Text style={linkStyles} truncate as="a" href={url} target="_blank" rel="no-referrer" size="T200" priority="300">
+            <Text
+              style={linkStyles}
+              truncate
+              as="a"
+              href={url}
+              target="_blank"
+              rel="noreferrer"
+              size="T200"
+              priority="300"
+            >
               {typeof siteName === 'string' && `${siteName} | `}
               {tryDecodeURIComponent(url)}
             </Text>
