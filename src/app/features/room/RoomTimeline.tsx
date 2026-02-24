@@ -443,6 +443,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
   const canSendReaction = permissions.event(MessageEvent.Reaction, mx.getSafeUserId());
   const canPinEvent = permissions.stateEvent(StateEvent.RoomPinnedEvents, mx.getSafeUserId());
   const [editId, setEditId] = useState<string>();
+  const [profileCache, setProfileCache] = useState<Record<string, any>>({});
 
   const roomToParents = useAtomValue(roomToParentsAtom);
   const unread = useRoomUnread(room.roomId, roomToUnreadAtom);
@@ -901,6 +902,37 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
     }
   }, [scrollToElement, editId]);
 
+  // fetch user profiles, specifically pronouns
+  useEffect(() => {
+    const visibleIndices = getItems();
+    const sendersToFetch = new Set<string>();
+
+    visibleIndices.forEach((index) => {
+      const [eventTimeline, baseIndex] = getTimelineAndBaseIndex(timeline.linkedTimelines, index);
+      const mEvent = getTimelineEvent(eventTimeline!, getTimelineRelativeIndex(index, baseIndex));
+      const senderId = mEvent?.getSender();
+
+      if (senderId && !profileCache[senderId]) {
+        sendersToFetch.add(senderId);
+      }
+    });
+
+    sendersToFetch.forEach(async (userId) => {
+      setProfileCache(prev => ({ ...prev, [userId]: { loading: true } }));
+
+      const [err, info] = await to(mx.getProfileInfo(userId));
+      if (err || !info) return;
+
+      setProfileCache((prev) => ({
+        ...prev,
+        [userId]: {
+          pronouns: (info as any)['io.fsky.nyx.pronouns'],
+          loading: false
+        },
+      }));
+    });
+  }, [timeline.range, timeline.linkedTimelines, mx, profileCache, getItems]);
+
   const handleJumpToLatest = () => {
     if (eventId) {
       navigateRoom(room.roomId, undefined, { replace: true });
@@ -938,15 +970,18 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
       if (!userId) {
         throw new Error('Button should have "data-user-id" attribute!');
       }
+
       openUserRoomProfile(
         room.roomId,
         space?.roomId,
         userId,
-        evt.currentTarget.getBoundingClientRect()
+        evt.currentTarget.getBoundingClientRect(),
+        profileCache[userId]?.pronouns
       );
     },
-    [room, space, openUserRoomProfile]
+    [room, space, openUserRoomProfile, profileCache]
   );
+
   const handleUsernameClick: MouseEventHandler<HTMLButtonElement> = useCallback(
     (evt) => {
       evt.preventDefault();
@@ -1077,6 +1112,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
             onUsernameClick={handleUsernameClick}
             onReplyClick={handleReplyClick}
             onReactionToggle={handleReactionToggle}
+            senderPronouns={profileCache[senderId]?.pronouns}
             onEditId={handleEdit}
             reply={
               replyEventId && (

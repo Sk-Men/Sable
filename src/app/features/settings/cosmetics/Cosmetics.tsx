@@ -152,6 +152,7 @@ function Privacy() {
 
 function IdentityCosmetics() {
     const [legacyUsernameColor, setLegacyUsernameColor] = useSetting(settingsAtom, 'legacyUsernameColor');
+    const [showPronouns, setShowPronouns] = useSetting(settingsAtom, 'showPronouns');
 
     return (
         <Box direction="Column" gap="100">
@@ -161,6 +162,13 @@ function IdentityCosmetics() {
                     title="Colorful Names"
                     description="Assign unique colors to users based on their ID. Does not override room/space custom colors. Will override default role colors."
                     after={<Switch variant="Primary" value={legacyUsernameColor} onChange={setLegacyUsernameColor} />}
+                />
+            </SequenceCard>
+            <SequenceCard className={SequenceCardStyle} variant="SurfaceVariant" direction="Column">
+                <SettingTile
+                    title="Show Pronouns"
+                    description="Display user pronouns in the message timeline."
+                    after={<Switch variant="Primary" value={showPronouns} onChange={setShowPronouns} />}
                 />
             </SequenceCard>
         </Box>
