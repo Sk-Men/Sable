@@ -23,6 +23,7 @@ import {
   Room,
   RoomEvent,
   RoomEventHandlerMap,
+  RoomStateEvent,
 } from 'matrix-js-sdk';
 import { HTMLReactParserOptions } from 'html-react-parser';
 import classNames from 'classnames';
@@ -965,6 +966,26 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
       }));
     });
   }, [timeline.range, timeline.linkedTimelines, mx, profileCache, getItems, globalProfiles, setGlobalProfiles]);
+
+  useEffect(() => {
+    const onMemberEvent = (event: MatrixEvent) => {
+      if (event.getType() !== StateEvent.RoomMember) return;
+
+      const userId = event.getStateKey();
+      if (!userId) return;
+
+      setGlobalProfiles((prev) => {
+        const next = { ...prev };
+        delete next[userId];
+        return next;
+      });
+    };
+
+    mx.on(RoomStateEvent.Members, onMemberEvent);
+    return () => {
+      mx.removeListener(RoomStateEvent.Members, onMemberEvent);
+    };
+  }, [mx, setGlobalProfiles]);
 
   const handleJumpToLatest = () => {
     if (eventId) {
