@@ -23,6 +23,7 @@ import {
   Room,
   RoomEvent,
   RoomEventHandlerMap,
+  RoomStateEvent,
 } from 'matrix-js-sdk';
 import { HTMLReactParserOptions } from 'html-react-parser';
 import classNames from 'classnames';
@@ -926,7 +927,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
       const mEvent = getTimelineEvent(eventTimeline!, getTimelineRelativeIndex(index, baseIndex));
       const senderId = mEvent?.getSender();
 
-      if (senderId && !profileCache[senderId]) {
+      if (senderId && !profileCache[senderId] && !globalProfiles[senderId]) {
         sendersToFetch.add(senderId);
       }
     });
@@ -958,8 +959,33 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
         ...prev,
         [userId]: normalized,
       }));
+
+      setGlobalProfiles((prev) => ({
+        ...prev,
+        [userId]: normalized,
+      }));
     });
-  }, [timeline.range, timeline.linkedTimelines, mx, profileCache, getItems]);
+  }, [timeline.range, timeline.linkedTimelines, mx, profileCache, getItems, globalProfiles, setGlobalProfiles]);
+
+  useEffect(() => {
+    const onMemberEvent = (event: MatrixEvent) => {
+      if (event.getType() !== StateEvent.RoomMember) return;
+
+      const userId = event.getStateKey();
+      if (!userId) return;
+
+      setGlobalProfiles((prev) => {
+        const next = { ...prev };
+        delete next[userId];
+        return next;
+      });
+    };
+
+    mx.on(RoomStateEvent.Members, onMemberEvent);
+    return () => {
+      mx.removeListener(RoomStateEvent.Members, onMemberEvent);
+    };
+  }, [mx, setGlobalProfiles]);
 
   const handleJumpToLatest = () => {
     if (eventId) {
@@ -1146,7 +1172,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
             onUsernameClick={handleUsernameClick}
             onReplyClick={handleReplyClick}
             onReactionToggle={handleReactionToggle}
-            senderPronouns={profileCache[senderId]?.pronouns}
+            senderPronouns={profileCache[senderId]?.pronouns || globalProfiles[senderId]?.pronouns}
             onEditId={handleEdit}
             reply={
               replyEventId && (
