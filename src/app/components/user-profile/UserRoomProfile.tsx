@@ -51,13 +51,13 @@ function UserExtendedSection({ profile, htmlReactParserOptions, linkifyOpts }: U
   }).format(new Date()) : null;
 
   const bioContent = useMemo(() => {
-    const rawBio = profile.extended?.["moe.sable.app.bio"] || profile.bio;
+    const rawBio = profile.extended?.["moe.sable.app.bio"] || profile.extended?.["chat.commet.profile_bio"] || profile.bio;
     if (!rawBio) return null;
 
     const safetyTrim = rawBio.length > 2048 ? rawBio.slice(0, 2048) : rawBio;
 
     const visibleText = safetyTrim.replace(/<[^>]*>?/gm, '');
-    const VISIBLE_LIMIT = 512;
+    const VISIBLE_LIMIT = 1024;
 
     if (visibleText.length <= VISIBLE_LIMIT) return safetyTrim;
 

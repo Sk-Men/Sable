@@ -950,7 +950,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
         displayName: info.displayname,
         pronouns: (info as any)['io.fsky.nyx.pronouns'],
         timezone: (info as any)['us.cloke.msc4175.tz'] || (info as any)['m.tz'],
-        bio: (info as any)['moe.sable.app.bio'],
+        bio: (info as any)['moe.sable.app.bio'] || (info as any)['chat.commet.profile_bio'],
         extended: info,
       };
 

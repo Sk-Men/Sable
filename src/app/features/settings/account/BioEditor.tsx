@@ -24,7 +24,7 @@ type BioEditorProps = {
     onSave: (htmlContent: string) => void;
 };
 
-const BIO_LIMIT = 512;
+const BIO_LIMIT = 1024;
 
 export function BioEditor({ value, isSaving, imagePackRooms, onSave }: BioEditorProps) {
     const editor = useEditor();

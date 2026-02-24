@@ -345,8 +345,16 @@ function ProfileExtended({ profile, userId }: ProfileProps) {
       </SequenceCard>
       <SequenceCard className={SequenceCardStyle} variant="SurfaceVariant" direction="Column" gap="400">
         <BioEditor
-          value={profile.extended?.["moe.sable.app.bio"] || profile.bio}
-          onSave={(htmlBio) => handleSaveField("moe.sable.app.bio", htmlBio)}
+          value={profile.extended?.["moe.sable.app.bio"] || profile.extended?.['chat.commet.profile_bio'] || profile.bio}
+          onSave={(htmlBio) => {
+            handleSaveField("moe.sable.app.bio", htmlBio)
+
+            const cleanedHtml = htmlBio.replace(/<br\/><\/blockquote>/g, "</blockquote>");
+            handleSaveField("chat.commet.profile_bio", {
+              "format": "org.matrix.custom.html",
+              "formatted_body": cleanedHtml
+            });
+          }}
         />
       </SequenceCard>
 

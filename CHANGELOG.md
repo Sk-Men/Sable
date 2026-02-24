@@ -3,6 +3,8 @@
 ## Version 1.0.1
 
 - (potentially) fixed rare crash when changing rooms
+- Support Commet bios.
+- Raise bio limit to 1024 characters.
 
 ## Version 1.0.0
 
