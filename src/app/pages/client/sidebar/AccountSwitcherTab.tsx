@@ -31,6 +31,7 @@ import { useMediaAuthentication } from '../../../hooks/useMediaAuthentication';
 import { useSessionProfiles } from '../../../hooks/useSessionProfiles'; import { Settings } from '../../../features/settings';
 import { Modal500 } from '../../../components/Modal500';
 import { createLogger } from '../../../utils/debug';
+import { useClientConfig } from '../../../hooks/useClientConfig';
 
 const log = createLogger('AccountSwitcherTab');
 
@@ -141,8 +142,15 @@ export function AccountSwitcherTab() {
 
   const sessionProfiles = useSessionProfiles(sessions);
 
+  const { disableAccountSwitcher } = useClientConfig();
+
 
   const handleToggle: MouseEventHandler<HTMLButtonElement> = (evt) => {
+    if (disableAccountSwitcher) {
+      setSettingsOpen(true);
+      return;
+    }
+
     const cords = evt.currentTarget.getBoundingClientRect();
     setMenuAnchor((cur) => (cur ? undefined : cords));
   };

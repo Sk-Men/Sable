@@ -4,6 +4,8 @@
   "allowCustomHomeservers": true,
   "elementCallUrl": null,
 
+  "disableAccountSwitcher": false,
+
   "featuredCommunities": {
     "openAsDefault": false,
     "spaces": [

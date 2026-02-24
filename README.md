@@ -21,6 +21,8 @@ After that, you can copy the dist/ directory to your server and serve it.
 
 * The default homeservers and explore pages are defined in [`config.json`](config.json).
 
+* You can also disable the account switcher in the config.json.
+
 * To deploy on subdirectory, you need to rebuild the app youself after updating the `base` path in [`build.config.ts`](build.config.ts).
     * For example, if you want to deploy on `https://sable.moe/app`, then set `base: '/app'`.
 
