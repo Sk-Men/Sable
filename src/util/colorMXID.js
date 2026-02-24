@@ -23,5 +23,11 @@ export function cssColorMXID(userId) {
 }
 
 export default function colorMXID(userId) {
-  return `var(${cssColorMXID(userId)})`;
+  const hash = hashCode(userId);
+
+  const h = hash % 360;
+  const s = 65;
+  const l = 80;
+
+  return `hsl(${h}, ${s}%, ${l}%)`;
 }

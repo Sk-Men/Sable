@@ -1,0 +1,355 @@
+import React, {
+    ChangeEventHandler,
+    KeyboardEventHandler,
+    MouseEventHandler,
+    useState,
+} from 'react';
+import {
+    as,
+    Box,
+    Button,
+    Chip,
+    config,
+    Icon,
+    Icons,
+    Input,
+    Menu,
+    MenuItem,
+    PopOut,
+    RectCords,
+    Switch,
+    Text,
+    toRem,
+} from 'folds';
+import { isKeyHotkey } from 'is-hotkey';
+import FocusTrap from 'focus-trap-react';
+import { SequenceCard } from '../../../components/sequence-card';
+import { useSetting } from '../../../state/hooks/settings';
+import { settingsAtom } from '../../../state/settings';
+import { SettingTile } from '../../../components/setting-tile';
+import {
+    DarkTheme,
+    LightTheme,
+    Theme,
+    ThemeKind,
+    useSystemThemeKind,
+    useThemeNames,
+    useThemes,
+} from '../../../hooks/useTheme';
+import { stopPropagation } from '../../../utils/keyboard';
+import { SequenceCardStyle } from '../styles.css';
+
+type ThemeSelectorProps = {
+    themeNames: Record<string, string>;
+    themes: Theme[];
+    selected: Theme;
+    onSelect: (theme: Theme) => void;
+};
+export const ThemeSelector = as<'div', ThemeSelectorProps>(
+    ({ themeNames, themes, selected, onSelect, ...props }, ref) => (
+        <Menu {...props} ref={ref}>
+            <Box direction="Column" gap="100" style={{ padding: config.space.S100 }}>
+                {themes.map((theme) => (
+                    <MenuItem
+                        key={theme.id}
+                        size="300"
+                        variant={theme.id === selected.id ? 'Primary' : 'Surface'}
+                        radii="300"
+                        onClick={() => onSelect(theme)}
+                    >
+                        <Text size="T300">{themeNames[theme.id] ?? theme.id}</Text>
+                    </MenuItem>
+                ))}
+            </Box>
+        </Menu>
+    )
+);
+
+
+function SelectTheme({ disabled }: { disabled?: boolean }) {
+    const themes = useThemes();
+    const themeNames = useThemeNames();
+    const [themeId, setThemeId] = useSetting(settingsAtom, 'themeId');
+    const [menuCords, setMenuCords] = useState<RectCords>();
+    const selectedTheme = themes.find((theme) => theme.id === themeId) ?? LightTheme;
+
+    const handleThemeMenu: MouseEventHandler<HTMLButtonElement> = (evt) => {
+        setMenuCords(evt.currentTarget.getBoundingClientRect());
+    };
+
+    const handleThemeSelect = (theme: Theme) => {
+        setThemeId(theme.id);
+        setMenuCords(undefined);
+    };
+
+    return (
+        <>
+            <Button
+                size="300"
+                variant="Primary"
+                outlined
+                fill="Soft"
+                radii="300"
+                after={<Icon size="300" src={Icons.ChevronBottom} />}
+                onClick={disabled ? undefined : handleThemeMenu}
+                aria-disabled={disabled}
+            >
+                <Text size="T300">{themeNames[selectedTheme.id] ?? selectedTheme.id}</Text>
+            </Button>
+            <PopOut
+                anchor={menuCords}
+                offset={5}
+                position="Bottom"
+                align="End"
+                content={
+                    <FocusTrap
+                        focusTrapOptions={{
+                            initialFocus: false,
+                            onDeactivate: () => setMenuCords(undefined),
+                            clickOutsideDeactivates: true,
+                            isKeyForward: (evt: KeyboardEvent) =>
+                                evt.key === 'ArrowDown' || evt.key === 'ArrowRight',
+                            isKeyBackward: (evt: KeyboardEvent) =>
+                                evt.key === 'ArrowUp' || evt.key === 'ArrowLeft',
+                            escapeDeactivates: stopPropagation,
+                        }}
+                    >
+                        <ThemeSelector
+                            themeNames={themeNames}
+                            themes={themes}
+                            selected={selectedTheme}
+                            onSelect={handleThemeSelect}
+                        />
+                    </FocusTrap>
+                }
+            />
+        </>
+    );
+}
+
+
+function SystemThemePreferences() {
+    const themeKind = useSystemThemeKind();
+    const themeNames = useThemeNames();
+    const themes = useThemes();
+    const [lightThemeId, setLightThemeId] = useSetting(settingsAtom, 'lightThemeId');
+    const [darkThemeId, setDarkThemeId] = useSetting(settingsAtom, 'darkThemeId');
+
+    const lightThemes = themes.filter((theme) => theme.kind === ThemeKind.Light);
+    const darkThemes = themes.filter((theme) => theme.kind === ThemeKind.Dark);
+
+    const selectedLightTheme = lightThemes.find((theme) => theme.id === lightThemeId) ?? LightTheme;
+    const selectedDarkTheme = darkThemes.find((theme) => theme.id === darkThemeId) ?? DarkTheme;
+
+    const [ltCords, setLTCords] = useState<RectCords>();
+    const [dtCords, setDTCords] = useState<RectCords>();
+
+    const handleLightThemeMenu: MouseEventHandler<HTMLButtonElement> = (evt) => {
+        setLTCords(evt.currentTarget.getBoundingClientRect());
+    };
+    const handleDarkThemeMenu: MouseEventHandler<HTMLButtonElement> = (evt) => {
+        setDTCords(evt.currentTarget.getBoundingClientRect());
+    };
+
+    const handleLightThemeSelect = (theme: Theme) => {
+        setLightThemeId(theme.id);
+        setLTCords(undefined);
+    };
+
+    const handleDarkThemeSelect = (theme: Theme) => {
+        setDarkThemeId(theme.id);
+        setDTCords(undefined);
+    };
+
+    return (
+        <Box wrap="Wrap" gap="400">
+            <SettingTile
+                title="Light Theme:"
+                after={
+                    <Chip
+                        variant={themeKind === ThemeKind.Light ? 'Primary' : 'Secondary'}
+                        outlined={themeKind === ThemeKind.Light}
+                        radii="Pill"
+                        after={<Icon size="200" src={Icons.ChevronBottom} />}
+                        onClick={handleLightThemeMenu}
+                    >
+                        <Text size="B300">{themeNames[selectedLightTheme.id] ?? selectedLightTheme.id}</Text>
+                    </Chip>
+                }
+            />
+            <PopOut
+                anchor={ltCords}
+                offset={5}
+                position="Bottom"
+                align="End"
+                content={
+                    <FocusTrap
+                        focusTrapOptions={{
+                            initialFocus: false,
+                            onDeactivate: () => setLTCords(undefined),
+                            clickOutsideDeactivates: true,
+                            isKeyForward: (evt: KeyboardEvent) =>
+                                evt.key === 'ArrowDown' || evt.key === 'ArrowRight',
+                            isKeyBackward: (evt: KeyboardEvent) =>
+                                evt.key === 'ArrowUp' || evt.key === 'ArrowLeft',
+                            escapeDeactivates: stopPropagation,
+                        }}
+                    >
+                        <ThemeSelector
+                            themeNames={themeNames}
+                            themes={lightThemes}
+                            selected={selectedLightTheme}
+                            onSelect={handleLightThemeSelect}
+                        />
+                    </FocusTrap>
+                }
+            />
+            <SettingTile
+                title="Dark Theme:"
+                after={
+                    <Chip
+                        variant={themeKind === ThemeKind.Dark ? 'Primary' : 'Secondary'}
+                        outlined={themeKind === ThemeKind.Dark}
+                        radii="Pill"
+                        after={<Icon size="200" src={Icons.ChevronBottom} />}
+                        onClick={handleDarkThemeMenu}
+                    >
+                        <Text size="B300">{themeNames[selectedDarkTheme.id] ?? selectedDarkTheme.id}</Text>
+                    </Chip>
+                }
+            />
+            <PopOut
+                anchor={dtCords}
+                offset={5}
+                position="Bottom"
+                align="End"
+                content={
+                    <FocusTrap
+                        focusTrapOptions={{
+                            initialFocus: false,
+                            onDeactivate: () => setDTCords(undefined),
+                            clickOutsideDeactivates: true,
+                            isKeyForward: (evt: KeyboardEvent) =>
+                                evt.key === 'ArrowDown' || evt.key === 'ArrowRight',
+                            isKeyBackward: (evt: KeyboardEvent) =>
+                                evt.key === 'ArrowUp' || evt.key === 'ArrowLeft',
+                            escapeDeactivates: stopPropagation,
+                        }}
+                    >
+                        <ThemeSelector
+                            themeNames={themeNames}
+                            themes={darkThemes}
+                            selected={selectedDarkTheme}
+                            onSelect={handleDarkThemeSelect}
+                        />
+                    </FocusTrap>
+                }
+            />
+        </Box>
+    );
+}
+
+function ThemeSettings() {
+    const [systemTheme, setSystemTheme] = useSetting(settingsAtom, 'useSystemTheme');
+    const [monochromeMode, setMonochromeMode] = useSetting(settingsAtom, 'monochromeMode');
+
+    return (
+        <Box direction="Column" gap="100">
+            <Text size="L400">Theme</Text>
+
+            <SequenceCard className={SequenceCardStyle} variant="SurfaceVariant" direction="Column" gap="400">
+                <SettingTile
+                    title="System Theme"
+                    description="Sync with your device's light/dark mode."
+                    after={<Switch variant="Primary" value={systemTheme} onChange={setSystemTheme} />}
+                />
+                {systemTheme && <SystemThemePreferences />}
+            </SequenceCard>
+
+            <SequenceCard className={SequenceCardStyle} variant="SurfaceVariant" direction="Column">
+                <SettingTile
+                    title="Manual Theme"
+                    description="Active when System Theme is disabled."
+                    after={<SelectTheme disabled={systemTheme} />}
+                />
+            </SequenceCard>
+
+            <SequenceCard className={SequenceCardStyle} variant="SurfaceVariant" direction="Column">
+                <SettingTile
+                    title="Monochrome Mode"
+                    after={<Switch variant="Primary" value={monochromeMode} onChange={setMonochromeMode} />}
+                />
+            </SequenceCard>
+        </Box>
+    );
+}
+
+function PageZoomInput() {
+    const [pageZoom, setPageZoom] = useSetting(settingsAtom, 'pageZoom');
+    const [currentZoom, setCurrentZoom] = useState(`${pageZoom}`);
+
+    const handleZoomChange: ChangeEventHandler<HTMLInputElement> = (evt) => {
+        setCurrentZoom(evt.target.value);
+    };
+
+    const handleZoomEnter: KeyboardEventHandler<HTMLInputElement> = (evt) => {
+        if (isKeyHotkey('escape', evt)) {
+            evt.stopPropagation();
+            setCurrentZoom(pageZoom.toString());
+        }
+        if (
+            isKeyHotkey('enter', evt) &&
+            'value' in evt.target &&
+            typeof evt.target.value === 'string'
+        ) {
+            const newZoom = parseInt(evt.target.value, 10);
+            if (Number.isNaN(newZoom)) return;
+            const safeZoom = Math.max(Math.min(newZoom, 150), 75);
+            setPageZoom(safeZoom);
+            setCurrentZoom(safeZoom.toString());
+        }
+    };
+
+    return (
+        <Input
+            style={{ width: toRem(100) }}
+            variant={pageZoom === parseInt(currentZoom, 10) ? 'Secondary' : 'Success'}
+            size="300"
+            radii="300"
+            type="number"
+            min="75"
+            max="150"
+            value={currentZoom}
+            onChange={handleZoomChange}
+            onKeyDown={handleZoomEnter}
+            after={<Text size="T300">%</Text>}
+            outlined
+        />
+    );
+}
+export function Appearance() {
+    const [twitterEmoji, setTwitterEmoji] = useSetting(settingsAtom, 'twitterEmoji');
+
+    return (
+        <Box direction="Column" gap="700">
+
+            <ThemeSettings />
+
+            <Box direction="Column" gap="100">
+                <Text size="L400">Visual Tweaks</Text>
+
+                <SequenceCard className={SequenceCardStyle} variant="SurfaceVariant" direction="Column">
+                    <SettingTile
+                        title="Twitter Emoji"
+                        description="Use Twitter-style emojis instead of system native ones."
+                        after={<Switch variant="Primary" value={twitterEmoji} onChange={setTwitterEmoji} />}
+                    />
+                </SequenceCard>
+
+                <SequenceCard className={SequenceCardStyle} variant="SurfaceVariant" direction="Column">
+                    <SettingTile title="Page Zoom" after={<PageZoomInput />} />
+                </SequenceCard>
+            </Box>
+        </Box>
+    );
+}

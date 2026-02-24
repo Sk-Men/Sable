@@ -22,6 +22,7 @@ import { JumboEmojiSize, settingsAtom } from '../../../state/settings';
 import { SettingTile } from '../../../components/setting-tile';
 import { stopPropagation } from '../../../utils/keyboard';
 import { SequenceCardStyle } from '../styles.css';
+import { Appearance } from './Themes';
 
 const emojiSizeItems = [
     { id: 'none', name: 'None (Same size as text)' },
@@ -149,6 +150,23 @@ function Privacy() {
     );
 }
 
+function IdentityCosmetics() {
+    const [legacyUsernameColor, setLegacyUsernameColor] = useSetting(settingsAtom, 'legacyUsernameColor');
+
+    return (
+        <Box direction="Column" gap="100">
+            <Text size="L400">Identity</Text>
+            <SequenceCard className={SequenceCardStyle} variant="SurfaceVariant" direction="Column">
+                <SettingTile
+                    title="Colorful Names"
+                    description="Assign unique colors to users based on their ID. Does not override room/space custom colors. Will override default role colors."
+                    after={<Switch variant="Primary" value={legacyUsernameColor} onChange={setLegacyUsernameColor} />}
+                />
+            </SequenceCard>
+        </Box>
+    );
+}
+
 type CosmeticsProps = {
     requestClose: () => void;
 };
@@ -174,6 +192,8 @@ export function Cosmetics({ requestClose }: CosmeticsProps) {
                 <Scroll hideTrack visibility="Hover">
                     <PageContent>
                         <Box direction="Column" gap="700">
+                            <Appearance />
+                            <IdentityCosmetics />
                             <JumboEmoji />
                             <Privacy />
                         </Box>
