@@ -61,7 +61,7 @@ import {
   isRoomAlias,
   mxcUrlToHttp,
 } from '../../../utils/matrix';
-import { MessageLayout, MessageSpacing } from '../../../state/settings';
+import { MessageLayout, MessageSpacing, settingsAtom } from '../../../state/settings';
 import { nicknamesAtom, setNicknameAtom } from '../../../state/nicknames';
 import { useMatrixClient } from '../../../hooks/useMatrixClient';
 import { useRecentEmoji } from '../../../hooks/useRecentEmoji';
@@ -85,6 +85,8 @@ import { getPowerTagIconSrc } from '../../../hooks/useMemberPowerTag';
 import { useSableCosmetics } from '../../../hooks/useSableCosmetics';
 import { SwipeableMessageWrapper } from '../../../components/SwipeableMessageWrapper';
 import { mobileOrTablet } from '../../../utils/user-agent';
+import { useUserProfile } from '../../../hooks/useUserProfile';
+import { useSetting } from '../../../state/hooks/settings';
 
 export type ReactionHandler = (keyOrMxc: string, shortcode: string) => void;
 
@@ -688,6 +690,7 @@ export type MessageProps = {
   memberPowerTag?: MemberPowerTag;
   hour24Clock: boolean;
   dateFormatString: string;
+  senderPronouns?: any[];
 };
 
 function useMobileLongPress(callback: (e: React.PointerEvent<HTMLElement>) => void, delay = 700) {
@@ -723,6 +726,38 @@ function useMobileLongPress(callback: (e: React.PointerEvent<HTMLElement>) => vo
   };
 }
 
+function PronounTag({ pronouns, tagColor }: { pronouns?: any[]; tagColor: string }) {
+  if (!pronouns || pronouns.length === 0) return null;
+
+  const display = pronouns.slice(0, 2).map((p) => p.summary).join('/');
+  const hasMore = pronouns.length > 2;
+
+  return (
+    <Box
+      alignItems="Center"
+      style={{
+        backgroundColor: 'var(--sable-surface-var-container)',
+        padding: '0 5px',
+        borderRadius: config.radii.Pill,
+        height: '16px',
+        display: 'inline-flex',
+      }}
+    >
+      <Text
+        style={{
+          color: tagColor,
+          fontSize: '0.7rem',
+          lineHeight: '1',
+          textTransform: 'lowercase',
+          opacity: 0.8,
+        }}
+      >
+        {display}{hasMore ? '...' : ''}
+      </Text>
+    </Box>
+  );
+}
+
 export const Message = as<'div', MessageProps>(
   (
     {
@@ -752,6 +787,7 @@ export const Message = as<'div', MessageProps>(
       hour24Clock,
       dateFormatString,
       children,
+      senderPronouns,
       ...props
     },
     ref
@@ -788,6 +824,8 @@ export const Message = as<'div', MessageProps>(
     const [mobileOptionsOpen, setMobileOptionsOpen] = useState(false);
     const optionsRef = useRef<HTMLDivElement>(null);
 
+    const [showPronouns] = useSetting(settingsAtom, 'showPronouns');
+
     useEffect(() => {
       if (!mobileOptionsOpen) return undefined;
       const handleClickOutside = (e: globalThis.Event) => {
@@ -807,7 +845,7 @@ export const Message = as<'div', MessageProps>(
         alignItems="Baseline"
         grow="Yes"
       >
-        <Box alignItems="Center" gap="200">
+        <Box alignItems="Center" gap="100">
           <Username
             as="button"
             style={{
@@ -826,6 +864,9 @@ export const Message = as<'div', MessageProps>(
               <UsernameBold>{senderDisplayName}</UsernameBold>
             </Text>
           </Username>
+          {showPronouns && (
+            <PronounTag pronouns={senderPronouns} tagColor={usernameColor} />
+          )}
           {tagIconSrc && <PowerIcon size="100" iconSrc={tagIconSrc} />}
         </Box>
         <Box shrink="No" gap="100">
