@@ -42,6 +42,9 @@ export enum StateEvent {
   PoniesRoomEmotes = 'im.ponies.room_emotes',
   PowerLevelTags = 'in.cinny.room.power_level_tags',
 
+  // Widget state events
+  RoomWidget = 'im.vector.modular.widgets',
+
   // Sable state events
   RoomCosmeticsColor = 'moe.sable.room.cosmetics.color',
   RoomCosmeticsFont = 'moe.sable.room.cosmetics.font',

@@ -16,6 +16,7 @@ import { useRoomMembers } from '../../hooks/useRoomMembers';
 import { CallView } from '../call/CallView';
 import { RoomViewHeader } from './RoomViewHeader';
 import { useCallState } from '../../pages/client/call/CallProvider';
+import { WidgetsDrawer } from '../widgets/WidgetsDrawer';
 
 export function Room() {
   const { eventId } = useParams();
@@ -23,6 +24,7 @@ export function Room() {
   const mx = useMatrixClient();
 
   const [isDrawer] = useSetting(settingsAtom, 'isPeopleDrawer');
+  const [isWidgetDrawerOpen] = useSetting(settingsAtom, 'isWidgetDrawer');
   const [hideActivity] = useSetting(settingsAtom, 'hideActivity');
   const screenSize = useScreenSizeContext();
   const powerLevels = usePowerLevels(room);
@@ -58,6 +60,12 @@ export function Room() {
           <>
             <Line variant="Background" direction="Vertical" size="300" />
             <MembersDrawer key={room.roomId} room={room} members={members} />
+          </>
+        )}
+        {screenSize === ScreenSize.Desktop && isWidgetDrawerOpen && (
+          <>
+            <Line variant="Background" direction="Vertical" size="300" />
+            <WidgetsDrawer key={`widgets-${room.roomId}`} room={room} />
           </>
         )}
       </Box>

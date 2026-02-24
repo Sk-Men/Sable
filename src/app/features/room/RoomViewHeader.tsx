@@ -69,6 +69,7 @@ import { useRoomPermissions } from '../../hooks/useRoomPermissions';
 import { InviteUserPrompt } from '../../components/invite-user-prompt';
 import { useCallState } from '../../pages/client/call/CallProvider';
 import { ContainerColor } from '../../styles/ContainerColor.css';
+import { useRoomWidgets } from '../../hooks/useRoomWidgets';
 
 type RoomMenuProps = {
   room: Room;
@@ -277,6 +278,8 @@ export function RoomViewHeader() {
     : undefined;
 
   const [peopleDrawer, setPeopleDrawer] = useSetting(settingsAtom, 'isPeopleDrawer');
+  const [widgetDrawer, setWidgetDrawer] = useSetting(settingsAtom, 'isWidgetDrawer');
+  const widgets = useRoomWidgets(room);
 
   const handleSearchClick = () => {
     const searchParams: _SearchPathSearchParams = {
@@ -448,6 +451,46 @@ export function RoomViewHeader() {
                 }
               />
             </>
+          )}
+
+          {screenSize === ScreenSize.Desktop && (
+            <TooltipProvider
+              position="Bottom"
+              offset={4}
+              tooltip={
+                <Tooltip>
+                  <Text>{widgetDrawer ? 'Hide Widgets' : 'Show Widgets'}</Text>
+                </Tooltip>
+              }
+            >
+              {(triggerRef) => (
+                <IconButton
+                  fill="None"
+                  ref={triggerRef}
+                  onClick={() => setWidgetDrawer((d) => !d)}
+                  style={{ position: 'relative' }}
+                >
+                  {widgets.length > 0 && (
+                    <Badge
+                      style={{
+                        position: 'absolute',
+                        left: toRem(3),
+                        top: toRem(3),
+                      }}
+                      variant="Secondary"
+                      size="400"
+                      fill="Solid"
+                      radii="Pill"
+                    >
+                      <Text as="span" size="L400">
+                        {widgets.length}
+                      </Text>
+                    </Badge>
+                  )}
+                  <Icon size="400" src={Icons.Category} filled={widgetDrawer} />
+                </IconButton>
+              )}
+            </TooltipProvider>
           )}
 
           {screenSize === ScreenSize.Desktop && (
