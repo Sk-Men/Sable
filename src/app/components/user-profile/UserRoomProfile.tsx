@@ -30,6 +30,7 @@ import { UserProfile, useUserProfile } from '../../hooks/useUserProfile';
 import { RenderBody } from '../message';
 import { factoryRenderLinkifyWithMention, getReactCustomHtmlParser, LINKIFY_OPTS, makeMentionCustomProps, renderMatrixMention } from '../../plugins/react-custom-html-parser';
 import { useSpoilerClickHandler } from '../../hooks/useSpoilerClickHandler';
+import { userRoomProfileAtom } from '../../state/userRoomProfile';
 
 type UserExtendedSectionProps = {
   profile: UserProfile;
@@ -180,6 +181,8 @@ export function UserRoomProfile({ userId }: UserRoomProfileProps) {
 
   const presence = useUserPresence(userId);
 
+  const extendedProfile = useUserProfile(userId);
+
   const handleMessage = () => {
     closeUserRoomProfile();
     const directSearchParam: DirectCreateSearchParams = {
@@ -187,8 +190,6 @@ export function UserRoomProfile({ userId }: UserRoomProfileProps) {
     };
     navigate(withSearchParam(getDirectCreatePath(), directSearchParam));
   };
-
-  const extendedProfile = useUserProfile(userId);
 
   // Todo eventually maybe
   const mentionClickHandler = useCallback((e: React.SyntheticEvent<HTMLElement>) => {
