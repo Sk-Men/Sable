@@ -164,11 +164,12 @@ export const getLinkedTimelines = (timeline: EventTimeline): EventTimeline[] => 
   return timelines;
 };
 
-export const timelineToEventsCount = (t: EventTimeline) => t.getEvents().length;
+export const timelineToEventsCount = (t: EventTimeline) => (t ? t.getEvents().length : 0);
+
 export const getTimelinesEventsCount = (timelines: EventTimeline[]): number => {
   const timelineEventCountReducer = (count: number, tm: EventTimeline) =>
     count + timelineToEventsCount(tm);
-  return timelines.reduce(timelineEventCountReducer, 0);
+  return (timelines || []).filter(Boolean).reduce(timelineEventCountReducer, 0);
 };
 
 export const getTimelineAndBaseIndex = (
@@ -176,10 +177,9 @@ export const getTimelineAndBaseIndex = (
   index: number
 ): [EventTimeline | undefined, number] => {
   let uptoTimelineLen = 0;
-  const timeline = timelines.find((t) => {
+  const timeline = (timelines || []).filter(Boolean).find((t) => {
     uptoTimelineLen += t.getEvents().length;
     return index < uptoTimelineLen;
-
   });
   if (!timeline) return [undefined, 0];
   return [timeline, uptoTimelineLen - timeline.getEvents().length];
