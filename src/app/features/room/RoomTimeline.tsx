@@ -924,7 +924,10 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
 
     visibleIndices.forEach((index) => {
       const [eventTimeline, baseIndex] = getTimelineAndBaseIndex(timeline.linkedTimelines, index);
-      const mEvent = getTimelineEvent(eventTimeline!, getTimelineRelativeIndex(index, baseIndex));
+
+      if (!eventTimeline) return;
+
+      const mEvent = getTimelineEvent(eventTimeline, getTimelineRelativeIndex(index, baseIndex));
       const senderId = mEvent?.getSender();
 
       if (senderId && !profileCache[senderId] && !globalProfiles[senderId]) {
