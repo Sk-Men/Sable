@@ -38,7 +38,8 @@ export function WidgetIframe({ widget, roomId, mx, onCapabilityRequest }: Widget
     userId,
     displayName,
     avatarUrl,
-    widget.id
+    widget.id,
+    mx
   );
 
   useEffect(() => {
@@ -59,6 +60,11 @@ export function WidgetIframe({ widget, roomId, mx, onCapabilityRequest }: Widget
     messaging.setViewedRoomId(roomId);
 
     messaging.once('ready', () => setReady(true));
+
+    // Set iframe src after ClientWidgetApi is listening for the load event.
+    // This avoids a race condition where the iframe loads before the widget
+    // API transport is ready to perform the capability handshake.
+    iframe.src = resolvedUrl;
 
     messaging.on('action:org.matrix.msc2876.read_events', (ev: CustomEvent) => {
       const room = mx.getRoom(roomId);
@@ -135,7 +141,6 @@ export function WidgetIframe({ widget, roomId, mx, onCapabilityRequest }: Widget
     <iframe
       ref={iframeRef}
       title={widget.name || 'Widget'}
-      src={resolvedUrl}
       sandbox="allow-forms allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox allow-downloads"
       allow="camera;microphone;clipboard-write;display-capture;autoplay;encrypted-media"
       style={{

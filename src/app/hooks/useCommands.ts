@@ -29,6 +29,7 @@ import { getStateEvent } from '../utils/room';
 import { splitWithSpace } from '../utils/common';
 import { createRoomEncryptionState } from '../components/create-room';
 import { AccountDataEvent } from '../../types/matrix/accountData';
+import { enrichWidgetUrl } from './useRoomWidgets';
 
 export const SHRUG = '¯\\_(ツ)_/¯';
 export const TABLEFLIP = '(╯°□°)╯︵ ┻━┻';
@@ -167,6 +168,7 @@ export enum Command {
   GColor = 'gcolor',
   Font = 'font',
   GFont = 'gfont',
+  AddWidget = 'addwidget',
 }
 
 export type CommandContent = {
@@ -697,6 +699,58 @@ export const useCommands = (mx: MatrixClient, room: Room): CommandRecord => {
           } catch (e: any) {
             if (e.errcode === 'M_FORBIDDEN') {
               sendFeedback('Permission Denied. An admin must enable "Space-Wide Fonts" in Settings > Cosmetics in app.sable.moe or another supported client.');
+            }
+          }
+        },
+      },
+      [Command.AddWidget]: {
+        name: Command.AddWidget,
+        description: 'Add a widget to this room. Usage: /addwidget <url> [name]',
+        exe: async (payload) => {
+          const userId = mx.getSafeUserId();
+
+          const sendFeedback = (msg: string) => {
+            const localNotice = new (window as any).matrixcs.MatrixEvent({
+              type: 'm.room.message',
+              content: { msgtype: 'm.notice', body: msg },
+              event_id: `~nullptr-widget-${Date.now()}`,
+              room_id: room.roomId,
+              sender: userId,
+            });
+            (room as any).addLiveEvents([localNotice], { duplicateStrategy: 'ignore' } as any);
+          };
+
+          const parts = payload.trim().split(/\s+/);
+          const url = parts[0];
+          const name = parts.slice(1).join(' ') || 'Widget';
+
+          if (!url) {
+            sendFeedback('Usage: /addwidget <url> [name]');
+            return;
+          }
+
+          try {
+            new URL(url);
+          } catch {
+            sendFeedback('Invalid URL. Please provide a valid widget URL.');
+            return;
+          }
+
+          try {
+            const widgetId = `${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+            await mx.sendStateEvent(room.roomId, StateEvent.RoomWidget as any, {
+              type: 'm.custom',
+              url: enrichWidgetUrl(url),
+              name,
+              id: widgetId,
+              creatorUserId: userId,
+            } as any, widgetId);
+            sendFeedback(`Widget "${name}" added.`);
+          } catch (e: any) {
+            if (e.errcode === 'M_FORBIDDEN') {
+              sendFeedback('Permission denied. You need permission to manage widgets in this room.');
+            } else {
+              sendFeedback(`Failed to add widget: ${e.message || 'Unknown error'}`);
             }
           }
         },

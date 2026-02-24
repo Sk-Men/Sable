@@ -20,7 +20,7 @@ import { IWidget } from 'matrix-widget-api';
 
 import * as css from './WidgetsDrawer.css';
 import { useMatrixClient } from '../../hooks/useMatrixClient';
-import { useRoomWidgets, RoomWidget } from '../../hooks/useRoomWidgets';
+import { useRoomWidgets, RoomWidget, enrichWidgetUrl } from '../../hooks/useRoomWidgets';
 import { WidgetIframe } from './WidgetIframe';
 import { useSetSetting } from '../../state/hooks/settings';
 import { settingsAtom } from '../../state/settings';
@@ -102,7 +102,7 @@ function AddWidgetForm({ room, onAdded }: AddWidgetFormProps) {
       const widgetId = `${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
       await mx.sendStateEvent(room.roomId, StateEvent.RoomWidget as any, {
         type: 'm.custom',
-        url: url.trim(),
+        url: enrichWidgetUrl(url.trim()),
         name: name.trim(),
         id: widgetId,
         creatorUserId: mx.getUserId(),
