@@ -926,7 +926,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
       const mEvent = getTimelineEvent(eventTimeline!, getTimelineRelativeIndex(index, baseIndex));
       const senderId = mEvent?.getSender();
 
-      if (senderId && !profileCache[senderId]) {
+      if (senderId && !profileCache[senderId] && !globalProfiles[senderId]) {
         sendersToFetch.add(senderId);
       }
     });
@@ -958,8 +958,13 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
         ...prev,
         [userId]: normalized,
       }));
+
+      setGlobalProfiles((prev) => ({
+        ...prev,
+        [userId]: normalized,
+      }));
     });
-  }, [timeline.range, timeline.linkedTimelines, mx, profileCache, getItems]);
+  }, [timeline.range, timeline.linkedTimelines, mx, profileCache, getItems, globalProfiles, setGlobalProfiles]);
 
   const handleJumpToLatest = () => {
     if (eventId) {
@@ -1146,7 +1151,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
             onUsernameClick={handleUsernameClick}
             onReplyClick={handleReplyClick}
             onReactionToggle={handleReactionToggle}
-            senderPronouns={profileCache[senderId]?.pronouns}
+            senderPronouns={profileCache[senderId]?.pronouns || globalProfiles[senderId]?.pronouns}
             onEditId={handleEdit}
             reply={
               replyEventId && (
