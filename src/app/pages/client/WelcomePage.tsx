@@ -59,14 +59,17 @@ export function WelcomePage() {
               </Box>
             </Box>
             <Box direction="Column" gap="200" alignItems="Center">
-              <Text size="T400" priority="400">
-                Features
-              </Text>
-              <Box direction="Column" gap="100" alignItems="Center">
-                <Text size="T200" priority="300" align="Center">
-                  a host of cosmetic features — check out the <b>Cosmetics</b> tab in space or room settings for details!
+              <Button
+                as="a"
+                href="https://github.com/7w1/sable/blob/dev/CHANGELOG.md"
+                target="_blank"
+                rel="noreferrer noopener"
+                before={<Icon size="200" src={Icons.Code} />}
+              >
+                <Text as="span" size="B400" truncate>
+                  Features
                 </Text>
-              </Box>
+              </Button>
             </Box>
           </PageHero>
         </PageHeroSection>
