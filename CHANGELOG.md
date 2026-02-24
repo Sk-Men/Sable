@@ -1,8 +1,9 @@
 # Sable Client Changelog
 
-## Version 1.0.2 - in dev
+## Version 1.1.0 - in dev
 
 - Global profile cache & automatic cache clearing on member update events.
+- Widgets support.
 
 ## Version 1.0.1
 
