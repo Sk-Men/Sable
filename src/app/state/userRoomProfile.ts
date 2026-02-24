@@ -1,5 +1,6 @@
 import { Position, RectCords } from 'folds';
 import { atom } from 'jotai';
+import { UserProfile } from '../hooks/useUserProfile';
 
 export type UserRoomProfileState = {
   userId: string;
@@ -7,7 +8,9 @@ export type UserRoomProfileState = {
   spaceId?: string;
   cords: RectCords;
   position?: Position;
-  pronouns?: any[];
+  initialProfile?: Partial<UserProfile>;
 };
 
 export const userRoomProfileAtom = atom<UserRoomProfileState | undefined>(undefined);
+
+export const profilesCacheAtom = atom<Record<string, UserProfile>>({});

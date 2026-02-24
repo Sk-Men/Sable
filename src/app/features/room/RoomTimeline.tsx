@@ -29,7 +29,7 @@ import classNames from 'classnames';
 import { ReactEditor } from 'slate-react';
 import { Editor } from 'slate';
 import to from 'await-to-js';
-import { useAtomValue, useSetAtom } from 'jotai';
+import { useAtom, useAtomValue, useSetAtom } from 'jotai';
 import { as, Badge, Box, Chip, color, config, ContainerColor, Icon, Icons, Line, Scroll, Text, toRem, } from 'folds';
 import { isKeyHotkey } from 'is-hotkey';
 import { Opts as LinkifyOpts } from 'linkifyjs';
@@ -107,6 +107,8 @@ import { useSpaceOptionally } from '../../hooks/useSpace';
 import { useRoomCreators } from '../../hooks/useRoomCreators';
 import { useRoomPermissions } from '../../hooks/useRoomPermissions';
 import { useGetMemberPowerTag } from '../../hooks/useMemberPowerTag';
+import { profilesCacheAtom } from '../../state/userRoomProfile';
+import { UserProfile } from '../../hooks/useUserProfile';
 
 const TimelineFloat = as<'div', css.TimelineFloatVariants>(
   ({ position, className, ...props }, ref) => (
@@ -443,7 +445,9 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
   const canSendReaction = permissions.event(MessageEvent.Reaction, mx.getSafeUserId());
   const canPinEvent = permissions.stateEvent(StateEvent.RoomPinnedEvents, mx.getSafeUserId());
   const [editId, setEditId] = useState<string>();
+
   const [profileCache, setProfileCache] = useState<Record<string, any>>({});
+  const [globalProfiles, setGlobalProfiles] = useAtom(profilesCacheAtom);
 
   const roomToParents = useAtomValue(roomToParentsAtom);
   const unread = useRoomUnread(room.roomId, roomToUnreadAtom);
@@ -902,7 +906,6 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
     }
   }, [scrollToElement, editId]);
 
-  // fetch user profiles, specifically pronouns
   useEffect(() => {
     const visibleIndices = getItems();
     const sendersToFetch = new Set<string>();
@@ -921,14 +924,28 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
       setProfileCache(prev => ({ ...prev, [userId]: { loading: true } }));
 
       const [err, info] = await to(mx.getProfileInfo(userId));
-      if (err || !info) return;
+
+      if (err || !info) {
+        setProfileCache(prev => {
+          const newState = { ...prev };
+          delete newState[userId];
+          return newState;
+        });
+        return;
+      }
+
+      const normalized: UserProfile = {
+        avatarUrl: info.avatar_url,
+        displayName: info.displayname,
+        pronouns: (info as any)['io.fsky.nyx.pronouns'],
+        timezone: (info as any)['us.cloke.msc4175.tz'] || (info as any)['m.tz'],
+        bio: (info as any)['moe.sable.app.bio'],
+        extended: info,
+      };
 
       setProfileCache((prev) => ({
         ...prev,
-        [userId]: {
-          pronouns: (info as any)['io.fsky.nyx.pronouns'],
-          loading: false
-        },
+        [userId]: normalized,
       }));
     });
   }, [timeline.range, timeline.linkedTimelines, mx, profileCache, getItems]);
@@ -967,16 +984,22 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
       evt.preventDefault();
       evt.stopPropagation();
       const userId = evt.currentTarget.getAttribute('data-user-id');
-      if (!userId) {
-        throw new Error('Button should have "data-user-id" attribute!');
-      }
+      if (!userId) return;
+
+      const cachedData = profileCache[userId];
 
       openUserRoomProfile(
         room.roomId,
         space?.roomId,
         userId,
         evt.currentTarget.getBoundingClientRect(),
-        profileCache[userId]?.pronouns
+        undefined,
+        {
+          pronouns: cachedData?.pronouns,
+          bio: cachedData?.bio,
+          timezone: cachedData?.timezone,
+          extended: cachedData?.extended,
+        }
       );
     },
     [room, space, openUserRoomProfile, profileCache]
