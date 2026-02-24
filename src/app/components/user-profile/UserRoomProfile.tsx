@@ -67,7 +67,7 @@ function UserExtendedSection({ profile, htmlReactParserOptions, linkifyOpts }: U
     typeof value === 'string' || typeof value === 'number');
 
   return (
-    <Box direction="Column" gap="400" style={{ marginBottom: config.space.S100 }}>
+    <Box direction="Column" gap="200" style={{ marginBottom: config.space.S100 }}>
       {(pronouns || localTime) && (
         <Box alignItems="Center" gap="300" wrap="Wrap">
           {pronouns && (
@@ -95,7 +95,7 @@ function UserExtendedSection({ profile, htmlReactParserOptions, linkifyOpts }: U
             backgroundColor: 'var(--sable-bg-container)',
             borderRadius: config.radii.R400,
             maxHeight: '200px',
-            marginTop: config.space.S100,
+            marginTop: config.space.S0,
           }}
         >
           <Box style={{ padding: config.space.S200, wordBreak: 'break-word' }}>
@@ -112,7 +112,7 @@ function UserExtendedSection({ profile, htmlReactParserOptions, linkifyOpts }: U
       )}
 
       {unknownFields.length > 0 && (
-        <Box direction="Column" gap="200">
+        <Box direction="Column" gap="100">
           <Button
             variant="Secondary"
             size="300"
