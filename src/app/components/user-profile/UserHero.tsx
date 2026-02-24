@@ -40,6 +40,9 @@ export function UserHero({ userId, avatarUrl, presence }: UserHeroProps) {
         style={{
           backgroundColor: colorMXID(userId),
           filter: avatarUrl ? undefined : 'brightness(50%)',
+          height: '80px',
+          overflow: 'hidden',
+          width: '100%'
         }}
       >
         {avatarUrl && (
@@ -120,7 +123,7 @@ export function UserHeroName({ displayName, userId }: UserHeroNameProps) {
           {shownName}
         </Text>
         {nick && (
-          <Text size="T200" priority="300" title={`Nickname (real: ${displayName ?? username})`}>
+          <Text size="T200" priority="300" title={`Nickname (real: ${username})`}>
             (nick)
           </Text>
         )}

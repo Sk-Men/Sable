@@ -68,53 +68,47 @@ function UserExtendedSection({ profile, htmlReactParserOptions, linkifyOpts }: U
 
   return (
     <Box direction="Column" gap="400" style={{ marginBottom: config.space.S100 }}>
-      {pronouns && (
-        <Box alignItems="Center" gap="200">
-          <Icon size="100" src={Icons.User} style={{ opacity: 0.5 }} />
-          <Text size="T300" priority="400">{pronouns}</Text>
-        </Box>
-      )}
-
-      {localTime && (
-        <Box alignItems="Center" gap="200">
-          <Icon size="100" src={Icons.Clock} style={{ opacity: 0.5 }} />
-          <Box direction="Column">
-            <Text size="T200" priority="400">{localTime}</Text>
-            <Text size="T200" priority="300">Local Time ({profile.timezone})</Text>
-          </Box>
+      {(pronouns || localTime) && (
+        <Box alignItems="Center" gap="300" wrap="Wrap">
+          {pronouns && (
+            <Box alignItems="Center" gap="100">
+              <Icon size="50" src={Icons.User} style={{ opacity: 0.5 }} />
+              <Text size="T200" priority="400">{pronouns}</Text>
+            </Box>
+          )}
+          {localTime && (
+            <Box alignItems="Center" gap="100">
+              <Icon size="50" src={Icons.Clock} style={{ opacity: 0.5 }} />
+              <Text size="T200" priority="400">{localTime} ({profile.timezone})</Text>
+            </Box>
+          )}
         </Box>
       )}
 
       {bioContent && (
-        <Box direction="Column" gap="200">
-          <Box alignItems="Center" gap="200">
-            <Icon size="100" src={Icons.Pencil} style={{ opacity: 0.5 }} />
-            <Text size="T200" priority="300">About me</Text>
+        <Scroll
+          direction="Vertical"
+          variant="SurfaceVariant"
+          visibility="Always"
+          size="300"
+          style={{
+            backgroundColor: 'var(--sable-bg-container)',
+            borderRadius: config.radii.R400,
+            maxHeight: '200px',
+            marginTop: config.space.S100,
+          }}
+        >
+          <Box style={{ padding: config.space.S200, wordBreak: 'break-word' }}>
+            <Text size="T200" priority="400" as="div">
+              <RenderBody
+                body={bioContent}
+                customBody={bioContent}
+                htmlReactParserOptions={htmlReactParserOptions}
+                linkifyOpts={linkifyOpts}
+              />
+            </Text>
           </Box>
-
-          <Scroll
-            direction="Vertical"
-            variant="SurfaceVariant"
-            visibility="Always"
-            size="300"
-            style={{
-              backgroundColor: 'var(--sable-bg-container)',
-              borderRadius: config.radii.R500,
-              maxHeight: '200px',
-            }}
-          >
-            <Box style={{ padding: config.space.S300, wordBreak: 'break-word' }}>
-              <Text size="T200" priority="400" as="div">
-                <RenderBody
-                  body={bioContent}
-                  customBody={bioContent}
-                  htmlReactParserOptions={htmlReactParserOptions}
-                  linkifyOpts={linkifyOpts}
-                />
-              </Text>
-            </Box>
-          </Scroll>
-        </Box>
+        </Scroll>
       )}
 
       {unknownFields.length > 0 && (
@@ -230,23 +224,22 @@ export function UserRoomProfile({ userId }: UserRoomProfileProps) {
         avatarUrl={avatarUrl}
         presence={presence && presence.lastActiveTs !== 0 ? presence : undefined}
       />
-      <Box direction="Column" gap="500" style={{ padding: config.space.S400 }}>
-        <Box direction="Column" gap="400">
-          <Box gap="400" alignItems="Start">
+      <Box direction="Column" gap="300" style={{ padding: config.space.S400 }}>
+        <Box direction="Column" gap="200">
+          <Box gap="200" alignItems="Center" wrap="Wrap">
             <UserHeroName displayName={displayName} userId={userId} />
             {userId !== myUserId && (
-              <Box shrink="No">
-                <Button
-                  size="300"
-                  variant="Primary"
-                  fill="Solid"
-                  radii="300"
-                  before={<Icon size="50" src={Icons.Message} filled />}
-                  onClick={handleMessage}
-                >
-                  <Text size="B300">Message</Text>
-                </Button>
-              </Box>
+              <Button
+                size="300"
+                variant="Primary"
+                fill="Solid"
+                radii="300"
+                before={<Icon size="50" src={Icons.Message} filled />}
+                onClick={handleMessage}
+                style={{ marginLeft: 'auto' }}
+              >
+                <Text size="B300">Message</Text>
+              </Button>
             )}
           </Box>
           <UserExtendedSection
@@ -254,7 +247,7 @@ export function UserRoomProfile({ userId }: UserRoomProfileProps) {
             htmlReactParserOptions={htmlReactParserOptions}
             linkifyOpts={linkifyOpts}
           />
-          <Box alignItems="Center" gap="200" wrap="Wrap">
+          <Box alignItems="Center" gap="100" wrap="Wrap">
             {server && <ServerChip server={server} />}
             <ShareChip userId={userId} />
             {creator ? <CreatorChip /> : <PowerChip userId={userId} />}
