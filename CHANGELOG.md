@@ -21,6 +21,8 @@
   - Reset's the dm room name to the name of the other user (on both ends).
   - Same as saving a blank room name.
 - New UI colors & fonts.
+- Pronoun pills.
+- Updated legacy colors (aka random name colors) to no longer be legacy and now be pretty.
 - Fixed background & header for PWA on iOS devices.
 - Lighten on currently hovered message.
 - Privacy blur options in Appearance tab in user settings.
