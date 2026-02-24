@@ -4,6 +4,7 @@
 
 - Global profile cache & automatic cache clearing on member update events.
 - Widgets support.
+- (potentially) fixed rare crash when ~~changing rooms~~ existing
 
 ## Version 1.0.1
 
