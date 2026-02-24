@@ -1,5 +1,9 @@
 # Sable Client Changelog
 
+## Version 1.0.1
+
+- (potentially) fixed rare crash when changing rooms
+
 ## Version 1.0.0
 
 - Releases provided in releases tab. Versions for Windows & Linux built via electron.

@@ -177,12 +177,23 @@ export const getTimelineAndBaseIndex = (
   index: number
 ): [EventTimeline | undefined, number] => {
   let uptoTimelineLen = 0;
-  const timeline = (timelines || []).filter(Boolean).find((t) => {
-    uptoTimelineLen += t.getEvents().length;
+
+  const validTimelines = (timelines || []).filter(Boolean);
+
+  const timeline = validTimelines.find((t) => {
+    const events = t.getEvents();
+    if (!events) return false;
+
+    uptoTimelineLen += events.length;
     return index < uptoTimelineLen;
   });
+
   if (!timeline) return [undefined, 0];
-  return [timeline, uptoTimelineLen - timeline.getEvents().length];
+
+  const timelineEvents = timeline.getEvents();
+  const timelineLen = timelineEvents ? timelineEvents.length : 0;
+
+  return [timeline, uptoTimelineLen - timelineLen];
 };
 
 export const getTimelineRelativeIndex = (absoluteIndex: number, timelineBaseIndex: number) =>
