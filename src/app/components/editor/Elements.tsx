@@ -128,9 +128,9 @@ export function RenderElement({ attributes, element, children }: RenderElementPr
   switch (element.type) {
     case BlockType.Paragraph:
       return (
-        <Text {...attributes} className={css.Paragraph}>
+        <Text {...attributes} className={css.Paragraph} style={{ fontSize: '1rem', lineHeight: 'inherit' }} >
           {children}
-        </Text>
+        </ Text>
       );
     case BlockType.Heading:
       if (element.level === 1)
@@ -224,7 +224,7 @@ export function RenderElement({ attributes, element, children }: RenderElementPr
       );
     default:
       return (
-        <Text className={css.Paragraph} {...attributes}>
+        <Text className={css.Paragraph} {...attributes} style={{ fontSize: '1rem', lineHeight: 'inherit' }}>
           {children}
         </Text>
       );
