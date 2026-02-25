@@ -697,6 +697,7 @@ export type MessageProps = {
   hour24Clock: boolean;
   dateFormatString: string;
   senderId: string;
+  senderDisplayName: string;
   content?: string;
 };
 
@@ -779,6 +780,7 @@ function MessageInternal(
     dateFormatString,
     children,
     senderId,
+    senderDisplayName,
     ...props
   }: MessageProps & { className?: string; children?: ReactNode },
   ref: any
@@ -814,13 +816,6 @@ function MessageInternal(
   const [nickDraft, setNickDraft] = useState('');
   const nicknames = useAtomValue(nicknamesAtom);
   const setNickname = useSetAtom(setNicknameAtom);
-
-  const senderDisplayName =
-    nicknames[senderId] ??
-    profile.displayName ??
-    getMemberDisplayName(room, senderId) ??
-    getMxIdLocalPart(senderId) ??
-    senderId;
 
   const tagIconSrc = memberPowerTag?.icon
     ? getPowerTagIconSrc(mx, useAuthentication, memberPowerTag.icon)
