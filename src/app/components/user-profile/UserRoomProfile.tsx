@@ -51,17 +51,31 @@ function UserExtendedSection({ profile, htmlReactParserOptions, linkifyOpts }: U
   }).format(new Date()) : null;
 
   const bioContent = useMemo(() => {
-    const rawBio = profile.extended?.["moe.sable.app.bio"] || profile.extended?.["chat.commet.profile_bio"] || profile.bio;
+    let rawBio = profile.extended?.["moe.sable.app.bio"] ||
+      profile.extended?.["chat.commet.profile_bio"] ||
+      profile.bio;
+
     if (!rawBio) return null;
+
+    if (typeof rawBio === 'object' && rawBio !== null && 'formatted_body' in rawBio) {
+      rawBio = rawBio.formatted_body;
+    }
+
+    if (typeof rawBio !== 'string') {
+      return null;
+    }
 
     const safetyTrim = rawBio.length > 2048 ? rawBio.slice(0, 2048) : rawBio;
 
     const visibleText = safetyTrim.replace(/<[^>]*>?/gm, '');
     const VISIBLE_LIMIT = 1024;
 
-    if (visibleText.length <= VISIBLE_LIMIT) return safetyTrim;
+    if (visibleText.length <= VISIBLE_LIMIT) {
+      return safetyTrim;
+    }
 
-    return safetyTrim;
+    return `${safetyTrim.slice(0, VISIBLE_LIMIT)}...`;
+
   }, [profile]);
 
   const unknownFields = Object.entries(profile.extended || {}).filter(([, value]) =>
