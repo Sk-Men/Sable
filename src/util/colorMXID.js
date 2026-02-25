@@ -4,7 +4,7 @@ function hashCode(str) {
   let hash = 0;
   let i;
   let chr;
-  if (str.length === 0) {
+  if (str == undefined || str.length === 0) {
     return hash;
   }
   for (i = 0; i < str.length; i += 1) {
