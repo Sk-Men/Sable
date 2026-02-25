@@ -90,6 +90,11 @@ import { mobileOrTablet } from '../../../utils/user-agent';
 import { useUserProfile } from '../../../hooks/useUserProfile';
 import { useSetting } from '../../../state/hooks/settings';
 import { useBlobCache } from '../../../hooks/useBlobCache';
+import { MessageAllReactionItem } from '../../../components/message/modals/MessageReactions';
+import { MessageReadReceiptItem } from '../../../components/message/modals/MessageReadRecipts';
+import { MessageSourceCodeItem } from '../../../components/message/modals/MessageSource';
+import { MessageDeleteItem } from '../../../components/message/modals/MessageDelete';
+import { MessageReportItem } from '../../../components/message/modals/MessageReport';
 
 export type ReactionHandler = (keyOrMxc: string, shortcode: string) => void;
 
@@ -135,200 +140,6 @@ export const MessageQuickReactions = as<'div', MessageQuickReactionsProps>(
     );
   }
 );
-
-export const MessageAllReactionItem = as<
-  'button',
-  {
-    room: Room;
-    relations: Relations;
-    onClose?: () => void;
-  }
->(({ room, relations, onClose, ...props }, ref) => {
-  const [open, setOpen] = useState(false);
-
-  const handleClose = () => {
-    setOpen(false);
-    onClose?.();
-  };
-
-  return (
-    <>
-      <Overlay
-        onContextMenu={(evt: any) => {
-          evt.stopPropagation();
-        }}
-        open={open}
-        backdrop={<OverlayBackdrop />}
-      >
-        <OverlayCenter>
-          <FocusTrap
-            focusTrapOptions={{
-              initialFocus: false,
-              returnFocusOnDeactivate: false,
-              onDeactivate: () => handleClose(),
-              clickOutsideDeactivates: true,
-              escapeDeactivates: stopPropagation,
-            }}
-          >
-            <Modal variant="Surface" size="300">
-              <ReactionViewer
-                room={room}
-                relations={relations}
-                requestClose={() => setOpen(false)}
-              />
-            </Modal>
-          </FocusTrap>
-        </OverlayCenter>
-      </Overlay>
-      <MenuItem
-        size="300"
-        after={<Icon size="100" src={Icons.Smile} />}
-        radii="300"
-        onClick={() => setOpen(true)}
-        {...props}
-        ref={ref}
-        aria-pressed={open}
-      >
-        <Text className={css.MessageMenuItemText} as="span" size="T300" truncate>
-          View Reactions
-        </Text>
-      </MenuItem>
-    </>
-  );
-});
-
-export const MessageReadReceiptItem = as<
-  'button',
-  {
-    room: Room;
-    eventId: string;
-    onClose?: () => void;
-  }
->(({ room, eventId, onClose, ...props }, ref) => {
-  const [open, setOpen] = useState(false);
-
-  const handleClose = () => {
-    setOpen(false);
-    onClose?.();
-  };
-
-  return (
-    <>
-      <Overlay open={open} backdrop={<OverlayBackdrop />}>
-        <OverlayCenter>
-          <FocusTrap
-            focusTrapOptions={{
-              initialFocus: false,
-              onDeactivate: handleClose,
-              clickOutsideDeactivates: true,
-              escapeDeactivates: stopPropagation,
-            }}
-          >
-            <Modal variant="Surface" size="300">
-              <EventReaders room={room} eventId={eventId} requestClose={handleClose} />
-            </Modal>
-          </FocusTrap>
-        </OverlayCenter>
-      </Overlay>
-      <MenuItem
-        size="300"
-        after={<Icon size="100" src={Icons.CheckTwice} />}
-        radii="300"
-        onClick={() => setOpen(true)}
-        {...props}
-        ref={ref}
-        aria-pressed={open}
-      >
-        <Text className={css.MessageMenuItemText} as="span" size="T300" truncate>
-          Read Receipts
-        </Text>
-      </MenuItem>
-    </>
-  );
-});
-
-export const MessageSourceCodeItem = as<
-  'button',
-  {
-    room: Room;
-    mEvent: MatrixEvent;
-    onClose?: () => void;
-  }
->(({ room, mEvent, onClose, ...props }, ref) => {
-  const [open, setOpen] = useState(false);
-
-  const getContent = (evt: MatrixEvent) =>
-    evt.isEncrypted()
-      ? {
-        [`<== DECRYPTED_EVENT ==>`]: evt.getEffectiveEvent(),
-        [`<== ORIGINAL_EVENT ==>`]: evt.event,
-      }
-      : evt.event;
-
-  const getText = (): string => {
-    const evtId = mEvent.getId()!;
-    const evtTimeline = room.getTimelineForEvent(evtId);
-    const edits =
-      evtTimeline &&
-      getEventEdits(evtTimeline.getTimelineSet(), evtId, mEvent.getType())?.getRelations();
-
-    if (!edits) return JSON.stringify(getContent(mEvent), null, 2);
-
-    const content: Record<string, unknown> = {
-      '<== MAIN_EVENT ==>': getContent(mEvent),
-    };
-
-    edits.forEach((editEvt, index) => {
-      content[`<== REPLACEMENT_EVENT_${index + 1} ==>`] = getContent(editEvt);
-    });
-
-    return JSON.stringify(content, null, 2);
-  };
-
-  const handleClose = () => {
-    setOpen(false);
-    onClose?.();
-  };
-
-  return (
-    <>
-      <Overlay open={open} backdrop={<OverlayBackdrop />}>
-        <OverlayCenter>
-          <FocusTrap
-            focusTrapOptions={{
-              initialFocus: false,
-              onDeactivate: handleClose,
-              clickOutsideDeactivates: true,
-              escapeDeactivates: stopPropagation,
-            }}
-          >
-            <Modal variant="Surface" size="500">
-              <TextViewer
-                name="Source Code"
-                langName="json"
-                text={getText()}
-                requestClose={handleClose}
-              />
-            </Modal>
-          </FocusTrap>
-        </OverlayCenter>
-      </Overlay>
-      <MenuItem
-        size="300"
-        after={<Icon size="100" src={Icons.BlockCode} />}
-        radii="300"
-        onClick={() => setOpen(true)}
-        {...props}
-        ref={ref}
-        aria-pressed={open}
-      >
-        <Text className={css.MessageMenuItemText} as="span" size="T300" truncate>
-          View Source
-        </Text>
-      </MenuItem>
-    </>
-  );
-});
 
 export const MessageCopyLinkItem = as<
   'button',
@@ -402,269 +213,6 @@ export const MessagePinItem = as<
         {isPinned ? 'Unpin Message' : 'Pin Message'}
       </Text>
     </MenuItem>
-  );
-});
-
-export const MessageDeleteItem = as<
-  'button',
-  {
-    room: Room;
-    mEvent: MatrixEvent;
-    onClose?: () => void;
-  }
->(({ room, mEvent, onClose, ...props }, ref) => {
-  const mx = useMatrixClient();
-  const [open, setOpen] = useState(false);
-
-  const [deleteState, deleteMessage] = useAsyncCallback(
-    useCallback(
-      (eventId: string, reason?: string) =>
-        mx.redactEvent(room.roomId, eventId, undefined, reason ? { reason } : undefined),
-      [mx, room]
-    )
-  );
-
-  const handleSubmit: FormEventHandler<HTMLFormElement> = (evt) => {
-    evt.preventDefault();
-    const eventId = mEvent.getId();
-    if (
-      !eventId ||
-      deleteState.status === AsyncStatus.Loading ||
-      deleteState.status === AsyncStatus.Success
-    )
-      return;
-    const target = evt.target as HTMLFormElement | undefined;
-    const reasonInput = target?.reasonInput as HTMLInputElement | undefined;
-    const reason = reasonInput && reasonInput.value.trim();
-    deleteMessage(eventId, reason);
-  };
-
-  const handleClose = () => {
-    setOpen(false);
-    onClose?.();
-  };
-
-  return (
-    <>
-      <Overlay open={open} backdrop={<OverlayBackdrop />}>
-        <OverlayCenter>
-          <FocusTrap
-            focusTrapOptions={{
-              initialFocus: false,
-              onDeactivate: handleClose,
-              clickOutsideDeactivates: true,
-              escapeDeactivates: stopPropagation,
-            }}
-          >
-            <Dialog variant="Surface">
-              <Header
-                style={{
-                  padding: `0 ${config.space.S200} 0 ${config.space.S400}`,
-                  borderBottomWidth: config.borderWidth.B300,
-                }}
-                variant="Surface"
-                size="500"
-              >
-                <Box grow="Yes">
-                  <Text size="H4">Delete Message</Text>
-                </Box>
-                <IconButton size="300" onClick={handleClose} radii="300">
-                  <Icon src={Icons.Cross} />
-                </IconButton>
-              </Header>
-              <Box
-                as="form"
-                onSubmit={handleSubmit}
-                style={{ padding: config.space.S400 }}
-                direction="Column"
-                gap="400"
-              >
-                <Text priority="400">
-                  This action is irreversible! Are you sure that you want to delete this message?
-                </Text>
-                <Box direction="Column" gap="100">
-                  <Text size="L400">
-                    Reason{' '}
-                    <Text as="span" size="T200">
-                      (optional)
-                    </Text>
-                  </Text>
-                  <Input name="reasonInput" variant="Background" />
-                  {deleteState.status === AsyncStatus.Error && (
-                    <Text style={{ color: color.Critical.Main }} size="T300">
-                      Failed to delete message! Please try again.
-                    </Text>
-                  )}
-                </Box>
-                <Button
-                  type="submit"
-                  variant="Critical"
-                  before={
-                    deleteState.status === AsyncStatus.Loading ? (
-                      <Spinner fill="Solid" variant="Critical" size="200" />
-                    ) : undefined
-                  }
-                  aria-disabled={deleteState.status === AsyncStatus.Loading}
-                >
-                  <Text size="B400">
-                    {deleteState.status === AsyncStatus.Loading ? 'Deleting...' : 'Delete'}
-                  </Text>
-                </Button>
-              </Box>
-            </Dialog>
-          </FocusTrap>
-        </OverlayCenter>
-      </Overlay>
-      <Button
-        variant="Critical"
-        fill="None"
-        size="300"
-        after={<Icon size="100" src={Icons.Delete} />}
-        radii="300"
-        onClick={() => setOpen(true)}
-        aria-pressed={open}
-        {...props}
-        ref={ref}
-      >
-        <Text className={css.MessageMenuItemText} as="span" size="T300" truncate>
-          Delete
-        </Text>
-      </Button>
-    </>
-  );
-});
-
-export const MessageReportItem = as<
-  'button',
-  {
-    room: Room;
-    mEvent: MatrixEvent;
-    onClose?: () => void;
-  }
->(({ room, mEvent, onClose, ...props }, ref) => {
-  const mx = useMatrixClient();
-  const [open, setOpen] = useState(false);
-
-  const [reportState, reportMessage] = useAsyncCallback(
-    useCallback(
-      (eventId: string, score: number, reason: string) =>
-        mx.reportEvent(room.roomId, eventId, score, reason),
-      [mx, room]
-    )
-  );
-
-  const handleSubmit: FormEventHandler<HTMLFormElement> = (evt) => {
-    evt.preventDefault();
-    const eventId = mEvent.getId();
-    if (
-      !eventId ||
-      reportState.status === AsyncStatus.Loading ||
-      reportState.status === AsyncStatus.Success
-    )
-      return;
-    const target = evt.target as HTMLFormElement | undefined;
-    const reasonInput = target?.reasonInput as HTMLInputElement | undefined;
-    const reason = reasonInput && reasonInput.value.trim();
-    if (reasonInput) reasonInput.value = '';
-    reportMessage(eventId, reason ? -100 : -50, reason || 'No reason provided');
-  };
-
-  const handleClose = () => {
-    setOpen(false);
-    onClose?.();
-  };
-
-  return (
-    <>
-      <Overlay open={open} backdrop={<OverlayBackdrop />}>
-        <OverlayCenter>
-          <FocusTrap
-            focusTrapOptions={{
-              initialFocus: false,
-              onDeactivate: handleClose,
-              clickOutsideDeactivates: true,
-              escapeDeactivates: stopPropagation,
-            }}
-          >
-            <Dialog variant="Surface">
-              <Header
-                style={{
-                  padding: `0 ${config.space.S200} 0 ${config.space.S400}`,
-                  borderBottomWidth: config.borderWidth.B300,
-                }}
-                variant="Surface"
-                size="500"
-              >
-                <Box grow="Yes">
-                  <Text size="H4">Report Message</Text>
-                </Box>
-                <IconButton size="300" onClick={handleClose} radii="300">
-                  <Icon src={Icons.Cross} />
-                </IconButton>
-              </Header>
-              <Box
-                as="form"
-                onSubmit={handleSubmit}
-                style={{ padding: config.space.S400 }}
-                direction="Column"
-                gap="400"
-              >
-                <Text priority="400">
-                  Report this message to server, which may then notify the appropriate people to
-                  take action.
-                </Text>
-                <Box direction="Column" gap="100">
-                  <Text size="L400">Reason</Text>
-                  <Input name="reasonInput" variant="Background" required />
-                  {reportState.status === AsyncStatus.Error && (
-                    <Text style={{ color: color.Critical.Main }} size="T300">
-                      Failed to report message! Please try again.
-                    </Text>
-                  )}
-                  {reportState.status === AsyncStatus.Success && (
-                    <Text style={{ color: color.Success.Main }} size="T300">
-                      Message has been reported to server.
-                    </Text>
-                  )}
-                </Box>
-                <Button
-                  type="submit"
-                  variant="Critical"
-                  before={
-                    reportState.status === AsyncStatus.Loading ? (
-                      <Spinner fill="Solid" variant="Critical" size="200" />
-                    ) : undefined
-                  }
-                  aria-disabled={
-                    reportState.status === AsyncStatus.Loading ||
-                    reportState.status === AsyncStatus.Success
-                  }
-                >
-                  <Text size="B400">
-                    {reportState.status === AsyncStatus.Loading ? 'Reporting...' : 'Report'}
-                  </Text>
-                </Button>
-              </Box>
-            </Dialog>
-          </FocusTrap>
-        </OverlayCenter>
-      </Overlay>
-      <Button
-        variant="Critical"
-        fill="None"
-        size="300"
-        after={<Icon size="100" src={Icons.Warning} />}
-        radii="300"
-        onClick={() => setOpen(true)}
-        aria-pressed={open}
-        {...props}
-        ref={ref}
-      >
-        <Text className={css.MessageMenuItemText} as="span" size="T300" truncate>
-          Report
-        </Text>
-      </Button>
-    </>
   );
 });
 
@@ -1135,13 +683,7 @@ function MessageInternal(
                             </Text>
                           </MenuItem>
                         )}
-                        {relations && (
-                          <MessageAllReactionItem
-                            room={room}
-                            relations={relations}
-                            onClose={closeMenu}
-                          />
-                        )}
+                        {relations && <MessageAllReactionItem room={room} relations={relations} />}
                         <MenuItem
                           size="300"
                           after={<Icon size="100" src={Icons.ReplyArrow} />}
@@ -1204,18 +746,10 @@ function MessageInternal(
                           </MenuItem>
                         )}
                         {!hideReadReceipts && (
-                          <MessageReadReceiptItem
-                            room={room}
-                            eventId={mEvent.getId() ?? ''}
-                            onClose={closeMenu}
-                          />
+                          <MessageReadReceiptItem room={room} eventId={mEvent.getId() ?? ''} />
                         )}
                         {showDeveloperTools && (
-                          <MessageSourceCodeItem
-                            room={room}
-                            mEvent={mEvent}
-                            onClose={closeMenu}
-                          />
+                          <MessageSourceCodeItem room={room} mEvent={mEvent} />
                         )}
                         <MessageCopyLinkItem room={room} mEvent={mEvent} onClose={closeMenu} />
                         {canPinEvent && (
@@ -1279,28 +813,25 @@ function MessageInternal(
                           )
                         )}
                       </Box>
-                      {((!mEvent.isRedacted() && canDelete) ||
-                        mEvent.getSender() !== mx.getUserId()) && (
-                          <>
-                            <Line size="300" />
-                            <Box direction="Column" gap="100" className={css.MessageMenuGroup}>
-                              {!mEvent.isRedacted() && canDelete && (
-                                <MessageDeleteItem
-                                  room={room}
-                                  mEvent={mEvent}
-                                  onClose={closeMenu}
-                                />
-                              )}
-                              {mEvent.getSender() !== mx.getUserId() && (
-                                <MessageReportItem
-                                  room={room}
-                                  mEvent={mEvent}
-                                  onClose={closeMenu}
-                                />
-                              )}
-                            </Box>
-                          </>
-                        )}
+                      {((!mEvent.isRedacted() && canDelete) || mEvent.getSender() !== mx.getUserId()) && (
+                        <>
+                          <Line size="300" />
+                          <Box direction="Column" gap="100" className={css.MessageMenuGroup}>
+                            {!mEvent.isRedacted() && canDelete && (
+                              <MessageDeleteItem
+                                room={room}
+                                mEvent={mEvent}
+                              />
+                            )}
+                            {mEvent.getSender() !== mx.getUserId() && (
+                              <MessageReportItem
+                                room={room}
+                                mEvent={mEvent}
+                              />
+                            )}
+                          </Box>
+                        </>
+                      )}
                     </Menu>
                   </FocusTrap>
                 }

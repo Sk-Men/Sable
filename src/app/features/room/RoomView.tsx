@@ -27,6 +27,7 @@ import { BackRouteHandler } from '../../components/BackRouteHandler';
 import { useOpenRoomSettings } from '../../state/hooks/roomSettings';
 import { useSpaceOptionally } from '../../hooks/useSpace';
 import { RoomSettingsPage } from '../../state/roomSettings';
+import { GlobalModalManager } from '../../components/message/modals/GlobalModalManager';
 
 const FN_KEYS_REGEX = /^F\d+$/;
 const shouldFocusMessageField = (evt: KeyboardEvent): boolean => {
@@ -128,6 +129,7 @@ export function RoomView({ room, eventId }: { room: Room; eventId?: string }) {
                 editor={editor}
               />
               <RoomViewTyping room={room} />
+              <GlobalModalManager />
             </Box>
             <Box shrink="No" direction="Column">
               <div style={{ padding: `0 ${config.space.S400}` }}>
