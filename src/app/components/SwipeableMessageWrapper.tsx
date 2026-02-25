@@ -1,41 +1,24 @@
 import { useMotionValue, useSpring, useTransform, motion } from 'framer-motion';
 import { useDrag } from '@use-gesture/react';
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useAtomValue } from 'jotai';
 import { config, Icon, Icons } from 'folds';
 import { mobileOrTablet } from '../utils/user-agent';
 import { RightSwipeAction, settingsAtom } from '../state/settings';
 
-export function SwipeableMessageWrapper({
-    children,
-    onReply
-}: {
-    children: React.ReactNode;
-    onReply: () => void;
-}) {
-    const settings = useAtomValue(settingsAtom);
+function ActiveSwipeWrapper({ children, onReply }: { children: React.ReactNode; onReply: () => void }) {
     const x = useMotionValue(0);
-    const springX = useSpring(x, { stiffness: 400, damping: 40 });
+    const springX = useSpring(x, { stiffness: 300, damping: 35 });
     const [isReady, setIsReady] = useState(false);
-
     const iconOpacity = useTransform(x, [0, -8], [0, 1]);
 
-    const isSwipeToReplyEnabled =
-        settings.mobileGestures &&
-        mobileOrTablet() &&
-        settings.rightSwipeAction !== RightSwipeAction.Members;
-
     const bind = useDrag(({ active, movement: [mx] }) => {
-        if (!isSwipeToReplyEnabled) return;
-
         if (active) {
             const val = mx < 0 ? mx : 0;
             x.set(Math.max(-80, val));
-            setIsReady(mx < -50);
+            if (mx < -50 !== isReady) setIsReady(mx < -50);
         } else {
-            if (mx < -50) {
-                onReply();
-            }
+            if (mx < -50) onReply();
             x.set(0);
             setIsReady(false);
         }
@@ -43,18 +26,12 @@ export function SwipeableMessageWrapper({
         axis: 'x',
         bounds: { right: 0 },
         rubberband: true,
-        filterTaps: true
+        filterTaps: true,
+        eventOptions: { passive: true }
     });
 
-    if (!isSwipeToReplyEnabled) {
-        return <>{children}</>;
-    }
-
     return (
-        <div
-            {...bind()}
-            style={{ position: 'relative', touchAction: 'pan-y' }}
-        >
+        <div {...bind()} style={{ position: 'relative', touchAction: 'pan-y' }}>
             <div style={{
                 position: 'absolute',
                 top: 0,
@@ -76,10 +53,31 @@ export function SwipeableMessageWrapper({
                     />
                 </motion.div>
             </div>
-
             <motion.div style={{ x: springX, position: 'relative', zIndex: 1 }}>
                 {children}
             </motion.div>
         </div>
     );
+}
+
+export function SwipeableMessageWrapper({
+    children,
+    onReply
+}: {
+    children: React.ReactNode;
+    onReply: () => void;
+}) {
+    const settings = useAtomValue(settingsAtom);
+
+    const isSwipeToReplyEnabled = useMemo(() =>
+        settings.mobileGestures &&
+        mobileOrTablet() &&
+        settings.rightSwipeAction !== RightSwipeAction.Members,
+        [settings.mobileGestures, settings.rightSwipeAction]);
+
+    if (!isSwipeToReplyEnabled) {
+        return <>{children}</>;
+    }
+
+    return <ActiveSwipeWrapper onReply={onReply}>{children}</ActiveSwipeWrapper>;
 }

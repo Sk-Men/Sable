@@ -1141,6 +1141,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
             onReplyClick={handleReplyClick}
             onReactionToggle={handleReactionToggle}
             senderId={senderId}
+            senderDisplayName={senderDisplayName}
             onEditId={handleEdit}
             reply={
               replyEventId && (
@@ -1197,6 +1198,9 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
         const { replyEventId, threadRootId } = mEvent;
         const highlighted = focusItem?.index === item && focusItem.highlight;
         const senderId = mEvent.getSender() ?? '';
+        const senderDisplayName =
+          getMemberDisplayName(room, senderId, nicknames) ?? getMxIdLocalPart(senderId) ?? senderId;
+
 
         return (
           <Message
@@ -1221,6 +1225,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
             onReactionToggle={handleReactionToggle}
             onEditId={handleEdit}
             senderId={senderId}
+            senderDisplayName={senderDisplayName}
             reply={
               replyEventId && (
                 <Reply
@@ -1273,8 +1278,6 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
                     editedEvent?.getContent()['m.new_content'] ??
                     mEvent.getContent()) as GetContentCallback;
 
-                  const senderDisplayName =
-                    getMemberDisplayName(room, senderId, nicknames) ?? getMxIdLocalPart(senderId) ?? senderId;
                   return (
                     <RenderMessageContent
                       displayName={senderDisplayName}
@@ -1312,6 +1315,8 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
         const hasReactions = reactions && reactions.length > 0;
         const highlighted = focusItem?.index === item && focusItem.highlight;
         const senderId = mEvent.getSender() ?? '';
+        const senderDisplayName =
+          getMemberDisplayName(room, senderId, nicknames) ?? getMxIdLocalPart(senderId) ?? senderId;
 
         return (
           <Message
@@ -1334,6 +1339,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
             onReplyClick={handleReplyClick}
             onReactionToggle={handleReactionToggle}
             senderId={senderId}
+            senderDisplayName={senderDisplayName}
             reactions={
               reactionRelations && (
                 <Reactions
