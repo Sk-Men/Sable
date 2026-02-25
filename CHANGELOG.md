@@ -4,6 +4,9 @@
 
 - Profile banners. Support's Commet's format.
 - Global name colors. Can be disabled in settings.
+- Even more refractoring to improve timeline & user profile speeds and caches and fix that stupid bug.
+  - probably introduced more bugs tbh, but things should be faster and less intense on resources?
+- Pinned messages actually jump to the damn pins instead of somewhere vaguely nearby half the time.
 
 ## Version 1.1.1
 

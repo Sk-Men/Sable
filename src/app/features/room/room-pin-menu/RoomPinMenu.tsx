@@ -20,6 +20,7 @@ import {
 } from 'folds';
 import { Opts as LinkifyOpts } from 'linkifyjs';
 import { HTMLReactParserOptions } from 'html-react-parser';
+import { useAtomValue } from 'jotai';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { useRoomPinnedEvents } from '../../../hooks/useRoomPinnedEvents';
 import * as css from './RoomPinMenu.css';
@@ -86,7 +87,6 @@ import {
   useGetMemberPowerTag,
 } from '../../../hooks/useMemberPowerTag';
 import { useRoomCreatorsTag } from '../../../hooks/useRoomCreatorsTag';
-import { useAtomValue } from 'jotai';
 import { nicknamesAtom } from '../../../state/nicknames';
 
 type PinnedMessageProps = {
@@ -145,7 +145,7 @@ function PinnedMessage({
   const renderOptions = () => (
     <Box shrink="No" gap="200" alignItems="Center">
       <Chip data-event-id={eventId} onClick={handleOpenClick} variant="Secondary" radii="Pill">
-        <Text size="T200">Open</Text>
+        <Text size="T200">Jump</Text>
       </Chip>
       {canPinEvent && (
         <IconButton

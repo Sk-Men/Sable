@@ -23,7 +23,6 @@ import {
   Room,
   RoomEvent,
   RoomEventHandlerMap,
-  RoomStateEvent,
 } from 'matrix-js-sdk';
 import { HTMLReactParserOptions } from 'html-react-parser';
 import classNames from 'classnames';
@@ -109,7 +108,6 @@ import { useRoomCreators } from '../../hooks/useRoomCreators';
 import { useRoomPermissions } from '../../hooks/useRoomPermissions';
 import { useGetMemberPowerTag } from '../../hooks/useMemberPowerTag';
 import { profilesCacheAtom } from '../../state/userRoomProfile';
-import { UserProfile } from '../../hooks/useUserProfile';
 
 const TimelineFloat = as<'div', css.TimelineFloatVariants>(
   ({ position, className, ...props }, ref) => (
@@ -240,7 +238,7 @@ type RoomTimelineProps = {
   editor: Editor;
 };
 
-const PAGINATION_LIMIT = 80;
+const PAGINATION_LIMIT = 40;
 
 type Timeline = {
   linkedTimelines: EventTimeline[];
@@ -473,8 +471,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
   const canPinEvent = permissions.stateEvent(StateEvent.RoomPinnedEvents, mx.getSafeUserId());
   const [editId, setEditId] = useState<string>();
 
-  const [profileCache, setProfileCache] = useState<Record<string, any>>({});
-  const [globalProfiles, setGlobalProfiles] = useAtom(profilesCacheAtom);
+  const [globalProfiles] = useAtom(profilesCacheAtom);
 
   const roomToParents = useAtomValue(roomToParentsAtom);
   const unread = useRoomUnread(room.roomId, roomToUnreadAtom);
@@ -933,113 +930,6 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
     }
   }, [scrollToElement, editId]);
 
-  const fetchingProfilesRef = useRef<Set<string>>(new Set());
-
-  useEffect(() => {
-    const visibleIndices = getItems();
-    const sendersToFetch = new Set<string>();
-
-    const now = Date.now();
-    const PROFILE_TTL = 10 * 60 * 1000;
-
-    visibleIndices.forEach((index) => {
-      const [eventTimeline, baseIndex] = getTimelineAndBaseIndex(timeline.linkedTimelines, index);
-      if (!eventTimeline) return;
-
-      const mEvent = getTimelineEvent(eventTimeline, getTimelineRelativeIndex(index, baseIndex));
-      const senderId = mEvent?.getSender();
-      if (!senderId) return;
-
-      const cached = profileCache[senderId] || globalProfiles[senderId];
-      const isStale = !cached || (now - (cached._updatedAt || 0) > PROFILE_TTL);
-
-      if (!isStale) return;
-
-      if (!fetchingProfilesRef.current.has(senderId)) {
-        sendersToFetch.add(senderId);
-      }
-    });
-
-    if (sendersToFetch.size === 0) return;
-
-    sendersToFetch.forEach(async (userId) => {
-      fetchingProfilesRef.current.add(userId);
-      const [err, info] = await to(mx.getProfileInfo(userId));
-
-      if (err || !info) {
-        fetchingProfilesRef.current.delete(userId);
-
-        if ((err as any)?.errcode === 'M_NOT_FOUND') {
-          const nullProfile: any = { _notFound: true, _updatedAt: now };
-          setProfileCache((prev) => ({ ...prev, [userId]: nullProfile }));
-          setGlobalProfiles((prev) => ({ ...prev, [userId]: nullProfile }));
-        }
-        return;
-      }
-
-      const rawBanner = (info as any)['chat.commet.profile_banner'];
-      const parsedBanner = typeof rawBanner === 'string' ? rawBanner.replace(/^"|"$/g, '') : undefined;
-
-      const normalized: any = {
-        avatarUrl: info.avatar_url,
-        displayName: info.displayname,
-        pronouns: (info as any)['io.fsky.nyx.pronouns'],
-        timezone: (info as any)['us.cloke.msc4175.tz'] || (info as any)['m.tz'],
-        bio: (info as any)['moe.sable.app.bio'] || (info as any)['chat.commet.profile_bio'],
-        bannerUrl: parsedBanner,
-        extended: info,
-        _updatedAt: now,
-      };
-
-      setProfileCache((prev) => ({ ...prev, [userId]: normalized }));
-      setGlobalProfiles((prev) => ({ ...prev, [userId]: normalized }));
-    });
-
-  }, [timeline.range, timeline.linkedTimelines, mx, getItems, setGlobalProfiles, globalProfiles, profileCache]);
-
-  useEffect(() => {
-    const onMemberEvent = (event: MatrixEvent) => {
-      if (event.getType() !== StateEvent.RoomMember) return;
-      if (event.getRoomId() !== room.roomId) return;
-
-      const userId = event.getStateKey();
-      if (!userId) return;
-
-      const content = event.getContent();
-
-      setGlobalProfiles((prev) => {
-        const existing = prev[userId];
-
-        const newAvatar = content.avatar_url;
-        const newName = content.displayname;
-
-        if (
-          existing &&
-          existing.avatarUrl === newAvatar &&
-          existing.displayName === newName
-        ) {
-          return prev;
-        }
-
-        const updatedProfile: any = {
-          ...(existing || {}),
-          avatarUrl: newAvatar,
-          displayName: newName,
-        };
-
-        return {
-          ...prev,
-          [userId]: updatedProfile,
-        };
-      });
-    };
-
-    mx.on(RoomStateEvent.Members, onMemberEvent);
-    return () => {
-      mx.removeListener(RoomStateEvent.Members, onMemberEvent);
-    };
-  }, [mx, room.roomId, setGlobalProfiles]);
-
   const handleJumpToLatest = () => {
     if (eventId) {
       navigateRoom(room.roomId, undefined, { replace: true });
@@ -1076,9 +966,10 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
       const userId = evt.currentTarget.getAttribute('data-user-id');
       if (!userId) return;
 
-      const cachedData = profileCache[userId] || globalProfiles[userId];
+      const cachedData = globalProfiles[userId];
 
       const cleanExtended = cachedData?.extended ? { ...cachedData.extended } : undefined;
+
       if (cleanExtended) {
         delete cleanExtended['io.fsky.nyx.pronouns'];
         delete cleanExtended['moe.sable.app.bio'];
@@ -1105,7 +996,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
         }
       );
     },
-    [room, space, openUserRoomProfile, profileCache, globalProfiles]
+    [room, space, openUserRoomProfile, globalProfiles]
   );
 
   const handleUsernameClick: MouseEventHandler<HTMLButtonElement> = useCallback(
@@ -1238,7 +1129,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
             onUsernameClick={handleUsernameClick}
             onReplyClick={handleReplyClick}
             onReactionToggle={handleReactionToggle}
-            senderPronouns={profileCache[senderId]?.pronouns || globalProfiles[senderId]?.pronouns}
+            senderId={senderId}
             onEditId={handleEdit}
             reply={
               replyEventId && (
@@ -1294,6 +1185,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
         const hasReactions = reactions && reactions.length > 0;
         const { replyEventId, threadRootId } = mEvent;
         const highlighted = focusItem?.index === item && focusItem.highlight;
+        const senderId = mEvent.getSender() ?? '';
 
         return (
           <Message
@@ -1317,6 +1209,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
             onReplyClick={handleReplyClick}
             onReactionToggle={handleReactionToggle}
             onEditId={handleEdit}
+            senderId={senderId}
             reply={
               replyEventId && (
                 <Reply
@@ -1369,7 +1262,6 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
                     editedEvent?.getContent()['m.new_content'] ??
                     mEvent.getContent()) as GetContentCallback;
 
-                  const senderId = mEvent.getSender() ?? '';
                   const senderDisplayName =
                     getMemberDisplayName(room, senderId, nicknames) ?? getMxIdLocalPart(senderId) ?? senderId;
                   return (
@@ -1408,6 +1300,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
         const reactions = reactionRelations && reactionRelations.getSortedAnnotationsByKey();
         const hasReactions = reactions && reactions.length > 0;
         const highlighted = focusItem?.index === item && focusItem.highlight;
+        const senderId = mEvent.getSender() ?? '';
 
         return (
           <Message
@@ -1429,6 +1322,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
             onUsernameClick={handleUsernameClick}
             onReplyClick={handleReplyClick}
             onReactionToggle={handleReactionToggle}
+            senderId={senderId}
             reactions={
               reactionRelations && (
                 <Reactions

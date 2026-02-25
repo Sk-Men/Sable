@@ -12,7 +12,7 @@ import colorMXID from '../../util/colorMXID';
 import { useRoomCreatorsTag } from './useRoomCreatorsTag';
 import { usePowerLevelTags } from './usePowerLevelTags';
 import { useTheme } from './useTheme';
-import { profilesCacheAtom } from '../state/userRoomProfile';
+import { useUserProfile } from './useUserProfile';
 
 const isValidHex = (c: string) => /^#[0-9A-F]{6}$/i.test(c);
 const sanitizeFont = (f: string) => f.replace(/[;{}<>]/g, '').slice(0, 32);
@@ -21,7 +21,7 @@ export function useSableCosmetics(userId: string, room: Room) {
     const mx = useMatrixClient();
     const theme = useTheme();
 
-    const globalProfiles = useAtomValue(profilesCacheAtom);
+    const profile = useUserProfile(userId);
 
     const [legacyUsernameColor] = useSetting(settingsAtom, 'legacyUsernameColor');
     const [renderGlobalColors] = useSetting(settingsAtom, 'renderGlobalNameColors');
@@ -79,12 +79,11 @@ export function useSableCosmetics(userId: string, room: Room) {
         }
 
         // global name color
-        const cachedProfile = globalProfiles[userId];
-        const hasGlobalColor = cachedProfile?.nameColor && isValidHex(cachedProfile.nameColor);
         // show if its on, or the user is you
+        const hasGlobalColor = profile?.nameColor && isValidHex(profile.nameColor);
         const isMe = userId === mx.getUserId();
         const validGlobal = (renderGlobalColors || isMe) && hasGlobalColor
-            ? cachedProfile.nameColor
+            ? profile.nameColor
             : undefined;
 
         // resolve traditional fallbacks
@@ -108,5 +107,5 @@ export function useSableCosmetics(userId: string, room: Room) {
         }
 
         return { color: resolvedColor, font: resolvedFont };
-    }, [room, userId, mx, getPowerTag, accessibleTagColors, legacyUsernameColor, renderGlobalColors, globalProfiles]);
+    }, [room, userId, mx, getPowerTag, accessibleTagColors, legacyUsernameColor, renderGlobalColors, profile.nameColor]);
 }

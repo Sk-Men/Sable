@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 
 const imageBlobCache = new Map<string, string>();
+const inflightRequests = new Map<string, Promise<string>>();
 
 export function useBlobCache(url?: string): string | undefined {
     const [cacheState, setCacheState] = useState<{ sourceUrl?: string; blobUrl?: string }>({
@@ -16,22 +17,47 @@ export function useBlobCache(url?: string): string | undefined {
     }
 
     useEffect(() => {
+        if (!url || imageBlobCache.has(url)) return;
+
         let isMounted = true;
 
-        if (url && !imageBlobCache.has(url)) {
-            fetch(url, { mode: 'cors' })
-                .then((res) => (res.ok ? res.blob() : Promise.reject()))
-                .then((blob) => {
-                    if (isMounted) {
-                        const objectUrl = URL.createObjectURL(blob);
-                        imageBlobCache.set(url, objectUrl);
-                        setCacheState({ sourceUrl: url, blobUrl: objectUrl });
-                    }
-                })
-                .catch(() => {
-                    // silently fail... mrow
-                });
-        }
+        const fetchBlob = async () => {
+            if (inflightRequests.has(url)) {
+                const existingBlobUrl = await inflightRequests.get(url);
+                if (isMounted) setCacheState({ sourceUrl: url, blobUrl: existingBlobUrl });
+                return;
+            }
+
+            const requestPromise = (async () => {
+                try {
+                    const res = await fetch(url, { mode: 'cors' });
+                    if (!res.ok) throw new Error();
+                    const blob = await res.blob();
+                    const objectUrl = URL.createObjectURL(blob);
+
+                    imageBlobCache.set(url, objectUrl);
+                    return objectUrl;
+                } catch (e) {
+                    inflightRequests.delete(url);
+                    throw e;
+                }
+            })();
+
+            inflightRequests.set(url, requestPromise);
+
+            try {
+                const finalBlobUrl = await requestPromise;
+                if (isMounted) {
+                    setCacheState({ sourceUrl: url, blobUrl: finalBlobUrl });
+                }
+            } catch (err) {
+                // silency fail... mrow
+            } finally {
+                inflightRequests.delete(url);
+            }
+        };
+
+        fetchBlob();
 
         return () => {
             isMounted = false;

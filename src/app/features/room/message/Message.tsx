@@ -31,6 +31,8 @@ import React, {
   useRef,
   useState,
   useEffect,
+  memo,
+  useMemo,
 } from 'react';
 import FocusTrap from 'focus-trap-react';
 import { useHover, useFocusWithin } from 'react-aria';
@@ -87,6 +89,7 @@ import { SwipeableMessageWrapper } from '../../../components/SwipeableMessageWra
 import { mobileOrTablet } from '../../../utils/user-agent';
 import { useUserProfile } from '../../../hooks/useUserProfile';
 import { useSetting } from '../../../state/hooks/settings';
+import { useBlobCache } from '../../../hooks/useBlobCache';
 
 export type ReactionHandler = (keyOrMxc: string, shortcode: string) => void;
 
@@ -690,7 +693,7 @@ export type MessageProps = {
   memberPowerTag?: MemberPowerTag;
   hour24Clock: boolean;
   dateFormatString: string;
-  senderPronouns?: any[];
+  senderId: string;
 };
 
 function useMobileLongPress(callback: (e: React.PointerEvent<HTMLElement>) => void, delay = 700) {
@@ -758,303 +761,324 @@ function PronounTag({ pronouns, tagColor }: { pronouns?: any[]; tagColor: string
   );
 }
 
-export const Message = as<'div', MessageProps>(
-  (
-    {
-      className,
-      room,
-      mEvent,
-      collapse,
-      highlight,
-      edit,
-      canDelete,
-      canSendReaction,
-      canPinEvent,
-      imagePackRooms,
-      relations,
-      messageLayout,
-      messageSpacing,
-      onUserClick,
-      onUsernameClick,
-      onReplyClick,
-      onReactionToggle,
-      onEditId,
-      reply,
-      reactions,
-      hideReadReceipts,
-      showDeveloperTools,
-      memberPowerTag,
-      hour24Clock,
-      dateFormatString,
-      children,
-      senderPronouns,
-      ...props
-    },
-    ref
-  ) => {
-    const mx = useMatrixClient();
-    const useAuthentication = useMediaAuthentication();
-    const senderId = mEvent.getSender() ?? '';
+function MessageInternal(
+  {
+    className,
+    room,
+    mEvent,
+    collapse,
+    highlight,
+    edit,
+    canDelete,
+    canSendReaction,
+    canPinEvent,
+    imagePackRooms,
+    relations,
+    messageLayout,
+    messageSpacing,
+    onUserClick,
+    onUsernameClick,
+    onReplyClick,
+    onReactionToggle,
+    onEditId,
+    reply,
+    reactions,
+    hideReadReceipts,
+    showDeveloperTools,
+    memberPowerTag,
+    hour24Clock,
+    dateFormatString,
+    children,
+    senderId,
+    ...props
+  }: MessageProps & { className?: string; children?: ReactNode },
+  ref: any
+) {
+  const mx = useMatrixClient();
+  const useAuthentication = useMediaAuthentication();
 
-    const [isDesktopHover, setIsDesktopHover] = useState(false);
-    const { hoverProps } = useHover({
-      onHoverChange: (h) => { if (!mobileOrTablet()) setIsDesktopHover(h); }
-    });
-    const { focusWithinProps } = useFocusWithin({
-      onFocusWithinChange: (f) => { if (!mobileOrTablet()) setIsDesktopHover(f); }
-    });
+  // Profiles and Colors
+  const profile = useUserProfile(senderId);
+  const { color: usernameColor, font: usernameFont } = useSableCosmetics(senderId, room);
 
-    const [menuAnchor, setMenuAnchor] = useState<RectCords>();
-    const [emojiBoardAnchor, setEmojiBoardAnchor] = useState<RectCords>();
-    const [nickEditOpen, setNickEditOpen] = useState(false);
-    const [nickDraft, setNickDraft] = useState('');
-    const nicknames = useAtomValue(nicknamesAtom);
-    const setNickname = useSetAtom(setNicknameAtom);
+  // Avatars
+  const avatarUrl = useMemo(() => {
+    if (collapse) return undefined;
+    const mxc = profile.avatarUrl || getMemberAvatarMxc(room, senderId);
+    return mxc ? mxcUrlToHttp(mx, mxc, useAuthentication, 48, 48, 'crop') : undefined;
+  }, [collapse, profile.avatarUrl, senderId, mx, room, useAuthentication]);
 
-    const senderDisplayName =
-      getMemberDisplayName(room, senderId, nicknames) ?? getMxIdLocalPart(senderId) ?? senderId;
-    const senderAvatarMxc = getMemberAvatarMxc(room, senderId);
+  const cachedAvatar = useBlobCache(avatarUrl ?? undefined);
 
-    const tagIconSrc = memberPowerTag?.icon
-      ? getPowerTagIconSrc(mx, useAuthentication, memberPowerTag.icon)
-      : undefined;
+  // UI State
+  const [isDesktopHover, setIsDesktopHover] = useState(false);
+  const { hoverProps } = useHover({
+    onHoverChange: (h) => { if (!mobileOrTablet()) setIsDesktopHover(h); }
+  });
+  const { focusWithinProps } = useFocusWithin({
+    onFocusWithinChange: (f) => { if (!mobileOrTablet()) setIsDesktopHover(f); }
+  });
 
-    const { color: usernameColor, font: usernameFont } = useSableCosmetics(senderId, room);
+  const [menuAnchor, setMenuAnchor] = useState<RectCords>();
+  const [emojiBoardAnchor, setEmojiBoardAnchor] = useState<RectCords>();
+  const [nickEditOpen, setNickEditOpen] = useState(false);
+  const [nickDraft, setNickDraft] = useState('');
+  const nicknames = useAtomValue(nicknamesAtom);
+  const setNickname = useSetAtom(setNicknameAtom);
 
-    const [mobileOptionsOpen, setMobileOptionsOpen] = useState(false);
-    const optionsRef = useRef<HTMLDivElement>(null);
+  const senderDisplayName =
+    nicknames[senderId] ??
+    profile.displayName ??
+    getMemberDisplayName(room, senderId) ??
+    getMxIdLocalPart(senderId) ??
+    senderId;
 
-    const [showPronouns] = useSetting(settingsAtom, 'showPronouns');
+  const tagIconSrc = memberPowerTag?.icon
+    ? getPowerTagIconSrc(mx, useAuthentication, memberPowerTag.icon)
+    : undefined;
 
-    useEffect(() => {
-      if (!mobileOptionsOpen) return undefined;
-      const handleClickOutside = (e: globalThis.Event) => {
-        if (optionsRef.current && !optionsRef.current.contains(e.target as Node)) {
-          setMobileOptionsOpen(false);
-        }
-      };
-      document.addEventListener('pointerdown', handleClickOutside, { capture: true });
-      return () => document.removeEventListener('pointerdown', handleClickOutside, { capture: true });
-    }, [mobileOptionsOpen]);
+  const [mobileOptionsOpen, setMobileOptionsOpen] = useState(false);
+  const optionsRef = useRef<HTMLDivElement>(null);
+  const [showPronouns] = useSetting(settingsAtom, 'showPronouns');
 
-    const headerJSX = !collapse && (
-      <Box
-        gap="300"
-        direction={messageLayout === MessageLayout.Compact ? 'RowReverse' : 'Row'}
-        justifyContent="SpaceBetween"
-        alignItems="Baseline"
-        grow="Yes"
-      >
-        <Box alignItems="Center" gap="100">
-          <Username
-            as="button"
-            style={{
-              color: usernameColor,
-              fontFamily: usernameFont
-            }}
-            data-user-id={senderId}
-            onContextMenu={onUserClick}
-            onClick={onUsernameClick}
-          >
-            <Text
-              as="span"
-              size={messageLayout === MessageLayout.Bubble ? 'T300' : 'T400'}
-              truncate
-            >
-              <UsernameBold>{senderDisplayName}</UsernameBold>
-            </Text>
-          </Username>
-          {showPronouns && (
-            <PronounTag pronouns={senderPronouns} tagColor={usernameColor} />
-          )}
-          {tagIconSrc && <PowerIcon size="100" iconSrc={tagIconSrc} />}
-        </Box>
-        <Box shrink="No" gap="100">
-          {messageLayout === MessageLayout.Modern && isDesktopHover && (
-            <>
-              <Text as="span" size="T200" priority="300">
-                {senderId}
-              </Text>
-              <Text as="span" size="T200" priority="300">
-                |
-              </Text>
-            </>
-          )}
-          <Time
-            ts={mEvent.getTs()}
-            compact={messageLayout === MessageLayout.Compact}
-            hour24Clock={hour24Clock}
-            dateFormatString={dateFormatString}
-          />
-        </Box>
-      </Box>
-    );
-
-    const avatarJSX = !collapse && messageLayout !== MessageLayout.Compact && (
-      <AvatarBase
-        className={messageLayout === MessageLayout.Bubble ? css.BubbleAvatarBase : undefined}
-      >
-        <Avatar
-          className={css.MessageAvatar}
-          as="button"
-          size="300"
-          data-user-id={senderId}
-          onClick={onUserClick}
-        >
-          <UserAvatar
-            userId={senderId}
-            src={
-              senderAvatarMxc
-                ? mxcUrlToHttp(mx, senderAvatarMxc, useAuthentication, 48, 48, 'crop') ?? undefined
-                : undefined
-            }
-            alt={senderDisplayName}
-            renderFallback={() => <Icon size="200" src={Icons.User} filled />}
-          />
-        </Avatar>
-      </AvatarBase>
-    );
-
-    const msgContentJSX = (
-      <Box direction="Column" alignSelf="Start" style={{ maxWidth: '100%' }}>
-        {reply}
-        {edit && onEditId ? (
-          <MessageEditor
-            style={{
-              maxWidth: '100%',
-              width: '100vw',
-            }}
-            roomId={room.roomId}
-            room={room}
-            mEvent={mEvent}
-            imagePackRooms={imagePackRooms}
-            onCancel={() => onEditId()}
-          />
-        ) : (
-          children
-        )}
-        {reactions}
-      </Box>
-    );
-
-    const handleContextMenu: MouseEventHandler<HTMLDivElement> = (evt) => {
-      if (mobileOrTablet()) {
-        evt.preventDefault();
-        return;
+  useEffect(() => {
+    if (!mobileOptionsOpen) return undefined;
+    const handleClickOutside = (e: globalThis.Event) => {
+      if (optionsRef.current && !optionsRef.current.contains(e.target as Node)) {
+        setMobileOptionsOpen(false);
       }
-
-      if (evt.altKey || !window.getSelection()?.isCollapsed || edit) return;
-      const tag = (evt.target as any).tagName;
-      if (typeof tag === 'string' && tag.toLowerCase() === 'a') return;
-      evt.preventDefault();
-      setMenuAnchor({
-        x: evt.clientX,
-        y: evt.clientY,
-        width: 0,
-        height: 0,
-      });
     };
+    document.addEventListener('pointerdown', handleClickOutside, { capture: true });
+    return () => document.removeEventListener('pointerdown', handleClickOutside, { capture: true });
+  }, [mobileOptionsOpen]);
 
-    const handleOpenMenu: MouseEventHandler<HTMLButtonElement> = (evt) => {
-      const target = evt.currentTarget.parentElement?.parentElement ?? evt.currentTarget;
-      setMenuAnchor(target.getBoundingClientRect());
-    };
+  const headerJSX = !collapse && (
+    <Box
+      gap="300"
+      direction={messageLayout === MessageLayout.Compact ? 'RowReverse' : 'Row'}
+      justifyContent="SpaceBetween"
+      alignItems="Baseline"
+      grow="Yes"
+    >
+      <Box alignItems="Center" gap="100">
+        <Username
+          as="button"
+          style={{
+            color: usernameColor,
+            fontFamily: usernameFont
+          }}
+          data-user-id={senderId}
+          onContextMenu={onUserClick}
+          onClick={onUsernameClick}
+        >
+          <Text
+            as="span"
+            size={messageLayout === MessageLayout.Bubble ? 'T300' : 'T400'}
+            truncate
+          >
+            <UsernameBold>{senderDisplayName}</UsernameBold>
+          </Text>
+        </Username>
+        {showPronouns && (
+          <PronounTag pronouns={profile.pronouns} tagColor={usernameColor} />
+        )}
+        {tagIconSrc && <PowerIcon size="100" iconSrc={tagIconSrc} />}
+      </Box>
+      <Box shrink="No" gap="100">
+        {messageLayout === MessageLayout.Modern && isDesktopHover && (
+          <>
+            <Text as="span" size="T200" priority="300">
+              {senderId}
+            </Text>
+            <Text as="span" size="T200" priority="300">
+              |
+            </Text>
+          </>
+        )}
+        <Time
+          ts={mEvent.getTs()}
+          compact={messageLayout === MessageLayout.Compact}
+          hour24Clock={hour24Clock}
+          dateFormatString={dateFormatString}
+        />
+      </Box>
+    </Box>
+  );
 
-    const closeMenu = () => {
-      setMenuAnchor(undefined);
-      setNickEditOpen(false);
-      setMobileOptionsOpen(false);
-    };
-
-    const handleOpenEmojiBoard: MouseEventHandler<HTMLButtonElement> = (evt) => {
-      const target = evt.currentTarget.parentElement?.parentElement ?? evt.currentTarget;
-      setEmojiBoardAnchor(target.getBoundingClientRect());
-    };
-
-    const handleAddReactions: MouseEventHandler<HTMLButtonElement> = () => {
-      const rect = menuAnchor;
-      closeMenu();
-      setTimeout(() => {
-        setEmojiBoardAnchor(rect);
-      }, 100);
-    };
-
-    const handleSwipeReply = () => {
-      const mockEvent = {
-        currentTarget: {
-          getAttribute: (attr: string) => (attr === 'data-event-id' ? mEvent.getId() : null),
-        },
-      } as unknown as React.MouseEvent<HTMLButtonElement>;
-
-      onReplyClick(mockEvent);
-    };
-
-    const bindLongPress = useMobileLongPress(() => {
-      setMobileOptionsOpen(true);
-    }, 700);
-
-    const isThreadedMessage = mEvent.threadRootId !== undefined;
-
-    return (
-      <MessageBase
-        className={classNames(css.MessageBase, className, {
-          [css.MessageBaseBubbleCollapsed]: messageLayout === MessageLayout.Bubble && collapse,
-        })}
-        tabIndex={0}
-        space={messageSpacing}
-        collapse={collapse}
-        highlight={highlight}
-        selected={!!menuAnchor || !!emojiBoardAnchor}
-        {...props}
-        {...hoverProps}
-        {...focusWithinProps}
-        ref={ref}
+  const avatarJSX = !collapse && messageLayout !== MessageLayout.Compact && (
+    <AvatarBase
+      className={messageLayout === MessageLayout.Bubble ? css.BubbleAvatarBase : undefined}
+    >
+      <Avatar
+        className={css.MessageAvatar}
+        as="button"
+        size="300"
+        data-user-id={senderId}
+        onClick={onUserClick}
       >
-        {!edit && (isDesktopHover || !!menuAnchor || !!emojiBoardAnchor || mobileOptionsOpen) && (
-          <div className={css.MessageOptionsBase} ref={optionsRef}>
-            <Menu className={css.MessageOptionsBar} variant="SurfaceVariant">
-              <Box gap="100">
-                {canSendReaction && (
-                  <PopOut
-                    position="Bottom"
-                    align={emojiBoardAnchor?.width === 0 ? 'Start' : 'End'}
-                    offset={emojiBoardAnchor?.width === 0 ? 0 : undefined}
-                    anchor={emojiBoardAnchor}
-                    content={
-                      <EmojiBoard
-                        imagePackRooms={imagePackRooms ?? []}
-                        returnFocusOnDeactivate={false}
-                        allowTextCustomEmoji
-                        onEmojiSelect={(key) => {
-                          onReactionToggle(mEvent.getId()!, key);
-                          setEmojiBoardAnchor(undefined);
-                          setMobileOptionsOpen(false);
-                        }}
-                        onCustomEmojiSelect={(mxc, shortcode) => {
-                          onReactionToggle(mEvent.getId()!, mxc, shortcode);
-                          setEmojiBoardAnchor(undefined);
-                          setMobileOptionsOpen(false);
-                        }}
-                        requestClose={() => {
-                          setEmojiBoardAnchor(undefined);
-                        }}
-                      />
-                    }
+        <UserAvatar
+          userId={senderId}
+          src={cachedAvatar}
+          alt={senderDisplayName}
+          renderFallback={() => <Icon size="200" src={Icons.User} filled />}
+        />
+      </Avatar>
+    </AvatarBase>
+  );
+
+  const msgContentJSX = (
+    <Box direction="Column" alignSelf="Start" style={{ maxWidth: '100%' }}>
+      {reply}
+      {edit && onEditId ? (
+        <MessageEditor
+          style={{
+            maxWidth: '100%',
+            width: '100vw',
+          }}
+          roomId={room.roomId}
+          room={room}
+          mEvent={mEvent}
+          imagePackRooms={imagePackRooms}
+          onCancel={() => onEditId()}
+        />
+      ) : (
+        children
+      )}
+      {reactions}
+    </Box>
+  );
+
+  const handleContextMenu: MouseEventHandler<HTMLDivElement> = (evt) => {
+    if (mobileOrTablet()) {
+      evt.preventDefault();
+      return;
+    }
+
+    if (evt.altKey || !window.getSelection()?.isCollapsed || edit) return;
+    const tag = (evt.target as any).tagName;
+    if (typeof tag === 'string' && tag.toLowerCase() === 'a') return;
+    evt.preventDefault();
+    setMenuAnchor({
+      x: evt.clientX,
+      y: evt.clientY,
+      width: 0,
+      height: 0,
+    });
+  };
+
+  const handleOpenMenu: MouseEventHandler<HTMLButtonElement> = (evt) => {
+    const target = evt.currentTarget.parentElement?.parentElement ?? evt.currentTarget;
+    setMenuAnchor(target.getBoundingClientRect());
+  };
+
+  const closeMenu = () => {
+    setMenuAnchor(undefined);
+    setNickEditOpen(false);
+    setMobileOptionsOpen(false);
+  };
+
+  const handleOpenEmojiBoard: MouseEventHandler<HTMLButtonElement> = (evt) => {
+    const target = evt.currentTarget.parentElement?.parentElement ?? evt.currentTarget;
+    setEmojiBoardAnchor(target.getBoundingClientRect());
+  };
+
+  const handleAddReactions: MouseEventHandler<HTMLButtonElement> = () => {
+    const rect = menuAnchor;
+    closeMenu();
+    setTimeout(() => {
+      setEmojiBoardAnchor(rect);
+    }, 100);
+  };
+
+  const handleSwipeReply = () => {
+    const mockEvent = {
+      currentTarget: {
+        getAttribute: (attr: string) => (attr === 'data-event-id' ? mEvent.getId() : null),
+      },
+    } as unknown as React.MouseEvent<HTMLButtonElement>;
+
+    onReplyClick(mockEvent);
+  };
+
+  const bindLongPress = useMobileLongPress(() => {
+    setMobileOptionsOpen(true);
+  }, 700);
+
+  const isThreadedMessage = mEvent.threadRootId !== undefined;
+
+  return (
+    <MessageBase
+      className={classNames(css.MessageBase, className, {
+        [css.MessageBaseBubbleCollapsed]: messageLayout === MessageLayout.Bubble && collapse,
+      })}
+      tabIndex={0}
+      space={messageSpacing}
+      collapse={collapse}
+      highlight={highlight}
+      selected={!!menuAnchor || !!emojiBoardAnchor}
+      {...props}
+      {...hoverProps}
+      {...focusWithinProps}
+      ref={ref}
+    >
+      {!edit && (isDesktopHover || !!menuAnchor || !!emojiBoardAnchor || mobileOptionsOpen) && (
+        <div className={css.MessageOptionsBase} ref={optionsRef}>
+          <Menu className={css.MessageOptionsBar} variant="SurfaceVariant">
+            <Box gap="100">
+              {canSendReaction && (
+                <PopOut
+                  position="Bottom"
+                  align={emojiBoardAnchor?.width === 0 ? 'Start' : 'End'}
+                  offset={emojiBoardAnchor?.width === 0 ? 0 : undefined}
+                  anchor={emojiBoardAnchor}
+                  content={
+                    <EmojiBoard
+                      imagePackRooms={imagePackRooms ?? []}
+                      returnFocusOnDeactivate={false}
+                      allowTextCustomEmoji
+                      onEmojiSelect={(key) => {
+                        onReactionToggle(mEvent.getId()!, key);
+                        setEmojiBoardAnchor(undefined);
+                        setMobileOptionsOpen(false);
+                      }}
+                      onCustomEmojiSelect={(mxc, shortcode) => {
+                        onReactionToggle(mEvent.getId()!, mxc, shortcode);
+                        setEmojiBoardAnchor(undefined);
+                        setMobileOptionsOpen(false);
+                      }}
+                      requestClose={() => {
+                        setEmojiBoardAnchor(undefined);
+                      }}
+                    />
+                  }
+                >
+                  <IconButton
+                    onClick={handleOpenEmojiBoard}
+                    variant="SurfaceVariant"
+                    size="300"
+                    radii="300"
+                    aria-pressed={!!emojiBoardAnchor}
                   >
-                    <IconButton
-                      onClick={handleOpenEmojiBoard}
-                      variant="SurfaceVariant"
-                      size="300"
-                      radii="300"
-                      aria-pressed={!!emojiBoardAnchor}
-                    >
-                      <Icon src={Icons.SmilePlus} size="100" />
-                    </IconButton>
-                  </PopOut>
-                )}
+                    <Icon src={Icons.SmilePlus} size="100" />
+                  </IconButton>
+                </PopOut>
+              )}
+              <IconButton
+                onClick={(ev) => {
+                  onReplyClick(ev);
+                  setMobileOptionsOpen(false);
+                }}
+                data-event-id={mEvent.getId()}
+                variant="SurfaceVariant"
+                size="300"
+                radii="300"
+              >
+                <Icon src={Icons.ReplyArrow} size="100" />
+              </IconButton>
+              {!isThreadedMessage && (
                 <IconButton
                   onClick={(ev) => {
-                    onReplyClick(ev);
+                    onReplyClick(ev, true);
                     setMobileOptionsOpen(false);
                   }}
                   data-event-id={mEvent.getId()}
@@ -1062,92 +1086,99 @@ export const Message = as<'div', MessageProps>(
                   size="300"
                   radii="300"
                 >
-                  <Icon src={Icons.ReplyArrow} size="100" />
+                  <Icon src={Icons.ThreadPlus} size="100" />
                 </IconButton>
-                {!isThreadedMessage && (
-                  <IconButton
-                    onClick={(ev) => {
-                      onReplyClick(ev, true);
-                      setMobileOptionsOpen(false);
+              )}
+              {canEditEvent(mx, mEvent) && onEditId && (
+                <IconButton
+                  onClick={() => {
+                    onEditId(mEvent.getId());
+                    setMobileOptionsOpen(false);
+                  }}
+                  variant="SurfaceVariant"
+                  size="300"
+                  radii="300"
+                >
+                  <Icon src={Icons.Pencil} size="100" />
+                </IconButton>
+              )}
+              <PopOut
+                anchor={menuAnchor}
+                position="Bottom"
+                align={menuAnchor?.width === 0 ? 'Start' : 'End'}
+                offset={menuAnchor?.width === 0 ? 0 : undefined}
+                content={
+                  <FocusTrap
+                    focusTrapOptions={{
+                      initialFocus: false,
+                      onDeactivate: () => setMenuAnchor(undefined),
+                      clickOutsideDeactivates: true,
+                      isKeyForward: (evt: KeyboardEvent) => evt.key === 'ArrowDown',
+                      isKeyBackward: (evt: KeyboardEvent) => evt.key === 'ArrowUp',
+                      escapeDeactivates: stopPropagation,
                     }}
-                    data-event-id={mEvent.getId()}
-                    variant="SurfaceVariant"
-                    size="300"
-                    radii="300"
                   >
-                    <Icon src={Icons.ThreadPlus} size="100" />
-                  </IconButton>
-                )}
-                {canEditEvent(mx, mEvent) && onEditId && (
-                  <IconButton
-                    onClick={() => {
-                      onEditId(mEvent.getId());
-                      setMobileOptionsOpen(false);
-                    }}
-                    variant="SurfaceVariant"
-                    size="300"
-                    radii="300"
-                  >
-                    <Icon src={Icons.Pencil} size="100" />
-                  </IconButton>
-                )}
-                <PopOut
-                  anchor={menuAnchor}
-                  position="Bottom"
-                  align={menuAnchor?.width === 0 ? 'Start' : 'End'}
-                  offset={menuAnchor?.width === 0 ? 0 : undefined}
-                  content={
-                    <FocusTrap
-                      focusTrapOptions={{
-                        initialFocus: false,
-                        onDeactivate: () => setMenuAnchor(undefined),
-                        clickOutsideDeactivates: true,
-                        isKeyForward: (evt: KeyboardEvent) => evt.key === 'ArrowDown',
-                        isKeyBackward: (evt: KeyboardEvent) => evt.key === 'ArrowUp',
-                        escapeDeactivates: stopPropagation,
-                      }}
-                    >
-                      <Menu>
+                    <Menu>
+                      {canSendReaction && (
+                        <MessageQuickReactions
+                          onReaction={(key, shortcode) => {
+                            onReactionToggle(mEvent.getId()!, key, shortcode);
+                            closeMenu();
+                          }}
+                        />
+                      )}
+                      <Box direction="Column" gap="100" className={css.MessageMenuGroup}>
                         {canSendReaction && (
-                          <MessageQuickReactions
-                            onReaction={(key, shortcode) => {
-                              onReactionToggle(mEvent.getId()!, key, shortcode);
-                              closeMenu();
-                            }}
-                          />
-                        )}
-                        <Box direction="Column" gap="100" className={css.MessageMenuGroup}>
-                          {canSendReaction && (
-                            <MenuItem
-                              size="300"
-                              after={<Icon size="100" src={Icons.SmilePlus} />}
-                              radii="300"
-                              onClick={handleAddReactions}
-                            >
-                              <Text
-                                className={css.MessageMenuItemText}
-                                as="span"
-                                size="T300"
-                                truncate
-                              >
-                                Add Reaction
-                              </Text>
-                            </MenuItem>
-                          )}
-                          {relations && (
-                            <MessageAllReactionItem
-                              room={room}
-                              relations={relations}
-                              onClose={closeMenu}
-                            />
-                          )}
                           <MenuItem
                             size="300"
-                            after={<Icon size="100" src={Icons.ReplyArrow} />}
+                            after={<Icon size="100" src={Icons.SmilePlus} />}
+                            radii="300"
+                            onClick={handleAddReactions}
+                          >
+                            <Text
+                              className={css.MessageMenuItemText}
+                              as="span"
+                              size="T300"
+                              truncate
+                            >
+                              Add Reaction
+                            </Text>
+                          </MenuItem>
+                        )}
+                        {relations && (
+                          <MessageAllReactionItem
+                            room={room}
+                            relations={relations}
+                            onClose={closeMenu}
+                          />
+                        )}
+                        <MenuItem
+                          size="300"
+                          after={<Icon size="100" src={Icons.ReplyArrow} />}
+                          radii="300"
+                          data-event-id={mEvent.getId()}
+                          onClick={(evt: any) => {
+                            onReplyClick(evt);
+                            closeMenu();
+                          }}
+                        >
+                          <Text
+                            className={css.MessageMenuItemText}
+                            as="span"
+                            size="T300"
+                            truncate
+                          >
+                            Reply
+                          </Text>
+                        </MenuItem>
+                        {!isThreadedMessage && (
+                          <MenuItem
+                            size="300"
+                            after={<Icon src={Icons.ThreadPlus} size="100" />}
                             radii="300"
                             data-event-id={mEvent.getId()}
                             onClick={(evt: any) => {
-                              onReplyClick(evt);
+                              onReplyClick(evt, true);
                               closeMenu();
                             }}
                           >
@@ -1157,202 +1188,184 @@ export const Message = as<'div', MessageProps>(
                               size="T300"
                               truncate
                             >
-                              Reply
+                              Reply in Thread
                             </Text>
                           </MenuItem>
-                          {!isThreadedMessage && (
-                            <MenuItem
-                              size="300"
-                              after={<Icon src={Icons.ThreadPlus} size="100" />}
-                              radii="300"
-                              data-event-id={mEvent.getId()}
-                              onClick={(evt: any) => {
-                                onReplyClick(evt, true);
-                                closeMenu();
-                              }}
+                        )}
+                        {canEditEvent(mx, mEvent) && onEditId && (
+                          <MenuItem
+                            size="300"
+                            after={<Icon size="100" src={Icons.Pencil} />}
+                            radii="300"
+                            data-event-id={mEvent.getId()}
+                            onClick={() => {
+                              onEditId(mEvent.getId());
+                              closeMenu();
+                            }}
+                          >
+                            <Text
+                              className={css.MessageMenuItemText}
+                              as="span"
+                              size="T300"
+                              truncate
                             >
-                              <Text
-                                className={css.MessageMenuItemText}
-                                as="span"
-                                size="T300"
-                                truncate
-                              >
-                                Reply in Thread
-                              </Text>
-                            </MenuItem>
-                          )}
-                          {canEditEvent(mx, mEvent) && onEditId && (
+                              Edit Message
+                            </Text>
+                          </MenuItem>
+                        )}
+                        {!hideReadReceipts && (
+                          <MessageReadReceiptItem
+                            room={room}
+                            eventId={mEvent.getId() ?? ''}
+                            onClose={closeMenu}
+                          />
+                        )}
+                        {showDeveloperTools && (
+                          <MessageSourceCodeItem
+                            room={room}
+                            mEvent={mEvent}
+                            onClose={closeMenu}
+                          />
+                        )}
+                        <MessageCopyLinkItem room={room} mEvent={mEvent} onClose={closeMenu} />
+                        {canPinEvent && (
+                          <MessagePinItem room={room} mEvent={mEvent} onClose={closeMenu} />
+                        )}
+                        {senderId !== mx.getUserId() && (
+                          nickEditOpen ? (
+                            <Box direction="Column" gap="100" style={{ padding: `${config.space.S100} ${config.space.S200}` }}>
+                              <Text size="L400">Nickname</Text>
+                              <input
+                                // eslint-disable-next-line jsx-a11y/no-autofocus
+                                autoFocus
+                                value={nickDraft}
+                                onChange={(e) => setNickDraft(e.target.value)}
+                                placeholder={senderDisplayName}
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Enter') {
+                                    setNickname(senderId, nickDraft || undefined, mx);
+                                    closeMenu();
+                                  }
+                                  if (e.key === 'Escape') closeMenu();
+                                }}
+                                style={{
+                                  background: 'var(--mx-c-surface)',
+                                  color: 'var(--mx-c-on-surface)',
+                                  border: '1px solid var(--mx-c-outline)',
+                                  borderRadius: '6px',
+                                  padding: '4px 8px',
+                                  fontSize: '14px',
+                                  width: '100%',
+                                  outline: 'none',
+                                }}
+                              />
+                              <Box gap="200">
+                                <MenuItem size="300" radii="300" variant="Success" fill="None"
+                                  onClick={() => { setNickname(senderId, nickDraft || undefined, mx); closeMenu(); }}>
+                                  <Text size="B300">Save</Text>
+                                </MenuItem>
+                                {nicknames[senderId] && (
+                                  <MenuItem size="300" radii="300" variant="Critical" fill="None"
+                                    onClick={() => { setNickname(senderId, undefined, mx); closeMenu(); }}>
+                                    <Text size="B300">Clear</Text>
+                                  </MenuItem>
+                                )}
+                              </Box>
+                            </Box>
+                          ) : (
                             <MenuItem
                               size="300"
                               after={<Icon size="100" src={Icons.Pencil} />}
                               radii="300"
-                              data-event-id={mEvent.getId()}
                               onClick={() => {
-                                onEditId(mEvent.getId());
-                                closeMenu();
+                                setNickDraft(nicknames[senderId] ?? '');
+                                setNickEditOpen(true);
                               }}
                             >
-                              <Text
-                                className={css.MessageMenuItemText}
-                                as="span"
-                                size="T300"
-                                truncate
-                              >
-                                Edit Message
+                              <Text className={css.MessageMenuItemText} as="span" size="T300" truncate>
+                                {nicknames[senderId] ? 'Edit Nickname' : 'Set Nickname'}
                               </Text>
                             </MenuItem>
-                          )}
-                          {!hideReadReceipts && (
-                            <MessageReadReceiptItem
-                              room={room}
-                              eventId={mEvent.getId() ?? ''}
-                              onClose={closeMenu}
-                            />
-                          )}
-                          {showDeveloperTools && (
-                            <MessageSourceCodeItem
-                              room={room}
-                              mEvent={mEvent}
-                              onClose={closeMenu}
-                            />
-                          )}
-                          <MessageCopyLinkItem room={room} mEvent={mEvent} onClose={closeMenu} />
-                          {canPinEvent && (
-                            <MessagePinItem room={room} mEvent={mEvent} onClose={closeMenu} />
-                          )}
-                          {senderId !== mx.getUserId() && (
-                            nickEditOpen ? (
-                              <Box direction="Column" gap="100" style={{ padding: `${config.space.S100} ${config.space.S200}` }}>
-                                <Text size="L400">Nickname</Text>
-                                <input
-                                  // eslint-disable-next-line jsx-a11y/no-autofocus
-                                  autoFocus
-                                  value={nickDraft}
-                                  onChange={(e) => setNickDraft(e.target.value)}
-                                  placeholder={senderDisplayName}
-                                  onKeyDown={(e) => {
-                                    if (e.key === 'Enter') {
-                                      setNickname(senderId, nickDraft || undefined, mx);
-                                      closeMenu();
-                                    }
-                                    if (e.key === 'Escape') closeMenu();
-                                  }}
-                                  style={{
-                                    background: 'var(--mx-c-surface)',
-                                    color: 'var(--mx-c-on-surface)',
-                                    border: '1px solid var(--mx-c-outline)',
-                                    borderRadius: '6px',
-                                    padding: '4px 8px',
-                                    fontSize: '14px',
-                                    width: '100%',
-                                    outline: 'none',
-                                  }}
+                          )
+                        )}
+                      </Box>
+                      {((!mEvent.isRedacted() && canDelete) ||
+                        mEvent.getSender() !== mx.getUserId()) && (
+                          <>
+                            <Line size="300" />
+                            <Box direction="Column" gap="100" className={css.MessageMenuGroup}>
+                              {!mEvent.isRedacted() && canDelete && (
+                                <MessageDeleteItem
+                                  room={room}
+                                  mEvent={mEvent}
+                                  onClose={closeMenu}
                                 />
-                                <Box gap="200">
-                                  <MenuItem size="300" radii="300" variant="Success" fill="None"
-                                    onClick={() => { setNickname(senderId, nickDraft || undefined, mx); closeMenu(); }}>
-                                    <Text size="B300">Save</Text>
-                                  </MenuItem>
-                                  {nicknames[senderId] && (
-                                    <MenuItem size="300" radii="300" variant="Critical" fill="None"
-                                      onClick={() => { setNickname(senderId, undefined, mx); closeMenu(); }}>
-                                      <Text size="B300">Clear</Text>
-                                    </MenuItem>
-                                  )}
-                                </Box>
-                              </Box>
-                            ) : (
-                              <MenuItem
-                                size="300"
-                                after={<Icon size="100" src={Icons.Pencil} />}
-                                radii="300"
-                                onClick={() => {
-                                  setNickDraft(nicknames[senderId] ?? '');
-                                  setNickEditOpen(true);
-                                }}
-                              >
-                                <Text className={css.MessageMenuItemText} as="span" size="T300" truncate>
-                                  {nicknames[senderId] ? 'Edit Nickname' : 'Set Nickname'}
-                                </Text>
-                              </MenuItem>
-                            )
-                          )}
-                        </Box>
-                        {((!mEvent.isRedacted() && canDelete) ||
-                          mEvent.getSender() !== mx.getUserId()) && (
-                            <>
-                              <Line size="300" />
-                              <Box direction="Column" gap="100" className={css.MessageMenuGroup}>
-                                {!mEvent.isRedacted() && canDelete && (
-                                  <MessageDeleteItem
-                                    room={room}
-                                    mEvent={mEvent}
-                                    onClose={closeMenu}
-                                  />
-                                )}
-                                {mEvent.getSender() !== mx.getUserId() && (
-                                  <MessageReportItem
-                                    room={room}
-                                    mEvent={mEvent}
-                                    onClose={closeMenu}
-                                  />
-                                )}
-                              </Box>
-                            </>
-                          )}
-                      </Menu>
-                    </FocusTrap>
-                  }
+                              )}
+                              {mEvent.getSender() !== mx.getUserId() && (
+                                <MessageReportItem
+                                  room={room}
+                                  mEvent={mEvent}
+                                  onClose={closeMenu}
+                                />
+                              )}
+                            </Box>
+                          </>
+                        )}
+                    </Menu>
+                  </FocusTrap>
+                }
+              >
+                <IconButton
+                  variant="SurfaceVariant"
+                  size="300"
+                  radii="300"
+                  onClick={handleOpenMenu}
+                  aria-pressed={!!menuAnchor}
                 >
-                  <IconButton
-                    variant="SurfaceVariant"
-                    size="300"
-                    radii="300"
-                    onClick={handleOpenMenu}
-                    aria-pressed={!!menuAnchor}
-                  >
-                    <Icon src={Icons.VerticalDots} size="100" />
-                  </IconButton>
-                </PopOut>
-              </Box>
-            </Menu>
-          </div>
-        )}
-        {messageLayout === MessageLayout.Compact && (
+                  <Icon src={Icons.VerticalDots} size="100" />
+                </IconButton>
+              </PopOut>
+            </Box>
+          </Menu>
+        </div>
+      )}
+      {messageLayout === MessageLayout.Compact && (
+        <SwipeableMessageWrapper onReply={handleSwipeReply}>
+          <CompactLayout before={headerJSX} onContextMenu={handleContextMenu}>
+            <div {...bindLongPress}>
+              {msgContentJSX}
+            </div>
+          </CompactLayout>
+        </SwipeableMessageWrapper>
+      )
+      }
+      {messageLayout === MessageLayout.Bubble && (
+        <SwipeableMessageWrapper onReply={handleSwipeReply}>
+          <BubbleLayout before={avatarJSX} header={headerJSX} onContextMenu={handleContextMenu}>
+            <div {...bindLongPress}>
+              {msgContentJSX}
+            </div>
+          </BubbleLayout>
+        </SwipeableMessageWrapper>
+      )}
+      {
+        messageLayout !== MessageLayout.Compact && messageLayout !== MessageLayout.Bubble && (
           <SwipeableMessageWrapper onReply={handleSwipeReply}>
-            <CompactLayout before={headerJSX} onContextMenu={handleContextMenu}>
+            <ModernLayout before={avatarJSX} onContextMenu={handleContextMenu}>
               <div {...bindLongPress}>
+                {headerJSX}
                 {msgContentJSX}
               </div>
-            </CompactLayout>
+            </ModernLayout>
           </SwipeableMessageWrapper>
         )
-        }
-        {messageLayout === MessageLayout.Bubble && (
-          <SwipeableMessageWrapper onReply={handleSwipeReply}>
-            <BubbleLayout before={avatarJSX} header={headerJSX} onContextMenu={handleContextMenu}>
-              <div {...bindLongPress}>
-                {msgContentJSX}
-              </div>
-            </BubbleLayout>
-          </SwipeableMessageWrapper>
-        )}
-        {
-          messageLayout !== MessageLayout.Compact && messageLayout !== MessageLayout.Bubble && (
-            <SwipeableMessageWrapper onReply={handleSwipeReply}>
-              <ModernLayout before={avatarJSX} onContextMenu={handleContextMenu}>
-                <div {...bindLongPress}>
-                  {headerJSX}
-                  {msgContentJSX}
-                </div>
-              </ModernLayout>
-            </SwipeableMessageWrapper>
-          )
-        }
-      </MessageBase >
-    );
-  }
-);
+      }
+    </MessageBase >
+  );
+};
+
+const MessageAs = as<'div', MessageProps>(MessageInternal);
+export const Message = React.memo(MessageAs);
 
 export type EventProps = {
   room: Room;
