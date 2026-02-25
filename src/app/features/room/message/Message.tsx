@@ -721,7 +721,9 @@ function useMobileDoubleTap(callback: () => void, delay = 300) {
 function PronounTag({ pronouns, tagColor }: { pronouns?: any[]; tagColor: string }) {
   if (!pronouns || pronouns.length === 0) return null;
 
-  const display = pronouns.slice(0, 2).map((p) => p.summary).join('/');
+  const clamp = (str: string, len: number) => str.length > len ? `${str.slice(0, len)}...` : str;
+
+  const display = clamp(pronouns.slice(0, 2).map((p) => clamp(p.summary, 48)).join('/'), 128);
   const hasMore = pronouns.length > 2;
 
   return (
