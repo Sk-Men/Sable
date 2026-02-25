@@ -30,7 +30,17 @@ import { UserProfile, useUserProfile } from '../../hooks/useUserProfile';
 import { RenderBody } from '../message';
 import { factoryRenderLinkifyWithMention, getReactCustomHtmlParser, LINKIFY_OPTS, makeMentionCustomProps, renderMatrixMention } from '../../plugins/react-custom-html-parser';
 import { useSpoilerClickHandler } from '../../hooks/useSpoilerClickHandler';
-import { userRoomProfileAtom } from '../../state/userRoomProfile';
+
+
+const KNOWN_KEYS = [
+  'moe.sable.app.bio',
+  'chat.commet.profile_bio',
+  'io.fsky.nyx.pronouns',
+  'us.cloke.msc4175.tz',
+  'm.tz',
+  'avatar_url',
+  'displayname'
+];
 
 type UserExtendedSectionProps = {
   profile: UserProfile;
@@ -78,8 +88,9 @@ function UserExtendedSection({ profile, htmlReactParserOptions, linkifyOpts }: U
 
   }, [profile]);
 
-  const unknownFields = Object.entries(profile.extended || {}).filter(([, value]) =>
-    typeof value === 'string' || typeof value === 'number');
+  const unknownFields = Object.entries(profile.extended || {}).filter(([key, value]) =>
+    !KNOWN_KEYS.includes(key) && (typeof value === 'string' || typeof value === 'number')
+  );
 
   return (
     <Box direction="Column" gap="200" style={{ marginBottom: config.space.S100 }}>
@@ -160,8 +171,9 @@ function UserExtendedSection({ profile, htmlReactParserOptions, linkifyOpts }: U
 
 type UserRoomProfileProps = {
   userId: string;
+  initialProfile?: Partial<UserProfile>;
 };
-export function UserRoomProfile({ userId }: UserRoomProfileProps) {
+export function UserRoomProfile({ userId, initialProfile }: UserRoomProfileProps) {
   const mx = useMatrixClient();
   const useAuthentication = useMediaAuthentication();
   const navigate = useNavigate();
@@ -195,7 +207,10 @@ export function UserRoomProfile({ userId }: UserRoomProfileProps) {
 
   const presence = useUserPresence(userId);
 
-  const extendedProfile = useUserProfile(userId);
+  const fetchedProfile = useUserProfile(userId);
+  const extendedProfile = (fetchedProfile && Object.keys(fetchedProfile).length > 0)
+    ? fetchedProfile
+    : (initialProfile as UserProfile) || fetchedProfile;
 
   const handleMessage = () => {
     closeUserRoomProfile();

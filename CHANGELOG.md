@@ -3,6 +3,7 @@
 ## Version 1.1.1
 
 - More cache fixes and improvements.
+- Fix flash of extra info when click on profiles sometimes.
 - Added minimum width for widgit drawer.
 
 ## Version 1.1.0
