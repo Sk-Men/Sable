@@ -1072,7 +1072,18 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
       const userId = evt.currentTarget.getAttribute('data-user-id');
       if (!userId) return;
 
-      const cachedData = profileCache[userId];
+      const cachedData = profileCache[userId] || globalProfiles[userId];
+
+      const cleanExtended = cachedData?.extended ? { ...cachedData.extended } : undefined;
+      if (cleanExtended) {
+        delete cleanExtended['io.fsky.nyx.pronouns'];
+        delete cleanExtended['moe.sable.app.bio'];
+        delete cleanExtended['chat.commet.profile_bio'];
+        delete cleanExtended['us.cloke.msc4175.tz'];
+        delete cleanExtended['m.tz'];
+        delete cleanExtended['avatar_url'];
+        delete cleanExtended['displayname'];
+      }
 
       openUserRoomProfile(
         room.roomId,
@@ -1084,11 +1095,11 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
           pronouns: cachedData?.pronouns,
           bio: cachedData?.bio,
           timezone: cachedData?.timezone,
-          extended: cachedData?.extended,
+          extended: cleanExtended,
         }
       );
     },
-    [room, space, openUserRoomProfile, profileCache]
+    [room, space, openUserRoomProfile, profileCache, globalProfiles]
   );
 
   const handleUsernameClick: MouseEventHandler<HTMLButtonElement> = useCallback(
