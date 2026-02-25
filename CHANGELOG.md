@@ -1,5 +1,9 @@
 # Sable Client Changelog
 
+## Version 1.1.4
+
+- Various performance improvements
+
 ## Version 1.1.3
 
 _skipped a number since lots of updates :3_

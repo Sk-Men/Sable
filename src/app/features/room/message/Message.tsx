@@ -38,6 +38,7 @@ import { useHover, useFocusWithin } from 'react-aria';
 import { MatrixEvent, Room } from 'matrix-js-sdk';
 import { Relations } from 'matrix-js-sdk/lib/models/relations';
 import classNames from 'classnames';
+import parse from 'html-react-parser';
 import { useAtomValue, useSetAtom } from 'jotai';
 import { RoomPinnedEventsEventContent } from 'matrix-js-sdk/lib/types';
 import {
@@ -92,6 +93,9 @@ import { useBlobCache } from '../../../hooks/useBlobCache';
 
 export type ReactionHandler = (keyOrMxc: string, shortcode: string) => void;
 
+const MemoizedBody = React.memo(({ children }: { children: ReactNode }) => {
+  return <>{children}</>;
+});
 type MessageQuickReactionsProps = {
   onReaction: ReactionHandler;
 };
@@ -693,6 +697,7 @@ export type MessageProps = {
   hour24Clock: boolean;
   dateFormatString: string;
   senderId: string;
+  content?: string;
 };
 
 function useMobileDoubleTap(callback: () => void, delay = 300) {
@@ -910,6 +915,10 @@ function MessageInternal(
     </AvatarBase>
   );
 
+  const stableContent = useMemo(() => {
+    return mEvent.getContent().body || '';
+  }, [mEvent]);
+
   const msgContentJSX = (
     <Box direction="Column" alignSelf="Start" style={{ maxWidth: '100%' }}>
       {reply}
@@ -926,7 +935,9 @@ function MessageInternal(
           onCancel={() => onEditId()}
         />
       ) : (
-        children
+        <MemoizedBody key={stableContent}>
+          {children}
+        </MemoizedBody>
       )}
       {reactions}
     </Box>

@@ -29,7 +29,7 @@ import classNames from 'classnames';
 import { ReactEditor } from 'slate-react';
 import { Editor } from 'slate';
 import to from 'await-to-js';
-import { useAtom, useAtomValue, useSetAtom } from 'jotai';
+import { useAtomValue, useSetAtom } from 'jotai';
 import { as, Badge, Box, Chip, color, config, ContainerColor, Icon, Icons, Line, Scroll, Text, toRem, } from 'folds';
 import { isKeyHotkey } from 'is-hotkey';
 import { Opts as LinkifyOpts } from 'linkifyjs';
@@ -238,7 +238,7 @@ type RoomTimelineProps = {
   editor: Editor;
 };
 
-const PAGINATION_LIMIT = 40;
+const PAGINATION_LIMIT = 60;
 
 type Timeline = {
   linkedTimelines: EventTimeline[];
@@ -471,7 +471,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
   const canPinEvent = permissions.stateEvent(StateEvent.RoomPinnedEvents, mx.getSafeUserId());
   const [editId, setEditId] = useState<string>();
 
-  const [globalProfiles] = useAtom(profilesCacheAtom);
+  const globalProfiles = useAtomValue(profilesCacheAtom);
 
   const roomToParents = useAtomValue(roomToParentsAtom);
   const unread = useRoomUnread(room.roomId, roomToUnreadAtom);
@@ -559,7 +559,18 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
       count: eventsLength,
       limit: PAGINATION_LIMIT,
       range: timeline.range,
-      onRangeChange: useCallback((r) => setTimeline((cs) => ({ ...cs, range: r })), []),
+      onRangeChange: useCallback((newRange) => {
+        setTimeline((currentTimeline) => {
+          const deltaStart = Math.abs(currentTimeline.range.start - newRange.start);
+          const deltaEnd = Math.abs(currentTimeline.range.end - newRange.end);
+
+          if (deltaStart < 3 && deltaEnd < 3) {
+            return currentTimeline;
+          }
+
+          return { ...currentTimeline, range: newRange };
+        });
+      }, []),
       getScrollElement,
       getItemElement: useCallback(
         (index: number) =>
