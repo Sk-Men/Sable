@@ -18,7 +18,7 @@ import { SettingTile } from '../../../components/setting-tile';
 import * as css from './BioEditor.css';
 
 type BioEditorProps = {
-    value?: string;
+    value?: string | any;
     isSaving?: boolean;
     imagePackRooms?: any[];
     onSave: (htmlContent: string) => void;
@@ -67,15 +67,23 @@ export function BioEditor({ value, isSaving, imagePackRooms, onSave }: BioEditor
 
         if (valueChanged || isFirstValidLoad) {
             prevValue.current = value;
-            const incomingPlainText = value ? toPlainText(htmlToEditorInput(value, isMarkdown), isMarkdown).trim() : '';
+
+            let normalizedValue = value;
+            if (typeof normalizedValue === 'object' && normalizedValue !== null && 'formatted_body' in normalizedValue) {
+                normalizedValue = normalizedValue.formatted_body;
+            }
+
+            const safeValue = typeof normalizedValue === 'string' ? normalizedValue : '';
+
+            const incomingPlainText = toPlainText(htmlToEditorInput(safeValue, isMarkdown), isMarkdown).trim();
             const currentPlainText = toPlainText(editor.children, isMarkdown).trim();
 
             if (currentPlainText === incomingPlainText && initialized.current) return;
 
-            const isLikelyHtml = value?.includes('<') || value?.includes('>');
+            const isLikelyHtml = safeValue.includes('<') || safeValue.includes('>');
             const initialValue = isLikelyHtml
-                ? htmlToEditorInput(value!, isMarkdown)
-                : plainToEditorInput(value ?? '', isMarkdown);
+                ? htmlToEditorInput(safeValue, isMarkdown)
+                : plainToEditorInput(safeValue, isMarkdown);
 
             editor.children = initialValue;
             Editor.normalize(editor, { force: true });

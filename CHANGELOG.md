@@ -3,6 +3,7 @@
 ## Version 1.1.4
 
 - Various performance improvements
+- Fix bio editor crashing when faced with commet bio format.
 
 ## Version 1.1.3
 

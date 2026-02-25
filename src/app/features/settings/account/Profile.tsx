@@ -25,7 +25,7 @@ import {
   Spinner,
 } from 'folds';
 import FocusTrap from 'focus-trap-react';
-import { MatrixClient } from 'matrix-js-sdk';
+import { useSetAtom } from 'jotai';
 import { SequenceCard } from '../../../components/sequence-card';
 import { SequenceCardStyle } from '../styles.css';
 import { SettingTile } from '../../../components/setting-tile';
@@ -48,7 +48,6 @@ import { TimezoneEditor } from './TimezoneEditor';
 import { PronounEditor } from './PronounEditor';
 import { BioEditor } from './BioEditor';
 import { NameColorEditor } from './NameColorEditor';
-import { useSetAtom } from 'jotai';
 import { profilesCacheAtom } from '../../../state/userRoomProfile';
 
 type PronounSet = {
