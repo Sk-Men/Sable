@@ -1431,6 +1431,10 @@ export const Event = as<'div', EventProps>(
       return () => document.removeEventListener('pointerdown', handleClick, { capture: true });
     }, [mobileOptionsOpen]);
 
+    const onDoubleTap = useMobileDoubleTap(() => {
+      setMobileOptionsOpen(true);
+    });
+
     return (
       <MessageBase
         className={classNames(css.MessageBase, className)}
@@ -1524,7 +1528,7 @@ export const Event = as<'div', EventProps>(
             </Menu>
           </div>
         )}
-        <div onContextMenu={handleContextMenu} {...bindLongPress}>
+        <div onContextMenu={handleContextMenu} onPointerDown={onDoubleTap}>
           {children}
         </div>
       </MessageBase>
