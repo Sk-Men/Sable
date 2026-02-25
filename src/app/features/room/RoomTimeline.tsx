@@ -165,7 +165,11 @@ export const getLinkedTimelines = (timeline: EventTimeline): EventTimeline[] => 
   return timelines;
 };
 
-export const timelineToEventsCount = (t: EventTimeline) => (t ? t.getEvents().length : 0);
+export const timelineToEventsCount = (t: EventTimeline) => {
+  if (!t) return 0;
+  const events = t.getEvents();
+  return events ? events.length : 0;
+};
 
 export const getTimelinesEventsCount = (timelines: EventTimeline[]): number => {
   const timelineEventCountReducer = (count: number, tm: EventTimeline) =>
@@ -178,7 +182,6 @@ export const getTimelineAndBaseIndex = (
   index: number
 ): [EventTimeline | undefined, number] => {
   let uptoTimelineLen = 0;
-
   const validTimelines = (timelines || []).filter(Boolean);
 
   const timeline = validTimelines.find((t) => {
@@ -191,17 +194,20 @@ export const getTimelineAndBaseIndex = (
 
   if (!timeline) return [undefined, 0];
 
-  const timelineEvents = timeline.getEvents();
-  const timelineLen = timelineEvents ? timelineEvents.length : 0;
+  const events = timeline.getEvents();
+  const timelineLen = events ? events.length : 0;
 
-  return [timeline, uptoTimelineLen - timelineLen];
+  return [timeline, Math.max(0, uptoTimelineLen - timelineLen)];
 };
 
 export const getTimelineRelativeIndex = (absoluteIndex: number, timelineBaseIndex: number) =>
   absoluteIndex - timelineBaseIndex;
 
-export const getTimelineEvent = (timeline: EventTimeline, index: number): MatrixEvent | undefined =>
-  timeline.getEvents()[index];
+export const getTimelineEvent = (timeline: EventTimeline, index: number): MatrixEvent | undefined => {
+  if (!timeline) return undefined;
+  const events = timeline.getEvents();
+  return events ? events[index] : undefined;
+};
 
 export const getEventIdAbsoluteIndex = (
   timelines: EventTimeline[],
@@ -210,11 +216,20 @@ export const getEventIdAbsoluteIndex = (
 ): number | undefined => {
   const timelineIndex = timelines.findIndex((t) => t === eventTimeline);
   if (timelineIndex === -1) return undefined;
-  const eventIndex = eventTimeline.getEvents().findIndex((evt: MatrixEvent) => evt.getId() === eventId);
+
+  const currentEvents = eventTimeline.getEvents();
+  if (!currentEvents) return undefined;
+
+  const eventIndex = currentEvents.findIndex((evt: MatrixEvent) => evt.getId() === eventId);
   if (eventIndex === -1) return undefined;
+
   const baseIndex = timelines
     .slice(0, timelineIndex)
-    .reduce((accValue, timeline) => timeline.getEvents().length + accValue, 0);
+    .reduce((accValue, timeline) => {
+      const evs = timeline.getEvents();
+      return (evs ? evs.length : 0) + accValue;
+    }, 0);
+
   return baseIndex + eventIndex;
 };
 
