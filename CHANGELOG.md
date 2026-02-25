@@ -1,12 +1,15 @@
 # Sable Client Changelog
 
-## Version 1.1.2
+## Version 1.1.3
+
+_skipped a number since lots of updates :3_
 
 - Profile banners. Support's Commet's format.
 - Global name colors. Can be disabled in settings.
 - Even more refractoring to improve timeline & user profile speeds and caches and fix that stupid bug.
   - probably introduced more bugs tbh, but things should be faster and less intense on resources?
 - Pinned messages actually jump to the damn pins instead of somewhere vaguely nearby half the time.
+- Mobile context menu is opened by double tapping on a message instead of holding.
 
 ## Version 1.1.1
 

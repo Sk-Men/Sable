@@ -31,7 +31,6 @@ import React, {
   useRef,
   useState,
   useEffect,
-  memo,
   useMemo,
 } from 'react';
 import FocusTrap from 'focus-trap-react';
@@ -696,37 +695,22 @@ export type MessageProps = {
   senderId: string;
 };
 
-function useMobileLongPress(callback: (e: React.PointerEvent<HTMLElement>) => void, delay = 700) {
-  const timerRef = useRef<NodeJS.Timeout>();
-  const startPos = useRef<{ x: number; y: number } | null>(null);
+function useMobileDoubleTap(callback: () => void, delay = 300) {
+  const lastTapRef = useRef<number>(0);
 
-  const start = useCallback((e: React.PointerEvent<HTMLElement>) => {
+  return useCallback((e: React.PointerEvent<HTMLElement>) => {
     if (!mobileOrTablet()) return;
-    startPos.current = { x: e.clientX, y: e.clientY };
-    timerRef.current = setTimeout(() => {
-      callback(e);
-      startPos.current = null;
-    }, delay);
+
+    const now = Date.now();
+    const timeSinceLastTap = now - lastTapRef.current;
+
+    if (timeSinceLastTap < delay && timeSinceLastTap > 0) {
+      callback();
+      lastTapRef.current = 0;
+    } else {
+      lastTapRef.current = now;
+    }
   }, [callback, delay]);
-
-  const clear = useCallback(() => {
-    if (timerRef.current) clearTimeout(timerRef.current);
-    startPos.current = null;
-  }, []);
-
-  const move = useCallback((e: React.PointerEvent<HTMLElement>) => {
-    if (!startPos.current) return;
-    const dx = Math.abs(e.clientX - startPos.current.x);
-    const dy = Math.abs(e.clientY - startPos.current.y);
-    if (dx > 10 || dy > 10) clear();
-  }, [clear]);
-
-  return {
-    onPointerDown: start,
-    onPointerMove: move,
-    onPointerUp: clear,
-    onPointerCancel: clear,
-  };
 }
 
 function PronounTag({ pronouns, tagColor }: { pronouns?: any[]; tagColor: string }) {
@@ -1000,9 +984,9 @@ function MessageInternal(
     onReplyClick(mockEvent);
   };
 
-  const bindLongPress = useMobileLongPress(() => {
+  const onDoubleTap = useMobileDoubleTap(() => {
     setMobileOptionsOpen(true);
-  }, 700);
+  });
 
   const isThreadedMessage = mEvent.threadRootId !== undefined;
 
@@ -1332,7 +1316,7 @@ function MessageInternal(
       {messageLayout === MessageLayout.Compact && (
         <SwipeableMessageWrapper onReply={handleSwipeReply}>
           <CompactLayout before={headerJSX} onContextMenu={handleContextMenu}>
-            <div {...bindLongPress}>
+            <div onPointerDown={onDoubleTap}>
               {msgContentJSX}
             </div>
           </CompactLayout>
@@ -1342,7 +1326,7 @@ function MessageInternal(
       {messageLayout === MessageLayout.Bubble && (
         <SwipeableMessageWrapper onReply={handleSwipeReply}>
           <BubbleLayout before={avatarJSX} header={headerJSX} onContextMenu={handleContextMenu}>
-            <div {...bindLongPress}>
+            <div onPointerDown={onDoubleTap}>
               {msgContentJSX}
             </div>
           </BubbleLayout>
@@ -1352,7 +1336,7 @@ function MessageInternal(
         messageLayout !== MessageLayout.Compact && messageLayout !== MessageLayout.Bubble && (
           <SwipeableMessageWrapper onReply={handleSwipeReply}>
             <ModernLayout before={avatarJSX} onContextMenu={handleContextMenu}>
-              <div {...bindLongPress}>
+              <div onPointerDown={onDoubleTap}>
                 {headerJSX}
                 {msgContentJSX}
               </div>
@@ -1446,10 +1430,6 @@ export const Event = as<'div', EventProps>(
       document.addEventListener('pointerdown', handleClick, { capture: true });
       return () => document.removeEventListener('pointerdown', handleClick, { capture: true });
     }, [mobileOptionsOpen]);
-
-    const bindLongPress = useMobileLongPress(() => {
-      setMobileOptionsOpen(true);
-    }, 700);
 
     return (
       <MessageBase
