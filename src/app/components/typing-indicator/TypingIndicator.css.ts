@@ -16,6 +16,7 @@ export const TypingDot = recipe({
       display: 'inline-block',
       backgroundColor: 'currentColor',
       borderRadius: '50%',
+      zIndex: 10,
       transform: 'translateY(15%)',
     },
   ],

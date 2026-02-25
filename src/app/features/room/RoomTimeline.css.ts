@@ -9,7 +9,7 @@ export const TimelineFloat = recipe({
       position: 'absolute',
       left: '50%',
       transform: 'translateX(-50%)',
-      zIndex: 1,
+      zIndex: 10,
       minWidth: 'max-content',
     },
   ],
