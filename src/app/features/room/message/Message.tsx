@@ -1,30 +1,19 @@
 import {
   Avatar,
   Box,
-  Button,
-  Dialog,
-  Header,
   Icon,
   IconButton,
   Icons,
-  Input,
   Line,
   Menu,
   MenuItem,
-  Modal,
-  Overlay,
-  OverlayBackdrop,
-  OverlayCenter,
   PopOut,
   RectCords,
-  Spinner,
   Text,
   as,
-  color,
   config,
 } from 'folds';
 import React, {
-  FormEventHandler,
   MouseEventHandler,
   ReactNode,
   useCallback,
@@ -38,7 +27,6 @@ import { useHover, useFocusWithin } from 'react-aria';
 import { MatrixEvent, Room } from 'matrix-js-sdk';
 import { Relations } from 'matrix-js-sdk/lib/models/relations';
 import classNames from 'classnames';
-import parse from 'html-react-parser';
 import { useAtomValue, useSetAtom } from 'jotai';
 import { RoomPinnedEventsEventContent } from 'matrix-js-sdk/lib/types';
 import {
@@ -53,13 +41,10 @@ import {
 } from '../../../components/message';
 import {
   canEditEvent,
-  getEventEdits,
   getMemberAvatarMxc,
-  getMemberDisplayName,
 } from '../../../utils/room';
 import {
   getCanonicalAliasOrRoomId,
-  getMxIdLocalPart,
   isRoomAlias,
   mxcUrlToHttp,
 } from '../../../utils/matrix';
@@ -68,11 +53,7 @@ import { nicknamesAtom, setNicknameAtom } from '../../../state/nicknames';
 import { useMatrixClient } from '../../../hooks/useMatrixClient';
 import { useRecentEmoji } from '../../../hooks/useRecentEmoji';
 import * as css from './styles.css';
-import { EventReaders } from '../../../components/event-readers';
-import { TextViewer } from '../../../components/text-viewer';
-import { AsyncStatus, useAsyncCallback } from '../../../hooks/useAsyncCallback';
 import { EmojiBoard } from '../../../components/emoji-board';
-import { ReactionViewer } from '../reaction-viewer';
 import { MessageEditor } from './MessageEditor';
 import { UserAvatar } from '../../../components/user-avatar';
 import { copyToClipboard } from '../../../utils/dom';
@@ -462,8 +443,10 @@ function MessageInternal(
     return mEvent.getContent().body || '';
   }, [mEvent]);
 
+  const MSG_CONTENT_STYLE = { maxWidth: '100%' };
+
   const msgContentJSX = (
-    <Box direction="Column" alignSelf="Start" style={{ maxWidth: '100%' }}>
+    <Box direction="Column" alignSelf="Start" style={MSG_CONTENT_STYLE}>
       {reply}
       {edit && onEditId ? (
         <MessageEditor
@@ -506,7 +489,11 @@ function MessageInternal(
 
   const handleOpenMenu: MouseEventHandler<HTMLButtonElement> = (evt) => {
     const target = evt.currentTarget.parentElement?.parentElement ?? evt.currentTarget;
-    setMenuAnchor(target.getBoundingClientRect());
+    const rect = target.getBoundingClientRect();
+
+    window.requestAnimationFrame(() => {
+      setMenuAnchor(rect);
+    });
   };
 
   const closeMenu = () => {
@@ -939,7 +926,11 @@ export const Event = as<'div', EventProps>(
 
     const handleOpenMenu: MouseEventHandler<HTMLButtonElement> = (evt) => {
       const target = evt.currentTarget.parentElement?.parentElement ?? evt.currentTarget;
-      setMenuAnchor(target.getBoundingClientRect());
+      const rect = target.getBoundingClientRect();
+
+      window.requestAnimationFrame(() => {
+        setMenuAnchor(rect);
+      });
     };
 
     const closeMenu = () => {

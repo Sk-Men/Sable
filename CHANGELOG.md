@@ -1,5 +1,10 @@
 # Sable Client Changelog
 
+## Version 1.1.5
+
+- Various performance improvements. See commits for details.
+- Fix typing indicator z index on mobile.
+
 ## Version 1.1.4
 
 - Various performance improvements

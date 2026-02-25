@@ -1,6 +1,6 @@
 import React from 'react';
 import { useAtom } from 'jotai';
-import { Overlay, OverlayBackdrop, OverlayCenter, Modal, Box } from 'folds';
+import { Overlay, OverlayBackdrop, OverlayCenter, Box } from 'folds';
 import FocusTrap from 'focus-trap-react';
 import { MessageReportInternal } from './MessageReport';
 import { MessageDeleteInternal } from './MessageDelete';
