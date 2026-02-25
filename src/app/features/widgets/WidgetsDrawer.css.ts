@@ -4,6 +4,7 @@ import { config, toRem } from 'folds';
 export const WidgetsDrawer = style({
   width: toRem(420),
   maxWidth: '100vw',
+  minWidth: '20vw',
 });
 
 export const WidgetsDrawerHeader = style({

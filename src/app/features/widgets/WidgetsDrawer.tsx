@@ -1,4 +1,4 @@
-import React, { ChangeEventHandler, FormEventHandler, MouseEventHandler, useState } from 'react';
+import React, { FormEventHandler, MouseEventHandler, useState } from 'react';
 import {
   Box,
   Header,
@@ -16,7 +16,6 @@ import {
   Line,
 } from 'folds';
 import { Room } from 'matrix-js-sdk';
-import { IWidget } from 'matrix-widget-api';
 
 import * as css from './WidgetsDrawer.css';
 import { useMatrixClient } from '../../hooks/useMatrixClient';
@@ -27,7 +26,6 @@ import { settingsAtom } from '../../state/settings';
 import { usePowerLevelsContext } from '../../hooks/usePowerLevels';
 import { useRoomCreators } from '../../hooks/useRoomCreators';
 import { useRoomPermissions } from '../../hooks/useRoomPermissions';
-import { ContainerColor } from '../../styles/ContainerColor.css';
 import { StateEvent } from '../../../types/matrix/room';
 import { IntegrationManager } from './IntegrationManager';
 

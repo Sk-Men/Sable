@@ -1,5 +1,10 @@
 # Sable Client Changelog
 
+## Version 1.1.1
+
+- More cache fixes and improvements.
+- Added minimum width for widgit drawer.
+
 ## Version 1.1.0
 
 - Global profile cache & automatic cache clearing on member update events along with other improvements.
