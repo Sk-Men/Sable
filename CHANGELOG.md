@@ -11,6 +11,8 @@ _skipped a number since lots of updates :3_
 - Pinned messages actually jump to the damn pins instead of somewhere vaguely nearby half the time.
   - that is... if they've been seen before. otherwise it just gives up sadly.
 - Mobile context menu is opened by double tapping on a message instead of holding.
+- Fixed bio editor formatting.
+- Properly clear user data when account settings are updated.
 
 ## Version 1.1.1
 

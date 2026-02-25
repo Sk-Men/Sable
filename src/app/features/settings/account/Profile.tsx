@@ -48,6 +48,8 @@ import { TimezoneEditor } from './TimezoneEditor';
 import { PronounEditor } from './PronounEditor';
 import { BioEditor } from './BioEditor';
 import { NameColorEditor } from './NameColorEditor';
+import { useSetAtom } from 'jotai';
+import { profilesCacheAtom } from '../../../state/userRoomProfile';
 
 type PronounSet = {
   summary: string;
@@ -488,6 +490,7 @@ function ProfileDisplayName({ profile, userId }: ProfileProps) {
 
 function ProfileExtended({ profile, userId }: ProfileProps) {
   const mx = useMatrixClient();
+  const setGlobalProfiles = useSetAtom(profilesCacheAtom);
 
   const pronouns = (profile.pronouns as PronounSet[]) || [];
 
@@ -495,16 +498,21 @@ function ProfileExtended({ profile, userId }: ProfileProps) {
   // Only renders them, can't edit or set
   const extendedFields = Object.entries(profile.extended || {});
 
-  const handleSaveField = useCallback((key: string, value: any) => {
-    (mx as MatrixClient).setExtendedProfileProperty?.(key, value);
-  }, [mx]);
+  const handleSaveField = useCallback(async (key: string, value: any) => {
+    await (mx).setExtendedProfileProperty?.(key, value);
+    setGlobalProfiles((prev) => {
+      const newCache = { ...prev };
+      delete newCache[userId];
+      return newCache;
+    });
+  }, [mx, userId, setGlobalProfiles]);
 
   return (
     <Box direction="Column" gap="100">
       <Text size="L400">Extended Profile</Text>
       <SequenceCard className={SequenceCardStyle} variant="SurfaceVariant" direction="Column" gap="400">
         <NameColorEditor
-          current={profile.extended?.["moe.sable.app.name_color"]}
+          current={profile.nameColor || profile.extended?.["moe.sable.app.name_color"]}
           onSave={(color) => handleSaveField("moe.sable.app.name_color", color)}
         />
       </SequenceCard>
