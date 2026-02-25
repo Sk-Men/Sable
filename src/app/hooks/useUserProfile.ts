@@ -10,6 +10,7 @@ export type UserProfile = {
   pronouns?: any[];
   timezone?: string;
   bio?: string;
+  bannerUrl?: string;
   extended?: Record<string, any>;
 };
 
@@ -24,6 +25,7 @@ export const useUserProfile = (userId: string, initialProfile?: Partial<UserProf
       pronouns: info['io.fsky.nyx.pronouns'],
       timezone: info['us.cloke.msc4175.tz'] || info['m.tz'],
       bio: info['moe.sable.app.bio'] || info['chat.commet.profile_bio'],
+      bannerUrl: info['chat.commet.profile_banner'],
       extended: {},
     };
 
@@ -32,7 +34,8 @@ export const useUserProfile = (userId: string, initialProfile?: Partial<UserProf
       'displayname',
       'io.fsky.nyx.pronouns',
       'us.cloke.msc4175.tz', 'm.tz',
-      'moe.sable.app.bio', 'chat.commet.profile_bio'
+      'moe.sable.app.bio', 'chat.commet.profile_bio',
+      'chat.commet.profile_banner'
     ];
 
     Object.keys(info).forEach((key) => {

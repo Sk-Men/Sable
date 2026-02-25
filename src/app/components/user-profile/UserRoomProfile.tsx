@@ -35,6 +35,7 @@ import { useSpoilerClickHandler } from '../../hooks/useSpoilerClickHandler';
 const KNOWN_KEYS = [
   'moe.sable.app.bio',
   'chat.commet.profile_bio',
+  'chat.commet.profile_banner',
   'io.fsky.nyx.pronouns',
   'us.cloke.msc4175.tz',
   'm.tz',
@@ -212,6 +213,10 @@ export function UserRoomProfile({ userId, initialProfile }: UserRoomProfileProps
     ? fetchedProfile
     : (initialProfile as UserProfile) || fetchedProfile;
 
+  const bannerHttpUrl = extendedProfile?.bannerUrl
+    ? mxcUrlToHttp(mx, extendedProfile.bannerUrl, useAuthentication)
+    : undefined;
+
   const handleMessage = () => {
     closeUserRoomProfile();
     const directSearchParam: DirectCreateSearchParams = {
@@ -252,6 +257,7 @@ export function UserRoomProfile({ userId, initialProfile }: UserRoomProfileProps
       <UserHero
         userId={userId}
         avatarUrl={avatarUrl}
+        bannerUrl={bannerHttpUrl ?? undefined}
         presence={presence && presence.lastActiveTs !== 0 ? presence : undefined}
       />
       <Box direction="Column" gap="300" style={{ padding: config.space.S400 }}>

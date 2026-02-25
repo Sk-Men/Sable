@@ -1,5 +1,9 @@
 # Sable Client Changelog
 
+## Version 1.1.2
+
+- Profile banners.
+
 ## Version 1.1.1
 
 - More cache fixes and improvements.

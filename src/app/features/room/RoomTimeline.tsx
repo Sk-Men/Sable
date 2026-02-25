@@ -977,12 +977,16 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
         return;
       }
 
+      const rawBanner = (info as any)['chat.commet.profile_banner'];
+      const parsedBanner = typeof rawBanner === 'string' ? rawBanner.replace(/^"|"$/g, '') : undefined;
+
       const normalized: any = {
         avatarUrl: info.avatar_url,
         displayName: info.displayname,
         pronouns: (info as any)['io.fsky.nyx.pronouns'],
         timezone: (info as any)['us.cloke.msc4175.tz'] || (info as any)['m.tz'],
         bio: (info as any)['moe.sable.app.bio'] || (info as any)['chat.commet.profile_bio'],
+        bannerUrl: parsedBanner,
         extended: info,
         _updatedAt: now,
       };
@@ -1081,6 +1085,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
         delete cleanExtended['chat.commet.profile_bio'];
         delete cleanExtended['us.cloke.msc4175.tz'];
         delete cleanExtended['m.tz'];
+        delete cleanExtended['chat.commet.profile_banner'];
         delete cleanExtended['avatar_url'];
         delete cleanExtended['displayname'];
       }

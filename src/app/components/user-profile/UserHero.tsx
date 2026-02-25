@@ -28,10 +28,15 @@ import { useNickname } from '../../hooks/useNickname';
 type UserHeroProps = {
   userId: string;
   avatarUrl?: string;
+  bannerUrl?: string;
   presence?: UserPresence;
 };
-export function UserHero({ userId, avatarUrl, presence }: UserHeroProps) {
+export function UserHero({ userId, avatarUrl, bannerUrl, presence }: UserHeroProps) {
   const [viewAvatar, setViewAvatar] = useState<string>();
+
+  const coverUrl = bannerUrl || avatarUrl;
+  const isFallbackCover = !bannerUrl && !!avatarUrl;
+
 
   return (
     <Box direction="Column" className={css.UserHero}>
@@ -39,14 +44,18 @@ export function UserHero({ userId, avatarUrl, presence }: UserHeroProps) {
         className={css.UserHeroCoverContainer}
         style={{
           backgroundColor: colorMXID(userId),
-          filter: avatarUrl ? undefined : 'brightness(50%)',
-          height: '80px',
-          overflow: 'hidden',
-          width: '100%'
         }}
       >
-        {avatarUrl && (
-          <img className={css.UserHeroCover} src={avatarUrl} alt={userId} draggable="false" />
+        {coverUrl && (
+          <img
+            className={classNames(
+              css.UserHeroCover,
+              isFallbackCover && css.UserHeroCoverFallback
+            )}
+            src={coverUrl}
+            alt={`${userId} cover`}
+            draggable="false"
+          />
         )}
       </div>
       <div className={css.UserHeroAvatarContainer}>
