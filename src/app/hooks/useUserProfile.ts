@@ -56,6 +56,7 @@ export const useUserProfile = (userId: string, initialProfile?: Partial<UserProf
       pronouns: cached?.pronouns ?? initialProfile?.pronouns,
       timezone: cached?.timezone ?? initialProfile?.timezone,
       bio: cached?.bio ?? initialProfile?.bio,
+      bannerUrl: cached?.bannerUrl ?? initialProfile?.bannerUrl,
       extended: cached?.extended ?? initialProfile?.extended,
     };
   });

@@ -24,6 +24,7 @@ import { stopPropagation } from '../../utils/keyboard';
 import { useRoom } from '../../hooks/useRoom';
 import { useSableCosmetics } from '../../hooks/useSableCosmetics';
 import { useNickname } from '../../hooks/useNickname';
+import { useBlobCache } from '../../hooks/useBlobCache';
 
 type UserHeroProps = {
   userId: string;
@@ -34,9 +35,11 @@ type UserHeroProps = {
 export function UserHero({ userId, avatarUrl, bannerUrl, presence }: UserHeroProps) {
   const [viewAvatar, setViewAvatar] = useState<string>();
 
-  const coverUrl = bannerUrl || avatarUrl;
-  const isFallbackCover = !bannerUrl && !!avatarUrl;
+  const cachedBannerUrl = useBlobCache(bannerUrl);
+  const cachedAvatarUrl = useBlobCache(avatarUrl);
 
+  const coverUrl = cachedBannerUrl || cachedAvatarUrl;
+  const isFallbackCover = !cachedBannerUrl && !!cachedAvatarUrl;
 
   return (
     <Box direction="Column" className={css.UserHero}>

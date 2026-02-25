@@ -213,8 +213,12 @@ export function UserRoomProfile({ userId, initialProfile }: UserRoomProfileProps
     ? fetchedProfile
     : (initialProfile as UserProfile) || fetchedProfile;
 
-  const bannerHttpUrl = extendedProfile?.bannerUrl
-    ? mxcUrlToHttp(mx, extendedProfile.bannerUrl, useAuthentication)
+  const parsedBanner = typeof extendedProfile.bannerUrl === 'string'
+    ? extendedProfile.bannerUrl.replace(/^"|"$/g, '')
+    : undefined;
+
+  const bannerHttpUrl = parsedBanner
+    ? mxcUrlToHttp(mx, parsedBanner, useAuthentication) ?? undefined
     : undefined;
 
   const handleMessage = () => {

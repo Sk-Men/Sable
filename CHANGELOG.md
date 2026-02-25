@@ -2,7 +2,7 @@
 
 ## Version 1.1.2
 
-- Profile banners.
+- Profile banners. Cached after first load.
 
 ## Version 1.1.1
 
