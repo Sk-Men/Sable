@@ -933,62 +933,70 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
     }
   }, [scrollToElement, editId]);
 
+  const fetchingProfilesRef = useRef<Set<string>>(new Set());
+
   useEffect(() => {
     const visibleIndices = getItems();
     const sendersToFetch = new Set<string>();
 
+    const now = Date.now();
+    const PROFILE_TTL = 10 * 60 * 1000;
+
     visibleIndices.forEach((index) => {
       const [eventTimeline, baseIndex] = getTimelineAndBaseIndex(timeline.linkedTimelines, index);
-
       if (!eventTimeline) return;
 
       const mEvent = getTimelineEvent(eventTimeline, getTimelineRelativeIndex(index, baseIndex));
       const senderId = mEvent?.getSender();
+      if (!senderId) return;
 
-      if (senderId && !profileCache[senderId] && !globalProfiles[senderId]) {
+      const cached = profileCache[senderId] || globalProfiles[senderId];
+      const isStale = !cached || (now - (cached._updatedAt || 0) > PROFILE_TTL);
+
+      if (!isStale) return;
+
+      if (!fetchingProfilesRef.current.has(senderId)) {
         sendersToFetch.add(senderId);
       }
     });
 
-    sendersToFetch.forEach(async (userId) => {
-      setProfileCache(prev => ({ ...prev, [userId]: { loading: true } }));
+    if (sendersToFetch.size === 0) return;
 
+    sendersToFetch.forEach(async (userId) => {
+      fetchingProfilesRef.current.add(userId);
       const [err, info] = await to(mx.getProfileInfo(userId));
 
       if (err || !info) {
-        setProfileCache(prev => {
-          const newState = { ...prev };
-          delete newState[userId];
-          return newState;
-        });
+        fetchingProfilesRef.current.delete(userId);
+
+        if ((err as any)?.errcode === 'M_NOT_FOUND') {
+          const nullProfile: any = { _notFound: true, _updatedAt: now };
+          setProfileCache((prev) => ({ ...prev, [userId]: nullProfile }));
+          setGlobalProfiles((prev) => ({ ...prev, [userId]: nullProfile }));
+        }
         return;
       }
 
-      const normalized: UserProfile = {
+      const normalized: any = {
         avatarUrl: info.avatar_url,
         displayName: info.displayname,
         pronouns: (info as any)['io.fsky.nyx.pronouns'],
         timezone: (info as any)['us.cloke.msc4175.tz'] || (info as any)['m.tz'],
         bio: (info as any)['moe.sable.app.bio'] || (info as any)['chat.commet.profile_bio'],
         extended: info,
+        _updatedAt: now,
       };
 
-      setProfileCache((prev) => ({
-        ...prev,
-        [userId]: normalized,
-      }));
-
-      setGlobalProfiles((prev) => ({
-        ...prev,
-        [userId]: normalized,
-      }));
+      setProfileCache((prev) => ({ ...prev, [userId]: normalized }));
+      setGlobalProfiles((prev) => ({ ...prev, [userId]: normalized }));
     });
-  }, [timeline.range, timeline.linkedTimelines, mx, profileCache, getItems, globalProfiles, setGlobalProfiles]);
 
+  }, [timeline.range, timeline.linkedTimelines, mx, getItems, setGlobalProfiles, globalProfiles, profileCache]);
 
   useEffect(() => {
     const onMemberEvent = (event: MatrixEvent) => {
       if (event.getType() !== StateEvent.RoomMember) return;
+      if (event.getRoomId() !== room.roomId) return;
 
       const userId = event.getStateKey();
       if (!userId) return;
@@ -998,28 +1006,21 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
       setGlobalProfiles((prev) => {
         const existing = prev[userId];
 
-        const newPronouns = content['io.fsky.nyx.pronouns'];
-        const newBio = content['moe.sable.app.bio'] || content['chat.commet.profile_bio'];
-        const newTz = content['us.cloke.msc4175.tz'] || content['m.tz'];
+        const newAvatar = content.avatar_url;
+        const newName = content.displayname;
 
         if (
           existing &&
-          existing.pronouns === newPronouns &&
-          existing.bio === newBio &&
-          existing.timezone === newTz &&
-          existing.avatarUrl === content.avatar_url &&
-          existing.displayName === content.displayname
+          existing.avatarUrl === newAvatar &&
+          existing.displayName === newName
         ) {
           return prev;
         }
 
-        const updatedProfile: UserProfile = {
-          avatarUrl: content.avatar_url,
-          displayName: content.displayname,
-          pronouns: newPronouns,
-          timezone: newTz,
-          bio: newBio,
-          extended: content,
+        const updatedProfile: any = {
+          ...(existing || {}),
+          avatarUrl: newAvatar,
+          displayName: newName,
         };
 
         return {
@@ -1029,11 +1030,11 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
       });
     };
 
-    room.on(RoomStateEvent.Members, onMemberEvent);
+    mx.on(RoomStateEvent.Members, onMemberEvent);
     return () => {
-      room.removeListener(RoomStateEvent.Members, onMemberEvent);
+      mx.removeListener(RoomStateEvent.Members, onMemberEvent);
     };
-  }, [room, setGlobalProfiles]);
+  }, [mx, room.roomId, setGlobalProfiles]);
 
   const handleJumpToLatest = () => {
     if (eventId) {
