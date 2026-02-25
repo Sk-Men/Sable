@@ -9,6 +9,7 @@ _skipped a number since lots of updates :3_
 - Even more refractoring to improve timeline & user profile speeds and caches and fix that stupid bug.
   - probably introduced more bugs tbh, but things should be faster and less intense on resources?
 - Pinned messages actually jump to the damn pins instead of somewhere vaguely nearby half the time.
+  - that is... if they've been seen before. otherwise it just gives up sadly.
 - Mobile context menu is opened by double tapping on a message instead of holding.
 
 ## Version 1.1.1
