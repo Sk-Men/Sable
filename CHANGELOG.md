@@ -1,10 +1,11 @@
 # Sable Client Changelog
 
-## Version 1.1.0 - in dev
+## Version 1.1.0
 
-- Global profile cache & automatic cache clearing on member update events.
+- Global profile cache & automatic cache clearing on member update events along with other improvements.
+- Fix unexpected bio field formats.
 - Widgets support.
-- (potentially) fixed rare crash when ~~changing rooms~~ existing
+- (potentially) fixed rare crash when ~~changing rooms~~ existing. please...
 
 ## Version 1.0.1
 

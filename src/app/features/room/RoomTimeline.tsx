@@ -985,6 +985,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
     });
   }, [timeline.range, timeline.linkedTimelines, mx, profileCache, getItems, globalProfiles, setGlobalProfiles]);
 
+
   useEffect(() => {
     const onMemberEvent = (event: MatrixEvent) => {
       if (event.getType() !== StateEvent.RoomMember) return;
@@ -992,18 +993,47 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
       const userId = event.getStateKey();
       if (!userId) return;
 
+      const content = event.getContent();
+
       setGlobalProfiles((prev) => {
-        const next = { ...prev };
-        delete next[userId];
-        return next;
+        const existing = prev[userId];
+
+        const newPronouns = content['io.fsky.nyx.pronouns'];
+        const newBio = content['moe.sable.app.bio'] || content['chat.commet.profile_bio'];
+        const newTz = content['us.cloke.msc4175.tz'] || content['m.tz'];
+
+        if (
+          existing &&
+          existing.pronouns === newPronouns &&
+          existing.bio === newBio &&
+          existing.timezone === newTz &&
+          existing.avatarUrl === content.avatar_url &&
+          existing.displayName === content.displayname
+        ) {
+          return prev;
+        }
+
+        const updatedProfile: UserProfile = {
+          avatarUrl: content.avatar_url,
+          displayName: content.displayname,
+          pronouns: newPronouns,
+          timezone: newTz,
+          bio: newBio,
+          extended: content,
+        };
+
+        return {
+          ...prev,
+          [userId]: updatedProfile,
+        };
       });
     };
 
-    mx.on(RoomStateEvent.Members, onMemberEvent);
+    room.on(RoomStateEvent.Members, onMemberEvent);
     return () => {
-      mx.removeListener(RoomStateEvent.Members, onMemberEvent);
+      room.removeListener(RoomStateEvent.Members, onMemberEvent);
     };
-  }, [mx, setGlobalProfiles]);
+  }, [room, setGlobalProfiles]);
 
   const handleJumpToLatest = () => {
     if (eventId) {
