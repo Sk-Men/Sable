@@ -2,7 +2,7 @@
 
 ## Version 1.1.2
 
-- Profile banners. Cached after first load.
+- Profile banners. Support's Commet's format.
 
 ## Version 1.1.1
 
