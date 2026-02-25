@@ -1,5 +1,10 @@
 # Sable Client Changelog
 
+## Version 1.1.2
+
+- Profile banners. Support's Commet's format.
+- Global name colors. Can be disabled in settings.
+
 ## Version 1.1.1
 
 - More cache fixes and improvements.

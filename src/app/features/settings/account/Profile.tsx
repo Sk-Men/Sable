@@ -47,6 +47,7 @@ import { useCapabilities } from '../../../hooks/useCapabilities';
 import { TimezoneEditor } from './TimezoneEditor';
 import { PronounEditor } from './PronounEditor';
 import { BioEditor } from './BioEditor';
+import { NameColorEditor } from './NameColorEditor';
 
 type PronounSet = {
   summary: string;
@@ -328,6 +329,12 @@ function ProfileExtended({ profile, userId }: ProfileProps) {
   return (
     <Box direction="Column" gap="100">
       <Text size="L400">Extended Profile</Text>
+      <SequenceCard className={SequenceCardStyle} variant="SurfaceVariant" direction="Column" gap="400">
+        <NameColorEditor
+          current={profile.extended?.["moe.sable.app.name_color"]}
+          onSave={(color) => handleSaveField("moe.sable.app.name_color", color)}
+        />
+      </SequenceCard>
       <SequenceCard className={SequenceCardStyle} variant="SurfaceVariant" direction="Column" gap="400">
         <PronounEditor
           current={pronouns}

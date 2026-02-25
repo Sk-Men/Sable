@@ -1081,6 +1081,8 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
         delete cleanExtended['chat.commet.profile_bio'];
         delete cleanExtended['us.cloke.msc4175.tz'];
         delete cleanExtended['m.tz'];
+        delete cleanExtended['chat.commet.profile_banner'];
+        delete cleanExtended['moe.sable.app.name_color'];
         delete cleanExtended['avatar_url'];
         delete cleanExtended['displayname'];
       }

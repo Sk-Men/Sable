@@ -18,6 +18,7 @@ export const UserHeroCoverContainer = style({
   height: toRem(96),
   overflow: 'hidden',
 });
+
 export const UserHeroCover = style({
   height: '100%',
   width: '100%',

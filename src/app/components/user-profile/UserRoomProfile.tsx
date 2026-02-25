@@ -38,6 +38,7 @@ const KNOWN_KEYS = [
   'io.fsky.nyx.pronouns',
   'us.cloke.msc4175.tz',
   'm.tz',
+  'moe.sable.app.name_color',
   'avatar_url',
   'displayname'
 ];

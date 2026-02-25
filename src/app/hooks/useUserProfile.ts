@@ -10,39 +10,14 @@ export type UserProfile = {
   pronouns?: any[];
   timezone?: string;
   bio?: string;
+  bannerUrl?: string;
+  nameColor?: string;
   extended?: Record<string, any>;
 };
 
 export const useUserProfile = (userId: string, initialProfile?: Partial<UserProfile>): UserProfile => {
   const mx = useMatrixClient();
   const [globalProfiles, setGlobalProfiles] = useAtom(profilesCacheAtom);
-
-  const normalizeInfo = useCallback((info: any): UserProfile => {
-    const normalized: UserProfile = {
-      avatarUrl: info.avatar_url,
-      displayName: info.displayname,
-      pronouns: info['io.fsky.nyx.pronouns'],
-      timezone: info['us.cloke.msc4175.tz'] || info['m.tz'],
-      bio: info['moe.sable.app.bio'] || info['chat.commet.profile_bio'],
-      extended: {},
-    };
-
-    const knownKeys = [
-      'avatar_url',
-      'displayname',
-      'io.fsky.nyx.pronouns',
-      'us.cloke.msc4175.tz', 'm.tz',
-      'moe.sable.app.bio', 'chat.commet.profile_bio'
-    ];
-
-    Object.keys(info).forEach((key) => {
-      if (!knownKeys.includes(key)) {
-        normalized.extended![key] = info[key];
-      }
-    });
-
-    return normalized;
-  }, []);
 
   const [profile, setProfile] = useState<UserProfile>(() => {
     const user = mx.getUser(userId);
@@ -53,9 +28,42 @@ export const useUserProfile = (userId: string, initialProfile?: Partial<UserProf
       pronouns: cached?.pronouns ?? initialProfile?.pronouns,
       timezone: cached?.timezone ?? initialProfile?.timezone,
       bio: cached?.bio ?? initialProfile?.bio,
+      bannerUrl: cached?.bannerUrl ?? initialProfile?.bannerUrl,
+      nameColor: cached?.nameColor ?? initialProfile?.nameColor,
       extended: cached?.extended ?? initialProfile?.extended,
     };
   });
+
+  const normalizeInfo = useCallback((info: any): UserProfile => {
+    const normalized: UserProfile = {
+      avatarUrl: info.avatar_url,
+      displayName: info.displayname,
+      pronouns: info['io.fsky.nyx.pronouns'],
+      timezone: info['us.cloke.msc4175.tz'] || info['m.tz'],
+      bio: info['moe.sable.app.bio'] || info['chat.commet.profile_bio'],
+      bannerUrl: info['chat.commet.profile_banner'],
+      nameColor: info['moe.sable.app.name_color'],
+      extended: { ...(profile?.extended || {}) },
+    };
+
+    const knownKeys = [
+      'avatar_url',
+      'displayname',
+      'io.fsky.nyx.pronouns',
+      'us.cloke.msc4175.tz', 'm.tz',
+      'moe.sable.app.bio', 'chat.commet.profile_bio',
+      'moe.sable.app.name_color',
+      'chat.commet.profile_banner'
+    ];
+
+    Object.keys(info).forEach((key) => {
+      if (!knownKeys.includes(key)) {
+        normalized.extended![key] = info[key];
+      }
+    });
+
+    return normalized;
+  }, [profile?.extended]);
 
   useEffect(() => {
     const user = mx.getUser(userId);

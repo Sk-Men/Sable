@@ -153,6 +153,7 @@ function Privacy() {
 function IdentityCosmetics() {
     const [legacyUsernameColor, setLegacyUsernameColor] = useSetting(settingsAtom, 'legacyUsernameColor');
     const [showPronouns, setShowPronouns] = useSetting(settingsAtom, 'showPronouns');
+    const [renderGlobalColors, setRenderGlobalColors] = useSetting(settingsAtom, 'renderGlobalNameColors');
 
     return (
         <Box direction="Column" gap="100">
@@ -166,9 +167,16 @@ function IdentityCosmetics() {
             </SequenceCard>
             <SequenceCard className={SequenceCardStyle} variant="SurfaceVariant" direction="Column">
                 <SettingTile
-                    title="Show Pronouns"
+                    title="Show Pronoun Pills"
                     description="Display user pronouns in the message timeline."
                     after={<Switch variant="Primary" value={showPronouns} onChange={setShowPronouns} />}
+                />
+            </SequenceCard>
+            <SequenceCard className={SequenceCardStyle} variant="SurfaceVariant" direction="Column">
+                <SettingTile
+                    title="Render Global Username Colors"
+                    description="Display the username colors anyone can set in their account settings."
+                    after={<Switch variant="Primary" value={renderGlobalColors} onChange={setRenderGlobalColors} />}
                 />
             </SequenceCard>
         </Box>
