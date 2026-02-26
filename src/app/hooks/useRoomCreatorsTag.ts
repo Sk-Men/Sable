@@ -1,4 +1,4 @@
-import { MemberPowerTag } from '../../types/matrix/room';
+import { MemberPowerTag } from '$types/matrix/room';
 
 const DEFAULT_TAG: MemberPowerTag = {
   name: 'Founder',

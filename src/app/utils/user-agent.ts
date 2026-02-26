@@ -1,13 +1,16 @@
 import { UAParser } from 'ua-parser-js';
 
-export const ua = () => UAParser(window.navigator.userAgent);
+const result = new UAParser(window.navigator.userAgent).getResult();
 
-export const isMacOS = () => ua().os.name === 'Mac OS';
-
-export const mobileOrTablet = (): boolean => {
-  const userAgent = ua();
-  const { os, device } = userAgent;
+const isMobileOrTablet = (() => {
+  const { os, device } = result;
   if (device.type === 'mobile' || device.type === 'tablet') return true;
   if (os.name === 'Android' || os.name === 'iOS') return true;
   return false;
-};
+})();
+
+const isMac = result.os.name === 'Mac OS';
+
+export const ua = () => result;
+export const isMacOS = () => isMac;
+export const mobileOrTablet = () => isMobileOrTablet;

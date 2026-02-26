@@ -7,6 +7,7 @@ import {
   useSelected,
   useSlate,
 } from 'slate-react';
+import { useAtomValue } from 'jotai';
 
 import * as css from '$styles/CustomHtml.css';
 import { CommandElement, EmoticonElement, LinkElement, MentionElement } from './slate';
@@ -15,6 +16,7 @@ import { getBeginCommand } from './utils';
 import { BlockType } from './types';
 import { mxcUrlToHttp } from '$appUtils/matrix';
 import { useMediaAuthentication } from '$hooks/useMediaAuthentication';
+import { nicknamesAtom } from '$state/nicknames';
 
 // Put this at the start and end of an inline component to work around this Chromium bug:
 // https://bugs.chromium.org/p/chromium/issues/detail?id=1249405
@@ -33,6 +35,10 @@ function RenderMentionElement({
 }: { element: MentionElement } & RenderElementProps) {
   const selected = useSelected();
   const focused = useFocused();
+  const nicknames = useAtomValue(nicknamesAtom);
+
+  const nickname = nicknames[element.id];
+  const displayName = nickname ? `@${nickname}` : element.name;
 
   return (
     <span
@@ -43,7 +49,7 @@ function RenderMentionElement({
       })}
       contentEditable={false}
     >
-      {element.name}
+      {displayName}
       {children}
     </span>
   );
@@ -122,7 +128,11 @@ export function RenderElement({ attributes, element, children }: RenderElementPr
   switch (element.type) {
     case BlockType.Paragraph:
       return (
-        <Text {...attributes} className={css.Paragraph}>
+        <Text
+          {...attributes}
+          className={css.Paragraph}
+          style={{ fontSize: '1rem', lineHeight: 'inherit' }}
+        >
           {children}
         </Text>
       );
@@ -218,7 +228,11 @@ export function RenderElement({ attributes, element, children }: RenderElementPr
       );
     default:
       return (
-        <Text className={css.Paragraph} {...attributes}>
+        <Text
+          className={css.Paragraph}
+          {...attributes}
+          style={{ fontSize: '1rem', lineHeight: 'inherit' }}
+        >
           {children}
         </Text>
       );

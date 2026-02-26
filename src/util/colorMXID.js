@@ -4,7 +4,7 @@ function hashCode(str) {
   let hash = 0;
   let i;
   let chr;
-  if (str.length === 0) {
+  if (str == undefined || str.length === 0) {
     return hash;
   }
   for (i = 0; i < str.length; i += 1) {
@@ -23,5 +23,11 @@ export function cssColorMXID(userId) {
 }
 
 export default function colorMXID(userId) {
-  return `var(${cssColorMXID(userId)})`;
+  const hash = hashCode(userId);
+
+  const h = hash % 360;
+  const s = 65;
+  const l = 80;
+
+  return `hsl(${h}, ${s}%, ${l}%)`;
 }

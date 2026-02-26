@@ -13,7 +13,7 @@ import {
 } from 'folds';
 import classNames from 'classnames';
 import { Room } from '$types/matrix-sdk';
-import { type Relations } from 'matrix-js-sdk/lib/models/relations';
+import { type Relations } from '$types/matrix-sdk';
 import FocusTrap from 'focus-trap-react';
 import { useMatrixClient } from '$hooks/useMatrixClient';
 import { factoryEventSentBy } from '$appUtils/matrix';

@@ -46,7 +46,7 @@ import { factoryRoomIdByAtoZ } from '$appUtils/sort';
 import { SearchItemStrGetter, useAsyncSearch, UseAsyncSearchOptions } from '$hooks/useAsyncSearch';
 import { highlightText, makeHighlightRegex } from '$plugins/react-custom-html-parser';
 import { AsyncStatus, useAsyncCallback } from '$hooks/useAsyncCallback';
-import { StateEvent } from '../../../types/matrix/room';
+import { StateEvent } from '$types/matrix/room';
 import { getViaServers } from '$plugins/via-servers';
 import { rateLimitedActions } from '$appUtils/matrix';
 import { useAlive } from '$hooks/useAlive';

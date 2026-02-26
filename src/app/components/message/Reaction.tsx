@@ -6,6 +6,8 @@ import * as css from './Reaction.css';
 import { getHexcodeForEmoji, getShortcodeFor } from '$plugins/emoji';
 import { getMemberDisplayName } from '$appUtils/room';
 import { eventWithShortcode, getMxIdLocalPart, mxcUrlToHttp } from '$appUtils/matrix';
+import { useAtomValue } from 'jotai';
+import { nicknamesAtom } from '$state/nicknames';
 
 export const Reaction = as<
   'button',
@@ -56,9 +58,10 @@ export function ReactionTooltipMsg({ room, reaction, events }: ReactionTooltipMs
     shortCodeEvt?.getContent().shortcode ??
     getShortcodeFor(getHexcodeForEmoji(reaction)) ??
     reaction;
+  const nicknames = useAtomValue(nicknamesAtom);
   const names = events.map(
     (ev: MatrixEvent) =>
-      getMemberDisplayName(room, ev.getSender() ?? 'Unknown') ??
+      getMemberDisplayName(room, ev.getSender() ?? 'Unknown', nicknames) ??
       getMxIdLocalPart(ev.getSender() ?? 'Unknown') ??
       'Unknown'
   );

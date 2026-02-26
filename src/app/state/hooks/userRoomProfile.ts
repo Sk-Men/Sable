@@ -2,10 +2,10 @@ import { useCallback } from 'react';
 import { useAtomValue, useSetAtom } from 'jotai';
 import { Position, RectCords } from 'folds';
 import { userRoomProfileAtom, UserRoomProfileState } from '../userRoomProfile';
+import { UserProfile } from '$hooks/useUserProfile';
 
 export const useUserRoomProfileState = (): UserRoomProfileState | undefined => {
   const data = useAtomValue(userRoomProfileAtom);
-
   return data;
 };
 
@@ -25,14 +25,23 @@ type OpenCallback = (
   spaceId: string | undefined,
   userId: string,
   cords: RectCords,
-  position?: Position
+  position?: Position,
+  initialProfile?: Partial<UserProfile>
 ) => void;
+
 export const useOpenUserRoomProfile = (): OpenCallback => {
   const setUserRoomProfile = useSetAtom(userRoomProfileAtom);
 
   const open: OpenCallback = useCallback(
-    (roomId, spaceId, userId, cords, position) => {
-      setUserRoomProfile({ roomId, spaceId, userId, cords, position });
+    (roomId, spaceId, userId, cords, position, initialProfile) => {
+      setUserRoomProfile({
+        roomId,
+        spaceId,
+        userId,
+        cords,
+        position,
+        initialProfile,
+      });
     },
     [setUserRoomProfile]
   );

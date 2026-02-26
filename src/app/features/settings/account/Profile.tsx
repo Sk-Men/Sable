@@ -25,6 +25,7 @@ import {
   Spinner,
 } from 'folds';
 import FocusTrap from 'focus-trap-react';
+import { useSetAtom } from 'jotai';
 import { SequenceCard } from '$components/sequence-card';
 import { SequenceCardStyle } from '../styles.css';
 import { SettingTile } from '$components/setting-tile';
@@ -43,6 +44,16 @@ import { ModalWide } from '$styles/Modal.css';
 import { createUploadAtom, UploadSuccess } from '$state/upload';
 import { CompactUploadCardRenderer } from '$components/upload-card';
 import { useCapabilities } from '$hooks/useCapabilities';
+import { TimezoneEditor } from './TimezoneEditor';
+import { PronounEditor } from './PronounEditor';
+import { BioEditor } from './BioEditor';
+import { NameColorEditor } from './NameColorEditor';
+import { profilesCacheAtom } from '$state/userRoomProfile';
+
+type PronounSet = {
+  summary: string;
+  language?: string;
+};
 
 type ProfileProps = {
   profile: UserProfile;
@@ -205,6 +216,181 @@ function ProfileAvatar({ profile, userId }: ProfileProps) {
   );
 }
 
+function ProfileBanner({ profile, userId }: ProfileProps) {
+  const mx = useMatrixClient();
+  const useAuthentication = useMediaAuthentication();
+  const [alertRemove, setAlertRemove] = useState(false);
+
+  const [stagedUrl, setStagedUrl] = useState<string>();
+  const [isRemoving, setIsRemoving] = useState(false);
+
+  const bannerUrl = profile.bannerUrl
+    ? (mxcUrlToHttp(mx, profile.bannerUrl, useAuthentication) ?? undefined)
+    : undefined;
+
+  useEffect(() => {
+    if (bannerUrl) {
+      setStagedUrl(undefined);
+    }
+  }, [bannerUrl]);
+
+  const [imageFile, setImageFile] = useState<File>();
+  const imageFileURL = useObjectURL(imageFile);
+
+  const uploadAtom = useMemo(() => {
+    if (imageFile) return createUploadAtom(imageFile);
+    return undefined;
+  }, [imageFile]);
+
+  const pickFile = useFilePicker(setImageFile, false);
+
+  const handlePick = useCallback(() => {
+    setIsRemoving(false);
+    setStagedUrl(undefined);
+    pickFile('image/*');
+  }, [pickFile]);
+
+  const handleRemoveUpload = useCallback(() => {
+    setImageFile(undefined);
+  }, []);
+
+  const handleUploaded = useCallback(
+    (upload: UploadSuccess) => {
+      const { mxc } = upload;
+
+      if (imageFileURL) setStagedUrl(imageFileURL);
+
+      mx.setExtendedProfileProperty?.('chat.commet.profile_banner', mxc);
+      setImageFile(undefined);
+    },
+    [mx, imageFileURL]
+  );
+
+  const handleRemoveBanner = async () => {
+    setIsRemoving(true);
+    setStagedUrl(undefined);
+    setImageFile(undefined);
+
+    await mx.setExtendedProfileProperty?.('chat.commet.profile_banner', null);
+
+    setAlertRemove(false);
+  };
+
+  const previewUrl = isRemoving ? undefined : imageFileURL || stagedUrl || bannerUrl;
+
+  return (
+    <SettingTile
+      title={
+        <Text as="span" size="L400">
+          Profile Banner
+        </Text>
+      }
+    >
+      <Box direction="Column" gap="300" grow="Yes">
+        <Box
+          style={{
+            height: '100px',
+            width: '100%',
+            borderRadius: config.radii.R400,
+            overflow: 'hidden',
+            backgroundColor: 'var(--sable-surface-container)',
+            position: 'relative',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          {previewUrl ? (
+            <img
+              src={previewUrl}
+              key={previewUrl}
+              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+              alt="Banner Preview"
+            />
+          ) : (
+            <Box justifyContent="Center" alignItems="Center">
+              <Text priority="300" size="T200">
+                No Banner Set
+              </Text>
+            </Box>
+          )}
+        </Box>
+
+        {uploadAtom ? (
+          <Box gap="200" direction="Column">
+            <CompactUploadCardRenderer
+              uploadAtom={uploadAtom}
+              onRemove={handleRemoveUpload}
+              onComplete={handleUploaded}
+            />
+          </Box>
+        ) : (
+          <Box gap="200">
+            <Button
+              onClick={handlePick}
+              size="300"
+              variant="Secondary"
+              fill="Soft"
+              outlined
+              radii="300"
+            >
+              <Text size="B300">{bannerUrl ? 'Change Banner' : 'Upload Banner'}</Text>
+            </Button>
+            {bannerUrl && (
+              <Button
+                size="300"
+                variant="Critical"
+                fill="None"
+                radii="300"
+                onClick={() => setAlertRemove(true)}
+              >
+                <Text size="B300">Remove</Text>
+              </Button>
+            )}
+          </Box>
+        )}
+      </Box>
+
+      <Overlay open={alertRemove} backdrop={<OverlayBackdrop />}>
+        <OverlayCenter>
+          <FocusTrap
+            focusTrapOptions={{
+              initialFocus: false,
+              onDeactivate: () => setAlertRemove(false),
+              clickOutsideDeactivates: true,
+              escapeDeactivates: stopPropagation,
+            }}
+          >
+            <Dialog variant="Surface">
+              <Header
+                style={{
+                  padding: `0 ${config.space.S200} 0 ${config.space.S400}`,
+                  borderBottomWidth: config.borderWidth.B300,
+                }}
+                variant="Surface"
+                size="500"
+              >
+                <Box grow="Yes">
+                  <Text size="H4">Remove Banner</Text>
+                </Box>
+                <IconButton size="300" onClick={() => setAlertRemove(false)} radii="300">
+                  <Icon src={Icons.Cross} />
+                </IconButton>
+              </Header>
+              <Box style={{ padding: config.space.S400 }} direction="Column" gap="400">
+                <Text priority="400">Are you sure you want to remove profile banner?</Text>
+                <Button variant="Critical" onClick={handleRemoveBanner}>
+                  <Text size="B400">Remove</Text>
+                </Button>
+              </Box>
+            </Dialog>
+          </FocusTrap>
+        </OverlayCenter>
+      </Overlay>
+    </SettingTile>
+  );
+}
+
 function ProfileDisplayName({ profile, userId }: ProfileProps) {
   const mx = useMatrixClient();
   const capabilities = useCapabilities();
@@ -303,23 +489,156 @@ function ProfileDisplayName({ profile, userId }: ProfileProps) {
   );
 }
 
-export function Profile() {
+function ProfileExtended({ profile, userId }: ProfileProps) {
   const mx = useMatrixClient();
-  const userId = mx.getUserId()!;
-  const profile = useUserProfile(userId);
+  const setGlobalProfiles = useSetAtom(profilesCacheAtom);
+
+  const pronouns = (profile.pronouns as PronounSet[]) || [];
+
+  // Unknown fields / unimplemented non-matrix-spec fields
+  // Only renders them, can't edit or set
+  const extendedFields = Object.entries(profile.extended || {});
+
+  const handleSaveField = useCallback(
+    async (key: string, value: any) => {
+      await mx.setExtendedProfileProperty?.(key, value);
+      setGlobalProfiles((prev) => {
+        const newCache = { ...prev };
+        delete newCache[userId];
+        return newCache;
+      });
+    },
+    [mx, userId, setGlobalProfiles]
+  );
 
   return (
     <Box direction="Column" gap="100">
-      <Text size="L400">Profile</Text>
+      <Text size="L400">Extended Profile</Text>
       <SequenceCard
         className={SequenceCardStyle}
         variant="SurfaceVariant"
         direction="Column"
         gap="400"
       >
-        <ProfileAvatar userId={userId} profile={profile} />
-        <ProfileDisplayName userId={userId} profile={profile} />
+        <NameColorEditor
+          current={profile.nameColor || profile.extended?.['moe.sable.app.name_color']}
+          onSave={(color) => handleSaveField('moe.sable.app.name_color', color)}
+        />
       </SequenceCard>
+      <SequenceCard
+        className={SequenceCardStyle}
+        variant="SurfaceVariant"
+        direction="Column"
+        gap="400"
+      >
+        <PronounEditor
+          current={pronouns}
+          onSave={(p) => handleSaveField('io.fsky.nyx.pronouns', p)}
+        />
+      </SequenceCard>
+      <SequenceCard
+        className={SequenceCardStyle}
+        variant="SurfaceVariant"
+        direction="Column"
+        gap="400"
+      >
+        <TimezoneEditor
+          current={profile.timezone}
+          onSave={(tz) => {
+            handleSaveField('us.cloke.msc4175.tz', tz);
+            handleSaveField('m.tz', tz);
+          }}
+        />
+      </SequenceCard>
+      <SequenceCard
+        className={SequenceCardStyle}
+        variant="SurfaceVariant"
+        direction="Column"
+        gap="400"
+      >
+        <BioEditor
+          value={
+            profile.extended?.['moe.sable.app.bio'] ||
+            profile.extended?.['chat.commet.profile_bio'] ||
+            profile.bio
+          }
+          onSave={(htmlBio) => {
+            handleSaveField('moe.sable.app.bio', htmlBio);
+
+            const cleanedHtml = htmlBio.replace(/<br\/><\/blockquote>/g, '</blockquote>');
+            handleSaveField('chat.commet.profile_bio', {
+              format: 'org.matrix.custom.html',
+              formatted_body: cleanedHtml,
+            });
+          }}
+        />
+      </SequenceCard>
+
+      {extendedFields.length > 0 &&
+        extendedFields.map(([key, value]) => {
+          if (
+            typeof value !== 'string' &&
+            typeof value !== 'number' &&
+            typeof value !== 'boolean'
+          ) {
+            return null;
+          }
+
+          const strVal = String(value);
+          if (
+            (typeof value !== 'string' &&
+              typeof value !== 'number' &&
+              typeof value !== 'boolean') ||
+            strVal.length > 256
+          ) {
+            return null;
+          }
+
+          return (
+            <SequenceCard
+              className={SequenceCardStyle}
+              variant="SurfaceVariant"
+              direction="Column"
+              gap="400"
+            >
+              <SettingTile
+                key={key}
+                title={key.split('.').pop() || key}
+                description={key}
+                after={
+                  <Text size="T300" truncate>
+                    {strVal}
+                  </Text>
+                }
+              />
+            </SequenceCard>
+          );
+        })}
+    </Box>
+  );
+}
+
+export function Profile() {
+  const mx = useMatrixClient();
+  const userId = mx.getUserId()!;
+  const profile = useUserProfile(userId);
+
+  return (
+    <Box direction="Column" gap="700">
+      <Box direction="Column" gap="100">
+        <Text size="L400">Profile</Text>
+        <SequenceCard
+          className={SequenceCardStyle}
+          variant="SurfaceVariant"
+          direction="Column"
+          gap="400"
+        >
+          <ProfileBanner userId={userId} profile={profile} />
+          <ProfileAvatar userId={userId} profile={profile} />
+          <ProfileDisplayName userId={userId} profile={profile} />
+        </SequenceCard>
+      </Box>
+      <ProfileExtended userId={userId} profile={profile} />
     </Box>
   );
 }

@@ -1,7 +1,7 @@
 import { Room } from '$types/matrix-sdk';
 import { useCallback, useMemo, useState } from 'react';
-import { AccountDataEvent } from '../../types/matrix/accountData';
-import { StateEvent } from '../../types/matrix/room';
+import { AccountDataEvent } from '$types/matrix/accountData';
+import { StateEvent } from '$types/matrix/room';
 import {
   getGlobalImagePacks,
   getRoomImagePack,

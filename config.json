@@ -1,12 +1,14 @@
 {
-  "defaultHomeserver": 1,
-  "homeserverList": ["converser.eu", "matrix.org", "mozilla.org", "unredacted.org", "xmr.se"],
+  "defaultHomeserver": 0,
+  "homeserverList": ["matrix.org", "mozilla.org", "unredacted.org", "sable.moe", "kendama.moe"],
   "allowCustomHomeservers": true,
+  "elementCallUrl": null,
+
+  "disableAccountSwitcher": false,
 
   "featuredCommunities": {
     "openAsDefault": false,
     "spaces": [
-      "#cinny-space:matrix.org",
       "#community:matrix.org",
       "#space:unredacted.org",
       "#science-space:matrix.org",
@@ -14,7 +16,6 @@
       "#mathematics-on:matrix.org"
     ],
     "rooms": [
-      "#cinny:matrix.org",
       "#freesoftware:matrix.org",
       "#pcapdroid:matrix.org",
       "#gentoo:matrix.org",

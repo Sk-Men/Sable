@@ -16,6 +16,8 @@ import { getMemberDisplayName, getMemberSearchStr } from '$appUtils/room';
 import { UserAvatar } from '$components/user-avatar';
 import { useMediaAuthentication } from '$hooks/useMediaAuthentication';
 import { Membership } from '$types/matrix/room';
+import { useAtomValue } from 'jotai';
+import { nicknamesAtom } from '$state/nicknames';
 
 type MentionAutoCompleteHandler = (userId: string, name: string) => void;
 
@@ -88,6 +90,7 @@ export function UserMentionAutocomplete({
 }: UserMentionAutocompleteProps) {
   const mx = useMatrixClient();
   const useAuthentication = useMediaAuthentication();
+  const nicknames = useAtomValue(nicknamesAtom);
   const roomId: string = room.roomId!;
   const roomAliasOrId = room.getCanonicalAlias() || roomId;
   const members = useRoomMembers(mx, roomId);
@@ -125,12 +128,14 @@ export function UserMentionAutocomplete({
         return;
       }
       const roomMember = autoCompleteMembers[0];
-      handleAutocomplete(roomMember.userId, roomMember.name);
+      handleAutocomplete(roomMember.userId, getName(roomMember));
     });
   });
 
   const getName = (member: RoomMember) =>
-    getMemberDisplayName(room, member.userId) ?? getMxIdLocalPart(member.userId) ?? member.userId;
+    getMemberDisplayName(room, member.userId, nicknames) ??
+    getMxIdLocalPart(member.userId) ??
+    member.userId;
 
   return (
     <AutocompleteMenu headerContent={<Text size="L400">Mentions</Text>} requestClose={requestClose}>

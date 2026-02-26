@@ -27,6 +27,7 @@ import { useVirtualizer } from '@tanstack/react-virtual';
 import { HTMLReactParserOptions } from 'html-react-parser';
 import { Opts as LinkifyOpts } from 'linkifyjs';
 import { useAtomValue } from 'jotai';
+import { nicknamesAtom } from '$state/nicknames';
 import { Page, PageContent, PageContentCenter, PageHeader } from '$components/page';
 import { useMatrixClient } from '$hooks/useMatrixClient';
 import { getMxIdLocalPart, mxcUrlToHttp } from '$appUtils/matrix';
@@ -225,6 +226,7 @@ function RoomNotificationsGroupComp({
   const mx = useMatrixClient();
   const useAuthentication = useMediaAuthentication();
   const unread = useRoomUnread(room.roomId, roomToUnreadAtom);
+  const nicknames = useAtomValue(nicknamesAtom);
 
   const powerLevels = usePowerLevels(room);
   const creators = useRoomCreators(room);
@@ -243,10 +245,16 @@ function RoomNotificationsGroupComp({
     () => ({
       ...LINKIFY_OPTS,
       render: factoryRenderLinkifyWithMention((href) =>
-        renderMatrixMention(mx, room.roomId, href, makeMentionCustomProps(mentionClickHandler))
+        renderMatrixMention(
+          mx,
+          room.roomId,
+          href,
+          makeMentionCustomProps(mentionClickHandler),
+          nicknames
+        )
       ),
     }),
-    [mx, room, mentionClickHandler]
+    [mx, room, mentionClickHandler, nicknames]
   );
   const htmlReactParserOptions = useMemo<HTMLReactParserOptions>(
     () =>
@@ -255,8 +263,9 @@ function RoomNotificationsGroupComp({
         useAuthentication,
         handleSpoilerClick: spoilerClickHandler,
         handleMentionClick: mentionClickHandler,
+        nicknames,
       }),
-    [mx, room, linkifyOpts, mentionClickHandler, spoilerClickHandler, useAuthentication]
+    [mx, room, linkifyOpts, mentionClickHandler, spoilerClickHandler, useAuthentication, nicknames]
   );
 
   const renderMatrixEvent = useMatrixEventRenderer<[IRoomEvent, string, GetContentCallback]>(
@@ -283,7 +292,7 @@ function RoomNotificationsGroupComp({
       [MessageEvent.RoomMessageEncrypted]: (evt, displayName) => {
         const evtTimeline = room.getTimelineForEvent(evt.event_id);
 
-        const mEvent = evtTimeline?.getEvents().find((e) => e.getId() === evt.event_id);
+        const mEvent = evtTimeline?.getEvents().find((e: any) => e.getId() === evt.event_id);
 
         if (!mEvent || !evtTimeline) {
           return (
@@ -443,7 +452,7 @@ function RoomNotificationsGroupComp({
           const { event } = notification;
 
           const displayName =
-            getMemberDisplayName(room, event.sender) ??
+            getMemberDisplayName(room, event.sender, nicknames) ??
             getMxIdLocalPart(event.sender) ??
             event.sender;
           const senderAvatarMxc = getMemberAvatarMxc(room, event.sender);
@@ -529,9 +538,6 @@ function RoomNotificationsGroupComp({
                     replyEventId={replyEventId}
                     threadRootId={threadRootId}
                     onClick={handleOpenClick}
-                    getMemberPowerTag={getMemberPowerTag}
-                    accessibleTagColors={accessibleTagColors}
-                    legacyUsernameColor={legacyUsernameColor}
                   />
                 )}
                 {renderMatrixEvent(event.type, false, event, displayName, getContent)}

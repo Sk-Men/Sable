@@ -1,7 +1,7 @@
 import React, { ReactNode } from 'react';
 import { IconSrc, Icons } from 'folds';
 import { MatrixEvent } from '$types/matrix-sdk';
-import { IMemberContent, Membership } from '../../types/matrix/room';
+import { IMemberContent, Membership } from '$types/matrix/room';
 import { getMxIdLocalPart } from '../utils/matrix';
 import { isMembershipChanged } from '../utils/room';
 

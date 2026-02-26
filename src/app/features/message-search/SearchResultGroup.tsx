@@ -15,7 +15,7 @@ import {
 } from '$plugins/react-custom-html-parser';
 import { getMxIdLocalPart, mxcUrlToHttp } from '$appUtils/matrix';
 import { useMatrixEventRenderer } from '$hooks/useMatrixEventRenderer';
-import { GetContentCallback, MessageEvent, StateEvent } from '../../../types/matrix/room';
+import { GetContentCallback, MessageEvent, StateEvent } from '$types/matrix/room';
 import {
   AvatarBase,
   ImageContent,
@@ -33,6 +33,8 @@ import { ImageViewer } from '$components/image-viewer';
 import * as customHtmlCss from '$styles/CustomHtml.css';
 import { RoomAvatar, RoomIcon } from '$components/room-avatar';
 import { getMemberAvatarMxc, getMemberDisplayName, getRoomAvatarUrl } from '$appUtils/room';
+import { useAtomValue } from 'jotai';
+import { nicknamesAtom } from '$state/nicknames';
 import { ResultItem } from './useMessageSearch';
 import { SequenceCard } from '$components/sequence-card';
 import { UserAvatar } from '$components/user-avatar';
@@ -43,7 +45,7 @@ import { usePowerLevels } from '$hooks/usePowerLevels';
 import { usePowerLevelTags } from '$hooks/usePowerLevelTags';
 import { useTheme } from '$hooks/useTheme';
 import { PowerIcon } from '$components/power';
-import colorMXID from '../../../util/colorMXID';
+import colorMXID from '$util/colorMXID';
 import {
   getPowerTagIconSrc,
   useAccessiblePowerTagColors,
@@ -87,6 +89,7 @@ export function SearchResultGroup({
 
   const theme = useTheme();
   const accessibleTagColors = useAccessiblePowerTagColors(theme.kind, creatorsTag, powerLevelTags);
+  const nicknames = useAtomValue(nicknamesAtom);
 
   const mentionClickHandler = useMentionClickHandler(room.roomId);
   const spoilerClickHandler = useSpoilerClickHandler();
@@ -95,10 +98,16 @@ export function SearchResultGroup({
     () => ({
       ...LINKIFY_OPTS,
       render: factoryRenderLinkifyWithMention((href) =>
-        renderMatrixMention(mx, room.roomId, href, makeMentionCustomProps(mentionClickHandler))
+        renderMatrixMention(
+          mx,
+          room.roomId,
+          href,
+          makeMentionCustomProps(mentionClickHandler),
+          nicknames
+        )
       ),
     }),
-    [mx, room, mentionClickHandler]
+    [mx, room, mentionClickHandler, nicknames]
   );
   const htmlReactParserOptions = useMemo<HTMLReactParserOptions>(
     () =>
@@ -108,6 +117,7 @@ export function SearchResultGroup({
         useAuthentication,
         handleSpoilerClick: spoilerClickHandler,
         handleMentionClick: mentionClickHandler,
+        nicknames,
       }),
     [
       mx,
@@ -117,6 +127,7 @@ export function SearchResultGroup({
       mentionClickHandler,
       spoilerClickHandler,
       useAuthentication,
+      nicknames,
     ]
   );
 
@@ -217,7 +228,7 @@ export function SearchResultGroup({
           const { event } = item;
 
           const displayName =
-            getMemberDisplayName(room, event.sender) ??
+            getMemberDisplayName(room, event.sender, nicknames) ??
             getMxIdLocalPart(event.sender) ??
             event.sender;
           const senderAvatarMxc = getMemberAvatarMxc(room, event.sender);
@@ -308,9 +319,6 @@ export function SearchResultGroup({
                     replyEventId={replyEventId}
                     threadRootId={threadRootId}
                     onClick={handleOpenClick}
-                    getMemberPowerTag={getMemberPowerTag}
-                    accessibleTagColors={accessibleTagColors}
-                    legacyUsernameColor={legacyUsernameColor}
                   />
                 )}
                 {renderMatrixEvent(event.type, false, event, displayName, getContent)}

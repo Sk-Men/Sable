@@ -8,7 +8,7 @@ import {
   RoomEvent,
   SyncState,
 } from '$types/matrix-sdk';
-import { ReceiptContent, ReceiptType } from 'matrix-js-sdk/lib/@types/read_receipts';
+import { ReceiptContent, ReceiptType } from '$types/matrix-sdk';
 import { useCallback, useEffect } from 'react';
 import {
   Membership,
@@ -17,7 +17,7 @@ import {
   UnreadInfo,
   Unread,
   StateEvent,
-} from '../../../types/matrix/room';
+} from '$types/matrix/room';
 import {
   getAllParents,
   getNotificationType,

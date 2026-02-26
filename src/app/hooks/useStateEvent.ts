@@ -3,7 +3,7 @@ import { useCallback, useMemo } from 'react';
 import { useStateEventCallback } from './useStateEventCallback';
 import { useForceUpdate } from './useForceUpdate';
 import { getStateEvent } from '../utils/room';
-import { StateEvent } from '../../types/matrix/room';
+import { StateEvent } from '$types/matrix/room';
 
 export const useStateEvent = (room: Room, eventType: StateEvent, stateKey = '') => {
   const [updateCount, forceUpdate] = useForceUpdate();

@@ -24,11 +24,13 @@ import {
   IVideoInfo,
   MATRIX_SPOILER_PROPERTY_NAME,
   MATRIX_SPOILER_REASON_PROPERTY_NAME,
-} from '../../../types/matrix/common';
+} from '$types/matrix/common';
 import { FALLBACK_MIMETYPE, getBlobSafeMimeType } from '$appUtils/mimeTypes';
 import { parseGeoUri, scaleYDimension } from '$appUtils/common';
 import { Attachment, AttachmentBox, AttachmentContent, AttachmentHeader } from './attachment';
 import { FileHeader, FileDownloadButton } from './FileHeader';
+import { useSetting } from '$state/hooks/settings';
+import { settingsAtom } from '$state/settings';
 
 export function MBadEncrypted() {
   return (
@@ -78,22 +80,36 @@ type MTextProps = {
 };
 export function MText({ edited, content, renderBody, renderUrlsPreview, style }: MTextProps) {
   const { body, formatted_body: customBody } = content;
+  const [jumboEmojiSize] = useSetting(settingsAtom, 'jumboEmojiSize');
 
   if (typeof body !== 'string') return <BrokenContent />;
+
   const trimmedBody = trimReplyFromBody(body);
+
+  let safeCustomBody: string | undefined = typeof customBody === 'string' ? customBody : undefined;
+  if (safeCustomBody && safeCustomBody.length > 8000) {
+    const imageTags = safeCustomBody.match(/<img[^>]*>/g);
+    if (imageTags) {
+      safeCustomBody = imageTags.join(' ');
+    } else {
+      safeCustomBody = undefined;
+    }
+  }
+
+  const isJumbo = trimmedBody.length < 500 && JUMBO_EMOJI_REG.test(trimmedBody);
   const urlsMatch = renderUrlsPreview && trimmedBody.match(URL_REG);
   const urls = urlsMatch ? [...new Set(urlsMatch)] : undefined;
 
   return (
     <>
       <MessageTextBody
-        preWrap={typeof customBody !== 'string'}
-        jumboEmoji={JUMBO_EMOJI_REG.test(trimmedBody)}
+        preWrap={typeof safeCustomBody !== 'string'}
+        jumboEmoji={isJumbo ? jumboEmojiSize : 'none'}
         style={style}
       >
         {renderBody({
           body: trimmedBody,
-          customBody: typeof customBody === 'string' ? customBody : undefined,
+          customBody: safeCustomBody,
         })}
         {edited && <MessageEditedContent />}
       </MessageTextBody>
@@ -117,18 +133,20 @@ export function MEmote({
   renderUrlsPreview,
 }: MEmoteProps) {
   const { body, formatted_body: customBody } = content;
+  const [jumboEmojiSize] = useSetting(settingsAtom, 'jumboEmojiSize');
 
   if (typeof body !== 'string') return <BrokenContent />;
   const trimmedBody = trimReplyFromBody(body);
   const urlsMatch = renderUrlsPreview && trimmedBody.match(URL_REG);
   const urls = urlsMatch ? [...new Set(urlsMatch)] : undefined;
+  const isJumbo = JUMBO_EMOJI_REG.test(trimmedBody);
 
   return (
     <>
       <MessageTextBody
         emote
         preWrap={typeof customBody !== 'string'}
-        jumboEmoji={JUMBO_EMOJI_REG.test(trimmedBody)}
+        jumboEmoji={isJumbo ? jumboEmojiSize : 'none'}
       >
         <b>{`${displayName} `}</b>
         {renderBody({
@@ -150,18 +168,20 @@ type MNoticeProps = {
 };
 export function MNotice({ edited, content, renderBody, renderUrlsPreview }: MNoticeProps) {
   const { body, formatted_body: customBody } = content;
+  const [jumboEmojiSize] = useSetting(settingsAtom, 'jumboEmojiSize');
 
   if (typeof body !== 'string') return <BrokenContent />;
   const trimmedBody = trimReplyFromBody(body);
   const urlsMatch = renderUrlsPreview && trimmedBody.match(URL_REG);
   const urls = urlsMatch ? [...new Set(urlsMatch)] : undefined;
+  const isJumbo = JUMBO_EMOJI_REG.test(trimmedBody);
 
   return (
     <>
       <MessageTextBody
         notice
         preWrap={typeof customBody !== 'string'}
-        jumboEmoji={JUMBO_EMOJI_REG.test(trimmedBody)}
+        jumboEmoji={isJumbo ? jumboEmojiSize : 'none'}
       >
         {renderBody({
           body: trimmedBody,

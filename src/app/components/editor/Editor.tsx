@@ -16,6 +16,7 @@ import {
   RenderLeafProps,
   RenderElementProps,
   RenderPlaceholderProps,
+  ReactEditor,
 } from 'slate-react';
 import { withHistory } from 'slate-history';
 import { BlockType } from './types';
@@ -23,6 +24,7 @@ import { RenderElement, RenderLeaf } from './Elements';
 import { CustomElement } from './slate';
 import * as css from './Editor.css';
 import { toggleKeyboardShortcut } from './keyboard';
+import { mobileOrTablet } from '$appUtils/user-agent';
 
 const initialValue: CustomElement[] = [
   {
@@ -71,6 +73,8 @@ type CustomEditorProps = {
   onKeyUp?: KeyboardEventHandler;
   onChange?: EditorChangeHandler;
   onPaste?: ClipboardEventHandler;
+  className?: string;
+  variant?: 'Surface' | 'SurfaceVariant' | 'Background';
 };
 export const CustomEditor = forwardRef<HTMLDivElement, CustomEditorProps>(
   (
@@ -87,6 +91,8 @@ export const CustomEditor = forwardRef<HTMLDivElement, CustomEditorProps>(
       onKeyUp,
       onChange,
       onPaste,
+      className,
+      variant = 'SurfaceVariant',
     },
     ref
   ) => {
@@ -99,7 +105,13 @@ export const CustomEditor = forwardRef<HTMLDivElement, CustomEditorProps>(
 
     const handleKeydown: KeyboardEventHandler = useCallback(
       (evt) => {
+        // mobile ignores config option
+        if (mobileOrTablet() && evt.key === 'Enter' && !evt.shiftKey) {
+          return;
+        }
+
         onKeyDown?.(evt);
+
         const shortcutToggled = toggleKeyboardShortcut(editor, evt);
         if (shortcutToggled) evt.preventDefault();
       },
@@ -119,7 +131,7 @@ export const CustomEditor = forwardRef<HTMLDivElement, CustomEditorProps>(
     );
 
     return (
-      <div className={css.Editor} ref={ref}>
+      <div className={`${css.Editor} ${className || ''}`} ref={ref}>
         <Slate editor={editor} initialValue={initialValue} onChange={onChange}>
           {top}
           <Box alignItems="Start">
@@ -130,10 +142,10 @@ export const CustomEditor = forwardRef<HTMLDivElement, CustomEditorProps>(
             )}
             <Scroll
               className={css.EditorTextareaScroll}
-              variant="SurfaceVariant"
+              variant={variant}
               style={{ maxHeight }}
               size="300"
-              visibility="Hover"
+              visibility="Always"
               hideTrack
             >
               <Editable
@@ -146,6 +158,10 @@ export const CustomEditor = forwardRef<HTMLDivElement, CustomEditorProps>(
                 onKeyDown={handleKeydown}
                 onKeyUp={onKeyUp}
                 onPaste={onPaste}
+                // keeps focus after pressing send.
+                onBlur={() => {
+                  if (mobileOrTablet()) ReactEditor.focus(editor);
+                }}
               />
             </Scroll>
             {after && (

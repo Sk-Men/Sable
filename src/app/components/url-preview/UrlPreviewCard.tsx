@@ -11,27 +11,42 @@ import {
 import * as css from './UrlPreviewCard.css';
 import { mxcUrlToHttp } from '$appUtils/matrix';
 import { useMediaAuthentication } from '$hooks/useMediaAuthentication';
+import { ImageViewer } from '../image-viewer';
+import { Image, Video } from '../media';
+import { ImageContent, VideoContent } from '../message';
 
 const linkStyles = { color: color.Success.Main };
+const TARGET_HEIGHT = 300;
 
-export const UrlPreviewCard = as<'div', { url: string; ts: number }>(
-  ({ url, ts, ...props }, ref) => {
+export const UrlPreviewCard = as<'div', { url: string; ts: number; mediaType?: string | null }>(
+  ({ url, ts, mediaType, ...props }, ref) => {
     const mx = useMatrixClient();
     const useAuthentication = useMediaAuthentication();
+
+    const isDirect = !!mediaType;
+
+    const [mediaDim, setMediaDim] = useState<{ w: number; h: number } | null>(null);
+    const calculatedWidth = mediaDim
+      ? Math.ceil((TARGET_HEIGHT * mediaDim.w) / mediaDim.h)
+      : undefined;
+
     const [previewStatus, loadPreview] = useAsyncCallback(
-      useCallback(() => mx.getUrlPreview(url, ts), [url, ts, mx])
+      useCallback(() => {
+        if (isDirect) return Promise.resolve(null);
+        return mx.getUrlPreview(url, ts);
+      }, [url, ts, mx, isDirect])
     );
 
     useEffect(() => {
       loadPreview();
-    }, [loadPreview]);
+    }, [url, loadPreview]);
 
     if (previewStatus.status === AsyncStatus.Error) return null;
 
-    const encodedUrl = url;
-    const decodedUrl = encodedUrl && decodeURIComponent(encodedUrl);
-
     const renderContent = (prev: IPreviewUrlResponse) => {
+      const siteName = prev['og:site_name'];
+      const title = prev['og:title'];
+      const description = prev['og:description'];
       const imgUrl = mxcUrlToHttp(
         mx,
         prev['og:image'] || '',
@@ -44,7 +59,21 @@ export const UrlPreviewCard = as<'div', { url: string; ts: number }>(
 
       return (
         <>
-          {imgUrl && <UrlPreviewImg src={imgUrl} alt={prev['og:title']} title={prev['og:title']} />}
+          {imgUrl && (
+            <UrlPreviewImg
+              src={imgUrl}
+              alt="Media"
+              style={{
+                width: 'auto',
+                height: 'auto',
+                maxWidth: '100%',
+                maxHeight: '100px',
+                borderRadius: '8px',
+                objectFit: 'contain',
+                display: 'block',
+              }}
+            />
+          )}
           <UrlPreviewContent>
             <Text
               style={linkStyles}
@@ -56,24 +85,66 @@ export const UrlPreviewCard = as<'div', { url: string; ts: number }>(
               size="T200"
               priority="300"
             >
-              {typeof prev['og:site_name'] === 'string' && `${prev['og:site_name']} | `}
-              {decodedUrl || url}
+              {typeof siteName === 'string' && `${siteName} | `}
+              {decodeURIComponent(url)}
             </Text>
-            <Text truncate priority="400">
-              <b>{prev['og:title']}</b>
-            </Text>
-            <Text size="T200" priority="300">
-              <UrlPreviewDescription>{prev['og:description']}</UrlPreviewDescription>
-            </Text>
+            {title && (
+              <Text truncate priority="400">
+                <b>{title}</b>
+              </Text>
+            )}
+            {description && (
+              <Text size="T200" priority="300">
+                <UrlPreviewDescription>{description}</UrlPreviewDescription>
+              </Text>
+            )}
           </UrlPreviewContent>
         </>
       );
     };
 
     return (
-      <UrlPreview {...props} ref={ref}>
+      <UrlPreview
+        {...props}
+        ref={ref}
+        style={
+          isDirect
+            ? {
+                background: 'transparent',
+                border: 'none',
+                padding: 0,
+                boxShadow: 'none',
+                display: 'inline-block',
+                verticalAlign: 'middle',
+                width: calculatedWidth ? `${calculatedWidth}px` : 'max-content',
+                minWidth: 0,
+                maxWidth: '100%',
+                margin: 0,
+              }
+            : {
+                width: '600px',
+              }
+        }
+      >
         {previewStatus.status === AsyncStatus.Success ? (
-          renderContent(previewStatus.data)
+          previewStatus.data ? (
+            renderContent(previewStatus.data)
+          ) : (
+            <UrlPreviewContent>
+              <Text
+                style={linkStyles}
+                truncate
+                as="a"
+                href={url}
+                target="_blank"
+                rel="noreferrer"
+                size="T200"
+                priority="300"
+              >
+                {decodeURIComponent(url)}
+              </Text>
+            </UrlPreviewContent>
+          )
         ) : (
           <Box grow="Yes" alignItems="Center" justifyContent="Center">
             <Spinner variant="Secondary" size="400" />

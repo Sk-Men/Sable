@@ -1,7 +1,7 @@
 import React, {
+  forwardRef,
   KeyboardEventHandler,
   RefObject,
-  forwardRef,
   useCallback,
   useEffect,
   useRef,
@@ -11,9 +11,10 @@ import { useAtom, useAtomValue } from 'jotai';
 import { isKeyHotkey } from 'is-hotkey';
 import { EventType, IContent, MsgType, RelationType, Room } from '$types/matrix-sdk';
 import { ReactEditor } from 'slate-react';
-import { Transforms, Editor } from 'slate';
+import { Editor, Transforms } from 'slate';
 import {
   Box,
+  config,
   Dialog,
   Icon,
   IconButton,
@@ -25,30 +26,36 @@ import {
   PopOut,
   Scroll,
   Text,
-  config,
   toRem,
 } from 'folds';
 
+import parse from 'html-react-parser';
+import {
+  getReactCustomHtmlParser,
+  LINKIFY_OPTS,
+  scaleSystemEmoji,
+} from '$plugins/react-custom-html-parser';
+
 import { useMatrixClient } from '$hooks/useMatrixClient';
 import {
-  CustomEditor,
-  Toolbar,
-  toMatrixCustomHTML,
-  toPlainText,
   AUTOCOMPLETE_PREFIXES,
   AutocompletePrefix,
   AutocompleteQuery,
+  createEmoticonElement,
+  CustomEditor,
+  customHtmlEqualsPlainText,
   getAutocompleteQuery,
   getPrevWorldRange,
   resetEditor,
   RoomMentionAutocomplete,
+  toMatrixCustomHTML,
+  Toolbar,
+  toPlainText,
+  trimCustomHtml,
   UserMentionAutocomplete,
   EmoticonAutocomplete,
-  createEmoticonElement,
   moveCursor,
   resetEditorHistory,
-  customHtmlEqualsPlainText,
-  trimCustomHtml,
   isEmptyEditor,
   getBeginCommand,
   trimCommand,
@@ -68,12 +75,12 @@ import { useFilePicker } from '$hooks/useFilePicker';
 import { useFilePasteHandler } from '$hooks/useFilePasteHandler';
 import { useFileDropZone } from '$hooks/useFileDrop';
 import {
-  TUploadItem,
-  TUploadMetadata,
   roomIdToMsgDraftAtomFamily,
   roomIdToReplyDraftAtomFamily,
   roomIdToUploadItemsAtomFamily,
   roomUploadAtomFamily,
+  TUploadItem,
+  TUploadMetadata,
 } from '$state/room/roomInputDrafts';
 import { UploadCardRenderer } from '$components/upload-card';
 import {
@@ -94,17 +101,22 @@ import {
   getImageMsgContent,
   getVideoMsgContent,
 } from './msgContent';
-import { getMemberDisplayName, getMentionContent, trimReplyFromBody } from '$appUtils/room';
+import {
+  getMemberDisplayName,
+  getMentionContent,
+  trimReplyFromBody,
+  trimReplyFromFormattedBody,
+} from '$appUtils/room';
 import { CommandAutocomplete } from './CommandAutocomplete';
 import { Command, SHRUG, TABLEFLIP, UNFLIP, useCommands } from '$hooks/useCommands';
 import { mobileOrTablet } from '$appUtils/user-agent';
 import { useElementSizeObserver } from '$hooks/useElementSizeObserver';
 import { ReplyLayout, ThreadIndicator } from '$components/message';
 import { roomToParentsAtom } from '$state/room/roomToParents';
+import { nicknamesAtom } from '$state/nicknames';
 import { useMediaAuthentication } from '$hooks/useMediaAuthentication';
 import { useImagePackRooms } from '$hooks/useImagePackRooms';
 import { usePowerLevelsContext } from '$hooks/usePowerLevels';
-import colorMXID from '../../../util/colorMXID';
 import { useIsDirectRoom } from '$hooks/useRoom';
 import { useAccessiblePowerTagColors, useGetMemberPowerTag } from '$hooks/useMemberPowerTag';
 import { useRoomCreators } from '$hooks/useRoomCreators';
@@ -112,6 +124,7 @@ import { useTheme } from '$hooks/useTheme';
 import { useRoomCreatorsTag } from '$hooks/useRoomCreatorsTag';
 import { usePowerLevelTags } from '$hooks/usePowerLevelTags';
 import { useComposingCheck } from '$hooks/useComposingCheck';
+import { useSableCosmetics } from '$hooks/useSableCosmetics';
 
 interface RoomInputProps {
   editor: Editor;
@@ -126,34 +139,19 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
     const [enterForNewline] = useSetting(settingsAtom, 'enterForNewline');
     const [isMarkdown] = useSetting(settingsAtom, 'isMarkdown');
     const [hideActivity] = useSetting(settingsAtom, 'hideActivity');
-    const [legacyUsernameColor] = useSetting(settingsAtom, 'legacyUsernameColor');
-    const direct = useIsDirectRoom();
     const commands = useCommands(mx, room);
     const emojiBtnRef = useRef<HTMLButtonElement>(null);
     const roomToParents = useAtomValue(roomToParentsAtom);
-    const powerLevels = usePowerLevelsContext();
-    const creators = useRoomCreators(room);
+    const nicknames = useAtomValue(nicknamesAtom);
 
     const [msgDraft, setMsgDraft] = useAtom(roomIdToMsgDraftAtomFamily(roomId));
     const [replyDraft, setReplyDraft] = useAtom(roomIdToReplyDraftAtomFamily(roomId));
     const replyUserID = replyDraft?.userId;
 
-    const powerLevelTags = usePowerLevelTags(room, powerLevels);
-    const creatorsTag = useRoomCreatorsTag();
-    const getMemberPowerTag = useGetMemberPowerTag(room, creators, powerLevels);
-    const theme = useTheme();
-    const accessibleTagColors = useAccessiblePowerTagColors(
-      theme.kind,
-      creatorsTag,
-      powerLevelTags
+    const { color: replyUsernameColor, font: replyUsernameFont } = useSableCosmetics(
+      replyUserID ?? '',
+      room
     );
-
-    const replyPowerTag = replyUserID ? getMemberPowerTag(replyUserID) : undefined;
-    const replyPowerColor = replyPowerTag?.color
-      ? accessibleTagColors.get(replyPowerTag.color)
-      : undefined;
-    const replyUsernameColor =
-      legacyUsernameColor || direct ? colorMXID(replyUserID ?? '') : replyPowerColor;
 
     const [uploadBoard, setUploadBoard] = useState(true);
     const [selectedFiles, setSelectedFiles] = useAtom(roomIdToUploadItemsAtomFamily(roomId));
@@ -170,6 +168,8 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
       useState<AutocompleteQuery<AutocompletePrefix>>();
 
     const sendTypingStatus = useTypingStatusUpdater(mx, roomId);
+
+    const [inputKey, setInputKey] = useState(0);
 
     const handleFiles = useCallback(
       async (files: File[]) => {
@@ -219,6 +219,34 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
       useCallback(() => document.body, []),
       useCallback((width) => setHideStickerBtn(width < 500), [])
     );
+
+    const replyEvent = replyDraft ? room.findEventById(replyDraft.eventId) : undefined;
+    const {
+      body: replyBody,
+      formatted_body: replyFormattedBody,
+      format: replyFormat,
+    } = replyEvent?.getContent() ?? {};
+
+    let replyBodyJSX: React.ReactNode = replyDraft ? trimReplyFromBody(replyDraft.body) : null;
+
+    if (replyFormat === 'org.matrix.custom.html' && replyFormattedBody) {
+      const strippedHtml = trimReplyFromFormattedBody(replyFormattedBody)
+        .replace(/<br\s*\/?>/gi, ' ')
+        .replace(/<\/p>\s*<p[^>]*>/gi, ' ')
+        .replace(/<\/?p[^>]*>/gi, '')
+        .replace(/(?:\r\n|\r|\n)/g, ' ');
+      const parserOpts = getReactCustomHtmlParser(mx, roomId, {
+        linkifyOpts: LINKIFY_OPTS,
+        nicknames,
+      });
+      replyBodyJSX = parse(strippedHtml, parserOpts);
+    } else if (replyBody) {
+      const strippedBody = trimReplyFromBody(replyBody).replace(/(?:\r\n|\r|\n)/g, ' ');
+      replyBodyJSX = scaleSystemEmoji(trimReplyFromBody(strippedBody));
+    } else if (replyDraft) {
+      const strippedBody = trimReplyFromBody(replyDraft.body).replace(/(?:\r\n|\r|\n)/g, ' ');
+      replyBodyJSX = scaleSystemEmoji(trimReplyFromBody(strippedBody));
+    }
 
     useEffect(() => {
       Transforms.insertFragment(editor, msgDraft);
@@ -330,6 +358,7 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
         resetEditor(editor);
         resetEditorHistory(editor);
         sendTypingStatus(false);
+
         return;
       }
 
@@ -348,8 +377,7 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
         mentionData.users.add(replyDraft.userId);
       }
 
-      const mMentions = getMentionContent(Array.from(mentionData.users), mentionData.room);
-      content['m.mentions'] = mMentions;
+      content['m.mentions'] = getMentionContent(Array.from(mentionData.users), mentionData.room);
 
       if (replyDraft || !customHtmlEqualsPlainText(formattedBody, body)) {
         content.format = 'org.matrix.custom.html';
@@ -368,8 +396,12 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
         }
       }
       mx.sendMessage(roomId, content as any);
+
       resetEditor(editor);
       resetEditorHistory(editor);
+
+      setInputKey((prev) => prev + 1);
+
       setReplyDraft(undefined);
       sendTypingStatus(false);
     }, [mx, roomId, editor, replyDraft, sendTypingStatus, setReplyDraft, isMarkdown, commands]);
@@ -534,6 +566,7 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
         <CustomEditor
           editableName="RoomInput"
           editor={editor}
+          key={inputKey}
           placeholder="Send a message..."
           onKeyDown={handleKeyDown}
           onKeyUp={handleKeyUp}
@@ -559,9 +592,9 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
                     <ReplyLayout
                       userColor={replyUsernameColor}
                       username={
-                        <Text size="T300" truncate>
+                        <Text size="T300" truncate style={{ fontFamily: replyUsernameFont }}>
                           <b>
-                            {getMemberDisplayName(room, replyDraft.userId) ??
+                            {getMemberDisplayName(room, replyDraft.userId, nicknames) ??
                               getMxIdLocalPart(replyDraft.userId) ??
                               replyDraft.userId}
                           </b>
@@ -569,7 +602,7 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
                       }
                     >
                       <Text size="T300" truncate>
-                        {trimReplyFromBody(replyDraft.body)}
+                        {replyBodyJSX}
                       </Text>
                     </ReplyLayout>
                   </Box>
@@ -664,7 +697,13 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
                   </PopOut>
                 )}
               </UseStateProvider>
-              <IconButton onClick={submit} variant="SurfaceVariant" size="300" radii="300">
+              <IconButton
+                onClick={submit}
+                onMouseDown={(e: React.MouseEvent) => e.preventDefault()}
+                variant="SurfaceVariant"
+                size="300"
+                radii="300"
+              >
                 <Icon src={Icons.Send} />
               </IconButton>
             </>

@@ -20,7 +20,7 @@ import { PasswordInput } from './password-input';
 import { ContainerColor } from '../styles/ContainerColor.css';
 import { copyToClipboard } from '../utils/dom';
 import { AsyncStatus, useAsyncCallback } from '../hooks/useAsyncCallback';
-import { clearSecretStorageKeys } from '../../client/secretStorageKeys';
+import { clearSecretStorageKeys } from '$client/secretStorageKeys';
 import { ActionUIA, ActionUIAFlowsLoader } from './ActionUIA';
 import { useMatrixClient } from '../hooks/useMatrixClient';
 import { useAlive } from '../hooks/useAlive';
@@ -261,7 +261,7 @@ function RecoveryKeyDisplay({ recoveryKey }: RecoveryKeyDisplayProps) {
           justifyContent="Center"
           gap="400"
         >
-          <Text style={{ fontFamily: 'monospace' }} size="T200" priority="300">
+          <Text style={{ fontFamily: 'var(--font-monospace)' }} size="T200" priority="300">
             {safeToDisplayKey}
           </Text>
           <Chip onClick={() => setShow(!show)} variant="Secondary" radii="Pill">

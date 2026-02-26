@@ -1,3 +1,4 @@
+import { globalStyle, style } from '@vanilla-extract/css';
 import { RecipeVariants, recipe } from '@vanilla-extract/recipes';
 import { DefaultReset, config } from 'folds';
 
@@ -8,7 +9,7 @@ export const TimelineFloat = recipe({
       position: 'absolute',
       left: '50%',
       transform: 'translateX(-50%)',
-      zIndex: 1,
+      zIndex: 10,
       minWidth: 'max-content',
     },
   ],
@@ -28,3 +29,17 @@ export const TimelineFloat = recipe({
 });
 
 export type TimelineFloatVariants = RecipeVariants<typeof TimelineFloat>;
+
+export const messageList = style({
+  display: 'flex',
+  flexDirection: 'column',
+  width: '100%',
+});
+
+globalStyle(`body ${messageList} [data-message-id]`, {
+  transition: 'background-color 0.1s ease-in-out !important',
+});
+
+globalStyle(`body ${messageList} [data-message-id]:hover`, {
+  backgroundColor: 'var(--sable-surface-container-hover) !important',
+});

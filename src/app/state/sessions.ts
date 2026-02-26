@@ -1,9 +1,12 @@
-// import { atom } from 'jotai';
-// import {
-//   atomWithLocalStorage,
-//   getLocalStorageItem,
-//   setLocalStorageItem,
-// } from './utils/atomWithLocalStorage';
+import { atom } from 'jotai';
+import {
+  atomWithLocalStorage,
+  getLocalStorageItem,
+  setLocalStorageItem,
+} from './utils/atomWithLocalStorage';
+import { createLogger } from '../utils/debug';
+
+const log = createLogger('sessions');
 
 export type Session = {
   baseUrl: string;
@@ -19,15 +22,18 @@ export type Sessions = Session[];
 export type SessionStoreName = {
   sync: string;
   crypto: string;
+  /** Prefix for the Rust crypto IndexedDB: the actual DB is `${rustCryptoPrefix}::matrix-sdk-crypto` */
+  rustCryptoPrefix: string;
 };
 
 /**
  * Migration code for old session
  */
-// const FALLBACK_STORE_NAME: SessionStoreName = {
-//   sync: 'web-sync-store',
-//   crypto: 'crypto-store',
-// } as const;
+const FALLBACK_STORE_NAME: SessionStoreName = {
+  sync: 'web-sync-store',
+  crypto: 'crypto-store',
+  rustCryptoPrefix: 'matrix-js-sdk',
+} as const;
 
 export function setFallbackSession(
   accessToken: string,
@@ -53,15 +59,13 @@ export const getFallbackSession = (): Session | undefined => {
   const accessToken = localStorage.getItem('cinny_access_token');
 
   if (baseUrl && userId && deviceId && accessToken) {
-    const session: Session = {
+    return {
       baseUrl,
       userId,
       deviceId,
       accessToken,
       fallbackSdkStores: true,
     };
-
-    return session;
   }
 
   return undefined;
@@ -70,71 +74,92 @@ export const getFallbackSession = (): Session | undefined => {
  * End of migration code for old session
  */
 
-// export const getSessionStoreName = (session: Session): SessionStoreName => {
-//   if (session.fallbackSdkStores) {
-//     return FALLBACK_STORE_NAME;
-//   }
+export const getSessionStoreName = (session: Session): SessionStoreName => {
+  if (session.fallbackSdkStores) {
+    return FALLBACK_STORE_NAME;
+  }
 
-//   return {
-//     sync: `sync${session.userId}`,
-//     crypto: `crypto${session.userId}`,
-//   };
-// };
+  return {
+    sync: `sync${session.userId}`,
+    crypto: `crypto${session.userId}`,
+    rustCryptoPrefix: `sync${session.userId}`,
+  };
+};
 
-// export const MATRIX_SESSIONS_KEY = 'matrixSessions';
-// const baseSessionsAtom = atomWithLocalStorage<Sessions>(
-//   MATRIX_SESSIONS_KEY,
-//   (key) => {
-//     const defaultSessions: Sessions = [];
-//     const sessions = getLocalStorageItem(key, defaultSessions);
+export const MATRIX_SESSIONS_KEY = 'matrixSessions';
+const baseSessionsAtom = atomWithLocalStorage<Sessions>(
+  MATRIX_SESSIONS_KEY,
+  (key) => {
+    const defaultSessions: Sessions = [];
+    const sessions = getLocalStorageItem(key, defaultSessions);
 
-//     // Before multi account support session was stored
-//     // as multiple item in local storage.
-//     // So we need these migration code.
-//     const fallbackSession = getFallbackSession();
-//     if (fallbackSession) {
-//       removeFallbackSession();
-//       sessions.push(fallbackSession);
-//       setLocalStorageItem(key, sessions);
-//     }
-//     return sessions;
-//   },
-//   (key, value) => {
-//     setLocalStorageItem(key, value);
-//   }
-// );
+    // Before multi account support session was stored
+    // as multiple item in local storage.
+    // So we need these migration code.
+    const fallbackSession = getFallbackSession();
+    if (fallbackSession) {
+      removeFallbackSession();
+      sessions.push(fallbackSession);
+      setLocalStorageItem(key, sessions);
+    }
+    return sessions;
+  },
+  (key, value) => {
+    setLocalStorageItem(key, value);
+  }
+);
 
-// export type SessionsAction =
-//   | {
-//       type: 'PUT';
-//       session: Session;
-//     }
-//   | {
-//       type: 'DELETE';
-//       session: Session;
-//     };
+export type SessionsAction =
+  | {
+      type: 'PUT';
+      session: Session;
+    }
+  | {
+      type: 'DELETE';
+      session: Session;
+    };
 
-// export const sessionsAtom = atom<Sessions, [SessionsAction], undefined>(
-//   (get) => get(baseSessionsAtom),
-//   (get, set, action) => {
-//     if (action.type === 'PUT') {
-//       const sessions = [...get(baseSessionsAtom)];
-//       const sessionIndex = sessions.findIndex(
-//         (session) => session.userId === action.session.userId
-//       );
-//       if (sessionIndex === -1) {
-//         sessions.push(action.session);
-//       } else {
-//         sessions.splice(sessionIndex, 1, action.session);
-//       }
-//       set(baseSessionsAtom, sessions);
-//       return;
-//     }
-//     if (action.type === 'DELETE') {
-//       const sessions = get(baseSessionsAtom).filter(
-//         (session) => session.userId !== action.session.userId
-//       );
-//       set(baseSessionsAtom, sessions);
-//     }
-//   }
-// );
+export const sessionsAtom = atom<Sessions, [SessionsAction], void>(
+  (get) => get(baseSessionsAtom),
+  (get, set, action) => {
+    if (action.type === 'PUT') {
+      const sessions = [...get(baseSessionsAtom)];
+      const sessionIndex = sessions.findIndex(
+        (session) => session.userId === action.session.userId
+      );
+      if (sessionIndex === -1) {
+        log.log('PUT new session', action.session.userId);
+        sessions.push(action.session);
+      } else {
+        log.log('PUT update session', action.session.userId);
+        sessions.splice(sessionIndex, 1, action.session);
+      }
+      set(baseSessionsAtom, sessions);
+      return;
+    }
+    if (action.type === 'DELETE') {
+      log.log('DELETE session', action.session.userId);
+      const sessions = get(baseSessionsAtom).filter(
+        (session) => session.userId !== action.session.userId
+      );
+      set(baseSessionsAtom, sessions);
+    }
+  }
+);
+
+export const ACTIVE_SESSION_KEY = 'matrixActiveSession';
+const baseActiveSessionAtom = atomWithLocalStorage<string | undefined>(
+  ACTIVE_SESSION_KEY,
+  (key) => getLocalStorageItem<string | undefined>(key, undefined),
+  (key, value) => setLocalStorageItem(key, value)
+);
+
+/** Stores the userId of the currently active session. */
+export const activeSessionIdAtom = atom<string | undefined, [string | undefined], void>(
+  (get) => get(baseActiveSessionAtom),
+  (_get, set, value) => {
+    set(baseActiveSessionAtom, value);
+  }
+);
+
+export const pendingNotificationAtom = atom<{ roomId: string; eventId: string } | null>(null);

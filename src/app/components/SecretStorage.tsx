@@ -2,10 +2,7 @@ import React, { FormEventHandler, useCallback } from 'react';
 import { Box, Text, Button, Spinner, color } from 'folds';
 import { decodeRecoveryKey, deriveRecoveryKeyFromPassphrase } from '$types/matrix-sdk';
 import { PasswordInput } from './password-input';
-import {
-  SecretStorageKeyContent,
-  SecretStoragePassphraseContent,
-} from '../../types/matrix/accountData';
+import { SecretStorageKeyContent, SecretStoragePassphraseContent } from '$types/matrix/accountData';
 import { AsyncStatus, useAsyncCallback } from '../hooks/useAsyncCallback';
 import { useMatrixClient } from '../hooks/useMatrixClient';
 import { useAlive } from '../hooks/useAlive';

@@ -1,10 +1,10 @@
 import React, { useCallback, useRef } from 'react';
-import { Box, Text, config } from 'folds';
+import { Box, Text, config, toRem } from 'folds';
 import { EventType, Room } from '$types/matrix-sdk';
 import { ReactEditor } from 'slate-react';
 import { isKeyHotkey } from 'is-hotkey';
 import { useStateEvent } from '$hooks/useStateEvent';
-import { StateEvent } from '../../../types/matrix/room';
+import { StateEvent } from '$types/matrix/room';
 import { usePowerLevelsContext } from '$hooks/usePowerLevels';
 import { useMatrixClient } from '$hooks/useMatrixClient';
 import { useEditor } from '$components/editor';
@@ -15,13 +15,19 @@ import { RoomTombstone } from './RoomTombstone';
 import { RoomInput } from './RoomInput';
 import { RoomViewFollowing, RoomViewFollowingPlaceholder } from './RoomViewFollowing';
 import { Page } from '$components/page';
-import { RoomViewHeader } from './RoomViewHeader';
 import { useKeyDown } from '$hooks/useKeyDown';
 import { editableActiveElement } from '$appUtils/dom';
 import { settingsAtom } from '$state/settings';
 import { useSetting } from '$state/hooks/settings';
 import { useRoomPermissions } from '$hooks/useRoomPermissions';
 import { useRoomCreators } from '$hooks/useRoomCreators';
+import { ScreenSize, useScreenSizeContext } from '$hooks/useScreenSize';
+import { SwipeableChatWrapper } from '$components/SwipeableChatWrapper';
+import { BackRouteHandler } from '$components/BackRouteHandler';
+import { useOpenRoomSettings } from '$state/hooks/roomSettings';
+import { useSpaceOptionally } from '$hooks/useSpace';
+import { RoomSettingsPage } from '$state/roomSettings';
+import { GlobalModalManager } from '$components/message/modals/GlobalModalManager';
 
 const FN_KEYS_REGEX = /^F\d+$/;
 const shouldFocusMessageField = (evt: KeyboardEvent): boolean => {
@@ -30,10 +36,8 @@ const shouldFocusMessageField = (evt: KeyboardEvent): boolean => {
     return false;
   }
 
-  // do not focus on F keys
   if (FN_KEYS_REGEX.test(code)) return false;
 
-  // do not focus on numlock/scroll lock
   if (
     code.startsWith('OS') ||
     code.startsWith('Meta') ||
@@ -61,6 +65,7 @@ export function RoomView({ room, eventId }: { room: Room; eventId?: string }) {
   const roomViewRef = useRef<HTMLDivElement>(null);
 
   const [hideActivity] = useSetting(settingsAtom, 'hideActivity');
+  const screenSize = useScreenSizeContext();
 
   const { roomId } = room;
   const editor = useEditor();
@@ -91,52 +96,74 @@ export function RoomView({ room, eventId }: { room: Room; eventId?: string }) {
     )
   );
 
+  const openSettings = useOpenRoomSettings();
+  const space = useSpaceOptionally();
+
+  const handleOpenMembers = useCallback(() => {
+    if (screenSize === ScreenSize.Mobile) {
+      openSettings(room.roomId, space?.roomId, RoomSettingsPage.MembersPage);
+    }
+  }, [screenSize, openSettings, room.roomId, space?.roomId]);
+
   return (
-    <Page ref={roomViewRef}>
-      <RoomViewHeader />
-      <Box grow="Yes" direction="Column">
-        <RoomTimeline
-          key={roomId}
-          room={room}
-          eventId={eventId}
-          roomInputRef={roomInputRef}
-          editor={editor}
-        />
-        <RoomViewTyping room={room} />
-      </Box>
-      <Box shrink="No" direction="Column">
-        <div style={{ padding: `0 ${config.space.S400}` }}>
-          {tombstoneEvent ? (
-            <RoomTombstone
-              roomId={roomId}
-              body={tombstoneEvent.getContent().body}
-              replacementRoomId={tombstoneEvent.getContent().replacement_room}
-            />
-          ) : (
-            <>
-              {canMessage && (
-                <RoomInput
-                  room={room}
-                  editor={editor}
-                  roomId={roomId}
-                  fileDropContainerRef={roomViewRef}
-                  ref={roomInputRef}
-                />
-              )}
-              {!canMessage && (
-                <RoomInputPlaceholder
-                  style={{ padding: config.space.S200 }}
-                  alignItems="Center"
-                  justifyContent="Center"
-                >
-                  <Text align="Center">You do not have permission to post in this room</Text>
-                </RoomInputPlaceholder>
-              )}
-            </>
-          )}
-        </div>
-        {hideActivity ? <RoomViewFollowingPlaceholder /> : <RoomViewFollowing room={room} />}
-      </Box>
-    </Page>
+    <BackRouteHandler>
+      {(onBack) => (
+        <Page
+          ref={roomViewRef}
+          style={
+            room.isCallRoom() && screenSize === ScreenSize.Desktop
+              ? { maxWidth: toRem(399), minWidth: toRem(399) }
+              : {}
+          }
+        >
+          <SwipeableChatWrapper onOpenSidebar={onBack} onOpenMembers={handleOpenMembers}>
+            <Box grow="Yes" direction="Column">
+              <RoomTimeline
+                key={roomId}
+                room={room}
+                eventId={eventId}
+                roomInputRef={roomInputRef}
+                editor={editor}
+              />
+              <RoomViewTyping room={room} />
+              <GlobalModalManager />
+            </Box>
+            <Box shrink="No" direction="Column">
+              <div style={{ padding: `0 ${config.space.S400}` }}>
+                {tombstoneEvent ? (
+                  <RoomTombstone
+                    roomId={roomId}
+                    body={tombstoneEvent.getContent().body}
+                    replacementRoomId={tombstoneEvent.getContent().replacement_room}
+                  />
+                ) : (
+                  <>
+                    {canMessage && (
+                      <RoomInput
+                        room={room}
+                        editor={editor}
+                        roomId={roomId}
+                        fileDropContainerRef={roomViewRef}
+                        ref={roomInputRef}
+                      />
+                    )}
+                    {!canMessage && (
+                      <RoomInputPlaceholder
+                        style={{ padding: config.space.S200 }}
+                        alignItems="Center"
+                        justifyContent="Center"
+                      >
+                        <Text align="Center">You do not have permission to post in this room</Text>
+                      </RoomInputPlaceholder>
+                    )}
+                  </>
+                )}
+              </div>
+              {hideActivity ? <RoomViewFollowingPlaceholder /> : <RoomViewFollowing room={room} />}
+            </Box>
+          </SwipeableChatWrapper>
+        </Page>
+      )}
+    </BackRouteHandler>
   );
 }

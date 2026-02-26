@@ -1,4 +1,4 @@
-import { useAtomValue } from 'jotai';
+import { useAtomValue, useSetAtom } from 'jotai';
 import React, { ReactNode, useCallback, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { RoomEvent, RoomEventHandlerMap } from '$types/matrix-sdk';
@@ -11,21 +11,24 @@ import InviteSound from '$public/sound/invite.ogg';
 import { notificationPermission, setFavicon } from '$appUtils/dom';
 import { useSetting } from '$state/hooks/settings';
 import { settingsAtom } from '$state/settings';
+import { nicknamesAtom } from '$state/nicknames';
 import { allInvitesAtom } from '$state/room-list/inviteList';
 import { usePreviousValue } from '$hooks/usePreviousValue';
 import { useMatrixClient } from '$hooks/useMatrixClient';
-import { getInboxInvitesPath, getInboxNotificationsPath } from '../pathUtils';
+import { getInboxInvitesPath } from '../pathUtils';
 import {
   getMemberDisplayName,
   getNotificationType,
   getUnreadInfo,
   isNotificationEvent,
 } from '$appUtils/room';
-import { NotificationType, UnreadInfo } from '../../../types/matrix/room';
+import { NotificationType, UnreadInfo } from '$types/matrix/room';
 import { getMxIdLocalPart, mxcUrlToHttp } from '$appUtils/matrix';
 import { useSelectedRoom } from '$hooks/router/useSelectedRoom';
 import { useInboxNotificationsSelected } from '$hooks/router/useInbox';
 import { useMediaAuthentication } from '$hooks/useMediaAuthentication';
+import { BackgroundNotifications } from './BackgroundNotifications';
+import { pendingNotificationAtom } from '$state/sessions';
 
 function SystemEmojiFeature() {
   const [twitterEmoji] = useSetting(settingsAtom, 'twitterEmoji');
@@ -136,16 +139,21 @@ function MessageNotifications() {
   const useAuthentication = useMediaAuthentication();
   const [showNotifications] = useSetting(settingsAtom, 'showNotifications');
   const [notificationSound] = useSetting(settingsAtom, 'isNotificationSounds');
+  const nicknames = useAtomValue(nicknamesAtom);
+  const nicknamesRef = useRef(nicknames);
+  nicknamesRef.current = nicknames;
 
-  const navigate = useNavigate();
-  const notificationSelected = useInboxNotificationsSelected();
+  const setPending = useSetAtom(pendingNotificationAtom);
   const selectedRoomId = useSelectedRoom();
+  const notificationSelected = useInboxNotificationsSelected();
 
   const notify = useCallback(
     ({
       roomName,
       roomAvatar,
       username,
+      roomId,
+      eventId,
     }: {
       roomName: string;
       roomAvatar?: string;
@@ -156,12 +164,14 @@ function MessageNotifications() {
       const noti = new window.Notification(roomName, {
         icon: roomAvatar,
         badge: roomAvatar,
-        body: `New inbox notification from ${username}`,
+        body: `${username}: new message`,
         silent: true,
       });
 
       noti.onclick = () => {
-        if (!window.closed) navigate(getInboxNotificationsPath());
+        window.focus();
+        setPending({ roomId, eventId });
+
         noti.close();
         notifRef.current = undefined;
       };
@@ -169,7 +179,7 @@ function MessageNotifications() {
       notifRef.current?.close();
       notifRef.current = noti;
     },
-    [navigate]
+    [setPending]
   );
 
   const playSound = useCallback(() => {
@@ -220,7 +230,10 @@ function MessageNotifications() {
           roomAvatar: avatarMxc
             ? (mxcUrlToHttp(mx, avatarMxc, useAuthentication, 96, 96, 'crop') ?? undefined)
             : undefined,
-          username: getMemberDisplayName(room, sender) ?? getMxIdLocalPart(sender) ?? sender,
+          username:
+            getMemberDisplayName(room, sender, nicknamesRef.current) ??
+            getMxIdLocalPart(sender) ??
+            sender,
           roomId: room.roomId,
           eventId,
         });
@@ -253,6 +266,20 @@ function MessageNotifications() {
   );
 }
 
+function PrivacyBlurFeature() {
+  const [blurMedia] = useSetting(settingsAtom, 'privacyBlur');
+  const [blurAvatars] = useSetting(settingsAtom, 'privacyBlurAvatars');
+  const [blurEmotes] = useSetting(settingsAtom, 'privacyBlurEmotes');
+
+  useEffect(() => {
+    document.body.classList.toggle('sable-blur-media', blurMedia);
+    document.body.classList.toggle('sable-blur-avatars', blurAvatars);
+    document.body.classList.toggle('sable-blur-emotes', blurEmotes);
+  }, [blurMedia, blurAvatars, blurEmotes]);
+
+  return null;
+}
+
 type ClientNonUIFeaturesProps = {
   children: ReactNode;
 };
@@ -262,9 +289,11 @@ export function ClientNonUIFeatures({ children }: ClientNonUIFeaturesProps) {
     <>
       <SystemEmojiFeature />
       <PageZoomFeature />
+      <PrivacyBlurFeature />
       <FaviconUpdater />
       <InviteNotifications />
       <MessageNotifications />
+      <BackgroundNotifications />
       {children}
     </>
   );

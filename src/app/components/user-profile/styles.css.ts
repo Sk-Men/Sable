@@ -18,11 +18,16 @@ export const UserHeroCoverContainer = style({
   height: toRem(96),
   overflow: 'hidden',
 });
+
 export const UserHeroCover = style({
   height: '100%',
   width: '100%',
   objectFit: 'cover',
-  filter: 'blur(16px)',
+  objectPosition: 'center',
+});
+
+export const UserHeroCoverFallback = style({
+  filter: 'blur(16px) brightness(50%)',
   transform: 'scale(2)',
 });
 

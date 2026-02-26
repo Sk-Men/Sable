@@ -2,7 +2,7 @@ import { MatrixEvent, Room } from '$types/matrix-sdk';
 import { createContext, useCallback, useContext, useMemo, useState } from 'react';
 import { produce } from 'immer';
 import { useStateEvent } from './useStateEvent';
-import { StateEvent } from '../../types/matrix/room';
+import { StateEvent } from '$types/matrix/room';
 import { useStateEventCallback } from './useStateEventCallback';
 import { useMatrixClient } from './useMatrixClient';
 import { getStateEvent } from '../utils/room';

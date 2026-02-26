@@ -29,7 +29,7 @@ import { PowerColorBadge, PowerIcon } from '../power';
 import { useGetMemberPowerLevel, usePowerLevels } from '$hooks/usePowerLevels';
 import { getPowers, usePowerLevelTags } from '$hooks/usePowerLevelTags';
 import { stopPropagation } from '$appUtils/keyboard';
-import { StateEvent } from '../../../types/matrix/room';
+import { StateEvent } from '$types/matrix/room';
 import { useOpenRoomSettings } from '$state/hooks/roomSettings';
 import { RoomSettingsPage } from '$state/roomSettings';
 import { useRoom } from '$hooks/useRoom';

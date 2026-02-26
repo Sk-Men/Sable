@@ -17,6 +17,7 @@ export type IMemberContent = {
 };
 
 export enum StateEvent {
+  // Cinny/Matrix state events
   RoomCanonicalAlias = 'm.room.canonical_alias',
   RoomCreate = 'm.room.create',
   RoomJoinRules = 'm.room.join_rules',
@@ -32,12 +33,21 @@ export enum StateEvent {
   RoomGuestAccess = 'm.room.guest_access',
   RoomServerAcl = 'm.room.server_acl',
   RoomTombstone = 'm.room.tombstone',
+  GroupCallPrefix = 'org.matrix.msc3401.call',
+  GroupCallMemberPrefix = 'org.matrix.msc3401.call.member',
 
   SpaceChild = 'm.space.child',
   SpaceParent = 'm.space.parent',
 
   PoniesRoomEmotes = 'im.ponies.room_emotes',
   PowerLevelTags = 'in.cinny.room.power_level_tags',
+
+  // Widget state events
+  RoomWidget = 'im.vector.modular.widgets',
+
+  // Sable state events
+  RoomCosmeticsColor = 'moe.sable.room.cosmetics.color',
+  RoomCosmeticsFont = 'moe.sable.room.cosmetics.font',
 }
 
 export enum MessageEvent {
@@ -50,6 +60,7 @@ export enum MessageEvent {
 
 export enum RoomType {
   Space = 'm.space',
+  Call = 'org.matrix.msc3417.call',
 }
 
 export type MSpaceChildContent = {

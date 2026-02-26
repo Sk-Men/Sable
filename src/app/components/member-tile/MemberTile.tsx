@@ -5,9 +5,14 @@ import { getMemberDisplayName } from '$appUtils/room';
 import { getMxIdLocalPart } from '$appUtils/matrix';
 import { UserAvatar } from '../user-avatar';
 import * as css from './style.css';
+import { useSableCosmetics } from '$hooks/useSableCosmetics';
+import { useAtomValue } from 'jotai';
+import { nicknamesAtom } from '$state/nicknames';
 
-const getName = (room: Room, member: RoomMember) =>
-  getMemberDisplayName(room, member.userId) ?? getMxIdLocalPart(member.userId) ?? member.userId;
+const getName = (room: Room, member: RoomMember, nicknames: Record<string, string>) =>
+  getMemberDisplayName(room, member.userId, nicknames) ??
+  getMxIdLocalPart(member.userId) ??
+  member.userId;
 
 type MemberTileProps = {
   mx: MatrixClient;
@@ -18,13 +23,17 @@ type MemberTileProps = {
 };
 export const MemberTile = as<'button', MemberTileProps>(
   ({ as: AsMemberTile = 'button', mx, room, member, useAuthentication, after, ...props }, ref) => {
-    const name = getName(room, member);
+    const nicknames = useAtomValue(nicknamesAtom);
+    const name = getName(room, member, nicknames);
     const username = getMxIdLocalPart(member.userId);
 
     const avatarMxcUrl = member.getMxcAvatarUrl();
     const avatarUrl = avatarMxcUrl
       ? mx.mxcUrlToHttp(avatarMxcUrl, 100, 100, 'crop', undefined, false, useAuthentication)
       : undefined;
+
+    // Sable username color and fonts
+    const { color, font } = useSableCosmetics(member.userId, room);
 
     return (
       <AsMemberTile className={css.MemberTile} {...props} ref={ref}>
@@ -37,7 +46,7 @@ export const MemberTile = as<'button', MemberTileProps>(
           />
         </Avatar>
         <Box grow="Yes" as="span" direction="Column">
-          <Text as="span" size="T300" truncate>
+          <Text as="span" size="T300" truncate style={{ color, fontFamily: font }}>
             <b>{name}</b>
           </Text>
           <Box alignItems="Center" justifyContent="SpaceBetween" gap="100">

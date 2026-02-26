@@ -13,7 +13,11 @@ export const TypingIndicator = as<'div', TypingIndicatorProps>(
       as="span"
       alignItems="Center"
       shrink="No"
-      style={{ gap: toRem(size === '300' ? 1 : 2), ...style }}
+      style={{
+        gap: toRem(size === '300' ? 1 : 2),
+        zIndex: 10,
+        ...style,
+      }}
       {...props}
       ref={ref}
     >

@@ -9,6 +9,13 @@ export enum MessageLayout {
   Bubble = 2,
 }
 
+export enum RightSwipeAction {
+  Members = 'members',
+  Reply = 'reply',
+}
+
+export type JumboEmojiSize = 'none' | 'extraSmall' | 'small' | 'normal' | 'large' | 'extraLarge';
+
 export interface Settings {
   themeId?: string;
   useSystemTheme: boolean;
@@ -22,6 +29,7 @@ export interface Settings {
   hideActivity: boolean;
 
   isPeopleDrawer: boolean;
+  isWidgetDrawer: boolean;
   memberSortFilterIndex: number;
   enterForNewline: boolean;
   messageLayout: MessageLayout;
@@ -41,6 +49,19 @@ export interface Settings {
   dateFormatString: string;
 
   developerTools: boolean;
+
+  // Cosmetics!
+  jumboEmojiSize: JumboEmojiSize;
+  privacyBlur: boolean;
+  privacyBlurAvatars: boolean;
+  privacyBlurEmotes: boolean;
+  showPronouns: boolean;
+  renderGlobalNameColors: boolean;
+
+  // Sable features!
+  mobileGestures: boolean;
+  rightSwipeAction: RightSwipeAction;
+  hideMembershipInReadOnly: boolean;
 }
 
 const defaultSettings: Settings = {
@@ -56,6 +77,7 @@ const defaultSettings: Settings = {
   hideActivity: false,
 
   isPeopleDrawer: true,
+  isWidgetDrawer: false,
   memberSortFilterIndex: 0,
   enterForNewline: false,
   messageLayout: 0,
@@ -75,6 +97,19 @@ const defaultSettings: Settings = {
   dateFormatString: 'D MMM YYYY',
 
   developerTools: false,
+
+  // Cosmetics!
+  jumboEmojiSize: 'normal',
+  privacyBlur: false,
+  privacyBlurAvatars: false,
+  privacyBlurEmotes: false,
+  showPronouns: true,
+  renderGlobalNameColors: true,
+
+  // Sable features!
+  mobileGestures: true,
+  rightSwipeAction: RightSwipeAction.Reply,
+  hideMembershipInReadOnly: true,
 };
 
 export const getSettings = () => {

@@ -1,6 +1,9 @@
-import { Box, Button, config, Icon, Icons, Text } from 'folds';
-import React from 'react';
+import { Box, Button, config, Icon, Icons, Scroll, Text } from 'folds';
+import React, { useCallback, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAtomValue } from 'jotai';
+import { Opts as LinkifyOpts } from 'linkifyjs';
+import { HTMLReactParserOptions } from 'html-react-parser';
 import { UserHero, UserHeroName } from './UserHero';
 import { getMxIdServer, mxcUrlToHttp } from '$appUtils/matrix';
 import { getMemberAvatarMxc, getMemberDisplayName } from '$appUtils/room';
@@ -15,18 +18,190 @@ import { PowerChip } from './PowerChip';
 import { UserInviteAlert, UserBanAlert, UserModeration, UserKickAlert } from './UserModeration';
 import { useIgnoredUsers } from '$hooks/useIgnoredUsers';
 import { useMembership } from '$hooks/useMembership';
-import { Membership } from '../../../types/matrix/room';
+import { Membership } from '$types/matrix/room';
 import { useRoomCreators } from '$hooks/useRoomCreators';
 import { useRoomPermissions } from '$hooks/useRoomPermissions';
 import { useMemberPowerCompare } from '$hooks/useMemberPowerCompare';
 import { CreatorChip } from './CreatorChip';
 import { getDirectCreatePath, withSearchParam } from '$pages/pathUtils';
 import { DirectCreateSearchParams } from '$pages/paths';
+import { nicknamesAtom } from '$state/nicknames';
+import { UserProfile, useUserProfile } from '$hooks/useUserProfile';
+import { RenderBody } from '../message';
+import {
+  factoryRenderLinkifyWithMention,
+  getReactCustomHtmlParser,
+  LINKIFY_OPTS,
+  makeMentionCustomProps,
+  renderMatrixMention,
+} from '$plugins/react-custom-html-parser';
+import { useSpoilerClickHandler } from '$hooks/useSpoilerClickHandler';
+
+const KNOWN_KEYS = [
+  'moe.sable.app.bio',
+  'chat.commet.profile_bio',
+  'chat.commet.profile_banner',
+  'io.fsky.nyx.pronouns',
+  'us.cloke.msc4175.tz',
+  'm.tz',
+  'moe.sable.app.name_color',
+  'avatar_url',
+  'displayname',
+];
+
+type UserExtendedSectionProps = {
+  profile: UserProfile;
+  htmlReactParserOptions: HTMLReactParserOptions;
+  linkifyOpts: LinkifyOpts;
+};
+
+function UserExtendedSection({
+  profile,
+  htmlReactParserOptions,
+  linkifyOpts,
+}: UserExtendedSectionProps) {
+  const clamp = (str: string, len: number) => (str.length > len ? `${str.slice(0, len)}...` : str);
+  const [showMore, setShowMore] = useState(false);
+
+  const pronouns = profile.pronouns?.map((p: any) => clamp(p.summary, 20)).join('/');
+  const timezone = profile.timezone ? clamp(profile.timezone, 64) : null;
+  const localTime = timezone
+    ? new Intl.DateTimeFormat([], {
+        hour: 'numeric',
+        minute: '2-digit',
+        timeZone: timezone,
+      }).format(new Date())
+    : null;
+
+  const bioContent = useMemo(() => {
+    let rawBio =
+      profile.extended?.['moe.sable.app.bio'] ||
+      profile.extended?.['chat.commet.profile_bio'] ||
+      profile.bio;
+
+    if (!rawBio) return null;
+
+    if (typeof rawBio === 'object' && rawBio !== null && 'formatted_body' in rawBio) {
+      rawBio = rawBio.formatted_body;
+    }
+
+    if (typeof rawBio !== 'string') {
+      return null;
+    }
+
+    const safetyTrim = rawBio.length > 2048 ? rawBio.slice(0, 2048) : rawBio;
+
+    const visibleText = safetyTrim.replace(/<[^>]*>?/gm, '');
+    const VISIBLE_LIMIT = 1024;
+
+    if (visibleText.length <= VISIBLE_LIMIT) {
+      return safetyTrim;
+    }
+
+    return `${safetyTrim.slice(0, VISIBLE_LIMIT)}...`;
+  }, [profile]);
+
+  const unknownFields = Object.entries(profile.extended || {}).filter(
+    ([key, value]) =>
+      !KNOWN_KEYS.includes(key) && (typeof value === 'string' || typeof value === 'number')
+  );
+
+  return (
+    <Box direction="Column" gap="200" style={{ marginBottom: config.space.S100 }}>
+      {(pronouns || localTime) && (
+        <Box alignItems="Center" gap="300" wrap="Wrap">
+          {pronouns && (
+            <Box alignItems="Center" gap="100">
+              <Icon size="50" src={Icons.User} style={{ opacity: 0.5 }} />
+              <Text size="T200" priority="400">
+                {pronouns}
+              </Text>
+            </Box>
+          )}
+          {localTime && (
+            <Box alignItems="Center" gap="100">
+              <Icon size="50" src={Icons.Clock} style={{ opacity: 0.5 }} />
+              <Text size="T200" priority="400">
+                {localTime} ({profile.timezone})
+              </Text>
+            </Box>
+          )}
+        </Box>
+      )}
+
+      {bioContent && (
+        <Scroll
+          direction="Vertical"
+          variant="SurfaceVariant"
+          visibility="Always"
+          size="300"
+          style={{
+            backgroundColor: 'var(--sable-bg-container)',
+            borderRadius: config.radii.R400,
+            maxHeight: '200px',
+            marginTop: config.space.S0,
+          }}
+        >
+          <Box style={{ padding: config.space.S200, wordBreak: 'break-word' }}>
+            <Text size="T200" priority="400" as="div">
+              <RenderBody
+                body={bioContent}
+                customBody={bioContent}
+                htmlReactParserOptions={htmlReactParserOptions}
+                linkifyOpts={linkifyOpts}
+              />
+            </Text>
+          </Box>
+        </Scroll>
+      )}
+
+      {unknownFields.length > 0 && (
+        <Box direction="Column" gap="100">
+          <Button
+            variant="Secondary"
+            size="300"
+            fill="None"
+            onClick={() => setShowMore(!showMore)}
+            after={<Icon size="50" src={showMore ? Icons.ChevronTop : Icons.ChevronBottom} />}
+            style={{ padding: '1rem', justifyContent: 'flex-start', width: 'fit-content' }}
+          >
+            <Text size="T200" priority="400">
+              {showMore ? 'Show less' : `+ ${unknownFields.length} more info`}
+            </Text>
+          </Button>
+
+          {showMore && (
+            <Box
+              direction="Column"
+              style={{
+                padding: config.space.S200,
+                backgroundColor: 'var(--sable-surface-container)',
+                borderRadius: config.radii.R400,
+              }}
+            >
+              {unknownFields.map(([key, value]) => (
+                <Box key={key} direction="Column" style={{ marginBottom: config.space.S100 }}>
+                  <Text size="T200" priority="400" style={{ letterSpacing: '0.05em' }}>
+                    {clamp(key, 64).split('.').pop()?.replace(/_/g, ' ')}
+                  </Text>
+                  <Text size="T200" priority="300">
+                    {String(clamp(value, 64))}
+                  </Text>
+                </Box>
+              ))}
+            </Box>
+          )}
+        </Box>
+      )}
+    </Box>
+  );
+}
 
 type UserRoomProfileProps = {
   userId: string;
+  initialProfile?: Partial<UserProfile>;
 };
-export function UserRoomProfile({ userId }: UserRoomProfileProps) {
+export function UserRoomProfile({ userId, initialProfile }: UserRoomProfileProps) {
   const mx = useMatrixClient();
   const useAuthentication = useMediaAuthentication();
   const navigate = useNavigate();
@@ -53,11 +228,27 @@ export function UserRoomProfile({ userId }: UserRoomProfileProps) {
   const membership = useMembership(room, userId);
 
   const server = getMxIdServer(userId);
-  const displayName = getMemberDisplayName(room, userId);
+  const nicknames = useAtomValue(nicknamesAtom);
+  const displayName = getMemberDisplayName(room, userId, nicknames);
   const avatarMxc = getMemberAvatarMxc(room, userId);
   const avatarUrl = (avatarMxc && mxcUrlToHttp(mx, avatarMxc, useAuthentication)) ?? undefined;
 
   const presence = useUserPresence(userId);
+
+  const fetchedProfile = useUserProfile(userId);
+  const extendedProfile =
+    fetchedProfile && Object.keys(fetchedProfile).length > 0
+      ? fetchedProfile
+      : (initialProfile as UserProfile) || fetchedProfile;
+
+  const parsedBanner =
+    typeof extendedProfile.bannerUrl === 'string'
+      ? extendedProfile.bannerUrl.replace(/^"|"$/g, '')
+      : undefined;
+
+  const bannerHttpUrl = parsedBanner
+    ? (mxcUrlToHttp(mx, parsedBanner, useAuthentication) ?? undefined)
+    : undefined;
 
   const handleMessage = () => {
     closeUserRoomProfile();
@@ -67,33 +258,71 @@ export function UserRoomProfile({ userId }: UserRoomProfileProps) {
     navigate(withSearchParam(getDirectCreatePath(), directSearchParam));
   };
 
+  // Todo eventually maybe
+  const mentionClickHandler = useCallback((e: React.SyntheticEvent<HTMLElement>) => {
+    e.preventDefault();
+  }, []);
+
+  const linkifyOpts = useMemo<LinkifyOpts>(
+    () => ({
+      ...LINKIFY_OPTS,
+      render: factoryRenderLinkifyWithMention((href) =>
+        renderMatrixMention(
+          mx,
+          room.roomId,
+          href,
+          makeMentionCustomProps(mentionClickHandler),
+          nicknames
+        )
+      ),
+    }),
+    [mx, room, mentionClickHandler, nicknames]
+  );
+
+  const spoilerClickHandler = useSpoilerClickHandler();
+
+  const htmlReactParserOptions = useMemo<HTMLReactParserOptions>(
+    () =>
+      getReactCustomHtmlParser(mx, room.roomId, {
+        linkifyOpts,
+        useAuthentication,
+        handleSpoilerClick: spoilerClickHandler,
+      }),
+    [mx, room, linkifyOpts, useAuthentication, spoilerClickHandler]
+  );
+
   return (
     <Box direction="Column">
       <UserHero
         userId={userId}
         avatarUrl={avatarUrl}
+        bannerUrl={bannerHttpUrl ?? undefined}
         presence={presence && presence.lastActiveTs !== 0 ? presence : undefined}
       />
-      <Box direction="Column" gap="500" style={{ padding: config.space.S400 }}>
-        <Box direction="Column" gap="400">
-          <Box gap="400" alignItems="Start">
+      <Box direction="Column" gap="300" style={{ padding: config.space.S400 }}>
+        <Box direction="Column" gap="200">
+          <Box gap="200" alignItems="Center" wrap="Wrap">
             <UserHeroName displayName={displayName} userId={userId} />
             {userId !== myUserId && (
-              <Box shrink="No">
-                <Button
-                  size="300"
-                  variant="Primary"
-                  fill="Solid"
-                  radii="300"
-                  before={<Icon size="50" src={Icons.Message} filled />}
-                  onClick={handleMessage}
-                >
-                  <Text size="B300">Message</Text>
-                </Button>
-              </Box>
+              <Button
+                size="300"
+                variant="Primary"
+                fill="Solid"
+                radii="300"
+                before={<Icon size="50" src={Icons.Message} filled />}
+                onClick={handleMessage}
+                style={{ marginLeft: 'auto' }}
+              >
+                <Text size="B300">Message</Text>
+              </Button>
             )}
           </Box>
-          <Box alignItems="Center" gap="200" wrap="Wrap">
+          <UserExtendedSection
+            profile={extendedProfile}
+            htmlReactParserOptions={htmlReactParserOptions}
+            linkifyOpts={linkifyOpts}
+          />
+          <Box alignItems="Center" gap="100" wrap="Wrap">
             {server && <ServerChip server={server} />}
             <ShareChip userId={userId} />
             {creator ? <CreatorChip /> : <PowerChip userId={userId} />}

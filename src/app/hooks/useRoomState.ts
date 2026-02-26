@@ -6,7 +6,7 @@ import {
   RoomStateEventHandlerMap,
 } from '$types/matrix-sdk';
 import { useCallback, useEffect, useState } from 'react';
-import { StateEvent } from '../../types/matrix/room';
+import { StateEvent } from '$types/matrix/room';
 
 export type StateKeyToEvents = Map<string, MatrixEvent>;
 export type StateTypeToState = Map<string, StateKeyToEvents>;

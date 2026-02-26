@@ -27,7 +27,7 @@ import { millify } from '$plugins/millify';
 import { useMatrixClient } from '$hooks/useMatrixClient';
 import { AsyncStatus, useAsyncCallback } from '$hooks/useAsyncCallback';
 import { onEnterOrSpace, stopPropagation } from '$appUtils/keyboard';
-import { RoomType, StateEvent } from '../../../types/matrix/room';
+import { RoomType, StateEvent } from '$types/matrix/room';
 import { useJoinedRoomId } from '$hooks/useJoinedRoomId';
 import { useElementSizeObserver } from '$hooks/useElementSizeObserver';
 import { getRoomAvatarUrl, getStateEvent } from '$appUtils/room';

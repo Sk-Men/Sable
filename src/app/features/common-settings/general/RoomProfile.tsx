@@ -43,6 +43,7 @@ type RoomProfileEditProps = {
   avatar?: string;
   name: string;
   topic: string;
+  isDm: boolean;
   onClose: () => void;
 };
 export function RoomProfileEdit({
@@ -52,6 +53,7 @@ export function RoomProfileEdit({
   avatar,
   name,
   topic,
+  isDm,
   onClose,
 }: RoomProfileEditProps) {
   const room = useRoom();
@@ -131,6 +133,14 @@ export function RoomProfileEdit({
     });
   };
 
+  const handleResetName = useCallback(() => {
+    submit(undefined, '', undefined).then(() => {
+      if (alive()) {
+        onClose();
+      }
+    });
+  }, [submit, alive, onClose]);
+
   return (
     <Box as="form" onSubmit={handleSubmit} direction="Column" gap="400">
       <Box gap="400">
@@ -194,7 +204,7 @@ export function RoomProfileEdit({
               alt={name}
               renderFallback={() => (
                 <RoomIcon
-                  space={room.isSpaceRoom()}
+                  roomType={room.getType()}
                   size="400"
                   joinRule={joinRule?.join_rule ?? JoinRule.Invite}
                   filled
@@ -204,15 +214,35 @@ export function RoomProfileEdit({
           </Avatar>
         </Box>
       </Box>
-      <Box direction="Inherit" gap="100">
+      <Box direction="Column" gap="100">
         <Text size="L400">Name</Text>
-        <Input
-          name="nameInput"
-          defaultValue={name}
-          variant="Secondary"
-          radii="300"
-          readOnly={!canEditName || submitting}
-        />
+        <Box gap="200" alignItems="Center">
+          <Box grow="Yes">
+            <Input
+              name="nameInput"
+              defaultValue={name}
+              variant="Secondary"
+              radii="300"
+              style={{ width: '100%' }}
+              readOnly={!canEditName || submitting}
+            />
+          </Box>
+
+          {isDm && canEditName && (
+            <Button
+              type="button"
+              variant="Critical"
+              fill="None"
+              size="300"
+              radii="300"
+              onClick={handleResetName}
+              disabled={submitting}
+              title="Reset DM Name"
+            >
+              <Icon src={Icons.Reload} size="100" />
+            </Button>
+          )}
+        </Box>
       </Box>
       <Box direction="Inherit" gap="100">
         <Text size="L400">Topic</Text>
@@ -263,6 +293,7 @@ export function RoomProfile({ permissions }: RoomProfileProps) {
   const useAuthentication = useMediaAuthentication();
   const room = useRoom();
   const directs = useAtomValue(mDirectAtom);
+  const isDm = directs.has(room.roomId);
 
   const avatar = useRoomAvatar(room, directs.has(room.roomId));
   const name = useRoomName(room);
@@ -299,6 +330,7 @@ export function RoomProfile({ permissions }: RoomProfileProps) {
             avatar={avatar}
             name={name ?? ''}
             topic={topic ?? ''}
+            isDm={isDm}
             onClose={handleCloseEdit}
           />
         ) : (
@@ -337,7 +369,7 @@ export function RoomProfile({ permissions }: RoomProfileProps) {
                   alt={name}
                   renderFallback={() => (
                     <RoomIcon
-                      space={room.isSpaceRoom()}
+                      roomType={room.getType()}
                       size="400"
                       joinRule={joinRule?.join_rule ?? JoinRule.Invite}
                       filled

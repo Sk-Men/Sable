@@ -23,6 +23,7 @@ export * from 'matrix-js-sdk/lib/models/user';
 export * from 'matrix-js-sdk/lib/models/search-result';
 export * from 'matrix-js-sdk/lib/models/event-timeline';
 export * from 'matrix-js-sdk/lib/models/event-timeline-set';
+export { Relations, RelationsEvent } from 'matrix-js-sdk/lib/models/relations';
 
 export * from 'matrix-js-sdk/lib/store/indexeddb';
 export * from 'matrix-js-sdk/lib/crypto/store/indexeddb-crypto-store';
@@ -39,12 +40,14 @@ export * from 'matrix-js-sdk/lib/@types/search';
 export * from 'matrix-js-sdk/lib/@types/state_events';
 export * from 'matrix-js-sdk/lib/@types/location';
 export * from 'matrix-js-sdk/lib/@types/auth';
+export * from 'matrix-js-sdk/lib/@types/spaces';
 export * from 'matrix-js-sdk/lib/@types/read_receipts';
 export * from 'matrix-js-sdk/lib/@types/membership';
 export * from 'matrix-js-sdk/lib/@types/registration';
 
 export * from 'matrix-js-sdk/lib/oidc/validate';
 export { VerificationMethod } from 'matrix-js-sdk/lib/types';
+export * from 'matrix-js-sdk/lib/pushprocessor';
 
 export * from 'matrix-js-sdk/lib/crypto-api/CryptoEvent';
 export * from 'matrix-js-sdk/lib/crypto-api/CryptoEventHandlerMap';
@@ -52,3 +55,7 @@ export * from 'matrix-js-sdk/lib/crypto-api/verification';
 export * from 'matrix-js-sdk/lib/crypto-api/keybackup';
 export * from 'matrix-js-sdk/lib/crypto-api/recovery-key';
 export * from 'matrix-js-sdk/lib/crypto-api/key-passphrase';
+export * from 'matrix-js-sdk/lib/common-crypto/CryptoBackend';
+
+export * from 'matrix-js-sdk/lib/matrixrtc/CallMembership';
+export * from 'matrix-js-sdk/lib/matrixrtc/MatrixRTCSession';

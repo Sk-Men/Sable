@@ -15,7 +15,7 @@ import {
   config,
 } from 'folds';
 import { MatrixEvent, Room, RoomMember } from '$types/matrix-sdk';
-import { Relations } from 'matrix-js-sdk/lib/models/relations';
+import { Relations } from '$types/matrix-sdk';
 import { getMemberDisplayName } from '$appUtils/room';
 import { eventWithShortcode, getMxIdLocalPart } from '$appUtils/matrix';
 import * as css from './ReactionViewer.css';
@@ -23,6 +23,8 @@ import { useMatrixClient } from '$hooks/useMatrixClient';
 import { useRelations } from '$hooks/useRelations';
 import { Reaction } from '$components/message';
 import { getHexcodeForEmoji, getShortcodeFor } from '$plugins/emoji';
+import { useAtomValue } from 'jotai';
+import { nicknamesAtom } from '$state/nicknames';
 import { UserAvatar } from '$components/user-avatar';
 import { useMediaAuthentication } from '$hooks/useMediaAuthentication';
 import { useOpenUserRoomProfile } from '$state/hooks/userRoomProfile';
@@ -45,6 +47,7 @@ export const ReactionViewer = as<'div', ReactionViewerProps>(
     );
     const space = useSpaceOptionally();
     const openProfile = useOpenUserRoomProfile();
+    const nicknames = useAtomValue(nicknamesAtom);
 
     const [selectedKey, setSelectedKey] = useState<string>(() => {
       if (initialKey) return initialKey;
@@ -53,7 +56,9 @@ export const ReactionViewer = as<'div', ReactionViewerProps>(
     });
 
     const getName = (member: RoomMember) =>
-      getMemberDisplayName(room, member.userId) ?? getMxIdLocalPart(member.userId) ?? member.userId;
+      getMemberDisplayName(room, member.userId, nicknames) ??
+      getMxIdLocalPart(member.userId) ??
+      member.userId;
 
     const getReactionsForKey = (key: string): MatrixEvent[] => {
       const reactSet = reactions.find(([k]) => k === key)?.[1];
@@ -78,7 +83,6 @@ export const ReactionViewer = as<'div', ReactionViewerProps>(
           <Scroll visibility="Hover" hideTrack size="300">
             <Box className={css.SidebarContent} direction="Column" gap="200">
               {reactions.map(([key, evts]) => {
-                if (typeof key !== 'string') return null;
                 return (
                   <Reaction
                     key={key}

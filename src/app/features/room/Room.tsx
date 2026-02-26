@@ -13,6 +13,10 @@ import { useKeyDown } from '$hooks/useKeyDown';
 import { markAsRead } from '$appUtils/notifications';
 import { useMatrixClient } from '$hooks/useMatrixClient';
 import { useRoomMembers } from '$hooks/useRoomMembers';
+import { CallView } from '$features/call/CallView';
+import { RoomViewHeader } from './RoomViewHeader';
+import { useCallState } from '$pages/client/call/CallProvider';
+import { WidgetsDrawer } from '$features/widgets/WidgetsDrawer';
 
 export function Room() {
   const { eventId } = useParams();
@@ -20,10 +24,12 @@ export function Room() {
   const mx = useMatrixClient();
 
   const [isDrawer] = useSetting(settingsAtom, 'isPeopleDrawer');
+  const [isWidgetDrawerOpen] = useSetting(settingsAtom, 'isWidgetDrawer');
   const [hideActivity] = useSetting(settingsAtom, 'hideActivity');
   const screenSize = useScreenSizeContext();
   const powerLevels = usePowerLevels(room);
   const members = useRoomMembers(mx, room.roomId);
+  const { isChatOpen } = useCallState();
 
   useKeyDown(
     window,
@@ -40,11 +46,26 @@ export function Room() {
   return (
     <PowerLevelsContextProvider value={powerLevels}>
       <Box grow="Yes">
-        <RoomView room={room} eventId={eventId} />
+        <Box grow="Yes" direction="Column">
+          <RoomViewHeader />
+          <Box grow="Yes">
+            <CallView room={room} />
+            {room.isCallRoom() && screenSize === ScreenSize.Desktop && isChatOpen && (
+              <Line variant="Background" direction="Vertical" size="300" />
+            )}
+            {(!room.isCallRoom() || isChatOpen) && <RoomView room={room} eventId={eventId} />}
+          </Box>
+        </Box>
         {screenSize === ScreenSize.Desktop && isDrawer && (
           <>
             <Line variant="Background" direction="Vertical" size="300" />
             <MembersDrawer key={room.roomId} room={room} members={members} />
+          </>
+        )}
+        {screenSize === ScreenSize.Desktop && isWidgetDrawerOpen && (
+          <>
+            <Line variant="Background" direction="Vertical" size="300" />
+            <WidgetsDrawer key={`widgets-${room.roomId}`} room={room} />
           </>
         )}
       </Box>

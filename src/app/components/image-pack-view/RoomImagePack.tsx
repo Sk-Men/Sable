@@ -4,7 +4,7 @@ import { usePowerLevels } from '$hooks/usePowerLevels';
 import { useMatrixClient } from '$hooks/useMatrixClient';
 import { ImagePackContent } from './ImagePackContent';
 import { ImagePack, PackContent } from '$plugins/custom-emoji';
-import { StateEvent } from '../../../types/matrix/room';
+import { StateEvent } from '$types/matrix/room';
 import { useRoomImagePack } from '$hooks/useImagePacks';
 import { randomStr } from '$appUtils/common';
 import { useRoomPermissions } from '$hooks/useRoomPermissions';

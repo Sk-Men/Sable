@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo, useCallback } from 'react';
 import { MsgType } from '$types/matrix-sdk';
 import { HTMLReactParserOptions } from 'html-react-parser';
 import { Opts } from 'linkifyjs';
@@ -30,7 +30,6 @@ import { ImageViewer } from './image-viewer';
 import { PdfViewer } from './Pdf-viewer';
 import { TextViewer } from './text-viewer';
 import { testMatrixTo } from '../plugins/matrix-to';
-import { IImageContent } from '../../types/matrix/common';
 
 type RenderMessageContentProps = {
   displayName: string;
@@ -45,7 +44,18 @@ type RenderMessageContentProps = {
   linkifyOpts: Opts;
   outlineAttachment?: boolean;
 };
-export function RenderMessageContent({
+
+const getMediaType = (url: string) => {
+  const cleanUrl = url.toLowerCase();
+  if (cleanUrl.match(/\.(mp4|webm|ogg)$/i)) return 'video';
+  if (cleanUrl.match(/\.(png|jpg|jpeg|gif|webp)$/i) || cleanUrl.match(/@(jpeg|webp|png|jpg)$/i))
+    return 'image';
+  return null;
+};
+
+const CAPTION_STYLE = { marginTop: config.space.S200 };
+
+function RenderMessageContentInternal({
   displayName,
   msgType,
   ts,
@@ -58,33 +68,52 @@ export function RenderMessageContent({
   linkifyOpts,
   outlineAttachment,
 }: RenderMessageContentProps) {
-  const renderUrlsPreview = (urls: string[]) => {
-    const filteredUrls = urls.filter((url) => !testMatrixTo(url));
-    if (filteredUrls.length === 0) return undefined;
-    return (
-      <UrlPreviewHolder>
-        {filteredUrls.map((url) => (
-          <UrlPreviewCard key={url} url={url} ts={ts} />
-        ))}
-      </UrlPreviewHolder>
-    );
-  };
+  const content = useMemo(() => getContent<any>(), [getContent]);
+
+  const renderBody = useCallback(
+    (props: any) => (
+      <RenderBody
+        {...props}
+        highlightRegex={highlightRegex}
+        htmlReactParserOptions={htmlReactParserOptions}
+        linkifyOpts={linkifyOpts}
+      />
+    ),
+    [highlightRegex, htmlReactParserOptions, linkifyOpts]
+  );
+
+  const renderUrlsPreview = useCallback(
+    (urls: string[]) => {
+      const filteredUrls = urls.filter((url) => !testMatrixTo(url));
+      if (filteredUrls.length === 0) return undefined;
+
+      const analyzed = filteredUrls.map((url) => ({
+        url,
+        type: getMediaType(url),
+      }));
+
+      const mediaLinks = analyzed.filter((item) => item.type !== null);
+      const toRender = mediaLinks.length > 0 ? mediaLinks : [analyzed[0]];
+
+      return (
+        <UrlPreviewHolder>
+          {toRender.map(({ url, type }) => (
+            <UrlPreviewCard key={url} url={url} ts={ts} mediaType={type} />
+          ))}
+        </UrlPreviewHolder>
+      );
+    },
+    [ts]
+  );
+
   const renderCaption = () => {
-    const content: IImageContent = getContent();
     if (content.filename && content.filename !== content.body) {
       return (
         <MText
-          style={{ marginTop: config.space.S200 }}
+          style={CAPTION_STYLE}
           edited={edited}
           content={content}
-          renderBody={(props) => (
-            <RenderBody
-              {...props}
-              highlightRegex={highlightRegex}
-              htmlReactParserOptions={htmlReactParserOptions}
-              linkifyOpts={linkifyOpts}
-            />
-          )}
+          renderBody={renderBody}
           renderUrlsPreview={urlPreview ? renderUrlsPreview : undefined}
         />
       );
@@ -95,7 +124,7 @@ export function RenderMessageContent({
   const renderFile = () => (
     <>
       <MFile
-        content={getContent()}
+        content={content}
         renderFileContent={({ body, mimeType, info, encInfo, url }) => (
           <FileContent
             body={body}
@@ -132,15 +161,8 @@ export function RenderMessageContent({
     return (
       <MText
         edited={edited}
-        content={getContent()}
-        renderBody={(props) => (
-          <RenderBody
-            {...props}
-            highlightRegex={highlightRegex}
-            htmlReactParserOptions={htmlReactParserOptions}
-            linkifyOpts={linkifyOpts}
-          />
-        )}
+        content={content}
+        renderBody={renderBody}
         renderUrlsPreview={urlPreview ? renderUrlsPreview : undefined}
       />
     );
@@ -151,15 +173,8 @@ export function RenderMessageContent({
       <MEmote
         displayName={displayName}
         edited={edited}
-        content={getContent()}
-        renderBody={(props) => (
-          <RenderBody
-            {...props}
-            highlightRegex={highlightRegex}
-            htmlReactParserOptions={htmlReactParserOptions}
-            linkifyOpts={linkifyOpts}
-          />
-        )}
+        content={content}
+        renderBody={renderBody}
         renderUrlsPreview={urlPreview ? renderUrlsPreview : undefined}
       />
     );
@@ -169,15 +184,8 @@ export function RenderMessageContent({
     return (
       <MNotice
         edited={edited}
-        content={getContent()}
-        renderBody={(props) => (
-          <RenderBody
-            {...props}
-            highlightRegex={highlightRegex}
-            htmlReactParserOptions={htmlReactParserOptions}
-            linkifyOpts={linkifyOpts}
-          />
-        )}
+        content={content}
+        renderBody={renderBody}
         renderUrlsPreview={urlPreview ? renderUrlsPreview : undefined}
       />
     );
@@ -187,10 +195,10 @@ export function RenderMessageContent({
     return (
       <>
         <MImage
-          content={getContent()}
-          renderImageContent={(props) => (
+          content={content}
+          renderImageContent={(imageProps) => (
             <ImageContent
-              {...props}
+              {...imageProps}
               autoPlay={mediaAutoLoad}
               renderImage={(p) => <Image {...p} loading="lazy" />}
               renderViewer={(p) => <ImageViewer {...p} />}
@@ -207,13 +215,13 @@ export function RenderMessageContent({
     return (
       <>
         <MVideo
-          content={getContent()}
+          content={content}
           renderAsFile={renderFile}
-          renderVideoContent={({ body, info, ...props }) => (
+          renderVideoContent={({ body, info, ...videoProps }) => (
             <VideoContent
               body={body}
               info={info}
-              {...props}
+              {...videoProps}
               renderThumbnail={
                 mediaAutoLoad
                   ? () => (
@@ -240,10 +248,10 @@ export function RenderMessageContent({
     return (
       <>
         <MAudio
-          content={getContent()}
+          content={content}
           renderAsFile={renderFile}
-          renderAudioContent={(props) => (
-            <AudioContent {...props} renderMediaControl={(p) => <MediaControl {...p} />} />
+          renderAudioContent={(audioProps) => (
+            <AudioContent {...audioProps} renderMediaControl={(p) => <MediaControl {...p} />} />
           )}
           outlined={outlineAttachment}
         />
@@ -252,17 +260,11 @@ export function RenderMessageContent({
     );
   }
 
-  if (msgType === MsgType.File) {
-    return renderFile();
-  }
-
-  if (msgType === MsgType.Location) {
-    return <MLocation content={getContent()} />;
-  }
-
-  if (msgType === 'm.bad.encrypted') {
-    return <MBadEncrypted />;
-  }
+  if (msgType === MsgType.File) return renderFile();
+  if (msgType === MsgType.Location) return <MLocation content={content} />;
+  if (msgType === 'm.bad.encrypted') return <MBadEncrypted />;
 
   return <UnsupportedContent />;
 }
+
+export const RenderMessageContent = React.memo(RenderMessageContentInternal);

@@ -9,6 +9,9 @@ export type ClientConfig = {
   defaultHomeserver?: number;
   homeserverList?: string[];
   allowCustomHomeservers?: boolean;
+  elementCallUrl?: string;
+
+  disableAccountSwitcher?: boolean;
 
   featuredCommunities?: {
     openAsDefault?: boolean;

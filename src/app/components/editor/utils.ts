@@ -204,6 +204,7 @@ export const replaceWithElement = (editor: Editor, selectRange: BaseRange, eleme
 export const moveCursor = (editor: Editor, withSpace?: boolean) => {
   Transforms.move(editor);
   if (withSpace) editor.insertText(' ');
+  Transforms.collapse(editor, { edge: 'end' });
 };
 
 interface PointUntilCharOptions {
@@ -255,8 +256,7 @@ export const getPrevWorldRange = (editor: Editor): BaseRange | undefined => {
 export const isEmptyEditor = (editor: Editor): boolean => {
   const firstChildren = editor.children[0];
   if (firstChildren && Element.isElement(firstChildren)) {
-    const isEmpty = editor.children.length === 1 && Editor.isEmpty(editor, firstChildren);
-    return isEmpty;
+    return editor.children.length === 1 && Editor.isEmpty(editor, firstChildren);
   }
   return false;
 };

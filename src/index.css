@@ -1,3 +1,4 @@
+@import url('https://fonts.googleapis.com/css2?family=Nunito:ital,wght@0,200..1000;1,200..1000&family=Space+Mono:ital,wght@0,400;0,700;1,400;1,700&display=swap');
 @font-face {
   font-family: Twemoji;
   src:
@@ -20,23 +21,25 @@
   --mx-uc-8: hsl(94, 100%, 35%);
 
   --font-emoji: 'Twemoji_DISABLED';
-  --font-secondary: 'Inter Variable', var(--font-emoji), sans-serif;
+  --font-secondary: 'Nunito', var(--font-emoji), sans-serif;
+  --font-monospace: 'Space Mono', monospace;
 }
 
 .dark-theme,
 .butter-theme {
   --tc-link: hsl(213deg 100% 80%);
 
-  --mx-uc-1: hsl(208, 100%, 75%);
-  --mx-uc-2: hsl(301, 100%, 80%);
-  --mx-uc-3: hsl(163, 100%, 70%);
-  --mx-uc-4: hsl(343, 100%, 75%);
-  --mx-uc-5: hsl(24, 100%, 70%);
-  --mx-uc-6: hsl(181, 100%, 60%);
-  --mx-uc-7: hsl(243, 100%, 80%);
-  --mx-uc-8: hsl(94, 100%, 80%);
+  --mx-uc-1: hsl(260, 100%, 75%);
+  --mx-uc-2: hsl(320, 100%, 75%);
+  --mx-uc-3: hsl(180, 100%, 65%);
+  --mx-uc-4: hsl(150, 100%, 70%);
+  --mx-uc-5: hsl(200, 100%, 75%);
+  --mx-uc-6: hsl(280, 80%, 70%);
+  --mx-uc-7: hsl(40, 100%, 75%);
+  --mx-uc-8: hsl(0, 100%, 75%);
 
-  --font-secondary: 'Inter Variable', var(--font-emoji), sans-serif;
+  --font-secondary: 'Nunito', var(--font-emoji), sans-serif;
+  --font-monospace: 'Space Mono', monospace;
 }
 
 html {
@@ -51,9 +54,8 @@ body {
   font-family: var(--font-secondary);
   font-size: 16px;
   font-weight: 400;
-
-  /*Why font-variant-ligatures => https://github.com/rsms/inter/issues/222 */
-  font-variant-ligatures: no-contextual;
+  /* eslint-disable-next-line css/no-invalid-properties */
+  background-color: var(--sable-bg-container);
 }
 #root {
   width: 100%;
@@ -131,4 +133,13 @@ textarea {
 audio:not([controls]) {
   /* eslint-disable-next-line css/no-important */
   display: none !important;
+}
+
+code,
+pre {
+  font-family: var(--font-monospace);
+  font-size: 0.9em;
+  line-height: 1.3;
+  letter-spacing: -0.01em;
+  font-variant-ligatures: contextual;
 }

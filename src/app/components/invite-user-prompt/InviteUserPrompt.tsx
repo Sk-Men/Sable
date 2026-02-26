@@ -35,7 +35,7 @@ import FocusTrap from 'focus-trap-react';
 import { stopPropagation } from '$appUtils/keyboard';
 import { useDirectUsers } from '$hooks/useDirectUsers';
 import { getMxIdLocalPart, getMxIdServer, isUserId } from '$appUtils/matrix';
-import { Membership } from '../../../types/matrix/room';
+import { Membership } from '$types/matrix/room';
 import { useAsyncSearch, UseAsyncSearchOptions } from '$hooks/useAsyncSearch';
 import { highlightText, makeHighlightRegex } from '$plugins/react-custom-html-parser';
 import { AsyncStatus, useAsyncCallback } from '$hooks/useAsyncCallback';

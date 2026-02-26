@@ -16,13 +16,16 @@ import {
 import { HttpApiEvent, HttpApiEventHandlerMap, MatrixClient } from '$types/matrix-sdk';
 import FocusTrap from 'focus-trap-react';
 import React, { MouseEventHandler, ReactNode, useCallback, useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAtom, useAtomValue, useSetAtom } from 'jotai';
 import {
   clearCacheAndReload,
   clearLoginData,
+  clearMismatchedStores,
   initClient,
   logoutClient,
   startClient,
-} from '../../../client/initMatrix';
+} from '$client/initMatrix';
 import { SplashScreen } from '$components/splash-screen';
 import { ServerConfigsLoader } from '$components/ServerConfigsLoader';
 import { CapabilitiesProvider } from '$hooks/useCapabilities';
@@ -34,7 +37,13 @@ import { useSyncState } from '$hooks/useSyncState';
 import { stopPropagation } from '$appUtils/keyboard';
 import { SyncStatus } from './SyncStatus';
 import { AuthMetadataProvider } from '$hooks/useAuthMetadata';
-import { getFallbackSession } from '$state/sessions';
+import { sessionsAtom, activeSessionIdAtom, Session, SessionsAction } from '$state/sessions';
+import { getHomePath } from '../pathUtils';
+import { createLogger } from '$appUtils/debug';
+import { pushSessionToSW } from '../../../sw-session';
+import { useSyncNicknames } from '$hooks/useNickname';
+
+const log = createLogger('ClientRoot');
 
 function ClientRootLoading() {
   return (
@@ -47,7 +56,12 @@ function ClientRootLoading() {
   );
 }
 
-function ClientRootOptions({ mx }: { mx?: MatrixClient }) {
+type ClientRootOptionsProps = {
+  mx?: MatrixClient;
+  session?: Session;
+  onLogout: () => void;
+};
+function ClientRootOptions({ mx, onLogout }: ClientRootOptionsProps) {
   const [menuAnchor, setMenuAnchor] = useState<RectCords>();
 
   const handleToggle: MouseEventHandler<HTMLButtonElement> = (evt) => {
@@ -99,7 +113,7 @@ function ClientRootOptions({ mx }: { mx?: MatrixClient }) {
                 <MenuItem
                   onClick={() => {
                     if (mx) {
-                      logoutClient(mx);
+                      onLogout();
                       return;
                     }
                     clearLoginData();
@@ -143,23 +157,83 @@ type ClientRootProps = {
 };
 export function ClientRoot({ children }: ClientRootProps) {
   const [loading, setLoading] = useState(true);
-  const { baseUrl } = getFallbackSession() ?? {};
+  const navigate = useNavigate();
+  const sessions = useAtomValue(sessionsAtom);
+  const [activeSessionId, setActiveSessionId] = useAtom(activeSessionIdAtom);
+  const setSessions = useSetAtom(sessionsAtom);
 
-  const [loadState, loadMatrix] = useAsyncCallback<MatrixClient, Error, []>(
-    useCallback(() => {
-      const session = getFallbackSession();
-      if (!session) {
+  const activeSession: Session | undefined =
+    sessions.find((s) => s.userId === activeSessionId) ?? sessions[0];
+
+  const { baseUrl } = activeSession ?? {};
+
+  const loadedUserIdRef = React.useRef<string | undefined>(undefined);
+
+  const [loadState, loadMatrix, setLoadState] = useAsyncCallback<MatrixClient, Error, []>(
+    useCallback(async () => {
+      if (!activeSession) {
+        log.error('no session found');
         throw new Error('No session Found!');
       }
-      return initClient(session);
-    }, [])
+      if (activeSession.userId !== activeSessionId) {
+        log.log('persisting activeSessionId →', activeSession.userId);
+        setActiveSessionId(activeSession.userId);
+      }
+      await clearMismatchedStores();
+      log.log('initClient for', activeSession.userId);
+      const newMx = await initClient(activeSession);
+      loadedUserIdRef.current = activeSession.userId;
+      pushSessionToSW(activeSession.baseUrl, activeSession.accessToken);
+      return newMx;
+    }, [activeSession, activeSessionId, setActiveSessionId])
   );
   const mx = loadState.status === AsyncStatus.Success ? loadState.data : undefined;
   const [startState, startMatrix] = useAsyncCallback<void, Error, [MatrixClient]>(
     useCallback((m) => startClient(m), [])
   );
 
+  useEffect(() => {
+    if (!activeSession) return;
+    if (loadedUserIdRef.current && loadedUserIdRef.current !== activeSession.userId) {
+      log.log(
+        'session changed from',
+        loadedUserIdRef.current,
+        '→',
+        activeSession.userId,
+        '— reloading client'
+      );
+      // Update the SW immediately so media requests use the new account's token
+      pushSessionToSW(activeSession.baseUrl, activeSession.accessToken);
+      if (mx?.clientRunning) {
+        mx.stopClient();
+      }
+      setLoading(true);
+      loadedUserIdRef.current = undefined;
+      setLoadState({ status: AsyncStatus.Idle });
+      navigate(getHomePath(), { replace: true });
+    }
+  }, [activeSession, mx, navigate, setLoadState]);
+
+  const handleLogout = useCallback(async () => {
+    if (!mx || !activeSession) return;
+    await logoutClient(mx, activeSession);
+    setSessions({ type: 'DELETE', session: activeSession } as SessionsAction);
+    const remaining = sessions.filter((s) => s.userId !== activeSession.userId);
+    setActiveSessionId(remaining[0]?.userId ?? undefined);
+    window.location.reload();
+  }, [mx, activeSession, sessions, setSessions, setActiveSessionId]);
+
+  useSyncNicknames(mx);
   useLogoutListener(mx);
+
+  useEffect(() => {
+    return () => {
+      if (mx?.clientRunning) {
+        log.log('ClientRoot unmounting — stopping client', mx.getUserId());
+        mx.stopClient();
+      }
+    };
+  }, [mx]);
 
   useEffect(() => {
     if (loadState.status === AsyncStatus.Idle) {
@@ -175,7 +249,7 @@ export function ClientRoot({ children }: ClientRootProps) {
 
   useSyncState(
     mx,
-    useCallback((state) => {
+    useCallback((state: string) => {
       if (state === 'PREPARED') {
         setLoading(false);
       }
@@ -185,7 +259,7 @@ export function ClientRoot({ children }: ClientRootProps) {
   return (
     <SpecVersions baseUrl={baseUrl!}>
       {mx && <SyncStatus mx={mx} />}
-      {loading && <ClientRootOptions mx={mx} />}
+      {loading && <ClientRootOptions mx={mx} session={activeSession} onLogout={handleLogout} />}
       {(loadState.status === AsyncStatus.Error || startState.status === AsyncStatus.Error) && (
         <SplashScreen>
           <Box direction="Column" grow="Yes" alignItems="Center" justifyContent="Center" gap="400">

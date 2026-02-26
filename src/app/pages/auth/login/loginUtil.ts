@@ -1,8 +1,9 @@
 import to from 'await-to-js';
-import { LoginRequest, LoginResponse, MatrixError, createClient } from '$types/matrix-sdk';
+import { createClient, LoginRequest, LoginResponse, MatrixError } from '$types/matrix-sdk';
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ClientConfig, clientAllowedServer } from '$hooks/useClientConfig';
+import { useSetAtom } from 'jotai';
+import { clientAllowedServer, ClientConfig } from '$hooks/useClientConfig';
 import { autoDiscovery, specVersions } from '../../../cs-api';
 import { ErrorCode } from '../../../cs-errorcode';
 import {
@@ -10,14 +11,17 @@ import {
   getAfterLoginRedirectPath,
 } from '$pages/afterLoginRedirectPath';
 import { getHomePath } from '$pages/pathUtils';
-import { setFallbackSession } from '$state/sessions';
+import { activeSessionIdAtom, sessionsAtom } from '$state/sessions';
+import { createLogger } from '$appUtils/debug';
+
+const log = createLogger('loginUtil');
 
 export enum GetBaseUrlError {
   NotAllow = 'NotAllow',
   NotFound = 'NotFound',
 }
 export const factoryGetBaseUrl = (clientConfig: ClientConfig, server: string) => {
-  const getBaseUrl = async (): Promise<string> => {
+  return async (): Promise<string> => {
     if (!clientAllowedServer(clientConfig, server)) {
       throw new Error(GetBaseUrlError.NotAllow);
     }
@@ -40,7 +44,6 @@ export const factoryGetBaseUrl = (clientConfig: ClientConfig, server: string) =>
     }
     return mxIdBaseUrl;
   };
-  return getBaseUrl;
 };
 
 export enum LoginError {
@@ -110,14 +113,29 @@ export const login = async (
 
 export const useLoginComplete = (data?: CustomLoginResponse) => {
   const navigate = useNavigate();
+  const setSessions = useSetAtom(sessionsAtom);
+  const setActiveSessionId = useSetAtom(activeSessionIdAtom);
 
   useEffect(() => {
     if (data) {
       const { response: loginRes, baseUrl: loginBaseUrl } = data;
-      setFallbackSession(loginRes.access_token, loginRes.device_id, loginRes.user_id, loginBaseUrl);
+      log.log('useLoginComplete: login success', {
+        userId: loginRes.user_id,
+        baseUrl: loginBaseUrl,
+      });
+      const newSession = {
+        baseUrl: loginBaseUrl,
+        userId: loginRes.user_id,
+        deviceId: loginRes.device_id,
+        accessToken: loginRes.access_token,
+      };
+      setSessions({ type: 'PUT', session: newSession });
+      setActiveSessionId(loginRes.user_id);
       const afterLoginRedirectUrl = getAfterLoginRedirectPath();
       deleteAfterLoginRedirectPath();
-      navigate(afterLoginRedirectUrl ?? getHomePath(), { replace: true });
+      const destination = afterLoginRedirectUrl ?? getHomePath();
+      log.log('useLoginComplete: navigating to', destination);
+      navigate(destination, { replace: true });
     }
-  }, [data, navigate]);
+  }, [data, navigate, setSessions, setActiveSessionId]);
 };

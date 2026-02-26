@@ -17,7 +17,7 @@ import {
 } from 'folds';
 import { HierarchyItem } from '$hooks/useSpaceHierarchy';
 import { useMatrixClient } from '$hooks/useMatrixClient';
-import { MSpaceChildContent, StateEvent } from '../../../types/matrix/room';
+import { MSpaceChildContent, StateEvent } from '$types/matrix/room';
 import { AsyncStatus, useAsyncCallback } from '$hooks/useAsyncCallback';
 import { UseStateProvider } from '$components/UseStateProvider';
 import { LeaveSpacePrompt } from '$components/leave-space-prompt';

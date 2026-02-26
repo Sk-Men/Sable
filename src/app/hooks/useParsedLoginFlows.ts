@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { ILoginFlow, IPasswordFlow, ISSOFlow, LoginFlow } from 'matrix-js-sdk/lib/@types/auth';
+import { ILoginFlow, IPasswordFlow, ISSOFlow, LoginFlow } from '$types/matrix-sdk';
 
 export const getSSOFlow = (loginFlows: LoginFlow[]): ISSOFlow | undefined =>
   loginFlows.find((flow) => flow.type === 'm.login.sso' || flow.type === 'm.login.cas') as

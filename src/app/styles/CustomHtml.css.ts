@@ -48,7 +48,7 @@ const BaseCode = style({
   borderRadius: config.radii.R300,
 });
 const CodeFont = style({
-  fontFamily: 'monospace',
+  fontFamily: 'var(--font-monospace)',
 });
 
 export const Code = style([
@@ -65,7 +65,7 @@ export const Spoiler = recipe({
     DefaultReset,
     {
       padding: `0 ${config.space.S100}`,
-      backgroundColor: color.SurfaceVariant.ContainerActive,
+      backgroundColor: color.SurfaceVariant.ContainerLine,
       borderRadius: config.radii.R300,
       selectors: {
         '&[aria-pressed=true]': {

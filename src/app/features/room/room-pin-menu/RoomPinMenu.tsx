@@ -20,6 +20,7 @@ import {
 } from 'folds';
 import { Opts as LinkifyOpts } from 'linkifyjs';
 import { HTMLReactParserOptions } from 'html-react-parser';
+import { useAtomValue } from 'jotai';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { useRoomPinnedEvents } from '$hooks/useRoomPinnedEvents';
 import * as css from './RoomPinMenu.css';
@@ -86,6 +87,7 @@ import {
   useGetMemberPowerTag,
 } from '$hooks/useMemberPowerTag';
 import { useRoomCreatorsTag } from '$hooks/useRoomCreatorsTag';
+import { nicknamesAtom } from '$state/nicknames';
 
 type PinnedMessageProps = {
   room: Room;
@@ -114,13 +116,14 @@ function PinnedMessage({
   const pinnedEvent = useRoomEvent(room, eventId);
   const useAuthentication = useMediaAuthentication();
   const mx = useMatrixClient();
+  const nicknames = useAtomValue(nicknamesAtom);
 
   const [unpinState, unpin] = useAsyncCallback(
     useCallback(() => {
       const pinEvent = getStateEvent(room, StateEvent.RoomPinnedEvents);
       const content = pinEvent?.getContent<RoomPinnedEventsEventContent>() ?? { pinned: [] };
       const newContent: RoomPinnedEventsEventContent = {
-        pinned: content.pinned.filter((id) => id !== eventId),
+        pinned: content.pinned.filter((id: string) => id !== eventId),
       };
 
       return mx.sendStateEvent(room.roomId, StateEvent.RoomPinnedEvents as any, newContent);
@@ -142,7 +145,7 @@ function PinnedMessage({
   const renderOptions = () => (
     <Box shrink="No" gap="200" alignItems="Center">
       <Chip data-event-id={eventId} onClick={handleOpenClick} variant="Secondary" radii="Pill">
-        <Text size="T200">Open</Text>
+        <Text size="T200">Jump</Text>
       </Chip>
       {canPinEvent && (
         <IconButton
@@ -175,7 +178,8 @@ function PinnedMessage({
     );
 
   const sender = pinnedEvent.getSender()!;
-  const displayName = getMemberDisplayName(room, sender) ?? getMxIdLocalPart(sender) ?? sender;
+  const displayName =
+    getMemberDisplayName(room, sender, nicknames) ?? getMxIdLocalPart(sender) ?? sender;
   const senderAvatarMxc = getMemberAvatarMxc(room, sender);
   const getContent = (() => pinnedEvent.getContent()) as GetContentCallback;
 
@@ -233,9 +237,6 @@ function PinnedMessage({
           replyEventId={pinnedEvent.replyEventId}
           threadRootId={pinnedEvent.threadRootId}
           onClick={handleOpenClick}
-          getMemberPowerTag={getMemberPowerTag}
-          accessibleTagColors={accessibleTagColors}
-          legacyUsernameColor={legacyUsernameColor}
         />
       )}
       {renderContent(pinnedEvent.getType(), false, pinnedEvent, displayName, getContent)}
@@ -251,6 +252,7 @@ export const RoomPinMenu = forwardRef<HTMLDivElement, RoomPinMenuProps>(
   ({ room, requestClose }, ref) => {
     const mx = useMatrixClient();
     const userId = mx.getUserId()!;
+    const nicknames = useAtomValue(nicknamesAtom);
     const powerLevels = usePowerLevelsContext();
     const creators = useRoomCreators(room);
 
@@ -297,10 +299,16 @@ export const RoomPinMenu = forwardRef<HTMLDivElement, RoomPinMenuProps>(
       () => ({
         ...LINKIFY_OPTS,
         render: factoryRenderLinkifyWithMention((href) =>
-          renderMatrixMention(mx, room.roomId, href, makeMentionCustomProps(mentionClickHandler))
+          renderMatrixMention(
+            mx,
+            room.roomId,
+            href,
+            makeMentionCustomProps(mentionClickHandler),
+            nicknames
+          )
         ),
       }),
-      [mx, room, mentionClickHandler]
+      [mx, room, mentionClickHandler, nicknames]
     );
     const htmlReactParserOptions = useMemo<HTMLReactParserOptions>(
       () =>
@@ -309,8 +317,17 @@ export const RoomPinMenu = forwardRef<HTMLDivElement, RoomPinMenuProps>(
           useAuthentication,
           handleSpoilerClick: spoilerClickHandler,
           handleMentionClick: mentionClickHandler,
+          nicknames,
         }),
-      [mx, room, linkifyOpts, mentionClickHandler, spoilerClickHandler, useAuthentication]
+      [
+        mx,
+        room,
+        linkifyOpts,
+        mentionClickHandler,
+        spoilerClickHandler,
+        useAuthentication,
+        nicknames,
+      ]
     );
 
     const renderMatrixEvent = useMatrixEventRenderer<[MatrixEvent, string, GetContentCallback]>(
@@ -341,7 +358,7 @@ export const RoomPinMenu = forwardRef<HTMLDivElement, RoomPinMenuProps>(
           const eventId = event.getId()!;
           const evtTimeline = room.getTimelineForEvent(eventId);
 
-          const mEvent = evtTimeline?.getEvents().find((e) => e.getId() === eventId);
+          const mEvent = evtTimeline?.getEvents().find((e: MatrixEvent) => e.getId() === eventId);
 
           if (!mEvent || !evtTimeline) {
             return (

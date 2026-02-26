@@ -24,7 +24,7 @@ import FocusTrap from 'focus-trap-react';
 import FileSaver from 'file-saver';
 import * as css from './PdfViewer.css';
 import { AsyncStatus } from '$hooks/useAsyncCallback';
-import { useZoom } from '$hooks/useZoom';
+import { useImageGestures } from '$hooks/useImageGestures';
 import { createPage, usePdfDocumentLoader, usePdfJSLoader } from '$plugins/pdfjs-dist';
 import { stopPropagation } from '$appUtils/keyboard';
 
@@ -38,7 +38,8 @@ export const PdfViewer = as<'div', PdfViewerProps>(
   ({ className, name, src, requestClose, ...props }, ref) => {
     const containerRef = useRef<HTMLDivElement>(null);
     const scrollRef = useRef<HTMLDivElement>(null);
-    const { zoom, zoomIn, zoomOut, setZoom } = useZoom(0.2);
+
+    const { zoom, zoomIn, zoomOut, setZoom, onPointerDown } = useImageGestures(true, 0.2);
 
     const [pdfJSState, loadPdfJS] = usePdfJSLoader();
     const [docState, loadPdfDocument] = usePdfDocumentLoader(
@@ -70,9 +71,7 @@ export const PdfViewer = as<'div', PdfViewerProps>(
           if (!container) return;
           container.textContent = '';
           container.append(canvas);
-          scrollRef.current?.scrollTo({
-            top: 0,
-          });
+          canvas.style.touchAction = 'pan-x pan-y';
         });
       }
     }, [docState, pageNo, zoom]);
@@ -105,7 +104,14 @@ export const PdfViewer = as<'div', PdfViewerProps>(
     };
 
     return (
-      <Box className={classNames(css.PdfViewer, className)} direction="Column" {...props} ref={ref}>
+      <Box
+        className={classNames(css.PdfViewer, className)}
+        direction="Column"
+        data-gestures="ignore"
+        onPointerDown={(e) => e.stopPropagation()}
+        {...props}
+        ref={ref}
+      >
         <Header className={css.PdfViewerHeader} size="400">
           <Box grow="Yes" alignItems="Center" gap="200">
             <IconButton size="300" radii="300" onClick={requestClose}>
@@ -173,8 +179,13 @@ export const PdfViewer = as<'div', PdfViewerProps>(
               direction="Both"
               variant="Surface"
               visibility="Hover"
+              style={{
+                width: '100%',
+                height: '100%',
+                touchAction: 'pan-x pan-y',
+              }}
             >
-              <Box>
+              <Box style={{ minWidth: '100%', minHeight: '100%' }} onPointerDown={onPointerDown}>
                 <div className={css.PdfViewerContent} ref={containerRef} />
               </Box>
             </Scroll>

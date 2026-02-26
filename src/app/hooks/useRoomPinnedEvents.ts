@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { RoomPinnedEventsEventContent } from '$types/matrix-sdk';
 import { Room } from '$types/matrix-sdk';
-import { StateEvent } from '../../types/matrix/room';
+import { StateEvent } from '$types/matrix/room';
 import { useStateEvent } from './useStateEvent';
 
 export const useRoomPinnedEvents = (room: Room): string[] => {

@@ -1,17 +1,14 @@
 import React, {
   ChangeEventHandler,
   FormEventHandler,
-  KeyboardEventHandler,
   MouseEventHandler,
   useEffect,
   useState,
 } from 'react';
 import dayjs from 'dayjs';
 import {
-  as,
   Box,
   Button,
-  Chip,
   config,
   Header,
   Icon,
@@ -25,334 +22,26 @@ import {
   Scroll,
   Switch,
   Text,
-  toRem,
 } from 'folds';
-import { isKeyHotkey } from 'is-hotkey';
 import FocusTrap from 'focus-trap-react';
 import { Page, PageContent, PageHeader } from '$components/page';
 import { SequenceCard } from '$components/sequence-card';
 import { useSetting } from '$state/hooks/settings';
-import { DateFormat, MessageLayout, MessageSpacing, settingsAtom } from '$state/settings';
+import {
+  DateFormat,
+  MessageLayout,
+  MessageSpacing,
+  RightSwipeAction,
+  settingsAtom,
+} from '$state/settings';
 import { SettingTile } from '$components/setting-tile';
 import { KeySymbol } from '$appUtils/key-symbol';
-import { isMacOS } from '$appUtils/user-agent';
-import {
-  DarkTheme,
-  LightTheme,
-  Theme,
-  ThemeKind,
-  useSystemThemeKind,
-  useThemeNames,
-  useThemes,
-} from '$hooks/useTheme';
+import { isMacOS, mobileOrTablet } from '$appUtils/user-agent';
 import { stopPropagation } from '$appUtils/keyboard';
 import { useMessageLayoutItems } from '$hooks/useMessageLayout';
 import { useMessageSpacingItems } from '$hooks/useMessageSpacing';
 import { useDateFormatItems } from '$hooks/useDateFormat';
 import { SequenceCardStyle } from '../styles.css';
-
-type ThemeSelectorProps = {
-  themeNames: Record<string, string>;
-  themes: Theme[];
-  selected: Theme;
-  onSelect: (theme: Theme) => void;
-};
-const ThemeSelector = as<'div', ThemeSelectorProps>(
-  ({ themeNames, themes, selected, onSelect, ...props }, ref) => (
-    <Menu {...props} ref={ref}>
-      <Box direction="Column" gap="100" style={{ padding: config.space.S100 }}>
-        {themes.map((theme) => (
-          <MenuItem
-            key={theme.id}
-            size="300"
-            variant={theme.id === selected.id ? 'Primary' : 'Surface'}
-            radii="300"
-            onClick={() => onSelect(theme)}
-          >
-            <Text size="T300">{themeNames[theme.id] ?? theme.id}</Text>
-          </MenuItem>
-        ))}
-      </Box>
-    </Menu>
-  )
-);
-
-function SelectTheme({ disabled }: { disabled?: boolean }) {
-  const themes = useThemes();
-  const themeNames = useThemeNames();
-  const [themeId, setThemeId] = useSetting(settingsAtom, 'themeId');
-  const [menuCords, setMenuCords] = useState<RectCords>();
-  const selectedTheme = themes.find((theme) => theme.id === themeId) ?? LightTheme;
-
-  const handleThemeMenu: MouseEventHandler<HTMLButtonElement> = (evt) => {
-    setMenuCords(evt.currentTarget.getBoundingClientRect());
-  };
-
-  const handleThemeSelect = (theme: Theme) => {
-    setThemeId(theme.id);
-    setMenuCords(undefined);
-  };
-
-  return (
-    <>
-      <Button
-        size="300"
-        variant="Primary"
-        outlined
-        fill="Soft"
-        radii="300"
-        after={<Icon size="300" src={Icons.ChevronBottom} />}
-        onClick={disabled ? undefined : handleThemeMenu}
-        aria-disabled={disabled}
-      >
-        <Text size="T300">{themeNames[selectedTheme.id] ?? selectedTheme.id}</Text>
-      </Button>
-      <PopOut
-        anchor={menuCords}
-        offset={5}
-        position="Bottom"
-        align="End"
-        content={
-          <FocusTrap
-            focusTrapOptions={{
-              initialFocus: false,
-              onDeactivate: () => setMenuCords(undefined),
-              clickOutsideDeactivates: true,
-              isKeyForward: (evt: KeyboardEvent) =>
-                evt.key === 'ArrowDown' || evt.key === 'ArrowRight',
-              isKeyBackward: (evt: KeyboardEvent) =>
-                evt.key === 'ArrowUp' || evt.key === 'ArrowLeft',
-              escapeDeactivates: stopPropagation,
-            }}
-          >
-            <ThemeSelector
-              themeNames={themeNames}
-              themes={themes}
-              selected={selectedTheme}
-              onSelect={handleThemeSelect}
-            />
-          </FocusTrap>
-        }
-      />
-    </>
-  );
-}
-
-function SystemThemePreferences() {
-  const themeKind = useSystemThemeKind();
-  const themeNames = useThemeNames();
-  const themes = useThemes();
-  const [lightThemeId, setLightThemeId] = useSetting(settingsAtom, 'lightThemeId');
-  const [darkThemeId, setDarkThemeId] = useSetting(settingsAtom, 'darkThemeId');
-
-  const lightThemes = themes.filter((theme) => theme.kind === ThemeKind.Light);
-  const darkThemes = themes.filter((theme) => theme.kind === ThemeKind.Dark);
-
-  const selectedLightTheme = lightThemes.find((theme) => theme.id === lightThemeId) ?? LightTheme;
-  const selectedDarkTheme = darkThemes.find((theme) => theme.id === darkThemeId) ?? DarkTheme;
-
-  const [ltCords, setLTCords] = useState<RectCords>();
-  const [dtCords, setDTCords] = useState<RectCords>();
-
-  const handleLightThemeMenu: MouseEventHandler<HTMLButtonElement> = (evt) => {
-    setLTCords(evt.currentTarget.getBoundingClientRect());
-  };
-  const handleDarkThemeMenu: MouseEventHandler<HTMLButtonElement> = (evt) => {
-    setDTCords(evt.currentTarget.getBoundingClientRect());
-  };
-
-  const handleLightThemeSelect = (theme: Theme) => {
-    setLightThemeId(theme.id);
-    setLTCords(undefined);
-  };
-
-  const handleDarkThemeSelect = (theme: Theme) => {
-    setDarkThemeId(theme.id);
-    setDTCords(undefined);
-  };
-
-  return (
-    <Box wrap="Wrap" gap="400">
-      <SettingTile
-        title="Light Theme:"
-        after={
-          <Chip
-            variant={themeKind === ThemeKind.Light ? 'Primary' : 'Secondary'}
-            outlined={themeKind === ThemeKind.Light}
-            radii="Pill"
-            after={<Icon size="200" src={Icons.ChevronBottom} />}
-            onClick={handleLightThemeMenu}
-          >
-            <Text size="B300">{themeNames[selectedLightTheme.id] ?? selectedLightTheme.id}</Text>
-          </Chip>
-        }
-      />
-      <PopOut
-        anchor={ltCords}
-        offset={5}
-        position="Bottom"
-        align="End"
-        content={
-          <FocusTrap
-            focusTrapOptions={{
-              initialFocus: false,
-              onDeactivate: () => setLTCords(undefined),
-              clickOutsideDeactivates: true,
-              isKeyForward: (evt: KeyboardEvent) =>
-                evt.key === 'ArrowDown' || evt.key === 'ArrowRight',
-              isKeyBackward: (evt: KeyboardEvent) =>
-                evt.key === 'ArrowUp' || evt.key === 'ArrowLeft',
-              escapeDeactivates: stopPropagation,
-            }}
-          >
-            <ThemeSelector
-              themeNames={themeNames}
-              themes={lightThemes}
-              selected={selectedLightTheme}
-              onSelect={handleLightThemeSelect}
-            />
-          </FocusTrap>
-        }
-      />
-      <SettingTile
-        title="Dark Theme:"
-        after={
-          <Chip
-            variant={themeKind === ThemeKind.Dark ? 'Primary' : 'Secondary'}
-            outlined={themeKind === ThemeKind.Dark}
-            radii="Pill"
-            after={<Icon size="200" src={Icons.ChevronBottom} />}
-            onClick={handleDarkThemeMenu}
-          >
-            <Text size="B300">{themeNames[selectedDarkTheme.id] ?? selectedDarkTheme.id}</Text>
-          </Chip>
-        }
-      />
-      <PopOut
-        anchor={dtCords}
-        offset={5}
-        position="Bottom"
-        align="End"
-        content={
-          <FocusTrap
-            focusTrapOptions={{
-              initialFocus: false,
-              onDeactivate: () => setDTCords(undefined),
-              clickOutsideDeactivates: true,
-              isKeyForward: (evt: KeyboardEvent) =>
-                evt.key === 'ArrowDown' || evt.key === 'ArrowRight',
-              isKeyBackward: (evt: KeyboardEvent) =>
-                evt.key === 'ArrowUp' || evt.key === 'ArrowLeft',
-              escapeDeactivates: stopPropagation,
-            }}
-          >
-            <ThemeSelector
-              themeNames={themeNames}
-              themes={darkThemes}
-              selected={selectedDarkTheme}
-              onSelect={handleDarkThemeSelect}
-            />
-          </FocusTrap>
-        }
-      />
-    </Box>
-  );
-}
-
-function PageZoomInput() {
-  const [pageZoom, setPageZoom] = useSetting(settingsAtom, 'pageZoom');
-  const [currentZoom, setCurrentZoom] = useState(`${pageZoom}`);
-
-  const handleZoomChange: ChangeEventHandler<HTMLInputElement> = (evt) => {
-    setCurrentZoom(evt.target.value);
-  };
-
-  const handleZoomEnter: KeyboardEventHandler<HTMLInputElement> = (evt) => {
-    if (isKeyHotkey('escape', evt)) {
-      evt.stopPropagation();
-      setCurrentZoom(pageZoom.toString());
-    }
-    if (
-      isKeyHotkey('enter', evt) &&
-      'value' in evt.target &&
-      typeof evt.target.value === 'string'
-    ) {
-      const newZoom = parseInt(evt.target.value, 10);
-      if (Number.isNaN(newZoom)) return;
-      const safeZoom = Math.max(Math.min(newZoom, 150), 75);
-      setPageZoom(safeZoom);
-      setCurrentZoom(safeZoom.toString());
-    }
-  };
-
-  return (
-    <Input
-      style={{ width: toRem(100) }}
-      variant={pageZoom === parseInt(currentZoom, 10) ? 'Secondary' : 'Success'}
-      size="300"
-      radii="300"
-      type="number"
-      min="75"
-      max="150"
-      value={currentZoom}
-      onChange={handleZoomChange}
-      onKeyDown={handleZoomEnter}
-      after={<Text size="T300">%</Text>}
-      outlined
-    />
-  );
-}
-
-function Appearance() {
-  const [systemTheme, setSystemTheme] = useSetting(settingsAtom, 'useSystemTheme');
-  const [monochromeMode, setMonochromeMode] = useSetting(settingsAtom, 'monochromeMode');
-  const [twitterEmoji, setTwitterEmoji] = useSetting(settingsAtom, 'twitterEmoji');
-
-  return (
-    <Box direction="Column" gap="100">
-      <Text size="L400">Appearance</Text>
-      <SequenceCard
-        className={SequenceCardStyle}
-        variant="SurfaceVariant"
-        direction="Column"
-        gap="400"
-      >
-        <SettingTile
-          title="System Theme"
-          description="Choose between light and dark theme based on system preference."
-          after={<Switch variant="Primary" value={systemTheme} onChange={setSystemTheme} />}
-        />
-        {systemTheme && <SystemThemePreferences />}
-      </SequenceCard>
-
-      <SequenceCard className={SequenceCardStyle} variant="SurfaceVariant" direction="Column">
-        <SettingTile
-          title="Theme"
-          description="Theme to use when system theme is not enabled."
-          after={<SelectTheme disabled={systemTheme} />}
-        />
-      </SequenceCard>
-
-      <SequenceCard className={SequenceCardStyle} variant="SurfaceVariant" direction="Column">
-        <SettingTile
-          title="Monochrome Mode"
-          after={<Switch variant="Primary" value={monochromeMode} onChange={setMonochromeMode} />}
-        />
-      </SequenceCard>
-
-      <SequenceCard className={SequenceCardStyle} variant="SurfaceVariant" direction="Column">
-        <SettingTile
-          title="Twitter Emoji"
-          after={<Switch variant="Primary" value={twitterEmoji} onChange={setTwitterEmoji} />}
-        />
-      </SequenceCard>
-
-      <SequenceCard className={SequenceCardStyle} variant="SurfaceVariant" direction="Column">
-        <SettingTile title="Page Zoom" after={<PageZoomInput />} />
-      </SequenceCard>
-    </Box>
-  );
-}
 
 type DateHintProps = {
   hasChanges: boolean;
@@ -707,7 +396,7 @@ function DateAndTime() {
   );
 }
 
-function Editor() {
+function Editor({ isMobile }: { isMobile: boolean }) {
   const [enterForNewline, setEnterForNewline] = useSetting(settingsAtom, 'enterForNewline');
   const [isMarkdown, setIsMarkdown] = useSetting(settingsAtom, 'isMarkdown');
   const [hideActivity, setHideActivity] = useSetting(settingsAtom, 'hideActivity');
@@ -715,13 +404,23 @@ function Editor() {
   return (
     <Box direction="Column" gap="100">
       <Text size="L400">Editor</Text>
-      <SequenceCard className={SequenceCardStyle} variant="SurfaceVariant" direction="Column">
+      <SequenceCard
+        className={SequenceCardStyle}
+        variant="SurfaceVariant"
+        direction="Column"
+        style={{ opacity: isMobile ? 0.5 : 1 }}
+      >
         <SettingTile
           title="ENTER for Newline"
-          description={`Use ${
-            isMacOS() ? KeySymbol.Command : 'Ctrl'
-          } + ENTER to send message and ENTER for newline.`}
-          after={<Switch variant="Primary" value={enterForNewline} onChange={setEnterForNewline} />}
+          description={`Use ${isMacOS() ? KeySymbol.Command : 'Ctrl'} + ENTER to send message. ${isMobile ? '(Disabled on Mobile)' : ''}`}
+          after={
+            <Switch
+              variant="Primary"
+              value={enterForNewline}
+              onChange={setEnterForNewline}
+              disabled={isMobile}
+            />
+          }
         />
       </SequenceCard>
       <SequenceCard className={SequenceCardStyle} variant="SurfaceVariant" direction="Column">
@@ -879,11 +578,106 @@ function SelectMessageSpacing() {
   );
 }
 
-function Messages() {
-  const [legacyUsernameColor, setLegacyUsernameColor] = useSetting(
-    settingsAtom,
-    'legacyUsernameColor'
+function SelectRightSwipeAction({ disabled }: { disabled?: boolean }) {
+  const [menuCords, setMenuCords] = useState<RectCords>();
+  const [action, setAction] = useSetting(settingsAtom, 'rightSwipeAction');
+
+  const options = [
+    { id: RightSwipeAction.Reply, name: 'Reply to Message' },
+    { id: RightSwipeAction.Members, name: 'Open Member List' },
+  ];
+
+  const handleMenu: MouseEventHandler<HTMLButtonElement> = (evt) => {
+    setMenuCords(evt.currentTarget.getBoundingClientRect());
+  };
+
+  const handleSelect = (val: RightSwipeAction) => {
+    setAction(val);
+    setMenuCords(undefined);
+  };
+
+  return (
+    <>
+      <Button
+        size="300"
+        variant="Secondary"
+        outlined
+        fill="Soft"
+        radii="300"
+        disabled={disabled}
+        after={<Icon size="300" src={Icons.ChevronBottom} />}
+        onClick={handleMenu}
+      >
+        <Text size="T300">{options.find((o) => o.id === action)?.name ?? action}</Text>
+      </Button>
+      <PopOut
+        anchor={menuCords}
+        offset={5}
+        position="Bottom"
+        align="End"
+        content={
+          <FocusTrap
+            focusTrapOptions={{
+              initialFocus: false,
+              onDeactivate: () => setMenuCords(undefined),
+              clickOutsideDeactivates: true,
+              escapeDeactivates: stopPropagation,
+            }}
+          >
+            <Menu>
+              <Box direction="Column" gap="100" style={{ padding: config.space.S100 }}>
+                {options.map((option) => (
+                  <MenuItem
+                    key={option.id}
+                    size="300"
+                    variant={action === option.id ? 'Primary' : 'Surface'}
+                    radii="300"
+                    onClick={() => handleSelect(option.id)}
+                  >
+                    <Text size="T300">{option.name}</Text>
+                  </MenuItem>
+                ))}
+              </Box>
+            </Menu>
+          </FocusTrap>
+        }
+      />
+    </>
   );
+}
+
+function Gestures({ isMobile }: { isMobile: boolean }) {
+  const [mobileGestures, setMobileGestures] = useSetting(settingsAtom, 'mobileGestures');
+
+  return (
+    <Box direction="Column" gap="100" style={{ opacity: isMobile ? 1 : 0.5 }}>
+      <Text size="L400">Gestures {!isMobile && '(Mobile Only)'}</Text>
+      <SequenceCard className={SequenceCardStyle} variant="SurfaceVariant" direction="Column">
+        <SettingTile
+          title="Enable Swiping"
+          description="Swipe left for rooms, swipe right for actions."
+          after={
+            <Switch
+              variant="Primary"
+              value={mobileGestures}
+              onChange={setMobileGestures}
+              disabled={!isMobile}
+            />
+          }
+        />
+      </SequenceCard>
+      <SequenceCard className={SequenceCardStyle} variant="SurfaceVariant" direction="Column">
+        <SettingTile
+          title="Right Swipe Action"
+          description="What happens when you swipe right on a message."
+          after={<SelectRightSwipeAction disabled={!isMobile || !mobileGestures} />}
+        />
+      </SequenceCard>
+    </Box>
+  );
+}
+
+function Messages() {
   const [hideMembershipEvents, setHideMembershipEvents] = useSetting(
     settingsAtom,
     'hideMembershipEvents'
@@ -896,6 +690,10 @@ function Messages() {
   const [urlPreview, setUrlPreview] = useSetting(settingsAtom, 'urlPreview');
   const [encUrlPreview, setEncUrlPreview] = useSetting(settingsAtom, 'encUrlPreview');
   const [showHiddenEvents, setShowHiddenEvents] = useSetting(settingsAtom, 'showHiddenEvents');
+  const [hideMembershipInReadOnly, setHideMembershipInReadOnly] = useSetting(
+    settingsAtom,
+    'hideMembershipInReadOnly'
+  );
 
   return (
     <Box direction="Column" gap="100">
@@ -905,18 +703,6 @@ function Messages() {
       </SequenceCard>
       <SequenceCard className={SequenceCardStyle} variant="SurfaceVariant" direction="Column">
         <SettingTile title="Message Spacing" after={<SelectMessageSpacing />} />
-      </SequenceCard>
-      <SequenceCard className={SequenceCardStyle} variant="SurfaceVariant" direction="Column">
-        <SettingTile
-          title="Legacy Username Color"
-          after={
-            <Switch
-              variant="Primary"
-              value={legacyUsernameColor}
-              onChange={setLegacyUsernameColor}
-            />
-          }
-        />
       </SequenceCard>
       <SequenceCard className={SequenceCardStyle} variant="SurfaceVariant" direction="Column">
         <SettingTile
@@ -968,6 +754,18 @@ function Messages() {
       </SequenceCard>
       <SequenceCard className={SequenceCardStyle} variant="SurfaceVariant" direction="Column">
         <SettingTile
+          title="Hide Member Events in Read-Only Rooms"
+          after={
+            <Switch
+              variant="Primary"
+              value={hideMembershipInReadOnly}
+              onChange={setHideMembershipInReadOnly}
+            />
+          }
+        />
+      </SequenceCard>
+      <SequenceCard className={SequenceCardStyle} variant="SurfaceVariant" direction="Column">
+        <SettingTile
           title="Show Hidden Events"
           after={
             <Switch variant="Primary" value={showHiddenEvents} onChange={setShowHiddenEvents} />
@@ -1002,9 +800,9 @@ export function General({ requestClose }: GeneralProps) {
         <Scroll hideTrack visibility="Hover">
           <PageContent>
             <Box direction="Column" gap="700">
-              <Appearance />
               <DateAndTime />
-              <Editor />
+              <Gestures isMobile={mobileOrTablet()} />
+              <Editor isMobile={mobileOrTablet()} />
               <Messages />
             </Box>
           </PageContent>

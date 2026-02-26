@@ -1,35 +1,35 @@
 /* eslint-disable jsx-a11y/alt-text */
 import React, {
   ComponentPropsWithoutRef,
-  JSX,
+  lazy,
   ReactEventHandler,
   Suspense,
-  lazy,
   useMemo,
   useState,
 } from 'react';
 import {
-  Element,
-  Text as DOMText,
-  HTMLReactParserOptions,
   attributesToProps,
   domToReact,
+  Element,
+  HTMLReactParserOptions,
+  Text as DOMText,
 } from 'html-react-parser';
 import { MatrixClient } from '$types/matrix-sdk';
 import classNames from 'classnames';
 import { Box, Chip, config, Header, Icon, IconButton, Icons, Scroll, Text, toRem } from 'folds';
-import { IntermediateRepresentation, Opts as LinkifyOpts, OptFn } from 'linkifyjs';
+import { IntermediateRepresentation, OptFn, Opts as LinkifyOpts } from 'linkifyjs';
 import Linkify from 'linkify-react';
 import { ErrorBoundary } from 'react-error-boundary';
 import { ChildNode } from 'domhandler';
 import * as css from '../styles/CustomHtml.css';
 import {
-  getMxIdLocalPart,
   getCanonicalAliasRoomId,
+  getMxIdLocalPart,
   isRoomAlias,
   mxcUrlToHttp,
 } from '../utils/matrix';
 import { getMemberDisplayName } from '../utils/room';
+import { Nicknames } from '../state/nicknames';
 import { EMOJI_PATTERN, sanitizeForRegex, URL_NEG_LB } from '../utils/regex';
 import { getHexcodeForEmoji, getShortcodeFor } from './emoji';
 import { findAndReplace } from '../utils/findAndReplace';
@@ -76,7 +76,8 @@ export const renderMatrixMention = (
   mx: MatrixClient,
   currentRoomId: string | undefined,
   href: string,
-  customProps: ComponentPropsWithoutRef<'a'>
+  customProps: ComponentPropsWithoutRef<'a'>,
+  nicknames?: Nicknames
 ) => {
   const userId = parseMatrixToUser(href);
   if (userId) {
@@ -90,7 +91,8 @@ export const renderMatrixMention = (
         data-mention-id={userId}
       >
         {`@${
-          (currentRoom && getMemberDisplayName(currentRoom, userId)) ?? getMxIdLocalPart(userId)
+          (currentRoom && getMemberDisplayName(currentRoom, userId, nicknames)) ??
+          getMxIdLocalPart(userId)
         }`}
       </a>
     );
@@ -151,7 +153,7 @@ export const renderMatrixMention = (
 export const factoryRenderLinkifyWithMention = (
   mentionRender: (href: string) => JSX.Element | undefined
 ): OptFn<(ir: IntermediateRepresentation) => any> => {
-  const render: OptFn<(ir: IntermediateRepresentation) => any> = ({
+  const renderLink: OptFn<(ir: IntermediateRepresentation) => any> = ({
     tagName,
     attributes,
     content,
@@ -166,7 +168,8 @@ export const factoryRenderLinkifyWithMention = (
 
     return <a {...attributes}>{content}</a>;
   };
-  return render;
+
+  return renderLink;
 };
 
 export const scaleSystemEmoji = (text: string): (string | JSX.Element)[] =>
@@ -322,6 +325,7 @@ export const getReactCustomHtmlParser = (
     handleSpoilerClick?: ReactEventHandler<HTMLElement>;
     handleMentionClick?: ReactEventHandler<HTMLElement>;
     useAuthentication?: boolean;
+    nicknames?: Nicknames;
   }
 ): HTMLReactParserOptions => {
   const opts: HTMLReactParserOptions = {
@@ -459,8 +463,9 @@ export const getReactCustomHtmlParser = (
           const mention = renderMatrixMention(
             mx,
             roomId,
-            decodedHref,
-            makeMentionCustomProps(params.handleMentionClick, content)
+            decodeURIComponent(props.href),
+            makeMentionCustomProps(params.handleMentionClick, content),
+            params.nicknames
           );
 
           if (mention) return mention;
@@ -484,24 +489,45 @@ export const getReactCustomHtmlParser = (
         }
 
         if (name === 'img') {
-          const src = typeof props.src === 'string' ? props.src : undefined;
-          const htmlSrc = src ? mxcUrlToHttp(mx, src, params.useAuthentication) : undefined;
-          if (htmlSrc && src && src.startsWith('mxc://') === false) {
+          const htmlSrc = mxcUrlToHttp(mx, props.src, params.useAuthentication) ?? undefined;
+
+          if (htmlSrc && !props.src.startsWith('mxc://')) {
             return (
               <a href={htmlSrc} target="_blank" rel="noreferrer noopener">
                 {props.alt || props.title || htmlSrc}
               </a>
             );
           }
+
           if (htmlSrc && 'data-mx-emoticon' in props) {
+            const siblingCount = domNode.parent?.children.length ?? 0;
+
+            // seperate style for bundled emojis
+            if (siblingCount > 5) {
+              return (
+                <span className={css.EmoticonBase}>
+                  <span className={css.Emoticon()}>
+                    <img
+                      {...props}
+                      src={htmlSrc}
+                      className={css.EmoticonImg}
+                      style={{ verticalAlign: 'middle' }}
+                    />
+                  </span>
+                </span>
+              );
+            }
+
+            // old style for just a few... what is this even for? React components or something?
             return (
               <span className={css.EmoticonBase}>
                 <span className={css.Emoticon()}>
-                  <img {...props} className={css.EmoticonImg} src={htmlSrc} />
+                  <img {...props} src={htmlSrc} className={css.EmoticonImg} />
                 </span>
               </span>
             );
           }
+
           if (htmlSrc) return <img {...props} className={css.Img} src={htmlSrc} />;
         }
       }

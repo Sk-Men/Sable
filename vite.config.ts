@@ -1,5 +1,6 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
+import svgr from 'vite-plugin-svgr';
 import { wasm } from '@rollup/plugin-wasm';
 import { viteStaticCopy } from 'vite-plugin-static-copy';
 import { vanillaExtractPlugin } from '@vanilla-extract/vite-plugin';
@@ -13,6 +14,10 @@ import buildConfig from './build.config';
 
 const copyFiles = {
   targets: [
+    {
+      src: 'node_modules/@element-hq/element-call-embedded/dist/*',
+      dest: 'public/element-call',
+    },
     {
       src: 'node_modules/pdfjs-dist/build/pdf.worker.min.mjs',
       dest: '',
@@ -110,6 +115,9 @@ export default defineConfig({
     vanillaExtractPlugin(),
     wasm(),
     react(),
+    svgr({
+      exportAsDefault: true,
+    }),
     VitePWA({
       srcDir: 'src',
       filename: 'sw.ts',

@@ -1,4 +1,11 @@
-import React, { MouseEventHandler, useCallback, useMemo, useState } from 'react';
+import React, {
+  KeyboardEventHandler,
+  MouseEventHandler,
+  useCallback,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { useNavigate } from 'react-router-dom';
 import FocusTrap from 'focus-trap-react';
 import { isKeyHotkey } from 'is-hotkey';
@@ -41,6 +48,7 @@ import { useTimeoutToggle } from '$hooks/useTimeoutToggle';
 import { useIgnoredUsers } from '$hooks/useIgnoredUsers';
 import { CutoutCard } from '../cutout-card';
 import { SettingTile } from '../setting-tile';
+import { useNickname, useSetNickname } from '$hooks/useNickname';
 
 export function ServerChip({ server }: { server: string }) {
   const mx = useMatrixClient();
@@ -444,7 +452,10 @@ export function OptionsChip({ userId }: { userId: string }) {
     setCords(evt.currentTarget.getBoundingClientRect());
   };
 
-  const close = () => setCords(undefined);
+  const close = () => {
+    setCords(undefined);
+    setEditingNick(false);
+  };
 
   const ignoredUsers = useIgnoredUsers();
   const ignored = ignoredUsers.includes(userId);
@@ -457,6 +468,22 @@ export function OptionsChip({ userId }: { userId: string }) {
     }, [mx, ignoredUsers, userId, ignored])
   );
   const ignoring = ignoreState.status === AsyncStatus.Loading;
+
+  const currentNick = useNickname(userId);
+  const setNickname = useSetNickname();
+  const [editingNick, setEditingNick] = useState(false);
+  const nickInputRef = useRef<HTMLInputElement>(null);
+
+  const handleSaveNick = () => {
+    const value = nickInputRef.current?.value ?? '';
+    setNickname(userId, value || undefined);
+    close();
+  };
+
+  const handleNickKeyDown: KeyboardEventHandler<HTMLInputElement> = (e) => {
+    if (e.key === 'Enter') handleSaveNick();
+    if (e.key === 'Escape') close();
+  };
 
   return (
     <PopOut
@@ -477,6 +504,68 @@ export function OptionsChip({ userId }: { userId: string }) {
         >
           <Menu>
             <div style={{ padding: config.space.S100 }}>
+              {editingNick ? (
+                <Box
+                  direction="Column"
+                  gap="100"
+                  style={{ padding: `${config.space.S100} ${config.space.S200}` }}
+                >
+                  <Text size="L400">Nickname</Text>
+                  <input
+                    ref={nickInputRef}
+                    autoFocus
+                    defaultValue={currentNick ?? ''}
+                    placeholder="Enter a nickname…"
+                    onKeyDown={handleNickKeyDown}
+                    style={{
+                      background: 'var(--mx-c-surface)',
+                      color: 'var(--mx-c-on-surface)',
+                      border: '1px solid var(--mx-c-outline)',
+                      borderRadius: '6px',
+                      padding: '4px 8px',
+                      fontSize: '14px',
+                      width: '100%',
+                      outline: 'none',
+                    }}
+                  />
+                  <Box gap="200">
+                    <MenuItem
+                      size="300"
+                      radii="300"
+                      variant="Success"
+                      fill="None"
+                      onClick={handleSaveNick}
+                    >
+                      <Text size="B300">Save</Text>
+                    </MenuItem>
+                    {currentNick && (
+                      <MenuItem
+                        size="300"
+                        radii="300"
+                        variant="Critical"
+                        fill="None"
+                        onClick={() => {
+                          setNickname(userId, undefined);
+                          close();
+                        }}
+                      >
+                        <Text size="B300">Clear</Text>
+                      </MenuItem>
+                    )}
+                  </Box>
+                </Box>
+              ) : (
+                <MenuItem
+                  variant="Surface"
+                  fill="None"
+                  size="300"
+                  radii="300"
+                  before={<Icon size="50" src={Icons.Pencil} />}
+                  onClick={() => setEditingNick(true)}
+                >
+                  <Text size="B300">{currentNick ? 'Edit Nickname' : 'Set Nickname'}</Text>
+                </MenuItem>
+              )}
               <MenuItem
                 variant="Critical"
                 fill="None"

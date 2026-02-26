@@ -4,7 +4,7 @@ import {
   IThumbnailContent,
   MATRIX_BLUR_HASH_PROPERTY_NAME,
   MATRIX_SPOILER_PROPERTY_NAME,
-} from '../../../types/matrix/common';
+} from '$types/matrix/common';
 import {
   getImageFileUrl,
   getThumbnail,

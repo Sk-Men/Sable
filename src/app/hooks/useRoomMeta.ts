@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { RoomJoinRulesEventContent } from '$types/matrix-sdk';
-import { Room, RoomEvent, RoomEventHandlerMap } from '$types/matrix-sdk';
-import { StateEvent } from '../../types/matrix/room';
+import { Room, RoomEvent, RoomStateEvent } from '$types/matrix-sdk';
+import { StateEvent } from '$types/matrix/room';
 import { useStateEvent } from './useStateEvent';
 
 export const useRoomAvatar = (room: Room, dm?: boolean): string | undefined => {
@@ -20,12 +20,21 @@ export const useRoomName = (room: Room): string => {
   const [name, setName] = useState(room.name);
 
   useEffect(() => {
-    const handleRoomNameChange: RoomEventHandlerMap[RoomEvent.Name] = () => {
-      setName(room.name);
+    const updateName = () => {
+      if (room.name === 'Empty room') {
+        room.recalculate();
+      }
+
+      setName((prev) => (prev !== room.name ? room.name : prev));
     };
-    room.on(RoomEvent.Name, handleRoomNameChange);
+    updateName();
+
+    room.on(RoomEvent.Name, updateName);
+    room.on(RoomStateEvent.Members, updateName);
+
     return () => {
-      room.removeListener(RoomEvent.Name, handleRoomNameChange);
+      room.removeListener(RoomEvent.Name, updateName);
+      room.removeListener(RoomStateEvent.Members, updateName);
     };
   }, [room]);
 

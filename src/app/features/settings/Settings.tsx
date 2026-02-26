@@ -33,6 +33,7 @@ import { About } from './about';
 import { UseStateProvider } from '$components/UseStateProvider';
 import { stopPropagation } from '$appUtils/keyboard';
 import { LogoutDialog } from '$components/LogoutDialog';
+import { Cosmetics } from './cosmetics/Cosmetics';
 
 export enum SettingsPages {
   GeneralPage,
@@ -40,6 +41,7 @@ export enum SettingsPages {
   NotificationPage,
   DevicesPage,
   EmojisStickersPage,
+  CosmeticsPage,
   DeveloperToolsPage,
   AboutPage,
 }
@@ -48,6 +50,7 @@ type SettingsMenuItem = {
   page: SettingsPages;
   name: string;
   icon: IconSrc;
+  activeIcon?: IconSrc;
 };
 
 const useSettingsMenuItems = (): SettingsMenuItem[] =>
@@ -62,6 +65,12 @@ const useSettingsMenuItems = (): SettingsMenuItem[] =>
         page: SettingsPages.AccountPage,
         name: 'Account',
         icon: Icons.User,
+      },
+      {
+        page: SettingsPages.CosmeticsPage,
+        name: 'Appearance',
+        icon: Icons.Alphabet,
+        activeIcon: Icons.AlphabetUnderline,
       },
       {
         page: SettingsPages.NotificationPage,
@@ -150,26 +159,34 @@ export function Settings({ initialPage, requestClose }: SettingsProps) {
             <Box grow="Yes" direction="Column">
               <PageNavContent>
                 <div style={{ flexGrow: 1 }}>
-                  {menuItems.map((item) => (
-                    <MenuItem
-                      key={item.name}
-                      variant="Background"
-                      radii="400"
-                      aria-pressed={activePage === item.page}
-                      before={<Icon src={item.icon} size="100" filled={activePage === item.page} />}
-                      onClick={() => setActivePage(item.page)}
-                    >
-                      <Text
-                        style={{
-                          fontWeight: activePage === item.page ? config.fontWeight.W600 : undefined,
-                        }}
-                        size="T300"
-                        truncate
+                  {menuItems.map((item) => {
+                    const currentIcon =
+                      activePage === item.page && item.activeIcon ? item.activeIcon : item.icon;
+
+                    return (
+                      <MenuItem
+                        key={item.name}
+                        variant="Background"
+                        radii="400"
+                        aria-pressed={activePage === item.page}
+                        before={
+                          <Icon src={currentIcon} size="100" filled={activePage === item.page} />
+                        }
+                        onClick={() => setActivePage(item.page)}
                       >
-                        {item.name}
-                      </Text>
-                    </MenuItem>
-                  ))}
+                        <Text
+                          style={{
+                            fontWeight:
+                              activePage === item.page ? config.fontWeight.W600 : undefined,
+                          }}
+                          size="T300"
+                          truncate
+                        >
+                          {item.name}
+                        </Text>
+                      </MenuItem>
+                    );
+                  })}
                 </div>
               </PageNavContent>
               <Box style={{ padding: config.space.S200 }} shrink="No" direction="Column">
@@ -215,6 +232,9 @@ export function Settings({ initialPage, requestClose }: SettingsProps) {
       )}
       {activePage === SettingsPages.AccountPage && (
         <Account requestClose={handlePageRequestClose} />
+      )}
+      {activePage === SettingsPages.CosmeticsPage && (
+        <Cosmetics requestClose={handlePageRequestClose} />
       )}
       {activePage === SettingsPages.NotificationPage && (
         <Notifications requestClose={handlePageRequestClose} />

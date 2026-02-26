@@ -14,21 +14,32 @@ import classNames from 'classnames';
 import FocusTrap from 'focus-trap-react';
 import * as css from './styles.css';
 import { UserAvatar } from '../user-avatar';
-import colorMXID from '../../../util/colorMXID';
+import colorMXID from '$util/colorMXID';
 import { getMxIdLocalPart } from '$appUtils/matrix';
 import { BreakWord, LineClamp3 } from '$styles/Text.css';
 import { UserPresence } from '$hooks/useUserPresence';
 import { AvatarPresence, PresenceBadge } from '../presence';
 import { ImageViewer } from '../image-viewer';
 import { stopPropagation } from '$appUtils/keyboard';
+import { useRoom } from '$hooks/useRoom';
+import { useSableCosmetics } from '$hooks/useSableCosmetics';
+import { useNickname } from '$hooks/useNickname';
+import { useBlobCache } from '$hooks/useBlobCache';
 
 type UserHeroProps = {
   userId: string;
   avatarUrl?: string;
+  bannerUrl?: string;
   presence?: UserPresence;
 };
-export function UserHero({ userId, avatarUrl, presence }: UserHeroProps) {
+export function UserHero({ userId, avatarUrl, bannerUrl, presence }: UserHeroProps) {
   const [viewAvatar, setViewAvatar] = useState<string>();
+
+  const cachedBannerUrl = useBlobCache(bannerUrl);
+  const cachedAvatarUrl = useBlobCache(avatarUrl);
+
+  const coverUrl = cachedBannerUrl || cachedAvatarUrl;
+  const isFallbackCover = !cachedBannerUrl && !!cachedAvatarUrl;
 
   return (
     <Box direction="Column" className={css.UserHero}>
@@ -36,11 +47,15 @@ export function UserHero({ userId, avatarUrl, presence }: UserHeroProps) {
         className={css.UserHeroCoverContainer}
         style={{
           backgroundColor: colorMXID(userId),
-          filter: avatarUrl ? undefined : 'brightness(50%)',
         }}
       >
-        {avatarUrl && (
-          <img className={css.UserHeroCover} src={avatarUrl} alt={userId} draggable="false" />
+        {coverUrl && (
+          <img
+            className={classNames(css.UserHeroCover, isFallbackCover && css.UserHeroCoverFallback)}
+            src={coverUrl}
+            alt={`${userId} cover`}
+            draggable="false"
+          />
         )}
       </div>
       <div className={css.UserHeroAvatarContainer}>
@@ -98,6 +113,12 @@ type UserHeroNameProps = {
 };
 export function UserHeroName({ displayName, userId }: UserHeroNameProps) {
   const username = getMxIdLocalPart(userId);
+  const nick = useNickname(userId);
+
+  // Sable username color and fonts
+  const { color, font } = useSableCosmetics(userId, useRoom());
+
+  const shownName = nick ?? displayName ?? username ?? userId;
 
   return (
     <Box grow="Yes" direction="Column" gap="0">
@@ -105,10 +126,16 @@ export function UserHeroName({ displayName, userId }: UserHeroNameProps) {
         <Text
           size="H4"
           className={classNames(BreakWord, LineClamp3)}
-          title={displayName ?? username}
+          title={shownName}
+          style={{ color, fontFamily: font }}
         >
-          {displayName ?? username ?? userId}
+          {shownName}
         </Text>
+        {nick && (
+          <Text size="T200" priority="300" title={`Nickname (real: ${username})`}>
+            (nick)
+          </Text>
+        )}
       </Box>
       <Box alignItems="Center" gap="100" wrap="Wrap">
         <Text size="T200" className={classNames(BreakWord, LineClamp3)} title={username}>

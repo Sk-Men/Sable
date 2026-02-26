@@ -1,13 +1,15 @@
 import React from 'react';
 import { createRoot } from 'react-dom/client';
 import { enableMapSet } from 'immer';
-import '@fontsource-variable/inter';
 import 'folds/dist/style.css';
 import { configClass, varsClass } from 'folds';
 
 enableMapSet();
 
 import './index.css';
+import './app/styles/themes.css';
+import './app/styles/overrides/General.css';
+import './app/styles/overrides/Privacy.css';
 
 import { trimTrailingSlash } from './app/utils/common';
 import App from './app/pages/App';
@@ -15,7 +17,13 @@ import App from './app/pages/App';
 // import i18n (needs to be bundled ;))
 import './app/i18n';
 import { pushSessionToSW } from './sw-session';
-import { getFallbackSession } from './app/state/sessions';
+import {
+  getFallbackSession,
+  MATRIX_SESSIONS_KEY,
+  Sessions,
+  ACTIVE_SESSION_KEY,
+} from './app/state/sessions';
+import { getLocalStorageItem } from './app/state/utils/atomWithLocalStorage';
 
 document.body.classList.add(configClass, varsClass);
 
@@ -27,21 +35,47 @@ if ('serviceWorker' in navigator) {
       : `/dev-sw.js?dev-sw`;
 
   const sendSessionToSW = () => {
-    const session = getFallbackSession();
-    pushSessionToSW(session?.baseUrl, session?.accessToken);
+    // Use the active session from the new multi-session store, fall back to legacy
+    const sessions = getLocalStorageItem<Sessions>(MATRIX_SESSIONS_KEY, []);
+    const activeId = getLocalStorageItem<string | undefined>(ACTIVE_SESSION_KEY, undefined);
+    const active =
+      sessions.find((s) => s.userId === activeId) ?? sessions[0] ?? getFallbackSession();
+    pushSessionToSW(active?.baseUrl, active?.accessToken);
   };
 
-  navigator.serviceWorker.register(swUrl).then(sendSessionToSW);
-  navigator.serviceWorker.ready.then(sendSessionToSW);
+  void navigator.serviceWorker.register(swUrl).then(sendSessionToSW);
+  void navigator.serviceWorker.ready.then(sendSessionToSW);
 
   navigator.serviceWorker.addEventListener('message', (ev) => {
-    const { type } = ev.data ?? {};
+    const data: unknown = ev.data;
+    if (!data || typeof data !== 'object') return;
+    const { type } = data as { type?: unknown };
 
     if (type === 'requestSession') {
       sendSessionToSW();
     }
   });
 }
+
+const injectIOSMetaTags = () => {
+  const metaTags = [
+    { name: 'theme-color', content: '#0C0B0F' },
+    { name: 'apple-mobile-web-app-capable', content: 'yes' },
+    { name: 'apple-mobile-web-app-status-bar-style', content: 'black-translucent' },
+  ];
+
+  metaTags.forEach((tag) => {
+    let element = document.querySelector(`meta[name="${tag.name}"]`);
+    if (!element) {
+      element = document.createElement('meta');
+      element.setAttribute('name', tag.name);
+      document.head.appendChild(element);
+    }
+    element.setAttribute('content', tag.content);
+  });
+};
+
+injectIOSMetaTags();
 
 const mountApp = () => {
   const rootContainer = document.getElementById('root');

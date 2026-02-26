@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { AccountDataEvent, MDirectContent } from '../../types/matrix/accountData';
+import { AccountDataEvent, MDirectContent } from '$types/matrix/accountData';
 import { useAccountData } from './useAccountData';
 import { useAllJoinedRoomsSet, useGetRoom } from './useGetRoom';
 

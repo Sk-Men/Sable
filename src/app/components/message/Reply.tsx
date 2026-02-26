@@ -2,16 +2,27 @@ import { Box, Icon, Icons, Text, as, color, toRem } from 'folds';
 import { EventTimelineSet, Room } from '$types/matrix-sdk';
 import React, { MouseEventHandler, ReactNode, useCallback, useMemo } from 'react';
 import classNames from 'classnames';
-import { getMemberDisplayName, trimReplyFromBody } from '$appUtils/room';
+import parse from 'html-react-parser';
+import { useAtomValue } from 'jotai';
+import {
+  getMemberDisplayName,
+  trimReplyFromBody,
+  trimReplyFromFormattedBody,
+} from '$appUtils/room';
 import { getMxIdLocalPart } from '$appUtils/matrix';
 import { LinePlaceholder } from './placeholder';
 import { randomNumberBetween } from '$appUtils/common';
 import * as css from './Reply.css';
 import { MessageBadEncryptedContent, MessageDeletedContent, MessageFailedContent } from './content';
-import { scaleSystemEmoji } from '$plugins/react-custom-html-parser';
+import {
+  getReactCustomHtmlParser,
+  scaleSystemEmoji,
+  LINKIFY_OPTS,
+} from '$plugins/react-custom-html-parser';
 import { useRoomEvent } from '$hooks/useRoomEvent';
-import colorMXID from '../../../util/colorMXID';
-import { GetMemberPowerTag } from '$hooks/useMemberPowerTag';
+import { useSableCosmetics } from '$hooks/useSableCosmetics';
+import { nicknamesAtom } from '$state/nicknames';
+import { useMatrixClient } from '$hooks/useMatrixClient';
 
 type ReplyLayoutProps = {
   userColor?: string;
@@ -57,26 +68,10 @@ type ReplyProps = {
   replyEventId: string;
   threadRootId?: string | undefined;
   onClick?: MouseEventHandler | undefined;
-  getMemberPowerTag?: GetMemberPowerTag;
-  accessibleTagColors?: Map<string, string>;
-  legacyUsernameColor?: boolean;
 };
 
 export const Reply = as<'div', ReplyProps>(
-  (
-    {
-      room,
-      timelineSet,
-      replyEventId,
-      threadRootId,
-      onClick,
-      getMemberPowerTag,
-      accessibleTagColors,
-      legacyUsernameColor,
-      ...props
-    },
-    ref
-  ) => {
+  ({ room, timelineSet, replyEventId, threadRootId, onClick, ...props }, ref) => {
     const placeholderWidth = useMemo(() => randomNumberBetween(40, 400), []);
     const getFromLocalTimeline = useCallback(
       () => timelineSet?.findEventById(replyEventId),
@@ -84,12 +79,14 @@ export const Reply = as<'div', ReplyProps>(
     );
     const replyEvent = useRoomEvent(room, replyEventId, getFromLocalTimeline);
 
-    const { body } = replyEvent?.getContent() ?? {};
-    const sender = replyEvent?.getSender();
-    const powerTag = sender ? getMemberPowerTag?.(sender) : undefined;
-    const tagColor = powerTag?.color ? accessibleTagColors?.get(powerTag.color) : undefined;
+    const mx = useMatrixClient();
 
-    const usernameColor = legacyUsernameColor ? colorMXID(sender ?? replyEventId) : tagColor;
+    // eslint-disable-next-line camelcase
+    const { body, formatted_body, format } = replyEvent?.getContent() ?? {};
+    const sender = replyEvent?.getSender();
+
+    const { color: usernameColor, font: usernameFont } = useSableCosmetics(sender ?? '', room);
+    const nicknames = useAtomValue(nicknamesAtom);
 
     const fallbackBody = replyEvent?.isRedacted() ? (
       <MessageDeletedContent />
@@ -98,7 +95,24 @@ export const Reply = as<'div', ReplyProps>(
     );
 
     const badEncryption = replyEvent?.getContent().msgtype === 'm.bad.encrypted';
-    const bodyJSX = body ? scaleSystemEmoji(trimReplyFromBody(body)) : fallbackBody;
+    let bodyJSX: ReactNode = fallbackBody;
+
+    // eslint-disable-next-line camelcase
+    if (format === 'org.matrix.custom.html' && formatted_body) {
+      const strippedHtml = trimReplyFromFormattedBody(formatted_body)
+        .replace(/<br\s*\/?>/gi, ' ')
+        .replace(/<\/p>\s*<p[^>]*>/gi, ' ')
+        .replace(/<\/?p[^>]*>/gi, '')
+        .replace(/(?:\r\n|\r|\n)/g, ' ');
+      const parserOpts = getReactCustomHtmlParser(mx, room.roomId, {
+        linkifyOpts: LINKIFY_OPTS,
+        nicknames,
+      });
+      bodyJSX = parse(strippedHtml, parserOpts) as JSX.Element;
+    } else if (body) {
+      const strippedBody = trimReplyFromBody(body).replace(/(?:\r\n|\r|\n)/g, ' ');
+      bodyJSX = scaleSystemEmoji(strippedBody);
+    }
 
     return (
       <Box direction="Row" gap="200" alignItems="Center" {...props} ref={ref}>
@@ -110,8 +124,8 @@ export const Reply = as<'div', ReplyProps>(
           userColor={usernameColor}
           username={
             sender && (
-              <Text size="T300" truncate>
-                <b>{getMemberDisplayName(room, sender) ?? getMxIdLocalPart(sender)}</b>
+              <Text size="T300" truncate style={{ fontFamily: usernameFont }}>
+                <b>{getMemberDisplayName(room, sender, nicknames) ?? getMxIdLocalPart(sender)}</b>
               </Text>
             )
           }

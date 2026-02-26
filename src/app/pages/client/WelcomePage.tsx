@@ -15,16 +15,12 @@ export function WelcomePage() {
         <PageHeroSection>
           <PageHero
             icon={<img width="70" height="70" src={CinnySVG} alt="Cinny Logo" />}
-            title="Welcome to Cinny"
+            title="Welcome to Sable"
             subTitle={
               <span>
-                Yet another matrix client.{' '}
-                <a
-                  href="https://github.com/cinnyapp/cinny/releases"
-                  target="_blank"
-                  rel="noreferrer noopener"
-                >
-                  v4.10.5
+                Yet another matrix client fork.{' '}
+                <a href="https://github.com/7w1/sable" target="_blank" rel="noreferrer noopener">
+                  v1.1.7
                 </a>
               </span>
             }
@@ -33,7 +29,7 @@ export function WelcomePage() {
               <Box grow="Yes" style={{ maxWidth: toRem(300) }} direction="Column" gap="300">
                 <Button
                   as="a"
-                  href="https://github.com/cinnyapp/cinny"
+                  href="https://github.com/7w1/sable"
                   target="_blank"
                   rel="noreferrer noopener"
                   before={<Icon size="200" src={Icons.Code} />}
@@ -42,9 +38,10 @@ export function WelcomePage() {
                     Source Code
                   </Text>
                 </Button>
+                {/*
                 <Button
                   as="a"
-                  href="https://cinny.in/#sponsor"
+                  href="https://github.com/7w1/sable"
                   target="_blank"
                   rel="noreferrer noopener"
                   fill="Soft"
@@ -54,7 +51,21 @@ export function WelcomePage() {
                     Support
                   </Text>
                 </Button>
+                */}
               </Box>
+            </Box>
+            <Box direction="Column" gap="200" alignItems="Center">
+              <Button
+                as="a"
+                href="https://github.com/7w1/sable/blob/dev/CHANGELOG.md"
+                target="_blank"
+                rel="noreferrer noopener"
+                before={<Icon size="200" src={Icons.Code} />}
+              >
+                <Text as="span" size="B400" truncate>
+                  Features
+                </Text>
+              </Button>
             </Box>
           </PageHero>
         </PageHeroSection>

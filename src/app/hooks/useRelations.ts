@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { RelationsEvent, type Relations } from 'matrix-js-sdk/lib/models/relations';
+import { RelationsEvent, type Relations } from '$types/matrix-sdk';
 
 export const useRelations = <T>(
   relations: Relations,
