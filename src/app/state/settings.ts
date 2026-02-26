@@ -61,6 +61,7 @@ export interface Settings {
   // Sable features!
   mobileGestures: boolean;
   rightSwipeAction: RightSwipeAction;
+  hideMembershipInReadOnly: boolean;
 }
 
 const defaultSettings: Settings = {
@@ -108,6 +109,7 @@ const defaultSettings: Settings = {
   // Sable features!
   mobileGestures: true,
   rightSwipeAction: RightSwipeAction.Reply,
+  hideMembershipInReadOnly: true,
 };
 
 export const getSettings = () => {

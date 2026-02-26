@@ -679,6 +679,7 @@ function Messages() {
   const [urlPreview, setUrlPreview] = useSetting(settingsAtom, 'urlPreview');
   const [encUrlPreview, setEncUrlPreview] = useSetting(settingsAtom, 'encUrlPreview');
   const [showHiddenEvents, setShowHiddenEvents] = useSetting(settingsAtom, 'showHiddenEvents');
+  const [hideMembershipInReadOnly, setHideMembershipInReadOnly] = useSetting(settingsAtom, 'hideMembershipInReadOnly');
 
   return (
     <Box direction="Column" gap="100">
@@ -735,6 +736,14 @@ function Messages() {
         <SettingTile
           title="Url Preview in Encrypted Room"
           after={<Switch variant="Primary" value={encUrlPreview} onChange={setEncUrlPreview} />}
+        />
+      </SequenceCard>
+      <SequenceCard className={SequenceCardStyle} variant="SurfaceVariant" direction="Column">
+        <SettingTile
+          title="Hide Member Events in Read-Only Rooms"
+          after={
+            <Switch variant="Primary" value={hideMembershipInReadOnly} onChange={setHideMembershipInReadOnly} />
+          }
         />
       </SequenceCard>
       <SequenceCard className={SequenceCardStyle} variant="SurfaceVariant" direction="Column">

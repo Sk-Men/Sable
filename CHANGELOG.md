@@ -5,6 +5,7 @@
 - Fix delete and report button colors.
 - Fix modal backgrounds missing in some menus.
 - Reply is now a toggle. When you click/swipe to reply to the message you're already replying to, it's reset.
+- Option to hide member events in read-only rooms, like announcement channels, so you can actually read them. Enabled by default.
 
 ## 1.1.6
 

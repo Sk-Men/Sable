@@ -1111,6 +1111,14 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
   );
   const { t } = useTranslation();
 
+  const [hideMemberInReadOnly] = useSetting(settingsAtom, 'hideMembershipInReadOnly');
+
+  const isReadOnly = useMemo(() => {
+    const myPowerLevel = powerLevels?.users?.[mx.getUserId()!] ?? powerLevels?.users_default ?? 0;
+    const sendLevel = powerLevels?.events?.[MessageEvent.RoomMessage] ?? powerLevels?.events_default ?? 0;
+    return myPowerLevel < sendLevel;
+  }, [powerLevels, mx]);
+
   const renderMatrixEvent = useMatrixEventRenderer<
     [string, MatrixEvent, number, EventTimelineSet, boolean]
   >(
@@ -1392,6 +1400,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
       },
       [StateEvent.RoomMember]: (mEventId, mEvent, item) => {
         const membershipChanged = isMembershipChanged(mEvent);
+        if (hideMemberInReadOnly && isReadOnly) return null;
         if (membershipChanged && hideMembershipEvents) return null;
         if (!membershipChanged && hideNickAvatarEvents) return null;
 
