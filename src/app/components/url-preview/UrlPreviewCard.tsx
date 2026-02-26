@@ -52,7 +52,7 @@ export const UrlPreviewCard = as<'div', { url: string; ts: number }>(
               as="a"
               href={url}
               target="_blank"
-              rel="no-referrer"
+              rel="noreferrer"
               size="T200"
               priority="300"
             >
