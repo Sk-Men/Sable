@@ -20,7 +20,13 @@ export function SwipeableOverlayWrapper({
     const x = useMotionValue(0);
     const springX = useSpring(x, { stiffness: 400, damping: 40 });
 
-    const bind = useDrag(({ active, movement: [mx], velocity: [vx], direction: [dx], event }) => {
+    const bind = useDrag(({ active, movement: [mx], velocity: [vx], direction: [dx], event, event: e }) => {
+        if (e && 'target' in e && e.target instanceof HTMLElement) {
+            if (e.target.closest('[data-gestures="ignore"]')) {
+                return;
+            }
+        }
+
         if (!settings.mobileGestures || !mobileOrTablet()) return;
 
         event.stopPropagation();

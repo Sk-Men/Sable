@@ -6,6 +6,8 @@
 - Fix modal backgrounds missing in some menus.
 - Reply is now a toggle. When you click/swipe to reply to the message you're already replying to, it's reset.
 - Option to hide member events in read-only rooms, like announcement channels, so you can actually read them. Enabled by default.
+- Improvements to image and pdf viewers. Touch pan/zoom, scroll wheel zoom, and better reponsiveness.
+- Fixed gestures occasionally triggering inside image and pdf viewer.
 
 ## 1.1.6
 

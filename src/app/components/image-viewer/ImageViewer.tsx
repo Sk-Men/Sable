@@ -1,12 +1,11 @@
 /* eslint-disable jsx-a11y/no-noninteractive-element-interactions */
-import React from 'react';
+import React, { useEffect } from 'react';
 import FileSaver from 'file-saver';
 import classNames from 'classnames';
 import { Box, Chip, Header, Icon, IconButton, Icons, Text, as } from 'folds';
 import * as css from './ImageViewer.css';
-import { useZoom } from '../../hooks/useZoom';
-import { usePan } from '../../hooks/usePan';
 import { downloadMedia } from '../../utils/matrix';
+import { useImageGestures } from '../../hooks/useImageGestures';
 
 export type ImageViewerProps = {
   alt: string;
@@ -16,12 +15,24 @@ export type ImageViewerProps = {
 
 export const ImageViewer = as<'div', ImageViewerProps>(
   ({ className, alt, src, requestClose, ...props }, ref) => {
-    const { zoom, zoomIn, zoomOut, setZoom } = useZoom(0.2);
-    const { pan, cursor, onMouseDown } = usePan(zoom !== 1);
+    const {
+      zoom,
+      pan,
+      cursor,
+      onPointerDown,
+      setZoom,
+      zoomIn,
+      zoomOut
+    } = useImageGestures(true, 0.2);
 
     const handleDownload = async () => {
       const fileContent = await downloadMedia(src);
       FileSaver.saveAs(fileContent, alt);
+    };
+
+    const handleWheel = (e: React.WheelEvent) => {
+      if (e.deltaY < 0) zoomIn();
+      else zoomOut();
     };
 
     return (
@@ -76,19 +87,27 @@ export const ImageViewer = as<'div', ImageViewerProps>(
         </Header>
         <Box
           grow="Yes"
+          onWheel={handleWheel}
           className={css.ImageViewerContent}
+          data-gestures="ignore"
           justifyContent="Center"
           alignItems="Center"
+          style={{ overflow: 'hidden', touchAction: 'none' }}
         >
           <img
             className={css.ImageViewerImg}
+            draggable={false}
+            data-gestures="ignore"
             style={{
               cursor,
-              transform: `scale(${zoom}) translate(${pan.translateX}px, ${pan.translateY}px)`,
+              userSelect: 'none',
+              touchAction: 'none',
+              willChange: 'transform',
+              transform: `translate(${pan.translateX}px, ${pan.translateY}px) scale(${zoom})`,
             }}
             src={src}
             alt={alt}
-            onMouseDown={onMouseDown}
+            onPointerDown={onPointerDown}
           />
         </Box>
       </Box>
