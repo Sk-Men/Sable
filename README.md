@@ -2,6 +2,8 @@
 
 A Matrix client built to enhance the user experience with quality-of-life features, cosmetics, utilites, and sheer usability. See the [changelog](https://github.com/7w1/sable/blob/dev/CHANGELOG.md).
 
+Join our matrix space [here](https://matrix.to/#/#sable:sable.moe) to discuss features, issues, or meowing.
+
 Forked from [Cinny](https://github.com/cinnyapp/cinny/).
 
 ## Getting started
