@@ -456,7 +456,8 @@ export const getReactCustomHtmlParser = (
         }
 
         if (name === 'img') {
-          const htmlSrc = mxcUrlToHttp(mx, props.src, params.useAuthentication);
+          const htmlSrc = mxcUrlToHttp(mx, props.src, params.useAuthentication) ?? undefined;
+
           if (htmlSrc && !props.src.startsWith('mxc://')) {
             return (
               <a href={htmlSrc} target="_blank" rel="noreferrer noopener">
@@ -464,15 +465,36 @@ export const getReactCustomHtmlParser = (
               </a>
             );
           }
+
           if (htmlSrc && 'data-mx-emoticon' in props) {
+            const siblingCount = domNode.parent?.children.length ?? 0;
+
+            // seperate style for bundled emojis
+            if (siblingCount > 5) {
+              return (
+                <span className={css.EmoticonBase}>
+                  <span className={css.Emoticon()}>
+                    <img
+                      {...props}
+                      src={htmlSrc}
+                      className={css.EmoticonImg}
+                      style={{ verticalAlign: 'middle' }}
+                    />
+                  </span>
+                </span>
+              );
+            }
+
+            // old style for just a few... what is this even for? React components or something?
             return (
               <span className={css.EmoticonBase}>
                 <span className={css.Emoticon()}>
-                  <img {...props} className={css.EmoticonImg} src={htmlSrc} />
+                  <img {...props} src={htmlSrc} className={css.EmoticonImg} />
                 </span>
               </span>
             );
           }
+
           if (htmlSrc) return <img {...props} className={css.Img} src={htmlSrc} />;
         }
       }

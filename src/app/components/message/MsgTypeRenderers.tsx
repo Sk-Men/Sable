@@ -83,21 +83,33 @@ export function MText({ edited, content, renderBody, renderUrlsPreview, style }:
   const [jumboEmojiSize] = useSetting(settingsAtom, 'jumboEmojiSize');
 
   if (typeof body !== 'string') return <BrokenContent />;
+
   const trimmedBody = trimReplyFromBody(body);
+
+  let safeCustomBody = customBody;
+  if (customBody && customBody.length > 8000) {
+    const imageTags = customBody.match(/<img[^>]*>/g);
+    if (imageTags) {
+      safeCustomBody = imageTags.join(' ');
+    } else {
+      safeCustomBody = undefined;
+    }
+  }
+
+  const isJumbo = trimmedBody.length < 500 && JUMBO_EMOJI_REG.test(trimmedBody);
   const urlsMatch = renderUrlsPreview && trimmedBody.match(URL_REG);
   const urls = urlsMatch ? [...new Set(urlsMatch)] : undefined;
-  const isJumbo = JUMBO_EMOJI_REG.test(trimmedBody);
 
   return (
     <>
       <MessageTextBody
-        preWrap={typeof customBody !== 'string'}
+        preWrap={typeof safeCustomBody !== 'string'}
         jumboEmoji={isJumbo ? jumboEmojiSize : 'none'}
         style={style}
       >
         {renderBody({
           body: trimmedBody,
-          customBody: typeof customBody === 'string' ? customBody : undefined,
+          customBody: safeCustomBody,
         })}
         {edited && <MessageEditedContent />}
       </MessageTextBody>
@@ -105,6 +117,7 @@ export function MText({ edited, content, renderBody, renderUrlsPreview, style }:
     </>
   );
 }
+
 
 type MEmoteProps = {
   displayName: string;

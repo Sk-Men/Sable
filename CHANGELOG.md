@@ -1,5 +1,9 @@
 # Sable Client Changelog
 
+## 1.1.6
+
+- Fix crash if too many emojis present [cinnyapp#2570](https://github.com/cinnyapp/cinny/issues/2570)
+
 ## Version 1.1.5
 
 - Various performance improvements. See commits for details.
