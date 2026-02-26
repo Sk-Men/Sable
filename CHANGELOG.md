@@ -4,6 +4,7 @@
 
 - Fix delete and report button colors.
 - Fix modal backgrounds missing in some menus.
+- Reply is now a toggle. When you click/swipe to reply to the message you're already replying to, it's reset.
 
 ## 1.1.6
 

@@ -228,6 +228,7 @@ export type MessageProps = {
   senderId: string;
   senderDisplayName: string;
   content?: string;
+  activeReplyId?: string | null;
 };
 
 function useMobileDoubleTap(callback: () => void, delay = 300) {
@@ -312,6 +313,7 @@ function MessageInternal(
     children,
     senderId,
     senderDisplayName,
+    activeReplyId,
     ...props
   }: MessageProps & { className?: string; children?: ReactNode },
   ref: any
@@ -518,9 +520,11 @@ function MessageInternal(
   };
 
   const handleSwipeReply = () => {
+    const currentId = mEvent.getId();
+    const targetId = activeReplyId === currentId ? null : currentId;
     const mockEvent = {
       currentTarget: {
-        getAttribute: (attr: string) => (attr === 'data-event-id' ? mEvent.getId() : null),
+        getAttribute: (attr: string) => (attr === 'data-event-id' ? targetId : null),
       },
     } as unknown as React.MouseEvent<HTMLButtonElement>;
 
@@ -605,6 +609,9 @@ function MessageInternal(
               {!isThreadedMessage && (
                 <IconButton
                   onClick={(ev) => {
+                    if (activeReplyId === mEvent.getId()) {
+                      ev.currentTarget.setAttribute('data-event-id', '');
+                    }
                     onReplyClick(ev, true);
                     setMobileOptionsOpen(false);
                   }}

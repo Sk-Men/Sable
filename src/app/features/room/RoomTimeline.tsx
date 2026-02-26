@@ -458,6 +458,8 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
   const nicknames = useAtomValue(nicknamesAtom);
 
   const setReplyDraft = useSetAtom(roomIdToReplyDraftAtomFamily(room.roomId));
+  const replyDraft = useAtomValue(roomIdToReplyDraftAtomFamily(room.roomId));
+  const activeReplyId = replyDraft?.eventId;
   const powerLevels = usePowerLevelsContext();
   const creators = useRoomCreators(room);
 
@@ -1033,6 +1035,11 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
 
   const triggerReply = useCallback(
     (replyId: string, startThread = false) => {
+      if (activeReplyId === replyId) {
+        setReplyDraft(undefined);
+        return;
+      }
+
       const replyEvt = room.findEventById(replyId);
       if (!replyEvt) return;
       const editedReply = getEditedEvent(replyId, replyEvt, room.getUnfilteredTimelineSet());
@@ -1053,15 +1060,19 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
         setTimeout(() => ReactEditor.focus(editor), 100);
       }
     },
-    [room, setReplyDraft, editor]
+    [room, setReplyDraft, editor, activeReplyId]
   );
 
   const handleReplyClick: MouseEventHandler<HTMLButtonElement> = useCallback(
     (evt) => {
       const replyId = evt.currentTarget.getAttribute('data-event-id');
+      if (!replyId) {
+        setReplyDraft(undefined);
+        return;
+      }
       if (replyId) triggerReply(replyId);
     },
-    [triggerReply]
+    [triggerReply, setReplyDraft]
   );
 
   const handleReactionToggle = useCallback(
@@ -1143,6 +1154,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
             senderId={senderId}
             senderDisplayName={senderDisplayName}
             onEditId={handleEdit}
+            activeReplyId={activeReplyId}
             reply={
               replyEventId && (
                 <Reply
@@ -1225,6 +1237,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
             onReactionToggle={handleReactionToggle}
             onEditId={handleEdit}
             senderId={senderId}
+            activeReplyId={activeReplyId}
             senderDisplayName={senderDisplayName}
             reply={
               replyEventId && (
@@ -1339,6 +1352,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
             onReplyClick={handleReplyClick}
             onReactionToggle={handleReactionToggle}
             senderId={senderId}
+            activeReplyId={activeReplyId}
             senderDisplayName={senderDisplayName}
             reactions={
               reactionRelations && (
