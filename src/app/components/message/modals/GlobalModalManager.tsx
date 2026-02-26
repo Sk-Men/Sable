@@ -1,6 +1,6 @@
 import React from 'react';
 import { useAtom } from 'jotai';
-import { Overlay, OverlayBackdrop, OverlayCenter, Box } from 'folds';
+import { Overlay, OverlayBackdrop, OverlayCenter, Box, Modal } from 'folds';
 import FocusTrap from 'focus-trap-react';
 import { MessageReportInternal } from './MessageReport';
 import { MessageDeleteInternal } from './MessageDelete';
@@ -28,23 +28,37 @@ export function GlobalModalManager() {
                         escapeDeactivates: stopPropagation,
                     }}
                 >
-                    <Box>
+                    <div>
                         {modal.type === ModalType.Report && (
-                            <MessageReportInternal room={modal.room} mEvent={modal.mEvent} onClose={close} />
+                            <Box>
+                                <MessageReportInternal room={modal.room} mEvent={modal.mEvent} onClose={close} />
+                            </Box>
                         )}
+
                         {modal.type === ModalType.Delete && (
-                            <MessageDeleteInternal room={modal.room} mEvent={modal.mEvent} onClose={close} />
+                            <Box>
+                                <MessageDeleteInternal room={modal.room} mEvent={modal.mEvent} onClose={close} />
+                            </Box>
                         )}
+
                         {modal.type === ModalType.Source && (
-                            <MessageSourceInternal room={modal.room} mEvent={modal.mEvent} onClose={close} />
+                            <Modal variant="Surface" size="300">
+                                <MessageSourceInternal room={modal.room} mEvent={modal.mEvent} onClose={close} />
+                            </Modal>
                         )}
+
                         {modal.type === ModalType.Reactions && (
-                            <MessageAllReactionInternal room={modal.room} relations={modal.relations} onClose={close} />
+                            <Modal variant="Surface" size="300">
+                                <MessageAllReactionInternal room={modal.room} relations={modal.relations} onClose={close} />
+                            </Modal>
                         )}
+
                         {modal.type === ModalType.ReadReceipts && (
-                            <MessageReadReceiptInternal room={modal.room} eventId={modal.eventId} onClose={close} />
+                            <Modal variant="Surface" size="300">
+                                <MessageReadReceiptInternal room={modal.room} eventId={modal.eventId} onClose={close} />
+                            </Modal>
                         )}
-                    </Box>
+                    </div>
                 </FocusTrap>
             </OverlayCenter>
         </Overlay>

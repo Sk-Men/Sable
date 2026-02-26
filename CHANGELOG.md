@@ -1,5 +1,10 @@
 # Sable Client Changelog
 
+## 1.1.7
+
+- Fix delete and report button colors.
+- Fix modal backgrounds missing in some menus.
+
 ## 1.1.6
 
 - Fix crash if too many emojis present [cinnyapp#2570](https://github.com/cinnyapp/cinny/issues/2570)

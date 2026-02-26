@@ -17,6 +17,7 @@ export function MessageReportItem({ room, mEvent }: { room: Room; mEvent: Matrix
         <MenuItem
             size="300"
             variant="Critical"
+            fill="None"
             after={<Icon size="100" src={Icons.Warning} />}
             radii="300"
             onClick={(e: React.MouseEvent) => {

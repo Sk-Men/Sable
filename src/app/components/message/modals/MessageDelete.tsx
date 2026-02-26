@@ -18,6 +18,7 @@ export function MessageDeleteItem({ room, mEvent }: { room: Room; mEvent: Matrix
             size="300"
             after={<Icon size="100" src={Icons.Delete} />}
             radii="300"
+            fill="None"
             variant="Critical"
             onClick={(e: React.MouseEvent) => {
                 e.preventDefault();
