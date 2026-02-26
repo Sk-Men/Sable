@@ -1,7 +1,15 @@
-import React, { forwardRef, KeyboardEventHandler, RefObject, useCallback, useEffect, useRef, useState, } from 'react';
+import React, {
+  forwardRef,
+  KeyboardEventHandler,
+  RefObject,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from 'react';
 import { useAtom, useAtomValue } from 'jotai';
 import { isKeyHotkey } from 'is-hotkey';
-import { EventType, IContent, MsgType, RelationType, Room } from 'matrix-js-sdk';
+import { EventType, IContent, MsgType, RelationType, Room } from '$types/matrix-sdk';
 import { ReactEditor } from 'slate-react';
 import { Editor, Transforms } from 'slate';
 import {
@@ -22,9 +30,13 @@ import {
 } from 'folds';
 
 import parse from 'html-react-parser';
-import { getReactCustomHtmlParser, LINKIFY_OPTS, scaleSystemEmoji } from '../../plugins/react-custom-html-parser';
+import {
+  getReactCustomHtmlParser,
+  LINKIFY_OPTS,
+  scaleSystemEmoji,
+} from '$plugins/react-custom-html-parser';
 
-import { useMatrixClient } from '../../hooks/useMatrixClient';
+import { useMatrixClient } from '$hooks/useMatrixClient';
 import {
   AUTOCOMPLETE_PREFIXES,
   AutocompletePrefix,
@@ -32,30 +44,36 @@ import {
   createEmoticonElement,
   CustomEditor,
   customHtmlEqualsPlainText,
-  EmoticonAutocomplete,
   getAutocompleteQuery,
-  getBeginCommand,
-  getMentions,
   getPrevWorldRange,
-  isEmptyEditor,
-  moveCursor,
   resetEditor,
-  resetEditorHistory,
   RoomMentionAutocomplete,
   toMatrixCustomHTML,
   Toolbar,
   toPlainText,
-  trimCommand,
   trimCustomHtml,
   UserMentionAutocomplete,
-} from '../../components/editor';
-import { EmojiBoard, EmojiBoardTab } from '../../components/emoji-board';
-import { UseStateProvider } from '../../components/UseStateProvider';
-import { encryptFile, getImageInfo, getMxIdLocalPart, mxcUrlToHttp, TUploadContent, } from '../../utils/matrix';
-import { useTypingStatusUpdater } from '../../hooks/useTypingStatusUpdater';
-import { useFilePicker } from '../../hooks/useFilePicker';
-import { useFilePasteHandler } from '../../hooks/useFilePasteHandler';
-import { useFileDropZone } from '../../hooks/useFileDrop';
+  EmoticonAutocomplete,
+  moveCursor,
+  resetEditorHistory,
+  isEmptyEditor,
+  getBeginCommand,
+  trimCommand,
+  getMentions,
+} from '$components/editor';
+import { EmojiBoard, EmojiBoardTab } from '$components/emoji-board';
+import { UseStateProvider } from '$components/UseStateProvider';
+import {
+  TUploadContent,
+  encryptFile,
+  getImageInfo,
+  getMxIdLocalPart,
+  mxcUrlToHttp,
+} from '$appUtils/matrix';
+import { useTypingStatusUpdater } from '$hooks/useTypingStatusUpdater';
+import { useFilePicker } from '$hooks/useFilePicker';
+import { useFilePasteHandler } from '$hooks/useFilePasteHandler';
+import { useFileDropZone } from '$hooks/useFileDrop';
 import {
   roomIdToMsgDraftAtomFamily,
   roomIdToReplyDraftAtomFamily,
@@ -63,33 +81,50 @@ import {
   roomUploadAtomFamily,
   TUploadItem,
   TUploadMetadata,
-} from '../../state/room/roomInputDrafts';
-import { UploadCardRenderer } from '../../components/upload-card';
+} from '$state/room/roomInputDrafts';
+import { UploadCardRenderer } from '$components/upload-card';
 import {
   UploadBoard,
   UploadBoardContent,
   UploadBoardHeader,
   UploadBoardImperativeHandlers,
-} from '../../components/upload-board';
-import { createUploadFamilyObserverAtom, Upload, UploadStatus, UploadSuccess, } from '../../state/upload';
-import { getImageUrlBlob, loadImageElement } from '../../utils/dom';
-import { safeFile } from '../../utils/mimeTypes';
-import { fulfilledPromiseSettledResult } from '../../utils/common';
-import { useSetting } from '../../state/hooks/settings';
-import { settingsAtom } from '../../state/settings';
-import { getAudioMsgContent, getFileMsgContent, getImageMsgContent, getVideoMsgContent, } from './msgContent';
-import { getMemberDisplayName, getMentionContent, trimReplyFromBody, trimReplyFromFormattedBody } from '../../utils/room';
-import { nicknamesAtom } from '../../state/nicknames';
+} from '$components/upload-board';
+import { Upload, UploadStatus, UploadSuccess, createUploadFamilyObserverAtom } from '$state/upload';
+import { getImageUrlBlob, loadImageElement } from '$appUtils/dom';
+import { safeFile } from '$appUtils/mimeTypes';
+import { fulfilledPromiseSettledResult } from '$appUtils/common';
+import { useSetting } from '$state/hooks/settings';
+import { settingsAtom } from '$state/settings';
+import {
+  getAudioMsgContent,
+  getFileMsgContent,
+  getImageMsgContent,
+  getVideoMsgContent,
+} from './msgContent';
+import {
+  getMemberDisplayName,
+  getMentionContent,
+  trimReplyFromBody,
+  trimReplyFromFormattedBody,
+} from '$appUtils/room';
 import { CommandAutocomplete } from './CommandAutocomplete';
-import { Command, SHRUG, TABLEFLIP, UNFLIP, useCommands } from '../../hooks/useCommands';
-import { mobileOrTablet } from '../../utils/user-agent';
-import { useElementSizeObserver } from '../../hooks/useElementSizeObserver';
-import { ReplyLayout, ThreadIndicator } from '../../components/message';
-import { roomToParentsAtom } from '../../state/room/roomToParents';
-import { useMediaAuthentication } from '../../hooks/useMediaAuthentication';
-import { useImagePackRooms } from '../../hooks/useImagePackRooms';
-import { useComposingCheck } from '../../hooks/useComposingCheck';
-import { useSableCosmetics } from '../../hooks/useSableCosmetics';
+import { Command, SHRUG, TABLEFLIP, UNFLIP, useCommands } from '$hooks/useCommands';
+import { mobileOrTablet } from '$appUtils/user-agent';
+import { useElementSizeObserver } from '$hooks/useElementSizeObserver';
+import { ReplyLayout, ThreadIndicator } from '$components/message';
+import { roomToParentsAtom } from '$state/room/roomToParents';
+import { nicknamesAtom } from '$state/nicknames';
+import { useMediaAuthentication } from '$hooks/useMediaAuthentication';
+import { useImagePackRooms } from '$hooks/useImagePackRooms';
+import { usePowerLevelsContext } from '$hooks/usePowerLevels';
+import { useIsDirectRoom } from '$hooks/useRoom';
+import { useAccessiblePowerTagColors, useGetMemberPowerTag } from '$hooks/useMemberPowerTag';
+import { useRoomCreators } from '$hooks/useRoomCreators';
+import { useTheme } from '$hooks/useTheme';
+import { useRoomCreatorsTag } from '$hooks/useRoomCreatorsTag';
+import { usePowerLevelTags } from '$hooks/usePowerLevelTags';
+import { useComposingCheck } from '$hooks/useComposingCheck';
+import { useSableCosmetics } from '$hooks/useSableCosmetics';
 
 interface RoomInputProps {
   editor: Editor;
@@ -113,7 +148,10 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
     const [replyDraft, setReplyDraft] = useAtom(roomIdToReplyDraftAtomFamily(roomId));
     const replyUserID = replyDraft?.userId;
 
-    const { color: replyUsernameColor, font: replyUsernameFont } = useSableCosmetics(replyUserID as any, room);
+    const { color: replyUsernameColor, font: replyUsernameFont } = useSableCosmetics(
+      replyUserID ?? '',
+      room
+    );
 
     const [uploadBoard, setUploadBoard] = useState(true);
     const [selectedFiles, setSelectedFiles] = useAtom(roomIdToUploadItemsAtomFamily(roomId));
@@ -183,7 +221,11 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
     );
 
     const replyEvent = replyDraft ? room.findEventById(replyDraft.eventId) : undefined;
-    const { body: replyBody, formatted_body: replyFormattedBody, format: replyFormat } = replyEvent?.getContent() ?? {};
+    const {
+      body: replyBody,
+      formatted_body: replyFormattedBody,
+      format: replyFormat,
+    } = replyEvent?.getContent() ?? {};
 
     let replyBodyJSX: React.ReactNode = replyDraft ? trimReplyFromBody(replyDraft.body) : null;
 
@@ -317,7 +359,6 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
         resetEditorHistory(editor);
         sendTypingStatus(false);
 
-
         return;
       }
 
@@ -359,7 +400,7 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
       resetEditor(editor);
       resetEditorHistory(editor);
 
-      setInputKey(prev => prev + 1);
+      setInputKey((prev) => prev + 1);
 
       setReplyDraft(undefined);
       sendTypingStatus(false);
@@ -599,7 +640,7 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
                     anchor={
                       emojiBoardTab === undefined
                         ? undefined
-                        : emojiBtnRef.current?.getBoundingClientRect() ?? undefined
+                        : (emojiBtnRef.current?.getBoundingClientRect() ?? undefined)
                     }
                     content={
                       <EmojiBoard
@@ -656,7 +697,13 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
                   </PopOut>
                 )}
               </UseStateProvider>
-              <IconButton onClick={submit} onMouseDown={(e: React.MouseEvent) => e.preventDefault()} variant="SurfaceVariant" size="300" radii="300">
+              <IconButton
+                onClick={submit}
+                onMouseDown={(e: React.MouseEvent) => e.preventDefault()}
+                variant="SurfaceVariant"
+                size="300"
+                radii="300"
+              >
                 <Icon src={Icons.Send} />
               </IconButton>
             </>

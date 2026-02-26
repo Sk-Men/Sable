@@ -1,18 +1,18 @@
 import React from 'react';
 import { Box, color, Spinner, Switch, Text } from 'folds';
-import { JoinRule, MatrixError } from 'matrix-js-sdk';
-import { RoomJoinRulesEventContent } from 'matrix-js-sdk/lib/types';
-import { SequenceCard } from '../../../components/sequence-card';
-import { SequenceCardStyle } from '../../room-settings/styles.css';
-import { SettingTile } from '../../../components/setting-tile';
-import { useRoom } from '../../../hooks/useRoom';
-import { useRoomDirectoryVisibility } from '../../../hooks/useRoomDirectoryVisibility';
-import { AsyncStatus, useAsyncCallback } from '../../../hooks/useAsyncCallback';
-import { StateEvent } from '../../../../types/matrix/room';
-import { useMatrixClient } from '../../../hooks/useMatrixClient';
-import { useStateEvent } from '../../../hooks/useStateEvent';
-import { ExtendedJoinRules } from '../../../components/JoinRulesSwitcher';
-import { RoomPermissionsAPI } from '../../../hooks/useRoomPermissions';
+import { JoinRule, MatrixError } from '$types/matrix-sdk';
+import { RoomJoinRulesEventContent } from '$types/matrix-sdk';
+import { SequenceCard } from '$components/sequence-card';
+import { SequenceCardStyle } from '$features/room-settings/styles.css';
+import { SettingTile } from '$components/setting-tile';
+import { useRoom } from '$hooks/useRoom';
+import { useRoomDirectoryVisibility } from '$hooks/useRoomDirectoryVisibility';
+import { AsyncStatus, useAsyncCallback } from '$hooks/useAsyncCallback';
+import { StateEvent } from '$types/matrix/room';
+import { useMatrixClient } from '$hooks/useMatrixClient';
+import { useStateEvent } from '$hooks/useStateEvent';
+import { ExtendedJoinRules } from '$components/JoinRulesSwitcher';
+import { RoomPermissionsAPI } from '$hooks/useRoomPermissions';
 
 type RoomPublishProps = {
   permissions: RoomPermissionsAPI;

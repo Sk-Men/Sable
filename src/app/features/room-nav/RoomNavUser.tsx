@@ -1,18 +1,18 @@
 import { Avatar, Box, Icon, Icons, Text } from 'folds';
 import React from 'react';
-import { Room } from 'matrix-js-sdk';
-import { CallMembership } from 'matrix-js-sdk/lib/matrixrtc/CallMembership';
-import { NavButton, NavItem, NavItemContent } from '../../components/nav';
-import { UserAvatar } from '../../components/user-avatar';
-import { useMatrixClient } from '../../hooks/useMatrixClient';
-import { useCallState } from '../../pages/client/call/CallProvider';
-import { getMxIdLocalPart } from '../../utils/matrix';
-import { getMemberAvatarMxc, getMemberDisplayName } from '../../utils/room';
-import { useMediaAuthentication } from '../../hooks/useMediaAuthentication';
-import { useOpenUserRoomProfile } from '../../state/hooks/userRoomProfile';
-import { useSpaceOptionally } from '../../hooks/useSpace';
+import { Room } from '$types/matrix-sdk';
+import { CallMembership } from '$types/matrix-sdk';
+import { NavButton, NavItem, NavItemContent } from '$components/nav';
+import { UserAvatar } from '$components/user-avatar';
+import { useMatrixClient } from '$hooks/useMatrixClient';
+import { useCallState } from '$pages/client/call/CallProvider';
+import { getMxIdLocalPart } from '$appUtils/matrix';
+import { getMemberAvatarMxc, getMemberDisplayName } from '$appUtils/room';
+import { useMediaAuthentication } from '$hooks/useMediaAuthentication';
+import { useOpenUserRoomProfile } from '$state/hooks/userRoomProfile';
+import { useSpaceOptionally } from '$hooks/useSpace';
 import { useAtomValue } from 'jotai';
-import { nicknamesAtom } from '../../state/nicknames';
+import { nicknamesAtom } from '$state/nicknames';
 
 type RoomNavUserProps = {
   room: Room;

@@ -29,7 +29,7 @@ async function cleanupDeadClients() {
   });
 }
 
-function setSession(clientId: string, accessToken: any, baseUrl: any) {
+function setSession(clientId: string, accessToken: unknown, baseUrl: unknown) {
   if (typeof accessToken === 'string' && typeof baseUrl === 'string') {
     sessions.set(clientId, { accessToken, baseUrl });
   } else {
@@ -77,7 +77,7 @@ async function requestSessionWithTimeout(
 }
 
 self.addEventListener('install', () => {
-  self.skipWaiting();
+  void self.skipWaiting();
 });
 
 self.addEventListener('activate', (event: ExtendableEvent) => {
@@ -96,11 +96,13 @@ self.addEventListener('message', (event: ExtendableMessageEvent) => {
   const client = event.source as Client | null;
   if (!client) return;
 
-  const { type, accessToken, baseUrl } = event.data || {};
+  const data: unknown = event.data;
+  if (!data || typeof data !== 'object') return;
+  const { type, accessToken, baseUrl } = data as Record<string, unknown>;
 
   if (type === 'setSession') {
     setSession(client.id, accessToken, baseUrl);
-    cleanupDeadClients();
+    void cleanupDeadClients();
   }
 });
 

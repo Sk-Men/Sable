@@ -1,8 +1,8 @@
-import { Room } from 'matrix-js-sdk';
+import { Room } from '$types/matrix-sdk';
 import { useMemo } from 'react';
 import { IPowerLevels } from './usePowerLevels';
 import { useStateEvent } from './useStateEvent';
-import { MemberPowerTag, StateEvent } from '../../types/matrix/room';
+import { MemberPowerTag, StateEvent } from '$types/matrix/room';
 
 export type PowerLevelTags = Record<number, MemberPowerTag>;
 

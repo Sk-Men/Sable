@@ -20,35 +20,35 @@ import {
 } from 'folds';
 import { HexColorPicker } from 'react-colorful';
 import { useAtomValue } from 'jotai';
-import { Page, PageContent, PageHeader } from '../../../components/page';
-import { IPowerLevels } from '../../../hooks/usePowerLevels';
-import { SequenceCard } from '../../../components/sequence-card';
+import { Page, PageContent, PageHeader } from '$components/page';
+import { IPowerLevels } from '$hooks/usePowerLevels';
+import { SequenceCard } from '$components/sequence-card';
 import { SequenceCardStyle } from '../styles.css';
-import { SettingTile } from '../../../components/setting-tile';
+import { SettingTile } from '$components/setting-tile';
 import {
   getPowers,
   getUsedPowers,
   PowerLevelTags,
   usePowerLevelTags,
-} from '../../../hooks/usePowerLevelTags';
-import { useRoom } from '../../../hooks/useRoom';
-import { HexColorPickerPopOut } from '../../../components/HexColorPickerPopOut';
-import { PowerColorBadge, PowerIcon } from '../../../components/power';
-import { UseStateProvider } from '../../../components/UseStateProvider';
-import { EmojiBoard } from '../../../components/emoji-board';
-import { useImagePackRooms } from '../../../hooks/useImagePackRooms';
-import { roomToParentsAtom } from '../../../state/room/roomToParents';
-import { useMediaAuthentication } from '../../../hooks/useMediaAuthentication';
-import { useMatrixClient } from '../../../hooks/useMatrixClient';
-import { useFilePicker } from '../../../hooks/useFilePicker';
-import { CompactUploadCardRenderer } from '../../../components/upload-card';
-import { createUploadAtom, UploadSuccess } from '../../../state/upload';
-import { AsyncStatus, useAsyncCallback } from '../../../hooks/useAsyncCallback';
-import { MemberPowerTag, MemberPowerTagIcon, StateEvent } from '../../../../types/matrix/room';
-import { useAlive } from '../../../hooks/useAlive';
-import { BetaNoticeBadge } from '../../../components/BetaNoticeBadge';
-import { getPowerTagIconSrc } from '../../../hooks/useMemberPowerTag';
-import { creatorsSupported } from '../../../utils/matrix';
+} from '$hooks/usePowerLevelTags';
+import { useRoom } from '$hooks/useRoom';
+import { HexColorPickerPopOut } from '$components/HexColorPickerPopOut';
+import { PowerColorBadge, PowerIcon } from '$components/power';
+import { UseStateProvider } from '$components/UseStateProvider';
+import { EmojiBoard } from '$components/emoji-board';
+import { useImagePackRooms } from '$hooks/useImagePackRooms';
+import { roomToParentsAtom } from '$state/room/roomToParents';
+import { useMediaAuthentication } from '$hooks/useMediaAuthentication';
+import { useMatrixClient } from '$hooks/useMatrixClient';
+import { useFilePicker } from '$hooks/useFilePicker';
+import { CompactUploadCardRenderer } from '$components/upload-card';
+import { createUploadAtom, UploadSuccess } from '$state/upload';
+import { AsyncStatus, useAsyncCallback } from '$hooks/useAsyncCallback';
+import { MemberPowerTag, MemberPowerTagIcon, StateEvent } from '$types/matrix/room';
+import { useAlive } from '$hooks/useAlive';
+import { BetaNoticeBadge } from '$components/BetaNoticeBadge';
+import { getPowerTagIconSrc } from '$hooks/useMemberPowerTag';
+import { creatorsSupported } from '$appUtils/matrix';
 
 type EditPowerProps = {
   maxPower: number;

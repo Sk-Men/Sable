@@ -1,6 +1,6 @@
-import React, {useCallback, useEffect, useRef, useState} from 'react';
-import {flushSync} from 'react-dom';
-import {useAlive} from './useAlive';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { flushSync } from 'react-dom';
+import { useAlive } from './useAlive';
 
 export enum AsyncStatus {
   Idle = 'idle',
@@ -43,57 +43,61 @@ export const useAsync = <TData, TError, TArgs extends unknown[]>(
   const reqNumberRef = useRef(0);
 
   return useCallback(
-      async (...args) => {
-        queueMicrotask(() => {
-          // Warning: flushSync was called from inside a lifecycle method.
-          // React cannot flush when React is already rendering.
-          // Consider moving this call to a scheduler task or micro task.
-          flushSync(() => {
-            // flushSync because
-            // https://github.com/facebook/react/issues/26713#issuecomment-1872085134
-            onStateChange({
-              status: AsyncStatus.Loading,
-            });
+    async (...args) => {
+      queueMicrotask(() => {
+        // Warning: flushSync was called from inside a lifecycle method.
+        // React cannot flush when React is already rendering.
+        // Consider moving this call to a scheduler task or micro task.
+        flushSync(() => {
+          // flushSync because
+          // https://github.com/facebook/react/issues/26713#issuecomment-1872085134
+          onStateChange({
+            status: AsyncStatus.Loading,
           });
         });
+      });
 
-        reqNumberRef.current += 1;
+      reqNumberRef.current += 1;
 
-        const currentReqNumber = reqNumberRef.current;
-        let data: TData;
-        try {
-          data = await asyncCallback(...args);
-        } catch (e) {
-          if (currentReqNumber !== reqNumberRef.current) return undefined as never;
-          if (alive()) {
-            queueMicrotask(() => {
-              onStateChange({
-                status: AsyncStatus.Error,
-                error: e as TError,
-              });
-            });
-          }
-          throw e;
-        }
-
+      const currentReqNumber = reqNumberRef.current;
+      let data: TData;
+      try {
+        data = await asyncCallback(...args);
+      } catch (e) {
         if (currentReqNumber !== reqNumberRef.current) return undefined as never;
         if (alive()) {
           queueMicrotask(() => {
             onStateChange({
-              status: AsyncStatus.Success,
-              data,
+              status: AsyncStatus.Error,
+              error: e as TError,
             });
           });
         }
-        return data;
-      },
-      [asyncCallback, alive, onStateChange]
+        throw e;
+      }
+
+      if (currentReqNumber !== reqNumberRef.current) return undefined as never;
+      if (alive()) {
+        queueMicrotask(() => {
+          onStateChange({
+            status: AsyncStatus.Success,
+            data,
+          });
+        });
+      }
+      return data;
+    },
+    [asyncCallback, alive, onStateChange]
   );
 };
 
 export const useAsyncCallback = <TData, TError, TArgs extends unknown[]>(
   asyncCallback: AsyncCallback<TArgs, TData>
-): [AsyncState<TData, TError>, AsyncCallback<TArgs, TData>, React.Dispatch<React.SetStateAction<AsyncState<TData, TError>>>] => {
+): [
+  AsyncState<TData, TError>,
+  AsyncCallback<TArgs, TData>,
+  React.Dispatch<React.SetStateAction<AsyncState<TData, TError>>>,
+] => {
   const [state, setState] = useState<AsyncState<TData, TError>>({
     status: AsyncStatus.Idle,
   });

@@ -1,9 +1,9 @@
 import React, { forwardRef, MouseEventHandler, ReactNode, useState } from 'react';
 import FocusTrap from 'focus-trap-react';
 import { Box, config, Menu, MenuItem, PopOut, Scroll, Text, toRem, RectCords } from 'folds';
-import { getPowers, PowerLevelTags } from '../../hooks/usePowerLevelTags';
+import { getPowers, PowerLevelTags } from '$hooks/usePowerLevelTags';
 import { PowerColorBadge } from './PowerColorBadge';
-import { stopPropagation } from '../../utils/keyboard';
+import { stopPropagation } from '$appUtils/keyboard';
 
 type PowerSelectorProps = {
   powerLevelTags: PowerLevelTags;

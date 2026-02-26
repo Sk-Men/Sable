@@ -1,12 +1,7 @@
 import React, { useRef } from 'react';
 import { Scroll } from 'folds';
 
-import {
-  Sidebar,
-  SidebarContent,
-  SidebarStackSeparator,
-  SidebarStack,
-} from '../../components/sidebar';
+import { Sidebar, SidebarContent, SidebarStackSeparator, SidebarStack } from '$components/sidebar';
 import {
   DirectTab,
   HomeTab,

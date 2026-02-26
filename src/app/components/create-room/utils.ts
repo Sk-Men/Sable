@@ -5,11 +5,11 @@ import {
   MatrixClient,
   RestrictedAllowType,
   Room,
-} from 'matrix-js-sdk';
-import { RoomJoinRulesEventContent } from 'matrix-js-sdk/lib/types';
-import { RoomType, StateEvent } from '../../../types/matrix/room';
-import { getViaServers } from '../../plugins/via-servers';
-import { getMxIdServer } from '../../utils/matrix';
+} from '$types/matrix-sdk';
+import { RoomJoinRulesEventContent } from '$types/matrix-sdk';
+import { RoomType, StateEvent } from '$types/matrix/room';
+import { getViaServers } from '$plugins/via-servers';
+import { getMxIdServer } from '$appUtils/matrix';
 import { CreateRoomAccess } from './types';
 
 export const createRoomCreationContent = (

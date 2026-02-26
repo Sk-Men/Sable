@@ -16,7 +16,7 @@ export const TypingIndicator = as<'div', TypingIndicatorProps>(
       style={{
         gap: toRem(size === '300' ? 1 : 2),
         zIndex: 10,
-        ...style
+        ...style,
       }}
       {...props}
       ref={ref}

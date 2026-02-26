@@ -18,25 +18,25 @@ import {
 } from 'folds';
 import FocusTrap from 'focus-trap-react';
 import classNames from 'classnames';
-import { MatrixError, Room } from 'matrix-js-sdk';
-import { IHierarchyRoom } from 'matrix-js-sdk/lib/@types/spaces';
-import { HierarchyItem } from '../../hooks/useSpaceHierarchy';
-import { useMatrixClient } from '../../hooks/useMatrixClient';
-import { RoomAvatar } from '../../components/room-avatar';
-import { nameInitials } from '../../utils/common';
-import { LocalRoomSummaryLoader } from '../../components/RoomSummaryLoader';
-import { getRoomAvatarUrl } from '../../utils/room';
-import { AsyncStatus, useAsyncCallback } from '../../hooks/useAsyncCallback';
+import { MatrixError, Room } from '$types/matrix-sdk';
+import { IHierarchyRoom } from '$types/matrix-sdk';
+import { HierarchyItem } from '$hooks/useSpaceHierarchy';
+import { useMatrixClient } from '$hooks/useMatrixClient';
+import { RoomAvatar } from '$components/room-avatar';
+import { nameInitials } from '$appUtils/common';
+import { LocalRoomSummaryLoader } from '$components/RoomSummaryLoader';
+import { getRoomAvatarUrl } from '$appUtils/room';
+import { AsyncStatus, useAsyncCallback } from '$hooks/useAsyncCallback';
 import * as css from './SpaceItem.css';
 import * as styleCss from './style.css';
 import { useDraggableItem } from './DnD';
-import { stopPropagation } from '../../utils/keyboard';
-import { mxcUrlToHttp } from '../../utils/matrix';
-import { useMediaAuthentication } from '../../hooks/useMediaAuthentication';
-import { useOpenCreateRoomModal } from '../../state/hooks/createRoomModal';
-import { useOpenCreateSpaceModal } from '../../state/hooks/createSpaceModal';
+import { stopPropagation } from '$appUtils/keyboard';
+import { mxcUrlToHttp } from '$appUtils/matrix';
+import { useMediaAuthentication } from '$hooks/useMediaAuthentication';
+import { useOpenCreateRoomModal } from '$state/hooks/createRoomModal';
+import { useOpenCreateSpaceModal } from '$state/hooks/createSpaceModal';
 import { AddExistingModal } from '../add-existing';
-import { CreateRoomType } from '../../components/create-room/types';
+import { CreateRoomType } from '$components/create-room/types';
 
 function SpaceProfileLoading() {
   return (
@@ -482,8 +482,14 @@ export const SpaceItemCard = as<'div', SpaceItemCardProps>(
                     name={summary.name || summary.canonical_alias || roomId}
                     avatarUrl={
                       summary?.avatar_url
-                        ? mxcUrlToHttp(mx, summary.avatar_url, useAuthentication, 96, 96, 'crop') ??
-                          undefined
+                        ? (mxcUrlToHttp(
+                            mx,
+                            summary.avatar_url,
+                            useAuthentication,
+                            96,
+                            96,
+                            'crop'
+                          ) ?? undefined)
                         : undefined
                     }
                     suggested={content.suggested}

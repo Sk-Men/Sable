@@ -1,9 +1,6 @@
-import { MatrixClient } from 'matrix-js-sdk';
-import {
-  MatrixRTCSession,
-  MatrixRTCSessionEvent,
-} from 'matrix-js-sdk/lib/matrixrtc/MatrixRTCSession';
-import { CallMembership } from 'matrix-js-sdk/lib/matrixrtc/CallMembership';
+import { MatrixClient } from '$types/matrix-sdk';
+import { MatrixRTCSession, MatrixRTCSessionEvent } from '$types/matrix-sdk';
+import { CallMembership } from '$types/matrix-sdk';
 import { useEffect, useState } from 'react';
 
 export const useCallMembers = (mx: MatrixClient, roomId: string): CallMembership[] => {

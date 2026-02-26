@@ -15,31 +15,26 @@ import React, { FormEventHandler, useCallback, useMemo, useState } from 'react';
 import { useAtomValue } from 'jotai';
 import Linkify from 'linkify-react';
 import classNames from 'classnames';
-import { JoinRule, MatrixError } from 'matrix-js-sdk';
-import { SequenceCard } from '../../../components/sequence-card';
-import { SequenceCardStyle } from '../../room-settings/styles.css';
-import { useRoom } from '../../../hooks/useRoom';
-import {
-  useRoomAvatar,
-  useRoomJoinRule,
-  useRoomName,
-  useRoomTopic,
-} from '../../../hooks/useRoomMeta';
-import { mDirectAtom } from '../../../state/mDirectList';
-import { BreakWord, LineClamp3 } from '../../../styles/Text.css';
-import { LINKIFY_OPTS } from '../../../plugins/react-custom-html-parser';
-import { RoomAvatar, RoomIcon } from '../../../components/room-avatar';
-import { mxcUrlToHttp } from '../../../utils/matrix';
-import { useMatrixClient } from '../../../hooks/useMatrixClient';
-import { useMediaAuthentication } from '../../../hooks/useMediaAuthentication';
-import { StateEvent } from '../../../../types/matrix/room';
-import { CompactUploadCardRenderer } from '../../../components/upload-card';
-import { useObjectURL } from '../../../hooks/useObjectURL';
-import { createUploadAtom, UploadSuccess } from '../../../state/upload';
-import { useFilePicker } from '../../../hooks/useFilePicker';
-import { AsyncStatus, useAsyncCallback } from '../../../hooks/useAsyncCallback';
-import { useAlive } from '../../../hooks/useAlive';
-import { RoomPermissionsAPI } from '../../../hooks/useRoomPermissions';
+import { JoinRule, MatrixError } from '$types/matrix-sdk';
+import { SequenceCard } from '$components/sequence-card';
+import { SequenceCardStyle } from '$features/room-settings/styles.css';
+import { useRoom } from '$hooks/useRoom';
+import { useRoomAvatar, useRoomJoinRule, useRoomName, useRoomTopic } from '$hooks/useRoomMeta';
+import { mDirectAtom } from '$state/mDirectList';
+import { BreakWord, LineClamp3 } from '$styles/Text.css';
+import { LINKIFY_OPTS } from '$plugins/react-custom-html-parser';
+import { RoomAvatar, RoomIcon } from '$components/room-avatar';
+import { mxcUrlToHttp } from '$appUtils/matrix';
+import { useMatrixClient } from '$hooks/useMatrixClient';
+import { useMediaAuthentication } from '$hooks/useMediaAuthentication';
+import { StateEvent } from '$types/matrix/room';
+import { CompactUploadCardRenderer } from '$components/upload-card';
+import { useObjectURL } from '$hooks/useObjectURL';
+import { createUploadAtom, UploadSuccess } from '$state/upload';
+import { useFilePicker } from '$hooks/useFilePicker';
+import { AsyncStatus, useAsyncCallback } from '$hooks/useAsyncCallback';
+import { useAlive } from '$hooks/useAlive';
+import { RoomPermissionsAPI } from '$hooks/useRoomPermissions';
 
 type RoomProfileEditProps = {
   canEditAvatar: boolean;
@@ -68,9 +63,8 @@ export function RoomProfileEdit({
   const joinRule = useRoomJoinRule(room);
   const [roomAvatar, setRoomAvatar] = useState(avatar);
 
-
   const avatarUrl = roomAvatar
-    ? mxcUrlToHttp(mx, roomAvatar, useAuthentication) ?? undefined
+    ? (mxcUrlToHttp(mx, roomAvatar, useAuthentication) ?? undefined)
     : undefined;
 
   const [imageFile, setImageFile] = useState<File>();
@@ -312,7 +306,7 @@ export function RoomProfile({ permissions }: RoomProfileProps) {
   const canEdit = canEditAvatar || canEditName || canEditTopic;
 
   const avatarUrl = avatar
-    ? mxcUrlToHttp(mx, avatar, useAuthentication, 96, 96, 'crop') ?? undefined
+    ? (mxcUrlToHttp(mx, avatar, useAuthentication, 96, 96, 'crop') ?? undefined)
     : undefined;
 
   const [edit, setEdit] = useState(false);

@@ -13,18 +13,18 @@ import {
   Chip,
 } from 'folds';
 import Linkify from 'linkify-react';
-import { mxcUrlToHttp } from '../../utils/matrix';
-import { useMatrixClient } from '../../hooks/useMatrixClient';
-import { nameInitials } from '../../utils/common';
-import { BreakWord } from '../../styles/Text.css';
-import { LINKIFY_OPTS } from '../../plugins/react-custom-html-parser';
-import { ContainerColor } from '../../styles/ContainerColor.css';
-import { useFilePicker } from '../../hooks/useFilePicker';
-import { useObjectURL } from '../../hooks/useObjectURL';
-import { createUploadAtom, UploadSuccess } from '../../state/upload';
+import { mxcUrlToHttp } from '$appUtils/matrix';
+import { useMatrixClient } from '$hooks/useMatrixClient';
+import { nameInitials } from '$appUtils/common';
+import { BreakWord } from '$styles/Text.css';
+import { LINKIFY_OPTS } from '$plugins/react-custom-html-parser';
+import { ContainerColor } from '$styles/ContainerColor.css';
+import { useFilePicker } from '$hooks/useFilePicker';
+import { useObjectURL } from '$hooks/useObjectURL';
+import { createUploadAtom, UploadSuccess } from '$state/upload';
 import { CompactUploadCardRenderer } from '../upload-card';
-import { useMediaAuthentication } from '../../hooks/useMediaAuthentication';
-import { PackMetaReader } from '../../plugins/custom-emoji';
+import { useMediaAuthentication } from '$hooks/useMediaAuthentication';
+import { PackMetaReader } from '$plugins/custom-emoji';
 
 type ImagePackAvatarProps = {
   url?: string;
@@ -53,7 +53,7 @@ export function ImagePackProfile({ meta, canEdit, onEdit }: ImagePackProfileProp
   const mx = useMatrixClient();
   const useAuthentication = useMediaAuthentication();
   const avatarUrl = meta.avatar
-    ? mxcUrlToHttp(mx, meta.avatar, useAuthentication) ?? undefined
+    ? (mxcUrlToHttp(mx, meta.avatar, useAuthentication) ?? undefined)
     : undefined;
 
   return (
@@ -101,7 +101,7 @@ export function ImagePackProfileEdit({ meta, onCancel, onSave }: ImagePackProfil
   const useAuthentication = useMediaAuthentication();
   const [avatar, setAvatar] = useState(meta.avatar);
 
-  const avatarUrl = avatar ? mxcUrlToHttp(mx, avatar, useAuthentication) ?? undefined : undefined;
+  const avatarUrl = avatar ? (mxcUrlToHttp(mx, avatar, useAuthentication) ?? undefined) : undefined;
 
   const [imageFile, setImageFile] = useState<File>();
   const avatarFileUrl = useObjectURL(imageFile);

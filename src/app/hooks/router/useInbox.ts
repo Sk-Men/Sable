@@ -1,9 +1,5 @@
 import { useMatch } from 'react-router-dom';
-import {
-  getInboxInvitesPath,
-  getInboxNotificationsPath,
-  getInboxPath,
-} from '../../pages/pathUtils';
+import { getInboxInvitesPath, getInboxNotificationsPath, getInboxPath } from '$pages/pathUtils';
 
 export const useInboxSelected = (): boolean => {
   const match = useMatch({

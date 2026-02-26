@@ -13,7 +13,7 @@ import {
   Button,
   Spinner,
 } from 'folds';
-import { JoinRule } from 'matrix-js-sdk';
+import { JoinRule } from '$types/matrix-sdk';
 import FocusTrap from 'focus-trap-react';
 import { stopPropagation } from '../utils/keyboard';
 import { getRoomIconSrc } from '../utils/room';

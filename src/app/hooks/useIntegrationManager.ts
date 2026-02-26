@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { MatrixClient } from 'matrix-js-sdk';
+import { MatrixClient } from '$types/matrix-sdk';
 import { useMatrixClient } from './useMatrixClient';
 
 export interface IntegrationManager {
@@ -34,11 +34,10 @@ async function discoverManagers(mx: MatrixClient): Promise<IntegrationManager[]>
         });
       }
     }
-  } catch {
-  }
+  } catch {}
 
   try {
-    const widgetsEvent = mx.getAccountData('m.widgets');
+    const widgetsEvent = mx.getAccountData('m.widgets' as never);
     if (widgetsEvent) {
       const content = widgetsEvent.getContent();
       Object.values(content).forEach((widget: any) => {
@@ -53,8 +52,7 @@ async function discoverManagers(mx: MatrixClient): Promise<IntegrationManager[]>
         }
       });
     }
-  } catch {
-  }
+  } catch {}
 
   if (managers.length === 0) {
     return DEFAULT_MANAGERS;
@@ -148,4 +146,3 @@ export function useIntegrationManager(): IntegrationManagerState & {
 
   return { ...state, refresh: loadManagers };
 }
-

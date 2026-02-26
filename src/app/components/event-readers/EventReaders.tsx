@@ -13,19 +13,19 @@ import {
   as,
   config,
 } from 'folds';
-import { Room } from 'matrix-js-sdk';
-import { useRoomEventReaders } from '../../hooks/useRoomEventReaders';
-import { getMemberDisplayName } from '../../utils/room';
-import { getMxIdLocalPart } from '../../utils/matrix';
+import { Room } from '$types/matrix-sdk';
+import { useRoomEventReaders } from '$hooks/useRoomEventReaders';
+import { getMemberDisplayName } from '$appUtils/room';
+import { getMxIdLocalPart } from '$appUtils/matrix';
 import * as css from './EventReaders.css';
-import { useMatrixClient } from '../../hooks/useMatrixClient';
+import { useMatrixClient } from '$hooks/useMatrixClient';
 import { UserAvatar } from '../user-avatar';
-import { useMediaAuthentication } from '../../hooks/useMediaAuthentication';
-import { useOpenUserRoomProfile } from '../../state/hooks/userRoomProfile';
-import { useSpaceOptionally } from '../../hooks/useSpace';
-import { getMouseEventCords } from '../../utils/dom';
+import { useMediaAuthentication } from '$hooks/useMediaAuthentication';
+import { useOpenUserRoomProfile } from '$state/hooks/userRoomProfile';
+import { useSpaceOptionally } from '$hooks/useSpace';
+import { getMouseEventCords } from '$appUtils/dom';
 import { useAtomValue } from 'jotai';
-import { nicknamesAtom } from '../../state/nicknames';
+import { nicknamesAtom } from '$state/nicknames';
 
 export type EventReadersProps = {
   room: Room;

@@ -29,19 +29,19 @@ import {
   Scroll,
   MenuItem,
 } from 'folds';
-import { Room } from 'matrix-js-sdk';
+import { Room } from '$types/matrix-sdk';
 import { isKeyHotkey } from 'is-hotkey';
 import FocusTrap from 'focus-trap-react';
-import { stopPropagation } from '../../utils/keyboard';
-import { useDirectUsers } from '../../hooks/useDirectUsers';
-import { getMxIdLocalPart, getMxIdServer, isUserId } from '../../utils/matrix';
-import { Membership } from '../../../types/matrix/room';
-import { useAsyncSearch, UseAsyncSearchOptions } from '../../hooks/useAsyncSearch';
-import { highlightText, makeHighlightRegex } from '../../plugins/react-custom-html-parser';
-import { AsyncStatus, useAsyncCallback } from '../../hooks/useAsyncCallback';
-import { useMatrixClient } from '../../hooks/useMatrixClient';
-import { BreakWord } from '../../styles/Text.css';
-import { useAlive } from '../../hooks/useAlive';
+import { stopPropagation } from '$appUtils/keyboard';
+import { useDirectUsers } from '$hooks/useDirectUsers';
+import { getMxIdLocalPart, getMxIdServer, isUserId } from '$appUtils/matrix';
+import { Membership } from '$types/matrix/room';
+import { useAsyncSearch, UseAsyncSearchOptions } from '$hooks/useAsyncSearch';
+import { highlightText, makeHighlightRegex } from '$plugins/react-custom-html-parser';
+import { AsyncStatus, useAsyncCallback } from '$hooks/useAsyncCallback';
+import { useMatrixClient } from '$hooks/useMatrixClient';
+import { BreakWord } from '$styles/Text.css';
+import { useAlive } from '$hooks/useAlive';
 
 const SEARCH_OPTIONS: UseAsyncSearchOptions = {
   limit: 1000,

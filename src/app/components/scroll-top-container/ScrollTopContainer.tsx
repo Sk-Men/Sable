@@ -5,13 +5,13 @@ import * as css from './style.css';
 import {
   getIntersectionObserverEntry,
   useIntersectionObserver,
-} from '../../hooks/useIntersectionObserver';
+} from '$hooks/useIntersectionObserver';
 
 export const ScrollTopContainer = as<
   'div',
   {
-    scrollRef?: RefObject<HTMLElement>;
-    anchorRef: RefObject<HTMLElement>;
+    scrollRef?: RefObject<HTMLElement | null>;
+    anchorRef: RefObject<HTMLElement | null>;
     onVisibilityChange?: (onTop: boolean) => void;
   }
 >(({ className, scrollRef, anchorRef, onVisibilityChange, ...props }, ref) => {

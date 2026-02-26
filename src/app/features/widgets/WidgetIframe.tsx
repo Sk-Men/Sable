@@ -1,11 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import {
-  ClientWidgetApi,
-  IWidget,
-  IRoomEvent,
-  Widget,
-  WidgetKind,
-} from 'matrix-widget-api';
+import { ClientWidgetApi, IWidget, IRoomEvent, Widget, WidgetKind } from 'matrix-widget-api';
 import {
   ClientEvent,
   Direction,
@@ -13,9 +7,9 @@ import {
   MatrixClient,
   MatrixEvent,
   MatrixEventEvent,
-} from 'matrix-js-sdk';
+} from '$types/matrix-sdk';
 import { GenericWidgetDriver, CapabilityApprovalCallback } from './GenericWidgetDriver';
-import { resolveWidgetUrl } from '../../hooks/useRoomWidgets';
+import { resolveWidgetUrl } from '$hooks/useRoomWidgets';
 
 interface WidgetIframeProps {
   widget: IWidget;

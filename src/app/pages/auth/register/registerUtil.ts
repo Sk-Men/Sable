@@ -5,18 +5,18 @@ import {
   MatrixError,
   RegisterRequest,
   RegisterResponse,
-} from 'matrix-js-sdk';
+} from '$types/matrix-sdk';
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { LoginPathSearchParams } from '../../paths';
+import { LoginPathSearchParams } from '$pages/paths';
 import { ErrorCode } from '../../../cs-errorcode';
 import {
   deleteAfterLoginRedirectPath,
   getAfterLoginRedirectPath,
-} from '../../afterLoginRedirectPath';
-import { getHomePath, getLoginPath, withSearchParam } from '../../pathUtils';
-import { getMxIdLocalPart, getMxIdServer } from '../../../utils/matrix';
-import { setFallbackSession } from '../../../state/sessions';
+} from '$pages/afterLoginRedirectPath';
+import { getHomePath, getLoginPath, withSearchParam } from '$pages/pathUtils';
+import { getMxIdLocalPart, getMxIdServer } from '$appUtils/matrix';
+import { setFallbackSession } from '$state/sessions';
 
 export enum RegisterError {
   UserTaken = 'UserTaken',

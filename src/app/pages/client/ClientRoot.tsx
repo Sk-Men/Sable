@@ -13,7 +13,7 @@ import {
   Spinner,
   Text,
 } from 'folds';
-import { HttpApiEvent, HttpApiEventHandlerMap, MatrixClient } from 'matrix-js-sdk';
+import { HttpApiEvent, HttpApiEventHandlerMap, MatrixClient } from '$types/matrix-sdk';
 import FocusTrap from 'focus-trap-react';
 import React, { MouseEventHandler, ReactNode, useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -25,23 +25,23 @@ import {
   initClient,
   logoutClient,
   startClient,
-} from '../../../client/initMatrix';
-import { SplashScreen } from '../../components/splash-screen';
-import { ServerConfigsLoader } from '../../components/ServerConfigsLoader';
-import { CapabilitiesProvider } from '../../hooks/useCapabilities';
-import { MediaConfigProvider } from '../../hooks/useMediaConfig';
-import { MatrixClientProvider } from '../../hooks/useMatrixClient';
+} from '$client/initMatrix';
+import { SplashScreen } from '$components/splash-screen';
+import { ServerConfigsLoader } from '$components/ServerConfigsLoader';
+import { CapabilitiesProvider } from '$hooks/useCapabilities';
+import { MediaConfigProvider } from '$hooks/useMediaConfig';
+import { MatrixClientProvider } from '$hooks/useMatrixClient';
 import { SpecVersions } from './SpecVersions';
-import { AsyncStatus, useAsyncCallback } from '../../hooks/useAsyncCallback';
-import { useSyncState } from '../../hooks/useSyncState';
-import { stopPropagation } from '../../utils/keyboard';
+import { AsyncStatus, useAsyncCallback } from '$hooks/useAsyncCallback';
+import { useSyncState } from '$hooks/useSyncState';
+import { stopPropagation } from '$appUtils/keyboard';
 import { SyncStatus } from './SyncStatus';
-import { AuthMetadataProvider } from '../../hooks/useAuthMetadata';
-import { sessionsAtom, activeSessionIdAtom, Session, SessionsAction } from '../../state/sessions';
+import { AuthMetadataProvider } from '$hooks/useAuthMetadata';
+import { sessionsAtom, activeSessionIdAtom, Session, SessionsAction } from '$state/sessions';
 import { getHomePath } from '../pathUtils';
-import { createLogger } from '../../utils/debug';
+import { createLogger } from '$appUtils/debug';
 import { pushSessionToSW } from '../../../sw-session';
-import { useSyncNicknames } from '../../hooks/useNickname';
+import { useSyncNicknames } from '$hooks/useNickname';
 
 const log = createLogger('ClientRoot');
 
@@ -195,7 +195,13 @@ export function ClientRoot({ children }: ClientRootProps) {
   useEffect(() => {
     if (!activeSession) return;
     if (loadedUserIdRef.current && loadedUserIdRef.current !== activeSession.userId) {
-      log.log('session changed from', loadedUserIdRef.current, '→', activeSession.userId, '— reloading client');
+      log.log(
+        'session changed from',
+        loadedUserIdRef.current,
+        '→',
+        activeSession.userId,
+        '— reloading client'
+      );
       // Update the SW immediately so media requests use the new account's token
       pushSessionToSW(activeSession.baseUrl, activeSession.accessToken);
       if (mx?.clientRunning) {

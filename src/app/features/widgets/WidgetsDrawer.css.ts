@@ -13,7 +13,6 @@ export const WidgetsDrawerHeader = style({
   borderBottomWidth: config.borderWidth.B300,
 });
 
-
 export const WidgetIframeContainer = style({
   flexGrow: 1,
   position: 'relative',
@@ -28,4 +27,3 @@ export const AddWidgetForm = style({
 export const AddWidgetInput = style({
   width: '100%',
 });
-

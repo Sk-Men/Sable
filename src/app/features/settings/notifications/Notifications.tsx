@@ -1,13 +1,13 @@
 import React from 'react';
 import { Box, Text, IconButton, Icon, Icons, Scroll } from 'folds';
-import { Page, PageContent, PageHeader } from '../../../components/page';
+import { Page, PageContent, PageHeader } from '$components/page';
 import { SystemNotification } from './SystemNotification';
 import { AllMessagesNotifications } from './AllMessages';
 import { SpecialMessagesNotifications } from './SpecialMessages';
 import { KeywordMessagesNotifications } from './KeywordMessages';
-import { SequenceCard } from '../../../components/sequence-card';
+import { SequenceCard } from '$components/sequence-card';
 import { SequenceCardStyle } from '../styles.css';
-import { SettingTile } from '../../../components/setting-tile';
+import { SettingTile } from '$components/setting-tile';
 
 type NotificationsProps = {
   requestClose: () => void;

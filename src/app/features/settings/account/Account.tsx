@@ -1,6 +1,6 @@
 import React from 'react';
 import { Box, Text, IconButton, Icon, Icons, Scroll } from 'folds';
-import { Page, PageContent, PageHeader } from '../../../components/page';
+import { Page, PageContent, PageHeader } from '$components/page';
 import { MatrixId } from './MatrixId';
 import { Profile } from './Profile';
 import { ContactInformation } from './ContactInfo';

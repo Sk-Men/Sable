@@ -11,20 +11,20 @@ import {
   as,
   config,
 } from 'folds';
-import { Room } from 'matrix-js-sdk';
+import { Room } from '$types/matrix-sdk';
 import classNames from 'classnames';
 import FocusTrap from 'focus-trap-react';
 import { useAtomValue } from 'jotai';
 
-import { getMemberDisplayName } from '../../utils/room';
-import { getMxIdLocalPart } from '../../utils/matrix';
+import { getMemberDisplayName } from '$appUtils/room';
+import { getMxIdLocalPart } from '$appUtils/matrix';
 import * as css from './RoomViewFollowing.css';
-import { useMatrixClient } from '../../hooks/useMatrixClient';
-import { useRoomLatestRenderedEvent } from '../../hooks/useRoomLatestRenderedEvent';
-import { useRoomEventReaders } from '../../hooks/useRoomEventReaders';
-import { EventReaders } from '../../components/event-readers';
-import { stopPropagation } from '../../utils/keyboard';
-import { nicknamesAtom } from '../../state/nicknames';
+import { useMatrixClient } from '$hooks/useMatrixClient';
+import { useRoomLatestRenderedEvent } from '$hooks/useRoomLatestRenderedEvent';
+import { useRoomEventReaders } from '$hooks/useRoomEventReaders';
+import { EventReaders } from '$components/event-readers';
+import { stopPropagation } from '$appUtils/keyboard';
+import { nicknamesAtom } from '$state/nicknames';
 
 export function RoomViewFollowingPlaceholder() {
   return <div className={css.RoomViewFollowingPlaceholder} />;
@@ -43,7 +43,8 @@ export const RoomViewFollowing = as<'div', RoomViewFollowingProps>(
     const names = latestEventReaders
       .filter((readerId) => readerId !== mx.getUserId())
       .map(
-        (readerId) => getMemberDisplayName(room, readerId, nicknames) ?? getMxIdLocalPart(readerId) ?? readerId
+        (readerId) =>
+          getMemberDisplayName(room, readerId, nicknames) ?? getMxIdLocalPart(readerId) ?? readerId
       );
 
     const eventId = latestEvent?.getId();

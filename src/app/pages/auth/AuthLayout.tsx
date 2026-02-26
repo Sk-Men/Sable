@@ -13,24 +13,19 @@ import classNames from 'classnames';
 
 import { AuthFooter } from './AuthFooter';
 import * as css from './styles.css';
-import * as PatternsCss from '../../styles/Patterns.css';
-import {
-  clientAllowedServer,
-  clientDefaultServer,
-  useClientConfig,
-} from '../../hooks/useClientConfig';
-import { AsyncStatus, useAsyncCallback } from '../../hooks/useAsyncCallback';
+import * as PatternsCss from '$styles/Patterns.css';
+import { clientAllowedServer, clientDefaultServer, useClientConfig } from '$hooks/useClientConfig';
+import { AsyncStatus, useAsyncCallback } from '$hooks/useAsyncCallback';
 import { LOGIN_PATH, REGISTER_PATH, RESET_PASSWORD_PATH } from '../paths';
-import CinnySVG from '../../../../public/favicon.png';
+import CinnySVG from '$public/favicon.png';
 import { ServerPicker } from './ServerPicker';
 import { AutoDiscoveryAction, autoDiscovery } from '../../cs-api';
-import { SpecVersionsLoader } from '../../components/SpecVersionsLoader';
-import { SpecVersionsProvider } from '../../hooks/useSpecVersions';
-import { AutoDiscoveryInfoProvider } from '../../hooks/useAutoDiscoveryInfo';
-import { AuthFlowsLoader } from '../../components/AuthFlowsLoader';
-import { AuthFlowsProvider } from '../../hooks/useAuthFlows';
-import { AuthServerProvider } from '../../hooks/useAuthServer';
-import { tryDecodeURIComponent } from '../../utils/dom';
+import { SpecVersionsLoader } from '$components/SpecVersionsLoader';
+import { SpecVersionsProvider } from '$hooks/useSpecVersions';
+import { AutoDiscoveryInfoProvider } from '$hooks/useAutoDiscoveryInfo';
+import { AuthFlowsLoader } from '$components/AuthFlowsLoader';
+import { AuthFlowsProvider } from '$hooks/useAuthFlows';
+import { AuthServerProvider } from '$hooks/useAuthServer';
 
 const currentAuthPath = (pathname: string): string => {
   if (matchPath(LOGIN_PATH, pathname)) {
@@ -77,7 +72,8 @@ export function AuthLayout() {
   const clientConfig = useClientConfig();
 
   const defaultServer = clientDefaultServer(clientConfig);
-  let server: string = urlEncodedServer ? tryDecodeURIComponent(urlEncodedServer) : defaultServer;
+  const decodedServer = urlEncodedServer && decodeURIComponent(urlEncodedServer);
+  let server: string = decodedServer ?? defaultServer;
 
   if (!clientAllowedServer(clientConfig, server)) {
     server = defaultServer;
@@ -99,7 +95,7 @@ export function AuthLayout() {
 
   // if server is mismatched with path server, update path — preserve all search params
   useEffect(() => {
-    if (!urlEncodedServer || tryDecodeURIComponent(urlEncodedServer) !== server) {
+    if (!urlEncodedServer || decodeURIComponent(urlEncodedServer) !== server) {
       const basePath = generatePath(currentAuthPath(location.pathname), {
         server: encodeURIComponent(server),
       });

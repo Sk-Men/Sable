@@ -1,20 +1,28 @@
 import { Box, Icon, Icons, Text, as, color, toRem } from 'folds';
-import { EventTimelineSet, Room } from 'matrix-js-sdk';
+import { EventTimelineSet, Room } from '$types/matrix-sdk';
 import React, { MouseEventHandler, ReactNode, useCallback, useMemo } from 'react';
 import classNames from 'classnames';
 import parse from 'html-react-parser';
 import { useAtomValue } from 'jotai';
-import { getMemberDisplayName, trimReplyFromBody, trimReplyFromFormattedBody } from '../../utils/room';
-import { getMxIdLocalPart } from '../../utils/matrix';
+import {
+  getMemberDisplayName,
+  trimReplyFromBody,
+  trimReplyFromFormattedBody,
+} from '$appUtils/room';
+import { getMxIdLocalPart } from '$appUtils/matrix';
 import { LinePlaceholder } from './placeholder';
-import { randomNumberBetween } from '../../utils/common';
+import { randomNumberBetween } from '$appUtils/common';
 import * as css from './Reply.css';
 import { MessageBadEncryptedContent, MessageDeletedContent, MessageFailedContent } from './content';
-import { getReactCustomHtmlParser, scaleSystemEmoji, LINKIFY_OPTS } from '../../plugins/react-custom-html-parser';
-import { useRoomEvent } from '../../hooks/useRoomEvent';
-import { useSableCosmetics } from '../../hooks/useSableCosmetics';
-import { nicknamesAtom } from '../../state/nicknames';
-import { useMatrixClient } from '../../hooks/useMatrixClient';
+import {
+  getReactCustomHtmlParser,
+  scaleSystemEmoji,
+  LINKIFY_OPTS,
+} from '$plugins/react-custom-html-parser';
+import { useRoomEvent } from '$hooks/useRoomEvent';
+import { useSableCosmetics } from '$hooks/useSableCosmetics';
+import { nicknamesAtom } from '$state/nicknames';
+import { useMatrixClient } from '$hooks/useMatrixClient';
 
 type ReplyLayoutProps = {
   userColor?: string;
@@ -63,17 +71,7 @@ type ReplyProps = {
 };
 
 export const Reply = as<'div', ReplyProps>(
-  (
-    {
-      room,
-      timelineSet,
-      replyEventId,
-      threadRootId,
-      onClick,
-      ...props
-    },
-    ref
-  ) => {
+  ({ room, timelineSet, replyEventId, threadRootId, onClick, ...props }, ref) => {
     const placeholderWidth = useMemo(() => randomNumberBetween(40, 400), []);
     const getFromLocalTimeline = useCallback(
       () => timelineSet?.findEventById(replyEventId),

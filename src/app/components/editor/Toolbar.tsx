@@ -31,11 +31,11 @@ import {
 import * as css from './Editor.css';
 import { BlockType, MarkType } from './types';
 import { HeadingLevel } from './slate';
-import { isMacOS } from '../../utils/user-agent';
-import { KeySymbol } from '../../utils/key-symbol';
-import { useSetting } from '../../state/hooks/settings';
-import { settingsAtom } from '../../state/settings';
-import { stopPropagation } from '../../utils/keyboard';
+import { isMacOS } from '$appUtils/user-agent';
+import { KeySymbol } from '$appUtils/key-symbol';
+import { useSetting } from '$state/hooks/settings';
+import { settingsAtom } from '$state/settings';
+import { stopPropagation } from '$appUtils/keyboard';
 
 function BtnTooltip({ text, shortCode }: { text: string; shortCode?: string }) {
   return (

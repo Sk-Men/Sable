@@ -1,15 +1,18 @@
 import to from 'await-to-js';
-import {createClient, LoginRequest, LoginResponse, MatrixError} from 'matrix-js-sdk';
-import {useEffect} from 'react';
-import {useNavigate} from 'react-router-dom';
-import {useSetAtom} from 'jotai';
-import {clientAllowedServer, ClientConfig} from '../../../hooks/useClientConfig';
-import {autoDiscovery, specVersions} from '../../../cs-api';
-import {ErrorCode} from '../../../cs-errorcode';
-import {deleteAfterLoginRedirectPath, getAfterLoginRedirectPath,} from '../../afterLoginRedirectPath';
-import {getHomePath} from '../../pathUtils';
-import {activeSessionIdAtom, sessionsAtom} from '../../../state/sessions';
-import {createLogger} from '../../../utils/debug';
+import { createClient, LoginRequest, LoginResponse, MatrixError } from '$types/matrix-sdk';
+import { useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useSetAtom } from 'jotai';
+import { clientAllowedServer, ClientConfig } from '$hooks/useClientConfig';
+import { autoDiscovery, specVersions } from '../../../cs-api';
+import { ErrorCode } from '../../../cs-errorcode';
+import {
+  deleteAfterLoginRedirectPath,
+  getAfterLoginRedirectPath,
+} from '$pages/afterLoginRedirectPath';
+import { getHomePath } from '$pages/pathUtils';
+import { activeSessionIdAtom, sessionsAtom } from '$state/sessions';
+import { createLogger } from '$appUtils/debug';
 
 const log = createLogger('loginUtil');
 
@@ -116,7 +119,10 @@ export const useLoginComplete = (data?: CustomLoginResponse) => {
   useEffect(() => {
     if (data) {
       const { response: loginRes, baseUrl: loginBaseUrl } = data;
-      log.log('useLoginComplete: login success', { userId: loginRes.user_id, baseUrl: loginBaseUrl });
+      log.log('useLoginComplete: login success', {
+        userId: loginRes.user_id,
+        baseUrl: loginBaseUrl,
+      });
       const newSession = {
         baseUrl: loginBaseUrl,
         userId: loginRes.user_id,

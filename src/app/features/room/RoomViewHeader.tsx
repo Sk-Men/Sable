@@ -23,53 +23,54 @@ import {
   Spinner,
 } from 'folds';
 import { useNavigate } from 'react-router-dom';
-import { Room } from 'matrix-js-sdk';
+import { Room } from '$types/matrix-sdk';
 
-import { useStateEvent } from '../../hooks/useStateEvent';
-import { PageHeader } from '../../components/page';
-import { RoomAvatar, RoomIcon } from '../../components/room-avatar';
-import { UseStateProvider } from '../../components/UseStateProvider';
-import { RoomTopicViewer } from '../../components/room-topic-viewer';
-import { StateEvent } from '../../../types/matrix/room';
-import { useMatrixClient } from '../../hooks/useMatrixClient';
-import { useIsDirectRoom, useRoom } from '../../hooks/useRoom';
-import { useSetting } from '../../state/hooks/settings';
-import { settingsAtom } from '../../state/settings';
-import { useSpaceOptionally } from '../../hooks/useSpace';
-import { getHomeSearchPath, getSpaceSearchPath, withSearchParam } from '../../pages/pathUtils';
-import { getCanonicalAliasOrRoomId, isRoomAlias, mxcUrlToHttp } from '../../utils/matrix';
-import { _SearchPathSearchParams } from '../../pages/paths';
+import { useStateEvent } from '$hooks/useStateEvent';
+import { PageHeader } from '$components/page';
+import { RoomAvatar, RoomIcon } from '$components/room-avatar';
+import { UseStateProvider } from '$components/UseStateProvider';
+import { RoomTopicViewer } from '$components/room-topic-viewer';
+import { StateEvent } from '$types/matrix/room';
+import { useMatrixClient } from '$hooks/useMatrixClient';
+import { useIsDirectRoom, useRoom } from '$hooks/useRoom';
+import { useSetting } from '$state/hooks/settings';
+import { settingsAtom } from '$state/settings';
+import { useSpaceOptionally } from '$hooks/useSpace';
+import { getHomeSearchPath, getSpaceSearchPath, withSearchParam } from '$pages/pathUtils';
+import { getCanonicalAliasOrRoomId, isRoomAlias, mxcUrlToHttp } from '$appUtils/matrix';
+import { _SearchPathSearchParams } from '$pages/paths';
 import * as css from './RoomViewHeader.css';
-import { useRoomUnread } from '../../state/hooks/unread';
-import { usePowerLevelsContext } from '../../hooks/usePowerLevels';
-import { markAsRead } from '../../utils/notifications';
-import { roomToUnreadAtom } from '../../state/room/roomToUnread';
-import { copyToClipboard } from '../../utils/dom';
-import { LeaveRoomPrompt } from '../../components/leave-room-prompt';
-import { useRoomAvatar, useRoomName, useRoomTopic } from '../../hooks/useRoomMeta';
-import { ScreenSize, useScreenSizeContext } from '../../hooks/useScreenSize';
-import { stopPropagation } from '../../utils/keyboard';
-import { getMatrixToRoom } from '../../plugins/matrix-to';
-import { getViaServers } from '../../plugins/via-servers';
-import { BackRouteHandler } from '../../components/BackRouteHandler';
-import { useMediaAuthentication } from '../../hooks/useMediaAuthentication';
-import { useRoomPinnedEvents } from '../../hooks/useRoomPinnedEvents';
+import { useRoomUnread } from '$state/hooks/unread';
+import { usePowerLevelsContext } from '$hooks/usePowerLevels';
+import { markAsRead } from '$appUtils/notifications';
+import { roomToUnreadAtom } from '$state/room/roomToUnread';
+import { copyToClipboard } from '$appUtils/dom';
+import { LeaveRoomPrompt } from '$components/leave-room-prompt';
+import { useRoomAvatar, useRoomName, useRoomTopic } from '$hooks/useRoomMeta';
+import { mDirectAtom } from '$state/mDirectList';
+import { ScreenSize, useScreenSizeContext } from '$hooks/useScreenSize';
+import { stopPropagation } from '$appUtils/keyboard';
+import { getMatrixToRoom } from '$plugins/matrix-to';
+import { getViaServers } from '$plugins/via-servers';
+import { BackRouteHandler } from '$components/BackRouteHandler';
+import { useMediaAuthentication } from '$hooks/useMediaAuthentication';
+import { useRoomPinnedEvents } from '$hooks/useRoomPinnedEvents';
 import { RoomPinMenu } from './room-pin-menu';
-import { useOpenRoomSettings } from '../../state/hooks/roomSettings';
-import { RoomNotificationModeSwitcher } from '../../components/RoomNotificationSwitcher';
+import { useOpenRoomSettings } from '$state/hooks/roomSettings';
+import { RoomNotificationModeSwitcher } from '$components/RoomNotificationSwitcher';
 import {
   getRoomNotificationMode,
   getRoomNotificationModeIcon,
   useRoomsNotificationPreferencesContext,
-} from '../../hooks/useRoomsNotificationPreferences';
+} from '$hooks/useRoomsNotificationPreferences';
 import { JumpToTime } from './jump-to-time';
-import { useRoomNavigate } from '../../hooks/useRoomNavigate';
-import { useRoomCreators } from '../../hooks/useRoomCreators';
-import { useRoomPermissions } from '../../hooks/useRoomPermissions';
-import { InviteUserPrompt } from '../../components/invite-user-prompt';
-import { useCallState } from '../../pages/client/call/CallProvider';
-import { ContainerColor } from '../../styles/ContainerColor.css';
-import { useRoomWidgets } from '../../hooks/useRoomWidgets';
+import { useRoomNavigate } from '$hooks/useRoomNavigate';
+import { useRoomCreators } from '$hooks/useRoomCreators';
+import { useRoomPermissions } from '$hooks/useRoomPermissions';
+import { InviteUserPrompt } from '$components/invite-user-prompt';
+import { useCallState } from '$pages/client/call/CallProvider';
+import { ContainerColor } from '$styles/ContainerColor.css';
+import { useRoomWidgets } from '$hooks/useRoomWidgets';
 
 type RoomMenuProps = {
   room: Room;
@@ -274,7 +275,7 @@ export function RoomViewHeader() {
   const name = useRoomName(room);
   const topic = useRoomTopic(room);
   const avatarUrl = avatarMxc
-    ? mxcUrlToHttp(mx, avatarMxc, useAuthentication, 96, 96, 'crop') ?? undefined
+    ? (mxcUrlToHttp(mx, avatarMxc, useAuthentication, 96, 96, 'crop') ?? undefined)
     : undefined;
 
   const [peopleDrawer, setPeopleDrawer] = useSetting(settingsAtom, 'isPeopleDrawer');

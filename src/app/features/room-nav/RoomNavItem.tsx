@@ -1,5 +1,5 @@
 import React, { MouseEventHandler, forwardRef, useState, MouseEvent } from 'react';
-import { EventType, Room } from 'matrix-js-sdk';
+import { EventType, Room } from '$types/matrix-sdk';
 import {
   Avatar,
   Box,
@@ -22,46 +22,46 @@ import {
 import { useFocusWithin, useHover } from 'react-aria';
 import FocusTrap from 'focus-trap-react';
 import { useNavigate } from 'react-router-dom';
-import { NavButton, NavItem, NavItemContent, NavItemOptions } from '../../components/nav';
-import { UnreadBadge, UnreadBadgeCenter } from '../../components/unread-badge';
-import { RoomAvatar, RoomIcon } from '../../components/room-avatar';
-import { getDirectRoomAvatarUrl, getRoomAvatarUrl } from '../../utils/room';
-import { nameInitials } from '../../utils/common';
-import { useMatrixClient } from '../../hooks/useMatrixClient';
-import { useRoomUnread } from '../../state/hooks/unread';
-import { roomToUnreadAtom } from '../../state/room/roomToUnread';
-import { usePowerLevels } from '../../hooks/usePowerLevels';
-import { copyToClipboard } from '../../utils/dom';
-import { markAsRead } from '../../utils/notifications';
-import { UseStateProvider } from '../../components/UseStateProvider';
-import { LeaveRoomPrompt } from '../../components/leave-room-prompt';
-import { useRoomTypingMember } from '../../hooks/useRoomTypingMembers';
-import { TypingIndicator } from '../../components/typing-indicator';
-import { stopPropagation } from '../../utils/keyboard';
-import { getMatrixToRoom } from '../../plugins/matrix-to';
-import { getCanonicalAliasOrRoomId, isRoomAlias } from '../../utils/matrix';
-import { getViaServers } from '../../plugins/via-servers';
-import { useMediaAuthentication } from '../../hooks/useMediaAuthentication';
-import { useSetting } from '../../state/hooks/settings';
-import { settingsAtom } from '../../state/settings';
-import { useOpenRoomSettings } from '../../state/hooks/roomSettings';
-import { useSpaceOptionally } from '../../hooks/useSpace';
+import { NavButton, NavItem, NavItemContent, NavItemOptions } from '$components/nav';
+import { UnreadBadge, UnreadBadgeCenter } from '$components/unread-badge';
+import { RoomAvatar, RoomIcon } from '$components/room-avatar';
+import { getDirectRoomAvatarUrl, getRoomAvatarUrl } from '$appUtils/room';
+import { nameInitials } from '$appUtils/common';
+import { useMatrixClient } from '$hooks/useMatrixClient';
+import { useRoomUnread } from '$state/hooks/unread';
+import { roomToUnreadAtom } from '$state/room/roomToUnread';
+import { usePowerLevels } from '$hooks/usePowerLevels';
+import { copyToClipboard } from '$appUtils/dom';
+import { markAsRead } from '$appUtils/notifications';
+import { UseStateProvider } from '$components/UseStateProvider';
+import { LeaveRoomPrompt } from '$components/leave-room-prompt';
+import { useRoomTypingMember } from '$hooks/useRoomTypingMembers';
+import { TypingIndicator } from '$components/typing-indicator';
+import { stopPropagation } from '$appUtils/keyboard';
+import { getMatrixToRoom } from '$plugins/matrix-to';
+import { getCanonicalAliasOrRoomId, isRoomAlias } from '$appUtils/matrix';
+import { getViaServers } from '$plugins/via-servers';
+import { useMediaAuthentication } from '$hooks/useMediaAuthentication';
+import { useSetting } from '$state/hooks/settings';
+import { settingsAtom } from '$state/settings';
+import { useOpenRoomSettings } from '$state/hooks/roomSettings';
+import { useSpaceOptionally } from '$hooks/useSpace';
 import {
   getRoomNotificationModeIcon,
   RoomNotificationMode,
-} from '../../hooks/useRoomsNotificationPreferences';
-import { RoomNotificationModeSwitcher } from '../../components/RoomNotificationSwitcher';
-import { useRoomCreators } from '../../hooks/useRoomCreators';
-import { useRoomPermissions } from '../../hooks/useRoomPermissions';
-import { InviteUserPrompt } from '../../components/invite-user-prompt';
-import { useCallState } from '../../pages/client/call/CallProvider';
-import { useCallMembers } from '../../hooks/useCallMemberships';
-import { useRoomNavigate } from '../../hooks/useRoomNavigate';
-import { ScreenSize, useScreenSizeContext } from '../../hooks/useScreenSize';
+} from '$hooks/useRoomsNotificationPreferences';
+import { RoomNotificationModeSwitcher } from '$components/RoomNotificationSwitcher';
+import { useRoomCreators } from '$hooks/useRoomCreators';
+import { useRoomPermissions } from '$hooks/useRoomPermissions';
+import { InviteUserPrompt } from '$components/invite-user-prompt';
+import { useCallState } from '$pages/client/call/CallProvider';
+import { useCallMembers } from '$hooks/useCallMemberships';
+import { useRoomNavigate } from '$hooks/useRoomNavigate';
+import { ScreenSize, useScreenSizeContext } from '$hooks/useScreenSize';
 import { RoomNavUser } from './RoomNavUser';
-import { useRoomName } from '../../hooks/useRoomMeta';
+import { useRoomName } from '$hooks/useRoomMeta';
 import { useAtomValue } from 'jotai';
-import { nicknamesAtom } from '../../state/nicknames';
+import { nicknamesAtom } from '$state/nicknames';
 
 type RoomNavItemMenuProps = {
   room: Room;

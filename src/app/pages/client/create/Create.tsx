@@ -1,14 +1,8 @@
 import React from 'react';
 import { Box, Icon, Icons, Scroll } from 'folds';
-import {
-  Page,
-  PageContent,
-  PageContentCenter,
-  PageHero,
-  PageHeroSection,
-} from '../../../components/page';
-import { CreateSpaceForm } from '../../../features/create-space';
-import { useRoomNavigate } from '../../../hooks/useRoomNavigate';
+import { Page, PageContent, PageContentCenter, PageHero, PageHeroSection } from '$components/page';
+import { CreateSpaceForm } from '$features/create-space';
+import { useRoomNavigate } from '$hooks/useRoomNavigate';
 
 export function Create() {
   const { navigateSpace } = useRoomNavigate();

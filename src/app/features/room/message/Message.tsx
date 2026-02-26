@@ -24,11 +24,11 @@ import React, {
 } from 'react';
 import FocusTrap from 'focus-trap-react';
 import { useHover, useFocusWithin } from 'react-aria';
-import { MatrixEvent, Room } from 'matrix-js-sdk';
-import { Relations } from 'matrix-js-sdk/lib/models/relations';
+import { MatrixEvent, Room } from '$types/matrix-sdk';
+import { Relations } from '$types/matrix-sdk';
 import classNames from 'classnames';
 import { useAtomValue, useSetAtom } from 'jotai';
-import { RoomPinnedEventsEventContent } from 'matrix-js-sdk/lib/types';
+import { RoomPinnedEventsEventContent } from '$types/matrix-sdk';
 import {
   AvatarBase,
   BubbleLayout,
@@ -38,44 +38,41 @@ import {
   Time,
   Username,
   UsernameBold,
-} from '../../../components/message';
-import {
-  canEditEvent,
-  getMemberAvatarMxc,
-} from '../../../utils/room';
-import {
-  getCanonicalAliasOrRoomId,
-  isRoomAlias,
-  mxcUrlToHttp,
-} from '../../../utils/matrix';
-import { MessageLayout, MessageSpacing, settingsAtom } from '../../../state/settings';
-import { nicknamesAtom, setNicknameAtom } from '../../../state/nicknames';
-import { useMatrixClient } from '../../../hooks/useMatrixClient';
-import { useRecentEmoji } from '../../../hooks/useRecentEmoji';
+} from '$components/message';
+import { canEditEvent, getMemberAvatarMxc } from '$appUtils/room';
+import { getCanonicalAliasOrRoomId, isRoomAlias, mxcUrlToHttp } from '$appUtils/matrix';
+import { MessageLayout, MessageSpacing, settingsAtom } from '$state/settings';
+import { nicknamesAtom, setNicknameAtom } from '$state/nicknames';
+import { useMatrixClient } from '$hooks/useMatrixClient';
+import { useRecentEmoji } from '$hooks/useRecentEmoji';
 import * as css from './styles.css';
-import { EmojiBoard } from '../../../components/emoji-board';
+import { EventReaders } from '$components/event-readers';
+import { TextViewer } from '$components/text-viewer';
+import { AsyncStatus, useAsyncCallback } from '$hooks/useAsyncCallback';
+import { EmojiBoard } from '$components/emoji-board';
+import { ReactionViewer } from '../reaction-viewer';
 import { MessageEditor } from './MessageEditor';
-import { UserAvatar } from '../../../components/user-avatar';
-import { copyToClipboard } from '../../../utils/dom';
-import { stopPropagation } from '../../../utils/keyboard';
-import { getMatrixToRoomEvent } from '../../../plugins/matrix-to';
-import { getViaServers } from '../../../plugins/via-servers';
-import { useMediaAuthentication } from '../../../hooks/useMediaAuthentication';
-import { useRoomPinnedEvents } from '../../../hooks/useRoomPinnedEvents';
-import { MemberPowerTag, StateEvent } from '../../../../types/matrix/room';
-import { PowerIcon } from '../../../components/power';
-import { getPowerTagIconSrc } from '../../../hooks/useMemberPowerTag';
-import { useSableCosmetics } from '../../../hooks/useSableCosmetics';
-import { SwipeableMessageWrapper } from '../../../components/SwipeableMessageWrapper';
-import { mobileOrTablet } from '../../../utils/user-agent';
-import { useUserProfile } from '../../../hooks/useUserProfile';
-import { useSetting } from '../../../state/hooks/settings';
-import { useBlobCache } from '../../../hooks/useBlobCache';
-import { MessageAllReactionItem } from '../../../components/message/modals/MessageReactions';
-import { MessageReadReceiptItem } from '../../../components/message/modals/MessageReadRecipts';
-import { MessageSourceCodeItem } from '../../../components/message/modals/MessageSource';
-import { MessageDeleteItem } from '../../../components/message/modals/MessageDelete';
-import { MessageReportItem } from '../../../components/message/modals/MessageReport';
+import { UserAvatar } from '$components/user-avatar';
+import { copyToClipboard } from '$appUtils/dom';
+import { stopPropagation } from '$appUtils/keyboard';
+import { getMatrixToRoomEvent } from '$plugins/matrix-to';
+import { getViaServers } from '$plugins/via-servers';
+import { useMediaAuthentication } from '$hooks/useMediaAuthentication';
+import { useRoomPinnedEvents } from '$hooks/useRoomPinnedEvents';
+import { MemberPowerTag, StateEvent } from '$types/matrix/room';
+import { PowerIcon } from '$components/power';
+import { getPowerTagIconSrc } from '$hooks/useMemberPowerTag';
+import { useSableCosmetics } from '$hooks/useSableCosmetics';
+import { SwipeableMessageWrapper } from '$components/SwipeableMessageWrapper';
+import { mobileOrTablet } from '$appUtils/user-agent';
+import { useUserProfile } from '$hooks/useUserProfile';
+import { useSetting } from '$state/hooks/settings';
+import { useBlobCache } from '$hooks/useBlobCache';
+import { MessageAllReactionItem } from '$components/message/modals/MessageReactions';
+import { MessageReadReceiptItem } from '$components/message/modals/MessageReadRecipts';
+import { MessageSourceCodeItem } from '$components/message/modals/MessageSource';
+import { MessageDeleteItem } from '$components/message/modals/MessageDelete';
+import { MessageReportItem } from '$components/message/modals/MessageReport';
 
 export type ReactionHandler = (keyOrMxc: string, shortcode: string) => void;
 
@@ -234,27 +231,36 @@ export type MessageProps = {
 function useMobileDoubleTap(callback: () => void, delay = 300) {
   const lastTapRef = useRef<number>(0);
 
-  return useCallback((e: React.PointerEvent<HTMLElement>) => {
-    if (!mobileOrTablet()) return;
+  return useCallback(
+    (e: React.PointerEvent<HTMLElement>) => {
+      if (!mobileOrTablet()) return;
 
-    const now = Date.now();
-    const timeSinceLastTap = now - lastTapRef.current;
+      const now = Date.now();
+      const timeSinceLastTap = now - lastTapRef.current;
 
-    if (timeSinceLastTap < delay && timeSinceLastTap > 0) {
-      callback();
-      lastTapRef.current = 0;
-    } else {
-      lastTapRef.current = now;
-    }
-  }, [callback, delay]);
+      if (timeSinceLastTap < delay && timeSinceLastTap > 0) {
+        callback();
+        lastTapRef.current = 0;
+      } else {
+        lastTapRef.current = now;
+      }
+    },
+    [callback, delay]
+  );
 }
 
 function PronounTag({ pronouns, tagColor }: { pronouns?: any[]; tagColor: string }) {
   if (!pronouns || pronouns.length === 0) return null;
 
-  const clamp = (str: string, len: number) => str.length > len ? `${str.slice(0, len)}...` : str;
+  const clamp = (str: string, len: number) => (str.length > len ? `${str.slice(0, len)}...` : str);
 
-  const display = clamp(pronouns.slice(0, 2).map((p) => clamp(p.summary, 48)).join('/'), 128);
+  const display = clamp(
+    pronouns
+      .slice(0, 2)
+      .map((p) => clamp(p.summary, 48))
+      .join('/'),
+    128
+  );
   const hasMore = pronouns.length > 2;
 
   return (
@@ -277,7 +283,8 @@ function PronounTag({ pronouns, tagColor }: { pronouns?: any[]; tagColor: string
           opacity: 0.8,
         }}
       >
-        {display}{hasMore ? '...' : ''}
+        {display}
+        {hasMore ? '...' : ''}
       </Text>
     </Box>
   );
@@ -337,10 +344,14 @@ function MessageInternal(
   // UI State
   const [isDesktopHover, setIsDesktopHover] = useState(false);
   const { hoverProps } = useHover({
-    onHoverChange: (h) => { if (!mobileOrTablet()) setIsDesktopHover(h); }
+    onHoverChange: (h) => {
+      if (!mobileOrTablet()) setIsDesktopHover(h);
+    },
   });
   const { focusWithinProps } = useFocusWithin({
-    onFocusWithinChange: (f) => { if (!mobileOrTablet()) setIsDesktopHover(f); }
+    onFocusWithinChange: (f) => {
+      if (!mobileOrTablet()) setIsDesktopHover(f);
+    },
   });
 
   const [menuAnchor, setMenuAnchor] = useState<RectCords>();
@@ -382,22 +393,18 @@ function MessageInternal(
           as="button"
           style={{
             color: usernameColor,
-            fontFamily: usernameFont
+            fontFamily: usernameFont,
           }}
           data-user-id={senderId}
           onContextMenu={onUserClick}
           onClick={onUsernameClick}
         >
-          <Text
-            as="span"
-            size={messageLayout === MessageLayout.Bubble ? 'T300' : 'T400'}
-            truncate
-          >
+          <Text as="span" size={messageLayout === MessageLayout.Bubble ? 'T300' : 'T400'} truncate>
             <UsernameBold>{senderDisplayName}</UsernameBold>
           </Text>
         </Username>
         {showPronouns && (
-          <PronounTag pronouns={profile.pronouns} tagColor={usernameColor} />
+          <PronounTag pronouns={profile.pronouns} tagColor={usernameColor ?? 'currentColor'} />
         )}
         {tagIconSrc && <PowerIcon size="100" iconSrc={tagIconSrc} />}
       </Box>
@@ -465,9 +472,7 @@ function MessageInternal(
           onCancel={() => onEditId()}
         />
       ) : (
-        <MemoizedBody key={stableContent}>
-          {children}
-        </MemoizedBody>
+        <MemoizedBody key={stableContent}>{children}</MemoizedBody>
       )}
       {reactions}
     </Box>
@@ -690,12 +695,7 @@ function MessageInternal(
                             closeMenu();
                           }}
                         >
-                          <Text
-                            className={css.MessageMenuItemText}
-                            as="span"
-                            size="T300"
-                            truncate
-                          >
+                          <Text className={css.MessageMenuItemText} as="span" size="T300" truncate>
                             Reply
                           </Text>
                         </MenuItem>
@@ -751,9 +751,13 @@ function MessageInternal(
                         {canPinEvent && (
                           <MessagePinItem room={room} mEvent={mEvent} onClose={closeMenu} />
                         )}
-                        {senderId !== mx.getUserId() && (
-                          nickEditOpen ? (
-                            <Box direction="Column" gap="100" style={{ padding: `${config.space.S100} ${config.space.S200}` }}>
+                        {senderId !== mx.getUserId() &&
+                          (nickEditOpen ? (
+                            <Box
+                              direction="Column"
+                              gap="100"
+                              style={{ padding: `${config.space.S100} ${config.space.S200}` }}
+                            >
                               <Text size="L400">Nickname</Text>
                               <input
                                 // eslint-disable-next-line jsx-a11y/no-autofocus
@@ -780,13 +784,29 @@ function MessageInternal(
                                 }}
                               />
                               <Box gap="200">
-                                <MenuItem size="300" radii="300" variant="Success" fill="None"
-                                  onClick={() => { setNickname(senderId, nickDraft || undefined, mx); closeMenu(); }}>
+                                <MenuItem
+                                  size="300"
+                                  radii="300"
+                                  variant="Success"
+                                  fill="None"
+                                  onClick={() => {
+                                    setNickname(senderId, nickDraft || undefined, mx);
+                                    closeMenu();
+                                  }}
+                                >
                                   <Text size="B300">Save</Text>
                                 </MenuItem>
                                 {nicknames[senderId] && (
-                                  <MenuItem size="300" radii="300" variant="Critical" fill="None"
-                                    onClick={() => { setNickname(senderId, undefined, mx); closeMenu(); }}>
+                                  <MenuItem
+                                    size="300"
+                                    radii="300"
+                                    variant="Critical"
+                                    fill="None"
+                                    onClick={() => {
+                                      setNickname(senderId, undefined, mx);
+                                      closeMenu();
+                                    }}
+                                  >
                                     <Text size="B300">Clear</Text>
                                   </MenuItem>
                                 )}
@@ -802,28 +822,27 @@ function MessageInternal(
                                 setNickEditOpen(true);
                               }}
                             >
-                              <Text className={css.MessageMenuItemText} as="span" size="T300" truncate>
+                              <Text
+                                className={css.MessageMenuItemText}
+                                as="span"
+                                size="T300"
+                                truncate
+                              >
                                 {nicknames[senderId] ? 'Edit Nickname' : 'Set Nickname'}
                               </Text>
                             </MenuItem>
-                          )
-                        )}
+                          ))}
                       </Box>
-                      {((!mEvent.isRedacted() && canDelete) || mEvent.getSender() !== mx.getUserId()) && (
+                      {((!mEvent.isRedacted() && canDelete) ||
+                        mEvent.getSender() !== mx.getUserId()) && (
                         <>
                           <Line size="300" />
                           <Box direction="Column" gap="100" className={css.MessageMenuGroup}>
                             {!mEvent.isRedacted() && canDelete && (
-                              <MessageDeleteItem
-                                room={room}
-                                mEvent={mEvent}
-                              />
+                              <MessageDeleteItem room={room} mEvent={mEvent} />
                             )}
                             {mEvent.getSender() !== mx.getUserId() && (
-                              <MessageReportItem
-                                room={room}
-                                mEvent={mEvent}
-                              />
+                              <MessageReportItem room={room} mEvent={mEvent} />
                             )}
                           </Box>
                         </>
@@ -849,37 +868,30 @@ function MessageInternal(
       {messageLayout === MessageLayout.Compact && (
         <SwipeableMessageWrapper onReply={handleSwipeReply}>
           <CompactLayout before={headerJSX} onContextMenu={handleContextMenu}>
-            <div onPointerDown={onDoubleTap}>
-              {msgContentJSX}
-            </div>
+            <div onPointerDown={onDoubleTap}>{msgContentJSX}</div>
           </CompactLayout>
         </SwipeableMessageWrapper>
-      )
-      }
+      )}
       {messageLayout === MessageLayout.Bubble && (
         <SwipeableMessageWrapper onReply={handleSwipeReply}>
           <BubbleLayout before={avatarJSX} header={headerJSX} onContextMenu={handleContextMenu}>
-            <div onPointerDown={onDoubleTap}>
-              {msgContentJSX}
-            </div>
+            <div onPointerDown={onDoubleTap}>{msgContentJSX}</div>
           </BubbleLayout>
         </SwipeableMessageWrapper>
       )}
-      {
-        messageLayout !== MessageLayout.Compact && messageLayout !== MessageLayout.Bubble && (
-          <SwipeableMessageWrapper onReply={handleSwipeReply}>
-            <ModernLayout before={avatarJSX} onContextMenu={handleContextMenu}>
-              <div onPointerDown={onDoubleTap}>
-                {headerJSX}
-                {msgContentJSX}
-              </div>
-            </ModernLayout>
-          </SwipeableMessageWrapper>
-        )
-      }
-    </MessageBase >
+      {messageLayout !== MessageLayout.Compact && messageLayout !== MessageLayout.Bubble && (
+        <SwipeableMessageWrapper onReply={handleSwipeReply}>
+          <ModernLayout before={avatarJSX} onContextMenu={handleContextMenu}>
+            <div onPointerDown={onDoubleTap}>
+              {headerJSX}
+              {msgContentJSX}
+            </div>
+          </ModernLayout>
+        </SwipeableMessageWrapper>
+      )}
+    </MessageBase>
   );
-};
+}
 
 const MessageAs = as<'div', MessageProps>(MessageInternal);
 export const Message = React.memo(MessageAs);
@@ -949,10 +961,14 @@ export const Event = as<'div', EventProps>(
 
     const [isDesktopHover, setIsDesktopHover] = useState(false);
     const { hoverProps } = useHover({
-      onHoverChange: (h) => { if (!mobileOrTablet()) setIsDesktopHover(h); }
+      onHoverChange: (h) => {
+        if (!mobileOrTablet()) setIsDesktopHover(h);
+      },
     });
     const { focusWithinProps } = useFocusWithin({
-      onFocusWithinChange: (f) => { if (!mobileOrTablet()) setIsDesktopHover(f); }
+      onFocusWithinChange: (f) => {
+        if (!mobileOrTablet()) setIsDesktopHover(f);
+      },
     });
 
     const optionsRef = useRef<HTMLDivElement>(null);
@@ -1009,43 +1025,27 @@ export const Event = as<'div', EventProps>(
                         <Menu {...props} ref={ref}>
                           <Box direction="Column" gap="100" className={css.MessageMenuGroup}>
                             {!hideReadReceipts && (
-                              <MessageReadReceiptItem
-                                room={room}
-                                eventId={mEvent.getId() ?? ''}
-                                onClose={closeMenu}
-                              />
+                              <MessageReadReceiptItem room={room} eventId={mEvent.getId() ?? ''} />
                             )}
                             {showDeveloperTools && (
-                              <MessageSourceCodeItem
-                                room={room}
-                                mEvent={mEvent}
-                                onClose={closeMenu}
-                              />
+                              <MessageSourceCodeItem room={room} mEvent={mEvent} />
                             )}
                             <MessageCopyLinkItem room={room} mEvent={mEvent} onClose={closeMenu} />
                           </Box>
                           {((!mEvent.isRedacted() && canDelete && !stateEvent) ||
                             (mEvent.getSender() !== mx.getUserId() && !stateEvent)) && (
-                              <>
-                                <Line size="300" />
-                                <Box direction="Column" gap="100" className={css.MessageMenuGroup}>
-                                  {!mEvent.isRedacted() && canDelete && (
-                                    <MessageDeleteItem
-                                      room={room}
-                                      mEvent={mEvent}
-                                      onClose={closeMenu}
-                                    />
-                                  )}
-                                  {mEvent.getSender() !== mx.getUserId() && (
-                                    <MessageReportItem
-                                      room={room}
-                                      mEvent={mEvent}
-                                      onClose={closeMenu}
-                                    />
-                                  )}
-                                </Box>
-                              </>
-                            )}
+                            <>
+                              <Line size="300" />
+                              <Box direction="Column" gap="100" className={css.MessageMenuGroup}>
+                                {!mEvent.isRedacted() && canDelete && (
+                                  <MessageDeleteItem room={room} mEvent={mEvent} />
+                                )}
+                                {mEvent.getSender() !== mx.getUserId() && (
+                                  <MessageReportItem room={room} mEvent={mEvent} />
+                                )}
+                              </Box>
+                            </>
+                          )}
                         </Menu>
                       </FocusTrap>
                     }

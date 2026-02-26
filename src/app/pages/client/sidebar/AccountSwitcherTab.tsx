@@ -17,21 +17,22 @@ import {
 import FocusTrap from 'focus-trap-react';
 import { useAtom, useAtomValue, useSetAtom } from 'jotai';
 import { useNavigate } from 'react-router-dom';
-import { sessionsAtom, activeSessionIdAtom, Session } from '../../../state/sessions';
-import { SidebarItem, SidebarItemTooltip, SidebarAvatar } from '../../../components/sidebar';
-import { UserAvatar } from '../../../components/user-avatar';
-import { nameInitials } from '../../../utils/common';
-import { getMxIdLocalPart, mxcUrlToHttp } from '../../../utils/matrix';
-import { stopPropagation } from '../../../utils/keyboard';
-import { getHomePath, getLoginPath, withSearchParam } from '../../pathUtils';
-import { logoutClient, initClient } from '../../../../client/initMatrix';
-import { useMatrixClient } from '../../../hooks/useMatrixClient';
-import { useUserProfile } from '../../../hooks/useUserProfile';
-import { useMediaAuthentication } from '../../../hooks/useMediaAuthentication';
-import { useSessionProfiles } from '../../../hooks/useSessionProfiles'; import { Settings } from '../../../features/settings';
-import { Modal500 } from '../../../components/Modal500';
-import { createLogger } from '../../../utils/debug';
-import { useClientConfig } from '../../../hooks/useClientConfig';
+import { sessionsAtom, activeSessionIdAtom, Session } from '$state/sessions';
+import { SidebarItem, SidebarItemTooltip, SidebarAvatar } from '$components/sidebar';
+import { UserAvatar } from '$components/user-avatar';
+import { nameInitials } from '$appUtils/common';
+import { getMxIdLocalPart, mxcUrlToHttp } from '$appUtils/matrix';
+import { stopPropagation } from '$appUtils/keyboard';
+import { getHomePath, getLoginPath, withSearchParam } from '$pages/pathUtils';
+import { logoutClient, initClient } from '$client/initMatrix';
+import { useMatrixClient } from '$hooks/useMatrixClient';
+import { useUserProfile } from '$hooks/useUserProfile';
+import { useMediaAuthentication } from '$hooks/useMediaAuthentication';
+import { useSessionProfiles } from '$hooks/useSessionProfiles';
+import { Settings } from '$features/settings';
+import { Modal500 } from '$components/Modal500';
+import { createLogger } from '$appUtils/debug';
+import { useClientConfig } from '$hooks/useClientConfig';
 
 const log = createLogger('AccountSwitcherTab');
 
@@ -77,11 +78,7 @@ function AccountRow({
       after={
         <Box gap="200" alignItems="Center" shrink="No">
           {isActive && (
-            <Icon
-              size="200"
-              src={Icons.Check}
-              style={{ color: 'var(--mx-c-success)' }}
-            />
+            <Icon size="200" src={Icons.Check} style={{ color: 'var(--mx-c-success)' }} />
           )}
           {isBusy ? (
             <Spinner size="200" variant="Secondary" />
@@ -103,11 +100,15 @@ function AccountRow({
       }
       onClick={() => !isActive && !isBusy && onSwitch(session)}
     >
-      <Box direction="Column" grow="Yes" style={{
-        paddingTop: config.space.S100,
-        paddingBottom: config.space.S100,
-        justifyContent: 'Center'
-      }}>
+      <Box
+        direction="Column"
+        grow="Yes"
+        style={{
+          paddingTop: config.space.S100,
+          paddingBottom: config.space.S100,
+          justifyContent: 'Center',
+        }}
+      >
         <Text size="T300" truncate>
           {label}
         </Text>
@@ -136,14 +137,13 @@ export function AccountSwitcherTab() {
   const myUserId = mx.getUserId() ?? '';
   const activeProfile = useUserProfile(myUserId);
   const activeAvatarUrl = activeProfile.avatarUrl
-    ? mxcUrlToHttp(mx, activeProfile.avatarUrl, useAuthentication, 96, 96, 'crop') ?? undefined
+    ? (mxcUrlToHttp(mx, activeProfile.avatarUrl, useAuthentication, 96, 96, 'crop') ?? undefined)
     : undefined;
   const activeDisplayName = activeProfile.displayName;
 
   const sessionProfiles = useSessionProfiles(sessions);
 
   const { disableAccountSwitcher } = useClientConfig();
-
 
   const handleToggle: MouseEventHandler<HTMLButtonElement> = (evt) => {
     if (disableAccountSwitcher) {
@@ -210,7 +210,8 @@ export function AccountSwitcherTab() {
     setSettingsOpen(true);
   };
 
-  const activeLocalPart = getMxIdLocalPart(activeSession?.userId ?? '') ?? activeSession?.userId ?? '';
+  const activeLocalPart =
+    getMxIdLocalPart(activeSession?.userId ?? '') ?? activeSession?.userId ?? '';
   const label = activeDisplayName ?? activeLocalPart;
 
   if (!activeSession) return null;
@@ -313,4 +314,3 @@ export function AccountSwitcherTab() {
     </SidebarItem>
   );
 }
-

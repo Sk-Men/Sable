@@ -3,9 +3,9 @@ import { Menu, Box, Text, Chip } from 'folds';
 import dayjs from 'dayjs';
 import * as css from './styles.css';
 import { PickerColumn } from './PickerColumn';
-import { hour12to24, hour24to12, hoursToMs, inSameDay, minutesToMs } from '../../utils/time';
-import { useSetting } from '../../state/hooks/settings';
-import { settingsAtom } from '../../state/settings';
+import { hour12to24, hour24to12, hoursToMs, inSameDay, minutesToMs } from '$appUtils/time';
+import { useSetting } from '$state/hooks/settings';
+import { settingsAtom } from '$state/settings';
 
 type TimePickerProps = {
   min: number;

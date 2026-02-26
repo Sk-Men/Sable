@@ -1,6 +1,6 @@
 import React, { CSSProperties, ReactNode } from 'react';
 import { Box, Badge, toRem, Text } from 'folds';
-import { millify } from '../../plugins/millify';
+import { millify } from '$plugins/millify';
 
 type UnreadBadgeProps = {
   highlight?: boolean;

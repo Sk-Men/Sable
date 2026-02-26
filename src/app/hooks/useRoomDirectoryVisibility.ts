@@ -1,5 +1,5 @@
 import { useCallback, useEffect } from 'react';
-import { Visibility } from 'matrix-js-sdk';
+import { Visibility } from '$types/matrix-sdk';
 import { useAsyncCallback } from './useAsyncCallback';
 import { useMatrixClient } from './useMatrixClient';
 

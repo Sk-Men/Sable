@@ -1,132 +1,127 @@
 import React, { useState, useEffect } from 'react';
 import { Box, Button, config, Text, Input, IconButton, Icon, Icons } from 'folds';
 import { HexColorPicker } from 'react-colorful';
-import { SettingTile } from '../../../components/setting-tile';
-import { HexColorPickerPopOut } from '../../../components/HexColorPickerPopOut';
+import { SettingTile } from '$components/setting-tile';
+import { HexColorPickerPopOut } from '$components/HexColorPickerPopOut';
 
 type NameColorEditorProps = {
-    current?: string;
-    onSave: (color: string | null) => void;
+  current?: string;
+  onSave: (color: string | null) => void;
 };
 
 export function NameColorEditor({ current, onSave }: NameColorEditorProps) {
-    const [tempColor, setTempColor] = useState(current || '#FFFFFF');
-    const [hasChanged, setHasChanged] = useState(false);
+  const [tempColor, setTempColor] = useState(current || '#FFFFFF');
+  const [hasChanged, setHasChanged] = useState(false);
 
-    useEffect(() => {
-        if (current) setTempColor(current);
-        else setTempColor('#FFFFFF');
-    }, [current]);
+  useEffect(() => {
+    if (current) setTempColor(current);
+    else setTempColor('#FFFFFF');
+  }, [current]);
 
-    const handleUpdate = (newColor: string) => {
-        const sanitized = newColor.startsWith('#') ? newColor : `#${newColor}`;
-        setTempColor(sanitized);
-        setHasChanged(sanitized.toUpperCase() !== (current?.toUpperCase() || '#FFFFFF'));
-    };
+  const handleUpdate = (newColor: string) => {
+    const sanitized = newColor.startsWith('#') ? newColor : `#${newColor}`;
+    setTempColor(sanitized);
+    setHasChanged(sanitized.toUpperCase() !== (current?.toUpperCase() || '#FFFFFF'));
+  };
 
-    const handleSave = () => {
-        if (/^#[0-9A-F]{6}$/i.test(tempColor)) {
-            onSave(tempColor);
-            setHasChanged(false);
-        }
-    };
+  const handleSave = () => {
+    if (/^#[0-9A-F]{6}$/i.test(tempColor)) {
+      onSave(tempColor);
+      setHasChanged(false);
+    }
+  };
 
-    const handleReset = () => {
-        onSave(null);
-        setHasChanged(false);
-        setTempColor('#FFFFFF');
-    };
+  const handleReset = () => {
+    onSave(null);
+    setHasChanged(false);
+    setTempColor('#FFFFFF');
+  };
 
-    return (
-        <Box direction="Column" gap="100">
-            <SettingTile
-                title="Global Name Color"
-                description="Custom name color everywhere names have color!"
-            />
-            <Box
-                alignItems="Center"
-                justifyContent="SpaceBetween"
-                gap="300"
+  return (
+    <Box direction="Column" gap="100">
+      <SettingTile
+        title="Global Name Color"
+        description="Custom name color everywhere names have color!"
+      />
+      <Box
+        alignItems="Center"
+        justifyContent="SpaceBetween"
+        gap="300"
+        style={{
+          padding: config.space.S400,
+          backgroundColor: 'var(--sable-surface-container)',
+          borderRadius: config.radii.R400,
+        }}
+      >
+        <Box alignItems="Center" gap="300" grow="Yes">
+          <HexColorPickerPopOut
+            picker={<HexColorPicker color={tempColor} onChange={handleUpdate} />}
+          >
+            {(onOpen, opened) => (
+              <Button
+                onClick={onOpen}
+                size="400"
+                variant="Secondary"
+                fill="None"
+                radii="300"
                 style={{
-                    padding: config.space.S400,
-                    backgroundColor: 'var(--sable-surface-container)',
-                    borderRadius: config.radii.R400
+                  padding: config.space.S100,
+                  border: `2px solid ${opened ? 'var(--sable-primary-main)' : 'var(--sable-border-focus)'}`,
                 }}
-            >
-                <Box alignItems="Center" gap="300" grow="Yes">
-                    <HexColorPickerPopOut
-                        picker={
-                            <HexColorPicker
-                                color={tempColor}
-                                onChange={handleUpdate}
-                            />
-                        }
-                    >
-                        {(onOpen, opened) => (
-                            <Button
-                                onClick={onOpen}
-                                size="400"
-                                variant="Secondary"
-                                fill="None"
-                                radii="300"
-                                style={{
-                                    padding: config.space.S100,
-                                    border: `2px solid ${opened ? 'var(--sable-primary-main)' : 'var(--sable-border-focus)'}`
-                                }}
-                            >
-                                <Box
-                                    style={{
-                                        width: '32px',
-                                        height: '32px',
-                                        borderRadius: '50%',
-                                        backgroundColor: tempColor,
-                                        boxShadow: 'inset 0 0 0 1px rgba(0,0,0,0.1)'
-                                    }}
-                                />
-                            </Button>
-                        )}
-                    </HexColorPickerPopOut>
+              >
+                <Box
+                  style={{
+                    width: '32px',
+                    height: '32px',
+                    borderRadius: '50%',
+                    backgroundColor: tempColor,
+                    boxShadow: 'inset 0 0 0 1px rgba(0,0,0,0.1)',
+                  }}
+                />
+              </Button>
+            )}
+          </HexColorPickerPopOut>
 
-                    <Box direction="Row" alignItems="Center" gap="100">
-                        <Input
-                            value={tempColor}
-                            onChange={(e) => handleUpdate(e.currentTarget.value)}
-                            placeholder="#FFFFFF"
-                            variant="Background"
-                            size="300"
-                            radii="300"
-                            style={{
-                                textTransform: 'uppercase',
-                                fontFamily: 'monospace',
-                                width: '100px'
-                            }}
-                        />
-                        {current && (
-                            <IconButton
-                                variant="Secondary"
-                                size="300"
-                                radii="300"
-                                onClick={handleReset}
-                                title="Reset to default"
-                            >
-                                <Icon src={Icons.Cross} size="100" />
-                            </IconButton>
-                        )}
-                    </Box>
-                </Box>
-
-                {hasChanged && (
-                    <Button
-                        variant="Primary"
-                        size="300"
-                        radii="Pill"
-                        onClick={handleSave}
-                        disabled={!/^#[0-9A-F]{6}$/i.test(tempColor)}
-                    >
-                        <Text size="B300">Save</Text>
-                    </Button>
-                )}
-            </Box>
+          <Box direction="Row" alignItems="Center" gap="100">
+            <Input
+              value={tempColor}
+              onChange={(e) => handleUpdate(e.currentTarget.value)}
+              placeholder="#FFFFFF"
+              variant="Background"
+              size="300"
+              radii="300"
+              style={{
+                textTransform: 'uppercase',
+                fontFamily: 'monospace',
+                width: '100px',
+              }}
+            />
+            {current && (
+              <IconButton
+                variant="Secondary"
+                size="300"
+                radii="300"
+                onClick={handleReset}
+                title="Reset to default"
+              >
+                <Icon src={Icons.Cross} size="100" />
+              </IconButton>
+            )}
+          </Box>
         </Box>
-    );
+
+        {hasChanged && (
+          <Button
+            variant="Primary"
+            size="300"
+            radii="Pill"
+            onClick={handleSave}
+            disabled={!/^#[0-9A-F]{6}$/i.test(tempColor)}
+          >
+            <Text size="B300">Save</Text>
+          </Button>
+        )}
+      </Box>
+    </Box>
+  );
 }

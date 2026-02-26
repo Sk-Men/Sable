@@ -1,4 +1,4 @@
-import { MatrixClient, MatrixError } from 'matrix-js-sdk';
+import { MatrixClient, MatrixError } from '$types/matrix-sdk';
 import { useCallback, useRef } from 'react';
 import { AsyncState, useAsyncCallback } from './useAsyncCallback';
 import { RequestEmailTokenCallback, RequestEmailTokenResponse } from './types';

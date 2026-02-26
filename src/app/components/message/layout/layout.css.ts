@@ -194,27 +194,27 @@ export const MessageTextBody = recipe({
     jumboEmoji: {
       none: {
         fontSize: '1em',
-        lineHeight: 'inherit'
+        lineHeight: 'inherit',
       },
       extraSmall: {
         fontSize: '1.25em',
-        lineHeight: '1.4em'
+        lineHeight: '1.4em',
       },
       small: {
         fontSize: '1.5em',
-        lineHeight: '1.5em'
+        lineHeight: '1.5em',
       },
       normal: {
         fontSize: '1.805em',
-        lineHeight: '1.625em'
+        lineHeight: '1.625em',
       },
       large: {
         fontSize: '2.1em',
-        lineHeight: '1.675em'
+        lineHeight: '1.675em',
       },
       extraLarge: {
         fontSize: '2.4em',
-        lineHeight: '1.7em'
+        lineHeight: '1.7em',
       },
     },
     emote: {

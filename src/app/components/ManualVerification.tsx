@@ -15,11 +15,11 @@ import {
 import FocusTrap from 'focus-trap-react';
 import { stopPropagation } from '../utils/keyboard';
 import { SettingTile } from './setting-tile';
-import { SecretStorageKeyContent } from '../../types/matrix/accountData';
+import { SecretStorageKeyContent } from '$types/matrix/accountData';
 import { SecretStorageRecoveryKey, SecretStorageRecoveryPassphrase } from './SecretStorage';
 import { useMatrixClient } from '../hooks/useMatrixClient';
 import { AsyncStatus, useAsyncCallback } from '../hooks/useAsyncCallback';
-import { storePrivateKey } from '../../client/secretStorageKeys';
+import { storePrivateKey } from '$client/secretStorageKeys';
 
 export enum ManualVerificationMethod {
   RecoveryPassphrase = 'passphrase',

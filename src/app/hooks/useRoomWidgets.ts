@@ -1,10 +1,10 @@
-import { Room, MatrixEvent, MatrixClient } from 'matrix-js-sdk';
+import { Room, MatrixEvent, MatrixClient } from '$types/matrix-sdk';
 import { useCallback, useMemo } from 'react';
 import { IWidget } from 'matrix-widget-api';
 import { useStateEventCallback } from './useStateEventCallback';
 import { useForceUpdate } from './useForceUpdate';
 import { getStateEvents } from '../utils/room';
-import { StateEvent } from '../../types/matrix/room';
+import { StateEvent } from '$types/matrix/room';
 
 export interface RoomWidget extends IWidget {
   eventId?: string;
@@ -99,10 +99,7 @@ export const useRoomWidgets = (room: Room): RoomWidget[] => {
     room.client,
     useCallback(
       (event) => {
-        if (
-          event.getRoomId() === room.roomId &&
-          event.getType() === StateEvent.RoomWidget
-        ) {
+        if (event.getRoomId() === room.roomId && event.getType() === StateEvent.RoomWidget) {
           forceUpdate();
         }
       },
@@ -137,4 +134,3 @@ export const useRoomWidgets = (room: Room): RoomWidget[] => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [room, updateCount]);
 };
-

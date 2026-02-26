@@ -22,27 +22,27 @@ import {
   Method,
   RelationType,
   Room,
-} from 'matrix-js-sdk';
+} from '$types/matrix-sdk';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { HTMLReactParserOptions } from 'html-react-parser';
 import { Opts as LinkifyOpts } from 'linkifyjs';
 import { useAtomValue } from 'jotai';
-import { nicknamesAtom } from '../../../state/nicknames';
-import { Page, PageContent, PageContentCenter, PageHeader } from '../../../components/page';
-import { useMatrixClient } from '../../../hooks/useMatrixClient';
-import { getMxIdLocalPart, mxcUrlToHttp } from '../../../utils/matrix';
-import { InboxNotificationsPathSearchParams } from '../../paths';
-import { AsyncStatus, useAsyncCallback } from '../../../hooks/useAsyncCallback';
-import { SequenceCard } from '../../../components/sequence-card';
-import { RoomAvatar, RoomIcon } from '../../../components/room-avatar';
+import { nicknamesAtom } from '$state/nicknames';
+import { Page, PageContent, PageContentCenter, PageHeader } from '$components/page';
+import { useMatrixClient } from '$hooks/useMatrixClient';
+import { getMxIdLocalPart, mxcUrlToHttp } from '$appUtils/matrix';
+import { InboxNotificationsPathSearchParams } from '$pages/paths';
+import { AsyncStatus, useAsyncCallback } from '$hooks/useAsyncCallback';
+import { SequenceCard } from '$components/sequence-card';
+import { RoomAvatar, RoomIcon } from '$components/room-avatar';
 import {
   getEditedEvent,
   getMemberAvatarMxc,
   getMemberDisplayName,
   getRoomAvatarUrl,
-} from '../../../utils/room';
-import { ScrollTopContainer } from '../../../components/scroll-top-container';
-import { useInterval } from '../../../hooks/useInterval';
+} from '$appUtils/room';
+import { ScrollTopContainer } from '$components/scroll-top-container';
+import { useInterval } from '$hooks/useInterval';
 import {
   AvatarBase,
   ImageContent,
@@ -55,49 +55,49 @@ import {
   Time,
   Username,
   UsernameBold,
-} from '../../../components/message';
+} from '$components/message';
 import {
   factoryRenderLinkifyWithMention,
   getReactCustomHtmlParser,
   LINKIFY_OPTS,
   makeMentionCustomProps,
   renderMatrixMention,
-} from '../../../plugins/react-custom-html-parser';
-import { RenderMessageContent } from '../../../components/RenderMessageContent';
-import { useSetting } from '../../../state/hooks/settings';
-import { settingsAtom } from '../../../state/settings';
-import { Image } from '../../../components/media';
-import { ImageViewer } from '../../../components/image-viewer';
-import { GetContentCallback, MessageEvent, StateEvent } from '../../../../types/matrix/room';
-import { useMatrixEventRenderer } from '../../../hooks/useMatrixEventRenderer';
-import * as customHtmlCss from '../../../styles/CustomHtml.css';
-import { useRoomNavigate } from '../../../hooks/useRoomNavigate';
-import { useRoomUnread } from '../../../state/hooks/unread';
-import { roomToUnreadAtom } from '../../../state/room/roomToUnread';
-import { markAsRead } from '../../../utils/notifications';
-import { ContainerColor } from '../../../styles/ContainerColor.css';
-import { VirtualTile } from '../../../components/virtualizer';
-import { UserAvatar } from '../../../components/user-avatar';
-import { EncryptedContent } from '../../../features/room/message';
-import { useMentionClickHandler } from '../../../hooks/useMentionClickHandler';
-import { useSpoilerClickHandler } from '../../../hooks/useSpoilerClickHandler';
-import { ScreenSize, useScreenSizeContext } from '../../../hooks/useScreenSize';
-import { BackRouteHandler } from '../../../components/BackRouteHandler';
-import { useMediaAuthentication } from '../../../hooks/useMediaAuthentication';
-import { allRoomsAtom } from '../../../state/room-list/roomList';
-import { usePowerLevels } from '../../../hooks/usePowerLevels';
-import { usePowerLevelTags } from '../../../hooks/usePowerLevelTags';
-import { useTheme } from '../../../hooks/useTheme';
-import { PowerIcon } from '../../../components/power';
-import colorMXID from '../../../../util/colorMXID';
-import { mDirectAtom } from '../../../state/mDirectList';
+} from '$plugins/react-custom-html-parser';
+import { RenderMessageContent } from '$components/RenderMessageContent';
+import { useSetting } from '$state/hooks/settings';
+import { settingsAtom } from '$state/settings';
+import { Image } from '$components/media';
+import { ImageViewer } from '$components/image-viewer';
+import { GetContentCallback, MessageEvent, StateEvent } from '$types/matrix/room';
+import { useMatrixEventRenderer } from '$hooks/useMatrixEventRenderer';
+import * as customHtmlCss from '$styles/CustomHtml.css';
+import { useRoomNavigate } from '$hooks/useRoomNavigate';
+import { useRoomUnread } from '$state/hooks/unread';
+import { roomToUnreadAtom } from '$state/room/roomToUnread';
+import { markAsRead } from '$appUtils/notifications';
+import { ContainerColor } from '$styles/ContainerColor.css';
+import { VirtualTile } from '$components/virtualizer';
+import { UserAvatar } from '$components/user-avatar';
+import { EncryptedContent } from '$features/room/message';
+import { useMentionClickHandler } from '$hooks/useMentionClickHandler';
+import { useSpoilerClickHandler } from '$hooks/useSpoilerClickHandler';
+import { ScreenSize, useScreenSizeContext } from '$hooks/useScreenSize';
+import { BackRouteHandler } from '$components/BackRouteHandler';
+import { useMediaAuthentication } from '$hooks/useMediaAuthentication';
+import { allRoomsAtom } from '$state/room-list/roomList';
+import { usePowerLevels } from '$hooks/usePowerLevels';
+import { usePowerLevelTags } from '$hooks/usePowerLevelTags';
+import { useTheme } from '$hooks/useTheme';
+import { PowerIcon } from '$components/power';
+import colorMXID from '$util/colorMXID';
+import { mDirectAtom } from '$state/mDirectList';
 import {
   getPowerTagIconSrc,
   useAccessiblePowerTagColors,
   useGetMemberPowerTag,
-} from '../../../hooks/useMemberPowerTag';
-import { useRoomCreatorsTag } from '../../../hooks/useRoomCreatorsTag';
-import { useRoomCreators } from '../../../hooks/useRoomCreators';
+} from '$hooks/useMemberPowerTag';
+import { useRoomCreatorsTag } from '$hooks/useRoomCreatorsTag';
+import { useRoomCreators } from '$hooks/useRoomCreators';
 
 type RoomNotificationsGroup = {
   roomId: string;
@@ -245,7 +245,13 @@ function RoomNotificationsGroupComp({
     () => ({
       ...LINKIFY_OPTS,
       render: factoryRenderLinkifyWithMention((href) =>
-        renderMatrixMention(mx, room.roomId, href, makeMentionCustomProps(mentionClickHandler), nicknames)
+        renderMatrixMention(
+          mx,
+          room.roomId,
+          href,
+          makeMentionCustomProps(mentionClickHandler),
+          nicknames
+        )
       ),
     }),
     [mx, room, mentionClickHandler, nicknames]
@@ -482,14 +488,14 @@ function RoomNotificationsGroupComp({
                         userId={event.sender}
                         src={
                           senderAvatarMxc
-                            ? mxcUrlToHttp(
-                              mx,
-                              senderAvatarMxc,
-                              useAuthentication,
-                              48,
-                              48,
-                              'crop'
-                            ) ?? undefined
+                            ? (mxcUrlToHttp(
+                                mx,
+                                senderAvatarMxc,
+                                useAuthentication,
+                                48,
+                                48,
+                                'crop'
+                              ) ?? undefined)
                             : undefined
                         }
                         alt={displayName}

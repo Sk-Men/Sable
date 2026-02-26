@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
-import { RoomMember } from 'matrix-js-sdk';
-import { Membership } from '../../types/matrix/room';
+import { RoomMember } from '$types/matrix-sdk';
+import { Membership } from '$types/matrix/room';
 
 export const MembershipFilter = {
   filterJoined: (m: RoomMember) => m.membership === Membership.Join,

@@ -1,16 +1,13 @@
 import React from 'react';
 import { Avatar, Box, Icon, Icons, Text } from 'folds';
 import { useAtomValue } from 'jotai';
-import { NavCategory, NavItem, NavItemContent, NavLink } from '../../../components/nav';
-import { getInboxInvitesPath, getInboxNotificationsPath } from '../../pathUtils';
-import {
-  useInboxInvitesSelected,
-  useInboxNotificationsSelected,
-} from '../../../hooks/router/useInbox';
-import { UnreadBadge } from '../../../components/unread-badge';
-import { allInvitesAtom } from '../../../state/room-list/inviteList';
-import { useNavToActivePathMapper } from '../../../hooks/useNavToActivePathMapper';
-import { PageNav, PageNavContent, PageNavHeader } from '../../../components/page';
+import { NavCategory, NavItem, NavItemContent, NavLink } from '$components/nav';
+import { getInboxInvitesPath, getInboxNotificationsPath } from '$pages/pathUtils';
+import { useInboxInvitesSelected, useInboxNotificationsSelected } from '$hooks/router/useInbox';
+import { UnreadBadge } from '$components/unread-badge';
+import { allInvitesAtom } from '$state/room-list/inviteList';
+import { useNavToActivePathMapper } from '$hooks/useNavToActivePathMapper';
+import { PageNav, PageNavContent, PageNavHeader } from '$components/page';
 
 function InvitesNavItem() {
   const invitesSelected = useInboxInvitesSelected();

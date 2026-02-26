@@ -15,21 +15,21 @@ import {
   Spinner,
   toRem,
 } from 'folds';
-import { HierarchyItem } from '../../hooks/useSpaceHierarchy';
-import { useMatrixClient } from '../../hooks/useMatrixClient';
-import { MSpaceChildContent, StateEvent } from '../../../types/matrix/room';
-import { AsyncStatus, useAsyncCallback } from '../../hooks/useAsyncCallback';
-import { UseStateProvider } from '../../components/UseStateProvider';
-import { LeaveSpacePrompt } from '../../components/leave-space-prompt';
-import { LeaveRoomPrompt } from '../../components/leave-room-prompt';
-import { stopPropagation } from '../../utils/keyboard';
-import { useOpenRoomSettings } from '../../state/hooks/roomSettings';
-import { useSpaceOptionally } from '../../hooks/useSpace';
-import { useOpenSpaceSettings } from '../../state/hooks/spaceSettings';
-import { IPowerLevels } from '../../hooks/usePowerLevels';
-import { getRoomCreatorsForRoomId } from '../../hooks/useRoomCreators';
-import { getRoomPermissionsAPI } from '../../hooks/useRoomPermissions';
-import { InviteUserPrompt } from '../../components/invite-user-prompt';
+import { HierarchyItem } from '$hooks/useSpaceHierarchy';
+import { useMatrixClient } from '$hooks/useMatrixClient';
+import { MSpaceChildContent, StateEvent } from '$types/matrix/room';
+import { AsyncStatus, useAsyncCallback } from '$hooks/useAsyncCallback';
+import { UseStateProvider } from '$components/UseStateProvider';
+import { LeaveSpacePrompt } from '$components/leave-space-prompt';
+import { LeaveRoomPrompt } from '$components/leave-room-prompt';
+import { stopPropagation } from '$appUtils/keyboard';
+import { useOpenRoomSettings } from '$state/hooks/roomSettings';
+import { useSpaceOptionally } from '$hooks/useSpace';
+import { useOpenSpaceSettings } from '$state/hooks/spaceSettings';
+import { IPowerLevels } from '$hooks/usePowerLevels';
+import { getRoomCreatorsForRoomId } from '$hooks/useRoomCreators';
+import { getRoomPermissionsAPI } from '$hooks/useRoomPermissions';
+import { InviteUserPrompt } from '$components/invite-user-prompt';
 
 type HierarchyItemWithParent = HierarchyItem & {
   parentId: string;

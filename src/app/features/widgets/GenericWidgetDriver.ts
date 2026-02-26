@@ -26,11 +26,9 @@ import {
   type TimelineEvents,
   MatrixClient,
   Room,
-} from 'matrix-js-sdk';
+} from '$types/matrix-sdk';
 
-export type CapabilityApprovalCallback = (
-  requested: Set<Capability>
-) => Promise<Set<Capability>>;
+export type CapabilityApprovalCallback = (requested: Set<Capability>) => Promise<Set<Capability>>;
 
 // Unlike SmallWidgetDriver which auto-grants all capabilities for Element Call,
 // this driver provides a capability approval mechanism for untrusted widgets.
@@ -140,14 +138,17 @@ export class GenericWidgetDriver extends WidgetDriver {
     let r: SendDelayedEventResponse | null;
     if (stateKey !== null) {
       r = await client._unstable_sendDelayedStateEvent(
-        roomId, delayOpts,
+        roomId,
+        delayOpts,
         eventType as keyof StateEvents,
         content as StateEvents[keyof StateEvents],
         stateKey
       );
     } else {
       r = await client._unstable_sendDelayedEvent(
-        roomId, delayOpts, null,
+        roomId,
+        delayOpts,
+        null,
         eventType as keyof TimelineEvents,
         content as TimelineEvents[keyof TimelineEvents]
       );
@@ -155,7 +156,10 @@ export class GenericWidgetDriver extends WidgetDriver {
     return { roomId, delayId: r.delay_id };
   }
 
-  public async updateDelayedEvent(delayId: string, action: UpdateDelayedEventAction): Promise<void> {
+  public async updateDelayedEvent(
+    delayId: string,
+    action: UpdateDelayedEventAction
+  ): Promise<void> {
     await this.mxClient._unstable_updateDelayedEvent(delayId, action);
   }
 
@@ -178,7 +182,11 @@ export class GenericWidgetDriver extends WidgetDriver {
       }
       await Promise.all(
         Object.entries(invertedContentMap).map(async ([str, recipients]) => {
-          const batch = await crypto.encryptToDeviceMessages(eventType, recipients, JSON.parse(str));
+          const batch = await crypto.encryptToDeviceMessages(
+            eventType,
+            recipients,
+            JSON.parse(str)
+          );
           await client.queueToDevice(batch);
         })
       );
@@ -187,7 +195,9 @@ export class GenericWidgetDriver extends WidgetDriver {
         eventType,
         batch: Object.entries(contentMap).flatMap(([userId, userContentMap]) =>
           Object.entries(userContentMap).map(([deviceId, content]) => ({
-            userId, deviceId, payload: content,
+            userId,
+            deviceId,
+            payload: content,
           }))
         ),
       });
@@ -195,8 +205,12 @@ export class GenericWidgetDriver extends WidgetDriver {
   }
 
   public async readRoomTimeline(
-    roomId: string, eventType: string, msgtype: string | undefined,
-    stateKey: string | undefined, limit: number, since: string | undefined
+    roomId: string,
+    eventType: string,
+    msgtype: string | undefined,
+    stateKey: string | undefined,
+    limit: number,
+    since: string | undefined
   ): Promise<IRoomEvent[]> {
     limit = limit > 0 ? Math.min(limit, Number.MAX_SAFE_INTEGER) : Number.MAX_SAFE_INTEGER;
     const room = this.mxClient.getRoom(roomId);
@@ -208,8 +222,10 @@ export class GenericWidgetDriver extends WidgetDriver {
       if (results.length >= limit) break;
       if (since !== undefined && ev.getId() === since) break;
       if (ev.getType() !== eventType || ev.isState()) continue;
-      if (eventType === EventType.RoomMessage && msgtype && msgtype !== ev.getContent().msgtype) continue;
-      if (ev.getStateKey() !== undefined && stateKey !== undefined && ev.getStateKey() !== stateKey) continue;
+      if (eventType === EventType.RoomMessage && msgtype && msgtype !== ev.getContent().msgtype)
+        continue;
+      if (ev.getStateKey() !== undefined && stateKey !== undefined && ev.getStateKey() !== stateKey)
+        continue;
       results.push(ev);
     }
     return results.map((e) => e.getEffectiveEvent() as IRoomEvent);
@@ -223,26 +239,39 @@ export class GenericWidgetDriver extends WidgetDriver {
   }
 
   public async readRoomState(
-    roomId: string, eventType: string, stateKey: string | undefined
+    roomId: string,
+    eventType: string,
+    stateKey: string | undefined
   ): Promise<IRoomEvent[]> {
     const room = this.mxClient.getRoom(roomId);
     if (!room) return [];
     const state = room.getLiveTimeline().getState(Direction.Forward);
     if (!state) return [];
     if (stateKey === undefined)
-      return state.getStateEvents(eventType).map((e: MatrixEvent) => e.getEffectiveEvent() as IRoomEvent);
+      return state
+        .getStateEvents(eventType)
+        .map((e: MatrixEvent) => e.getEffectiveEvent() as IRoomEvent);
     const event = state.getStateEvents(eventType, stateKey);
     return event === null ? [] : [event.getEffectiveEvent() as IRoomEvent];
   }
 
   public async readEventRelations(
-    eventId: string, roomId?: string, relationType?: string, eventType?: string,
-    from?: string, to?: string, limit?: number, direction?: 'f' | 'b'
+    eventId: string,
+    roomId?: string,
+    relationType?: string,
+    eventType?: string,
+    from?: string,
+    to?: string,
+    limit?: number,
+    direction?: 'f' | 'b'
   ): Promise<IReadEventRelationsResult> {
     roomId = roomId ?? this.inRoomId ?? undefined;
     if (typeof roomId !== 'string') throw new Error('Error while reading the current room');
     const { events, nextBatch, prevBatch } = await this.mxClient.relations(
-      roomId, eventId, relationType ?? null, eventType ?? null,
+      roomId,
+      eventId,
+      relationType ?? null,
+      eventType ?? null,
       { from, to, limit, dir: direction as Direction }
     );
     return {
@@ -252,12 +281,20 @@ export class GenericWidgetDriver extends WidgetDriver {
     };
   }
 
-  public async searchUserDirectory(searchTerm: string, limit?: number): Promise<ISearchUserDirectoryResult> {
-    const { limited, results } = await this.mxClient.searchUserDirectory({ term: searchTerm, limit });
+  public async searchUserDirectory(
+    searchTerm: string,
+    limit?: number
+  ): Promise<ISearchUserDirectoryResult> {
+    const { limited, results } = await this.mxClient.searchUserDirectory({
+      term: searchTerm,
+      limit,
+    });
     return {
       limited,
       results: results.map((r: any) => ({
-        userId: r.user_id, displayName: r.display_name, avatarUrl: r.avatar_url,
+        userId: r.user_id,
+        displayName: r.display_name,
+        avatarUrl: r.avatar_url,
       })),
     };
   }
@@ -281,4 +318,3 @@ export class GenericWidgetDriver extends WidgetDriver {
       : undefined;
   }
 }
-

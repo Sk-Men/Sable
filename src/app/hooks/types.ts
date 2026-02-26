@@ -1,4 +1,4 @@
-import { IRequestTokenResponse } from 'matrix-js-sdk';
+import { IRequestTokenResponse } from '$types/matrix-sdk';
 
 export type RequestEmailTokenResponse = {
   email: string;

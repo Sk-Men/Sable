@@ -1,7 +1,20 @@
 /* eslint-disable jsx-a11y/alt-text */
-import React, { ComponentPropsWithoutRef, lazy, ReactEventHandler, Suspense, useMemo, useState, } from 'react';
-import { attributesToProps, domToReact, Element, HTMLReactParserOptions, Text as DOMText, } from 'html-react-parser';
-import { MatrixClient } from 'matrix-js-sdk';
+import React, {
+  ComponentPropsWithoutRef,
+  lazy,
+  ReactEventHandler,
+  Suspense,
+  useMemo,
+  useState,
+} from 'react';
+import {
+  attributesToProps,
+  domToReact,
+  Element,
+  HTMLReactParserOptions,
+  Text as DOMText,
+} from 'html-react-parser';
+import { MatrixClient } from '$types/matrix-sdk';
 import classNames from 'classnames';
 import { Box, Chip, config, Header, Icon, IconButton, Icons, Scroll, Text, toRem } from 'folds';
 import { IntermediateRepresentation, OptFn, Opts as LinkifyOpts } from 'linkifyjs';
@@ -9,19 +22,28 @@ import Linkify from 'linkify-react';
 import { ErrorBoundary } from 'react-error-boundary';
 import { ChildNode } from 'domhandler';
 import * as css from '../styles/CustomHtml.css';
-import { getCanonicalAliasRoomId, getMxIdLocalPart, isRoomAlias, mxcUrlToHttp, } from '../utils/matrix';
+import {
+  getCanonicalAliasRoomId,
+  getMxIdLocalPart,
+  isRoomAlias,
+  mxcUrlToHttp,
+} from '../utils/matrix';
 import { getMemberDisplayName } from '../utils/room';
 import { Nicknames } from '../state/nicknames';
 import { EMOJI_PATTERN, sanitizeForRegex, URL_NEG_LB } from '../utils/regex';
 import { getHexcodeForEmoji, getShortcodeFor } from './emoji';
 import { findAndReplace } from '../utils/findAndReplace';
-import { parseMatrixToRoom, parseMatrixToRoomEvent, parseMatrixToUser, testMatrixTo, } from './matrix-to';
+import {
+  parseMatrixToRoom,
+  parseMatrixToRoomEvent,
+  parseMatrixToUser,
+  testMatrixTo,
+} from './matrix-to';
 import { onEnterOrSpace } from '../utils/keyboard';
-import { copyToClipboard, tryDecodeURIComponent } from '../utils/dom';
+import { copyToClipboard } from '../utils/dom';
 import { useTimeoutToggle } from '../hooks/useTimeoutToggle';
 
 const ReactPrism = lazy(() => import('./react-prism/ReactPrism'));
-
 
 const EMOJI_REG_G = new RegExp(`${URL_NEG_LB}(${EMOJI_PATTERN})`, 'g');
 
@@ -68,8 +90,10 @@ export const renderMatrixMention = (
         className={css.Mention({ highlight: mx.getUserId() === userId })}
         data-mention-id={userId}
       >
-        {`@${(currentRoom && getMemberDisplayName(currentRoom, userId, nicknames)) ?? getMxIdLocalPart(userId)
-          }`}
+        {`@${
+          (currentRoom && getMemberDisplayName(currentRoom, userId, nicknames)) ??
+          getMxIdLocalPart(userId)
+        }`}
       </a>
     );
   }
@@ -129,14 +153,16 @@ export const renderMatrixMention = (
 export const factoryRenderLinkifyWithMention = (
   mentionRender: (href: string) => JSX.Element | undefined
 ): OptFn<(ir: IntermediateRepresentation) => any> => {
-
   const renderLink: OptFn<(ir: IntermediateRepresentation) => any> = ({
     tagName,
     attributes,
     content,
   }) => {
-    if (tagName === 'a' && testMatrixTo(tryDecodeURIComponent(attributes.href))) {
-      const mention = mentionRender(tryDecodeURIComponent(attributes.href));
+    const encodedHref = attributes.href;
+    const decodedHref = encodedHref && decodeURIComponent(encodedHref);
+
+    if (tagName === 'a' && decodedHref && testMatrixTo(decodedHref)) {
+      const mention = mentionRender(decodedHref);
       if (mention) return mention;
     }
 
@@ -282,7 +308,7 @@ export function CodeBlock({
         hideTrack
       >
         <div id="code-block-content" className={css.CodeBlockInternal}>
-          {domToReact(children, opts)}
+          {domToReact(children as any, opts)}
         </div>
       </Scroll>
       {largeCodeBlock && !expanded && <Box className={css.CodeBlockBottomShadow} />}
@@ -306,12 +332,13 @@ export const getReactCustomHtmlParser = (
     replace: (domNode) => {
       if (domNode instanceof Element && 'name' in domNode) {
         const { name, attribs, children, parent } = domNode;
+        const renderChildren = () => domToReact(children as any, opts);
         const props = attributesToProps(attribs);
 
         if (name === 'h1') {
           return (
             <Text {...props} className={css.Heading} size="H2">
-              {domToReact(children, opts)}
+              {renderChildren()}
             </Text>
           );
         }
@@ -319,7 +346,7 @@ export const getReactCustomHtmlParser = (
         if (name === 'h2') {
           return (
             <Text {...props} className={css.Heading} size="H3">
-              {domToReact(children, opts)}
+              {renderChildren()}
             </Text>
           );
         }
@@ -327,7 +354,7 @@ export const getReactCustomHtmlParser = (
         if (name === 'h3') {
           return (
             <Text {...props} className={css.Heading} size="H4">
-              {domToReact(children, opts)}
+              {renderChildren()}
             </Text>
           );
         }
@@ -335,7 +362,7 @@ export const getReactCustomHtmlParser = (
         if (name === 'h4') {
           return (
             <Text {...props} className={css.Heading} size="H4">
-              {domToReact(children, opts)}
+              {renderChildren()}
             </Text>
           );
         }
@@ -343,7 +370,7 @@ export const getReactCustomHtmlParser = (
         if (name === 'h5') {
           return (
             <Text {...props} className={css.Heading} size="H5">
-              {domToReact(children, opts)}
+              {renderChildren()}
             </Text>
           );
         }
@@ -351,7 +378,7 @@ export const getReactCustomHtmlParser = (
         if (name === 'h6') {
           return (
             <Text {...props} className={css.Heading} size="H6">
-              {domToReact(children, opts)}
+              {renderChildren()}
             </Text>
           );
         }
@@ -359,7 +386,7 @@ export const getReactCustomHtmlParser = (
         if (name === 'p') {
           return (
             <Text {...props} className={classNames(css.Paragraph, css.MarginSpaced)} size="Inherit">
-              {domToReact(children, opts)}
+              {renderChildren()}
             </Text>
           );
         }
@@ -371,7 +398,7 @@ export const getReactCustomHtmlParser = (
         if (name === 'blockquote') {
           return (
             <Text {...props} size="Inherit" as="blockquote" className={css.BlockQuote}>
-              {domToReact(children, opts)}
+              {renderChildren()}
             </Text>
           );
         }
@@ -379,23 +406,23 @@ export const getReactCustomHtmlParser = (
         if (name === 'ul') {
           return (
             <ul {...props} className={css.List}>
-              {domToReact(children, opts)}
+              {renderChildren()}
             </ul>
           );
         }
         if (name === 'ol') {
           return (
             <ol {...props} className={css.List}>
-              {domToReact(children, opts)}
+              {renderChildren()}
             </ol>
           );
         }
 
         if (name === 'code') {
           if (parent && 'name' in parent && parent.name === 'pre') {
-            const codeReact = domToReact(children, opts);
+            const codeReact = renderChildren();
             if (typeof codeReact === 'string') {
-              let lang = props.className;
+              let lang = typeof props.className === 'string' ? props.className : undefined;
               if (lang === 'language-rs') lang = 'language-rust';
               else if (lang === 'language-js') lang = 'language-javascript';
               else if (lang === 'language-ts') lang = 'language-typescript';
@@ -416,13 +443,19 @@ export const getReactCustomHtmlParser = (
           } else {
             return (
               <Text as="code" size="T300" className={css.Code} {...props}>
-                {domToReact(children, opts)}
+                {renderChildren()}
               </Text>
             );
           }
         }
 
-        if (name === 'a' && testMatrixTo(tryDecodeURIComponent(props.href))) {
+        if (name === 'a' && typeof props.href === 'string') {
+          const encodedHref = props.href;
+          const decodedHref = encodedHref && decodeURIComponent(encodedHref);
+          if (!decodedHref || !testMatrixTo(decodedHref)) {
+            return undefined;
+          }
+
           const content = children.find((child) => !(child instanceof DOMText))
             ? undefined
             : children.map((c) => (c instanceof DOMText ? c.data : '')).join();
@@ -430,7 +463,7 @@ export const getReactCustomHtmlParser = (
           const mention = renderMatrixMention(
             mx,
             roomId,
-            tryDecodeURIComponent(props.href),
+            decodeURIComponent(props.href),
             makeMentionCustomProps(params.handleMentionClick, content),
             params.nicknames
           );
@@ -450,7 +483,7 @@ export const getReactCustomHtmlParser = (
               aria-pressed
               style={{ cursor: 'pointer' }}
             >
-              {domToReact(children, opts)}
+              {renderChildren()}
             </span>
           );
         }

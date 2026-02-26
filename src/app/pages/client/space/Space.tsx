@@ -26,71 +26,62 @@ import {
   toRem,
 } from 'folds';
 import { useVirtualizer } from '@tanstack/react-virtual';
-import { JoinRule, Room } from 'matrix-js-sdk';
-import { RoomJoinRulesEventContent } from 'matrix-js-sdk/lib/types';
+import { JoinRule, Room } from '$types/matrix-sdk';
+import { RoomJoinRulesEventContent } from '$types/matrix-sdk';
 import FocusTrap from 'focus-trap-react';
-import { useMatrixClient } from '../../../hooks/useMatrixClient';
-import { mDirectAtom } from '../../../state/mDirectList';
-import {
-  NavCategory,
-  NavCategoryHeader,
-  NavItem,
-  NavItemContent,
-  NavLink,
-} from '../../../components/nav';
-import { getSpaceLobbyPath, getSpaceRoomPath, getSpaceSearchPath } from '../../pathUtils';
-import { getCanonicalAliasOrRoomId, isRoomAlias } from '../../../utils/matrix';
-import { useSelectedRoom } from '../../../hooks/router/useSelectedRoom';
-import {
-  useSpaceLobbySelected,
-  useSpaceSearchSelected,
-} from '../../../hooks/router/useSelectedSpace';
-import { useSpace } from '../../../hooks/useSpace';
-import { VirtualTile } from '../../../components/virtualizer';
-import { RoomNavCategoryButton, RoomNavItem } from '../../../features/room-nav';
-import { makeNavCategoryId } from '../../../state/closedNavCategories';
-import { roomToUnreadAtom } from '../../../state/room/roomToUnread';
-import { useCategoryHandler } from '../../../hooks/useCategoryHandler';
-import { useNavToActivePathMapper } from '../../../hooks/useNavToActivePathMapper';
-import { useRoomName } from '../../../hooks/useRoomMeta';
-import { useSpaceJoinedHierarchy } from '../../../hooks/useSpaceHierarchy';
-import { allRoomsAtom } from '../../../state/room-list/roomList';
-import { PageNav, PageNavContent, PageNavHeader } from '../../../components/page';
-import { usePowerLevels } from '../../../hooks/usePowerLevels';
-import { useRecursiveChildScopeFactory, useSpaceChildren } from '../../../state/hooks/roomList';
-import { roomToParentsAtom } from '../../../state/room/roomToParents';
-import { markAsRead } from '../../../utils/notifications';
-import { useRoomsUnread } from '../../../state/hooks/unread';
-import { UseStateProvider } from '../../../components/UseStateProvider';
-import { LeaveSpacePrompt } from '../../../components/leave-space-prompt';
-import { copyToClipboard } from '../../../utils/dom';
-import { useClosedNavCategoriesAtom } from '../../../state/hooks/closedNavCategories';
-import { useStateEvent } from '../../../hooks/useStateEvent';
-import { Membership, StateEvent } from '../../../../types/matrix/room';
-import { stopPropagation } from '../../../utils/keyboard';
-import { getMatrixToRoom } from '../../../plugins/matrix-to';
-import { getViaServers } from '../../../plugins/via-servers';
-import { useSetting } from '../../../state/hooks/settings';
-import { settingsAtom } from '../../../state/settings';
+import { useMatrixClient } from '$hooks/useMatrixClient';
+import { mDirectAtom } from '$state/mDirectList';
+import { NavCategory, NavCategoryHeader, NavItem, NavItemContent, NavLink } from '$components/nav';
+import { getSpaceLobbyPath, getSpaceRoomPath, getSpaceSearchPath } from '$pages/pathUtils';
+import { getCanonicalAliasOrRoomId, isRoomAlias } from '$appUtils/matrix';
+import { useSelectedRoom } from '$hooks/router/useSelectedRoom';
+import { useSpaceLobbySelected, useSpaceSearchSelected } from '$hooks/router/useSelectedSpace';
+import { useSpace } from '$hooks/useSpace';
+import { VirtualTile } from '$components/virtualizer';
+import { RoomNavCategoryButton, RoomNavItem } from '$features/room-nav';
+import { makeNavCategoryId } from '$state/closedNavCategories';
+import { roomToUnreadAtom } from '$state/room/roomToUnread';
+import { useCategoryHandler } from '$hooks/useCategoryHandler';
+import { useNavToActivePathMapper } from '$hooks/useNavToActivePathMapper';
+import { useRoomName } from '$hooks/useRoomMeta';
+import { useSpaceJoinedHierarchy } from '$hooks/useSpaceHierarchy';
+import { allRoomsAtom } from '$state/room-list/roomList';
+import { PageNav, PageNavContent, PageNavHeader } from '$components/page';
+import { usePowerLevels } from '$hooks/usePowerLevels';
+import { useRecursiveChildScopeFactory, useSpaceChildren } from '$state/hooks/roomList';
+import { roomToParentsAtom } from '$state/room/roomToParents';
+import { markAsRead } from '$appUtils/notifications';
+import { useRoomsUnread } from '$state/hooks/unread';
+import { UseStateProvider } from '$components/UseStateProvider';
+import { LeaveSpacePrompt } from '$components/leave-space-prompt';
+import { copyToClipboard } from '$appUtils/dom';
+import { useClosedNavCategoriesAtom } from '$state/hooks/closedNavCategories';
+import { useStateEvent } from '$hooks/useStateEvent';
+import { Membership, StateEvent } from '$types/matrix/room';
+import { stopPropagation } from '$appUtils/keyboard';
+import { getMatrixToRoom } from '$plugins/matrix-to';
+import { getViaServers } from '$plugins/via-servers';
+import { useSetting } from '$state/hooks/settings';
+import { settingsAtom } from '$state/settings';
 import {
   getRoomNotificationMode,
   useRoomsNotificationPreferencesContext,
-} from '../../../hooks/useRoomsNotificationPreferences';
-import { useOpenSpaceSettings } from '../../../state/hooks/spaceSettings';
-import { useRoomNavigate } from '../../../hooks/useRoomNavigate';
-import { useRoomCreators } from '../../../hooks/useRoomCreators';
-import { useRoomPermissions } from '../../../hooks/useRoomPermissions';
-import { ContainerColor } from '../../../styles/ContainerColor.css';
-import { AsyncStatus, useAsyncCallback } from '../../../hooks/useAsyncCallback';
-import { BreakWord } from '../../../styles/Text.css';
-import { InviteUserPrompt } from '../../../components/invite-user-prompt';
-import { CallNavStatus } from '../../../features/room-nav/RoomCallNavStatus';
+} from '$hooks/useRoomsNotificationPreferences';
+import { useOpenSpaceSettings } from '$state/hooks/spaceSettings';
+import { useRoomNavigate } from '$hooks/useRoomNavigate';
+import { useRoomCreators } from '$hooks/useRoomCreators';
+import { useRoomPermissions } from '$hooks/useRoomPermissions';
+import { ContainerColor } from '$styles/ContainerColor.css';
+import { AsyncStatus, useAsyncCallback } from '$hooks/useAsyncCallback';
+import { BreakWord } from '$styles/Text.css';
+import { InviteUserPrompt } from '$components/invite-user-prompt';
+import { CallNavStatus } from '$features/room-nav/RoomCallNavStatus';
 import { useCallState } from '../call/CallProvider';
-import { SwipeableChatWrapper } from '../../../components/SwipeableChatWrapper';
-import { mobileOrTablet } from '../../../utils/user-agent';
+import { SwipeableChatWrapper } from '$components/SwipeableChatWrapper';
+import { mobileOrTablet } from '$appUtils/user-agent';
 import { useNavigate } from 'react-router-dom';
-import { lastVisitedRoomIdAtom } from '../../../state/room/lastRoom';
-import { SwipeableOverlayWrapper } from '../../../components/SwipeableOverlayWrapper';
+import { lastVisitedRoomIdAtom } from '$state/room/lastRoom';
+import { SwipeableOverlayWrapper } from '$components/SwipeableOverlayWrapper';
 
 type SpaceMenuProps = {
   room: Room;
@@ -355,7 +346,7 @@ export function SpaceTombstone({ roomId, replacementRoomId }: SpaceTombstoneProp
       </Box>
       <Box direction="Column" shrink="No">
         {replacementRoom?.getMyMembership() === Membership.Join ||
-          joinState.status === AsyncStatus.Success ? (
+        joinState.status === AsyncStatus.Success ? (
           <Button onClick={handleOpen} size="300" variant="Success" fill="Solid" radii="300">
             <Text size="B300">Open New Space</Text>
           </Button>
@@ -530,7 +521,9 @@ export function Space() {
                       key={vItem.index}
                       ref={virtualizer.measureElement}
                     >
-                      <div style={{ paddingTop: vItem.index === 0 ? undefined : config.space.S400 }}>
+                      <div
+                        style={{ paddingTop: vItem.index === 0 ? undefined : config.space.S400 }}
+                      >
                         <NavCategoryHeader>
                           <RoomNavCategoryButton
                             data-category-id={categoryId}
@@ -546,14 +539,21 @@ export function Space() {
                 }
 
                 return (
-                  <VirtualTile virtualItem={vItem} key={vItem.index} ref={virtualizer.measureElement}>
+                  <VirtualTile
+                    virtualItem={vItem}
+                    key={vItem.index}
+                    ref={virtualizer.measureElement}
+                  >
                     <RoomNavItem
                       room={room}
                       selected={selectedRoomId === roomId}
                       showAvatar={mDirects.has(roomId)}
                       direct={mDirects.has(roomId)}
                       linkPath={getToLink(roomId)}
-                      notificationMode={getRoomNotificationMode(notificationPreferences, room.roomId)}
+                      notificationMode={getRoomNotificationMode(
+                        notificationPreferences,
+                        room.roomId
+                      )}
                     />
                   </VirtualTile>
                 );
@@ -563,6 +563,6 @@ export function Space() {
         </PageNavContent>
         <CallNavStatus />
       </SwipeableOverlayWrapper>
-    </PageNav >
+    </PageNav>
   );
 }

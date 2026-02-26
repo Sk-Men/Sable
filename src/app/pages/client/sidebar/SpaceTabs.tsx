@@ -25,7 +25,7 @@ import {
   toRem,
 } from 'folds';
 import { useAtom, useAtomValue } from 'jotai';
-import { Room } from 'matrix-js-sdk';
+import { Room } from '$types/matrix-sdk';
 import {
   draggable,
   dropTargetForElements,
@@ -43,11 +43,11 @@ import {
   useOrphanSpaces,
   useRecursiveChildScopeFactory,
   useSpaceChildren,
-} from '../../../state/hooks/roomList';
-import { useMatrixClient } from '../../../hooks/useMatrixClient';
-import { roomToParentsAtom } from '../../../state/room/roomToParents';
-import { allRoomsAtom } from '../../../state/room-list/roomList';
-import { getSpaceLobbyPath, getSpacePath, joinPathComponent } from '../../pathUtils';
+} from '$state/hooks/roomList';
+import { useMatrixClient } from '$hooks/useMatrixClient';
+import { roomToParentsAtom } from '$state/room/roomToParents';
+import { allRoomsAtom } from '$state/room-list/roomList';
+import { getSpaceLobbyPath, getSpacePath, joinPathComponent } from '$pages/pathUtils';
 import {
   SidebarAvatar,
   SidebarItem,
@@ -57,13 +57,13 @@ import {
   SidebarStackSeparator,
   SidebarFolder,
   SidebarFolderDropTarget,
-} from '../../../components/sidebar';
-import { RoomUnreadProvider, RoomsUnreadProvider } from '../../../components/RoomUnreadProvider';
-import { useSelectedSpace } from '../../../hooks/router/useSelectedSpace';
-import { UnreadBadge } from '../../../components/unread-badge';
-import { getCanonicalAliasOrRoomId, isRoomAlias } from '../../../utils/matrix';
-import { RoomAvatar } from '../../../components/room-avatar';
-import { nameInitials, randomStr } from '../../../utils/common';
+} from '$components/sidebar';
+import { RoomUnreadProvider, RoomsUnreadProvider } from '$components/RoomUnreadProvider';
+import { useSelectedSpace } from '$hooks/router/useSelectedSpace';
+import { UnreadBadge } from '$components/unread-badge';
+import { getCanonicalAliasOrRoomId, isRoomAlias } from '$appUtils/matrix';
+import { RoomAvatar } from '$components/room-avatar';
+import { nameInitials, randomStr } from '$appUtils/common';
 import {
   ISidebarFolder,
   SidebarItems,
@@ -72,27 +72,27 @@ import {
   parseSidebar,
   sidebarItemWithout,
   useSidebarItems,
-} from '../../../hooks/useSidebarItems';
-import { AccountDataEvent } from '../../../../types/matrix/accountData';
-import { ScreenSize, useScreenSizeContext } from '../../../hooks/useScreenSize';
-import { useNavToActivePathAtom } from '../../../state/hooks/navToActivePath';
-import { useOpenedSidebarFolderAtom } from '../../../state/hooks/openedSidebarFolder';
-import { usePowerLevels } from '../../../hooks/usePowerLevels';
-import { useRoomsUnread } from '../../../state/hooks/unread';
-import { roomToUnreadAtom } from '../../../state/room/roomToUnread';
-import { markAsRead } from '../../../utils/notifications';
-import { copyToClipboard } from '../../../utils/dom';
-import { stopPropagation } from '../../../utils/keyboard';
-import { getMatrixToRoom } from '../../../plugins/matrix-to';
-import { getViaServers } from '../../../plugins/via-servers';
-import { getRoomAvatarUrl } from '../../../utils/room';
-import { useMediaAuthentication } from '../../../hooks/useMediaAuthentication';
-import { useSetting } from '../../../state/hooks/settings';
-import { settingsAtom } from '../../../state/settings';
-import { useOpenSpaceSettings } from '../../../state/hooks/spaceSettings';
-import { useRoomCreators } from '../../../hooks/useRoomCreators';
-import { useRoomPermissions } from '../../../hooks/useRoomPermissions';
-import { InviteUserPrompt } from '../../../components/invite-user-prompt';
+} from '$hooks/useSidebarItems';
+import { AccountDataEvent } from '$types/matrix/accountData';
+import { ScreenSize, useScreenSizeContext } from '$hooks/useScreenSize';
+import { useNavToActivePathAtom } from '$state/hooks/navToActivePath';
+import { useOpenedSidebarFolderAtom } from '$state/hooks/openedSidebarFolder';
+import { usePowerLevels } from '$hooks/usePowerLevels';
+import { useRoomsUnread } from '$state/hooks/unread';
+import { roomToUnreadAtom } from '$state/room/roomToUnread';
+import { markAsRead } from '$appUtils/notifications';
+import { copyToClipboard } from '$appUtils/dom';
+import { stopPropagation } from '$appUtils/keyboard';
+import { getMatrixToRoom } from '$plugins/matrix-to';
+import { getViaServers } from '$plugins/via-servers';
+import { getRoomAvatarUrl } from '$appUtils/room';
+import { useMediaAuthentication } from '$hooks/useMediaAuthentication';
+import { useSetting } from '$state/hooks/settings';
+import { settingsAtom } from '$state/settings';
+import { useOpenSpaceSettings } from '$state/hooks/spaceSettings';
+import { useRoomCreators } from '$hooks/useRoomCreators';
+import { useRoomPermissions } from '$hooks/useRoomPermissions';
+import { InviteUserPrompt } from '$components/invite-user-prompt';
 
 type SpaceMenuProps = {
   room: Room;
@@ -234,9 +234,9 @@ type SidebarDraggable = string | FolderDraggable;
 
 const useDraggableItem = (
   item: SidebarDraggable,
-  targetRef: RefObject<HTMLElement>,
+  targetRef: RefObject<HTMLElement | null>,
   onDragging: (item?: SidebarDraggable) => void,
-  dragHandleRef?: RefObject<HTMLElement>
+  dragHandleRef?: RefObject<HTMLElement | null>
 ): boolean => {
   const [dragging, setDragging] = useState(false);
 
@@ -266,7 +266,7 @@ const useDraggableItem = (
 
 const useDropTarget = (
   item: SidebarDraggable,
-  targetRef: RefObject<HTMLElement>
+  targetRef: RefObject<HTMLElement | null>
 ): Instruction | undefined => {
   const [dropState, setDropState] = useState<Instruction>();
 
@@ -314,7 +314,7 @@ const useDropTarget = (
 
 function useDropTargetInstruction<T extends InstructionType>(
   item: SidebarDraggable,
-  targetRef: RefObject<HTMLElement>,
+  targetRef: RefObject<HTMLElement | null>,
   instructionType: T
 ): T | undefined {
   const [dropState, setDropState] = useState<T>();
@@ -346,7 +346,7 @@ function useDropTargetInstruction<T extends InstructionType>(
 }
 
 const useDnDMonitor = (
-  scrollRef: RefObject<HTMLElement>,
+  scrollRef: RefObject<HTMLElement | null>,
   onDragging: (dragItem?: SidebarDraggable) => void,
   onReorder: (
     draggable: SidebarDraggable,
@@ -606,7 +606,7 @@ function ClosedSpaceFolder({
 }
 
 type SpaceTabsProps = {
-  scrollRef: RefObject<HTMLDivElement>;
+  scrollRef: RefObject<HTMLDivElement | null>;
 };
 export function SpaceTabs({ scrollRef }: SpaceTabsProps) {
   const navigate = useNavigate();

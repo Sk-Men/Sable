@@ -16,10 +16,9 @@ import {
   Input,
   color,
 } from 'folds';
-import { stopPropagation } from '../../utils/keyboard';
-import { isRoomAlias, isRoomId } from '../../utils/matrix';
-import { parseMatrixToRoom, parseMatrixToRoomEvent, testMatrixTo } from '../../plugins/matrix-to';
-import { tryDecodeURIComponent } from '../../utils/dom';
+import { stopPropagation } from '$appUtils/keyboard';
+import { isRoomAlias, isRoomId } from '$appUtils/matrix';
+import { parseMatrixToRoom, parseMatrixToRoomEvent, testMatrixTo } from '$plugins/matrix-to';
 
 type JoinAddressProps = {
   onOpen: (roomIdOrAlias: string, via?: string[], eventId?: string) => void;
@@ -43,7 +42,8 @@ export function JoinAddressPrompt({ onOpen, onCancel }: JoinAddressProps) {
     }
 
     if (testMatrixTo(address)) {
-      const decodedAddress = tryDecodeURIComponent(address);
+      const encodedAddress = address;
+      const decodedAddress = encodedAddress && decodeURIComponent(encodedAddress);
       const toRoom = parseMatrixToRoom(decodedAddress);
       if (toRoom) {
         onOpen(toRoom.roomIdOrAlias, toRoom.viaServers);

@@ -31,20 +31,20 @@ import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import FocusTrap from 'focus-trap-react';
 import { useAtomValue } from 'jotai';
 import { useQuery } from '@tanstack/react-query';
-import { MatrixClient, Method, RoomType } from 'matrix-js-sdk';
-import { Page, PageContent, PageContentCenter, PageHeader } from '../../../components/page';
-import { useMatrixClient } from '../../../hooks/useMatrixClient';
-import { RoomTopicViewer } from '../../../components/room-topic-viewer';
-import { RoomCard, RoomCardBase, RoomCardGrid } from '../../../components/room-card';
-import { ExploreServerPathSearchParams } from '../../paths';
-import { getExploreServerPath, withSearchParam } from '../../pathUtils';
+import { MatrixClient, Method, RoomType } from '$types/matrix-sdk';
+import { Page, PageContent, PageContentCenter, PageHeader } from '$components/page';
+import { useMatrixClient } from '$hooks/useMatrixClient';
+import { RoomTopicViewer } from '$components/room-topic-viewer';
+import { RoomCard, RoomCardBase, RoomCardGrid } from '$components/room-card';
+import { ExploreServerPathSearchParams } from '$pages/paths';
+import { getExploreServerPath, withSearchParam } from '$pages/pathUtils';
 import * as css from './style.css';
-import { allRoomsAtom } from '../../../state/room-list/roomList';
-import { useRoomNavigate } from '../../../hooks/useRoomNavigate';
-import { getMxIdServer } from '../../../utils/matrix';
-import { stopPropagation } from '../../../utils/keyboard';
-import { ScreenSize, useScreenSizeContext } from '../../../hooks/useScreenSize';
-import { BackRouteHandler } from '../../../components/BackRouteHandler';
+import { allRoomsAtom } from '$state/room-list/roomList';
+import { useRoomNavigate } from '$hooks/useRoomNavigate';
+import { getMxIdServer } from '$appUtils/matrix';
+import { stopPropagation } from '$appUtils/keyboard';
+import { ScreenSize, useScreenSizeContext } from '$hooks/useScreenSize';
+import { BackRouteHandler } from '$components/BackRouteHandler';
 
 const useServerSearchParams = (searchParams: URLSearchParams): ExploreServerPathSearchParams =>
   useMemo(

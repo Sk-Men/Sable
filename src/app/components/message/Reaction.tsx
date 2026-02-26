@@ -1,13 +1,13 @@
 import React from 'react';
 import { Box, Text, as } from 'folds';
 import classNames from 'classnames';
-import { MatrixClient, MatrixEvent, Room } from 'matrix-js-sdk';
+import { MatrixClient, MatrixEvent, Room } from '$types/matrix-sdk';
 import * as css from './Reaction.css';
-import { getHexcodeForEmoji, getShortcodeFor } from '../../plugins/emoji';
-import { getMemberDisplayName } from '../../utils/room';
-import { eventWithShortcode, getMxIdLocalPart, mxcUrlToHttp } from '../../utils/matrix';
+import { getHexcodeForEmoji, getShortcodeFor } from '$plugins/emoji';
+import { getMemberDisplayName } from '$appUtils/room';
+import { eventWithShortcode, getMxIdLocalPart, mxcUrlToHttp } from '$appUtils/matrix';
 import { useAtomValue } from 'jotai';
-import { nicknamesAtom } from '../../state/nicknames';
+import { nicknamesAtom } from '$state/nicknames';
 
 export const Reaction = as<
   'button',
@@ -31,8 +31,7 @@ export const Reaction = as<
       {reaction.startsWith('mxc://') ? (
         <img
           className={css.ReactionImg}
-          src={mxcUrlToHttp(mx, reaction, useAuthentication) ?? reaction
-          }
+          src={mxcUrlToHttp(mx, reaction, useAuthentication) ?? reaction}
           alt={reaction}
         />
       ) : (

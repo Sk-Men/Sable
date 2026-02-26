@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
-import { RoomJoinRulesEventContent } from 'matrix-js-sdk/lib/types';
-import { Room, RoomEvent, RoomStateEvent } from 'matrix-js-sdk';
-import { StateEvent } from '../../types/matrix/room';
+import { RoomJoinRulesEventContent } from '$types/matrix-sdk';
+import { Room, RoomEvent, RoomStateEvent } from '$types/matrix-sdk';
+import { StateEvent } from '$types/matrix/room';
 import { useStateEvent } from './useStateEvent';
 
 export const useRoomAvatar = (room: Room, dm?: boolean): string | undefined => {

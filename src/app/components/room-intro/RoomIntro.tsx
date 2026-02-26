@@ -1,22 +1,22 @@
 import React, { useCallback, useState } from 'react';
 import { Avatar, Box, Button, Spinner, Text, as } from 'folds';
-import { Room } from 'matrix-js-sdk';
+import { Room } from '$types/matrix-sdk';
 import { useAtomValue } from 'jotai';
-import { IRoomCreateContent, Membership, StateEvent } from '../../../types/matrix/room';
-import { getMemberDisplayName, getStateEvent } from '../../utils/room';
-import { nicknamesAtom } from '../../state/nicknames';
-import { useMatrixClient } from '../../hooks/useMatrixClient';
-import { getMxIdLocalPart, mxcUrlToHttp } from '../../utils/matrix';
-import { AsyncStatus, useAsyncCallback } from '../../hooks/useAsyncCallback';
-import { timeDayMonthYear, timeHourMinute } from '../../utils/time';
-import { useRoomNavigate } from '../../hooks/useRoomNavigate';
+import { IRoomCreateContent, Membership, StateEvent } from '$types/matrix/room';
+import { getMemberDisplayName, getStateEvent } from '$appUtils/room';
+import { nicknamesAtom } from '$state/nicknames';
+import { useMatrixClient } from '$hooks/useMatrixClient';
+import { getMxIdLocalPart, mxcUrlToHttp } from '$appUtils/matrix';
+import { AsyncStatus, useAsyncCallback } from '$hooks/useAsyncCallback';
+import { timeDayMonthYear, timeHourMinute } from '$appUtils/time';
+import { useRoomNavigate } from '$hooks/useRoomNavigate';
 import { RoomAvatar } from '../room-avatar';
-import { nameInitials } from '../../utils/common';
-import { useRoomAvatar, useRoomName, useRoomTopic } from '../../hooks/useRoomMeta';
-import { mDirectAtom } from '../../state/mDirectList';
-import { useMediaAuthentication } from '../../hooks/useMediaAuthentication';
-import { useSetting } from '../../state/hooks/settings';
-import { settingsAtom } from '../../state/settings';
+import { nameInitials } from '$appUtils/common';
+import { useRoomAvatar, useRoomName, useRoomTopic } from '$hooks/useRoomMeta';
+import { mDirectAtom } from '$state/mDirectList';
+import { useMediaAuthentication } from '$hooks/useMediaAuthentication';
+import { useSetting } from '$state/hooks/settings';
+import { settingsAtom } from '$state/settings';
 import { InviteUserPrompt } from '../invite-user-prompt';
 
 export type RoomIntroProps = {

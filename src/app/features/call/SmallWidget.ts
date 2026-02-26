@@ -16,7 +16,7 @@ import {
   MatrixEvent,
   MatrixEventEvent,
   RoomStateEvent,
-} from 'matrix-js-sdk';
+} from '$types/matrix-sdk';
 import {
   ClientWidgetApi,
   IRoomEvent,
@@ -41,7 +41,7 @@ export const getWidgetUrl = (
   roomId: string,
   elementCallUrl: string,
   widgetId: string,
-  setParams: any,
+  setParams: any
 ): URL => {
   const baseUrl = window.location.origin;
   const url = elementCallUrl
@@ -125,7 +125,7 @@ export class SmallWidget extends EventEmitter {
       this.mockWidget,
       WidgetKind.Room,
       true,
-      this.roomId,
+      this.roomId
     );
     this.iframe = iframe;
     this.messaging = new ClientWidgetApi(this.mockWidget, iframe, driver);
@@ -193,7 +193,7 @@ export class SmallWidget extends EventEmitter {
           // MAKE PERSISTENT HERE
           // Send the ack after the widget actually has become sticky.
         }
-      },
+      }
     );
 
     return this.messaging;
@@ -360,7 +360,7 @@ export const getWidgetData = (
   client: MatrixClient,
   roomId: string,
   currentData: object,
-  overwriteData: object,
+  overwriteData: object
 ): IWidgetData => {
   // Example: Determine E2EE based on room state if needed
   const perParticipantE2EE = true; // Default or based on logic
@@ -396,7 +396,7 @@ export const createVirtualWidget = (
   url: URL,
   waitForIframeLoad: boolean,
   data: IWidgetData,
-  roomId: string,
+  roomId: string
 ): IApp => ({
   client,
   id,

@@ -1,10 +1,10 @@
 import React from 'react';
 import { Box, Icon, IconButton, Icons, Scroll, Text } from 'folds';
 import { useAtomValue } from 'jotai';
-import { useClientConfig } from '../../../hooks/useClientConfig';
-import { RoomCard, RoomCardGrid } from '../../../components/room-card';
-import { allRoomsAtom } from '../../../state/room-list/roomList';
-import { RoomSummaryLoader } from '../../../components/RoomSummaryLoader';
+import { useClientConfig } from '$hooks/useClientConfig';
+import { RoomCard, RoomCardGrid } from '$components/room-card';
+import { allRoomsAtom } from '$state/room-list/roomList';
+import { RoomSummaryLoader } from '$components/RoomSummaryLoader';
 import {
   Page,
   PageContent,
@@ -12,12 +12,12 @@ import {
   PageHeader,
   PageHero,
   PageHeroSection,
-} from '../../../components/page';
-import { RoomTopicViewer } from '../../../components/room-topic-viewer';
+} from '$components/page';
+import { RoomTopicViewer } from '$components/room-topic-viewer';
 import * as css from './style.css';
-import { useRoomNavigate } from '../../../hooks/useRoomNavigate';
-import { ScreenSize, useScreenSizeContext } from '../../../hooks/useScreenSize';
-import { BackRouteHandler } from '../../../components/BackRouteHandler';
+import { useRoomNavigate } from '$hooks/useRoomNavigate';
+import { ScreenSize, useScreenSizeContext } from '$hooks/useScreenSize';
+import { BackRouteHandler } from '$components/BackRouteHandler';
 
 export function FeaturedRooms() {
   const { featuredCommunities } = useClientConfig();

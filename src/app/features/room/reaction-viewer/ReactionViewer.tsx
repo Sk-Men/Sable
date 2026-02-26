@@ -14,22 +14,22 @@ import {
   as,
   config,
 } from 'folds';
-import { MatrixEvent, Room, RoomMember } from 'matrix-js-sdk';
-import { Relations } from 'matrix-js-sdk/lib/models/relations';
-import { getMemberDisplayName } from '../../../utils/room';
-import { eventWithShortcode, getMxIdLocalPart } from '../../../utils/matrix';
+import { MatrixEvent, Room, RoomMember } from '$types/matrix-sdk';
+import { Relations } from '$types/matrix-sdk';
+import { getMemberDisplayName } from '$appUtils/room';
+import { eventWithShortcode, getMxIdLocalPart } from '$appUtils/matrix';
 import * as css from './ReactionViewer.css';
-import { useMatrixClient } from '../../../hooks/useMatrixClient';
-import { useRelations } from '../../../hooks/useRelations';
-import { Reaction } from '../../../components/message';
-import { getHexcodeForEmoji, getShortcodeFor } from '../../../plugins/emoji';
+import { useMatrixClient } from '$hooks/useMatrixClient';
+import { useRelations } from '$hooks/useRelations';
+import { Reaction } from '$components/message';
+import { getHexcodeForEmoji, getShortcodeFor } from '$plugins/emoji';
 import { useAtomValue } from 'jotai';
-import { nicknamesAtom } from '../../../state/nicknames';
-import { UserAvatar } from '../../../components/user-avatar';
-import { useMediaAuthentication } from '../../../hooks/useMediaAuthentication';
-import { useOpenUserRoomProfile } from '../../../state/hooks/userRoomProfile';
-import { useSpaceOptionally } from '../../../hooks/useSpace';
-import { getMouseEventCords } from '../../../utils/dom';
+import { nicknamesAtom } from '$state/nicknames';
+import { UserAvatar } from '$components/user-avatar';
+import { useMediaAuthentication } from '$hooks/useMediaAuthentication';
+import { useOpenUserRoomProfile } from '$state/hooks/userRoomProfile';
+import { useSpaceOptionally } from '$hooks/useSpace';
+import { getMouseEventCords } from '$appUtils/dom';
 
 export type ReactionViewerProps = {
   room: Room;
@@ -56,7 +56,9 @@ export const ReactionViewer = as<'div', ReactionViewerProps>(
     });
 
     const getName = (member: RoomMember) =>
-      getMemberDisplayName(room, member.userId, nicknames) ?? getMxIdLocalPart(member.userId) ?? member.userId;
+      getMemberDisplayName(room, member.userId, nicknames) ??
+      getMxIdLocalPart(member.userId) ??
+      member.userId;
 
     const getReactionsForKey = (key: string): MatrixEvent[] => {
       const reactSet = reactions.find(([k]) => k === key)?.[1];

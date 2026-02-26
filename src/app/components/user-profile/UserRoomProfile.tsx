@@ -5,32 +5,37 @@ import { useAtomValue } from 'jotai';
 import { Opts as LinkifyOpts } from 'linkifyjs';
 import { HTMLReactParserOptions } from 'html-react-parser';
 import { UserHero, UserHeroName } from './UserHero';
-import { getMxIdServer, mxcUrlToHttp } from '../../utils/matrix';
-import { getMemberAvatarMxc, getMemberDisplayName } from '../../utils/room';
-import { useMatrixClient } from '../../hooks/useMatrixClient';
-import { useMediaAuthentication } from '../../hooks/useMediaAuthentication';
-import { usePowerLevels } from '../../hooks/usePowerLevels';
-import { useRoom } from '../../hooks/useRoom';
-import { useUserPresence } from '../../hooks/useUserPresence';
+import { getMxIdServer, mxcUrlToHttp } from '$appUtils/matrix';
+import { getMemberAvatarMxc, getMemberDisplayName } from '$appUtils/room';
+import { useMatrixClient } from '$hooks/useMatrixClient';
+import { useMediaAuthentication } from '$hooks/useMediaAuthentication';
+import { usePowerLevels } from '$hooks/usePowerLevels';
+import { useRoom } from '$hooks/useRoom';
+import { useUserPresence } from '$hooks/useUserPresence';
 import { IgnoredUserAlert, MutualRoomsChip, OptionsChip, ServerChip, ShareChip } from './UserChips';
-import { useCloseUserRoomProfile } from '../../state/hooks/userRoomProfile';
+import { useCloseUserRoomProfile } from '$state/hooks/userRoomProfile';
 import { PowerChip } from './PowerChip';
 import { UserInviteAlert, UserBanAlert, UserModeration, UserKickAlert } from './UserModeration';
-import { useIgnoredUsers } from '../../hooks/useIgnoredUsers';
-import { useMembership } from '../../hooks/useMembership';
-import { Membership } from '../../../types/matrix/room';
-import { useRoomCreators } from '../../hooks/useRoomCreators';
-import { useRoomPermissions } from '../../hooks/useRoomPermissions';
-import { useMemberPowerCompare } from '../../hooks/useMemberPowerCompare';
+import { useIgnoredUsers } from '$hooks/useIgnoredUsers';
+import { useMembership } from '$hooks/useMembership';
+import { Membership } from '$types/matrix/room';
+import { useRoomCreators } from '$hooks/useRoomCreators';
+import { useRoomPermissions } from '$hooks/useRoomPermissions';
+import { useMemberPowerCompare } from '$hooks/useMemberPowerCompare';
 import { CreatorChip } from './CreatorChip';
-import { getDirectCreatePath, withSearchParam } from '../../pages/pathUtils';
-import { DirectCreateSearchParams } from '../../pages/paths';
-import { nicknamesAtom } from '../../state/nicknames';
-import { UserProfile, useUserProfile } from '../../hooks/useUserProfile';
+import { getDirectCreatePath, withSearchParam } from '$pages/pathUtils';
+import { DirectCreateSearchParams } from '$pages/paths';
+import { nicknamesAtom } from '$state/nicknames';
+import { UserProfile, useUserProfile } from '$hooks/useUserProfile';
 import { RenderBody } from '../message';
-import { factoryRenderLinkifyWithMention, getReactCustomHtmlParser, LINKIFY_OPTS, makeMentionCustomProps, renderMatrixMention } from '../../plugins/react-custom-html-parser';
-import { useSpoilerClickHandler } from '../../hooks/useSpoilerClickHandler';
-
+import {
+  factoryRenderLinkifyWithMention,
+  getReactCustomHtmlParser,
+  LINKIFY_OPTS,
+  makeMentionCustomProps,
+  renderMatrixMention,
+} from '$plugins/react-custom-html-parser';
+import { useSpoilerClickHandler } from '$hooks/useSpoilerClickHandler';
 
 const KNOWN_KEYS = [
   'moe.sable.app.bio',
@@ -41,7 +46,7 @@ const KNOWN_KEYS = [
   'm.tz',
   'moe.sable.app.name_color',
   'avatar_url',
-  'displayname'
+  'displayname',
 ];
 
 type UserExtendedSectionProps = {
@@ -50,21 +55,28 @@ type UserExtendedSectionProps = {
   linkifyOpts: LinkifyOpts;
 };
 
-function UserExtendedSection({ profile, htmlReactParserOptions, linkifyOpts }: UserExtendedSectionProps) {
-  const clamp = (str: string, len: number) => str.length > len ? `${str.slice(0, len)}...` : str;
+function UserExtendedSection({
+  profile,
+  htmlReactParserOptions,
+  linkifyOpts,
+}: UserExtendedSectionProps) {
+  const clamp = (str: string, len: number) => (str.length > len ? `${str.slice(0, len)}...` : str);
   const [showMore, setShowMore] = useState(false);
 
-  const pronouns = profile.pronouns?.map((p: any) => clamp(p.summary, 20)).join("/");
+  const pronouns = profile.pronouns?.map((p: any) => clamp(p.summary, 20)).join('/');
   const timezone = profile.timezone ? clamp(profile.timezone, 64) : null;
-  const localTime = timezone ? new Intl.DateTimeFormat([], {
-    hour: 'numeric',
-    minute: '2-digit',
-    timeZone: timezone,
-  }).format(new Date()) : null;
+  const localTime = timezone
+    ? new Intl.DateTimeFormat([], {
+        hour: 'numeric',
+        minute: '2-digit',
+        timeZone: timezone,
+      }).format(new Date())
+    : null;
 
   const bioContent = useMemo(() => {
-    let rawBio = profile.extended?.["moe.sable.app.bio"] ||
-      profile.extended?.["chat.commet.profile_bio"] ||
+    let rawBio =
+      profile.extended?.['moe.sable.app.bio'] ||
+      profile.extended?.['chat.commet.profile_bio'] ||
       profile.bio;
 
     if (!rawBio) return null;
@@ -87,11 +99,11 @@ function UserExtendedSection({ profile, htmlReactParserOptions, linkifyOpts }: U
     }
 
     return `${safetyTrim.slice(0, VISIBLE_LIMIT)}...`;
-
   }, [profile]);
 
-  const unknownFields = Object.entries(profile.extended || {}).filter(([key, value]) =>
-    !KNOWN_KEYS.includes(key) && (typeof value === 'string' || typeof value === 'number')
+  const unknownFields = Object.entries(profile.extended || {}).filter(
+    ([key, value]) =>
+      !KNOWN_KEYS.includes(key) && (typeof value === 'string' || typeof value === 'number')
   );
 
   return (
@@ -101,13 +113,17 @@ function UserExtendedSection({ profile, htmlReactParserOptions, linkifyOpts }: U
           {pronouns && (
             <Box alignItems="Center" gap="100">
               <Icon size="50" src={Icons.User} style={{ opacity: 0.5 }} />
-              <Text size="T200" priority="400">{pronouns}</Text>
+              <Text size="T200" priority="400">
+                {pronouns}
+              </Text>
             </Box>
           )}
           {localTime && (
             <Box alignItems="Center" gap="100">
               <Icon size="50" src={Icons.Clock} style={{ opacity: 0.5 }} />
-              <Text size="T200" priority="400">{localTime} ({profile.timezone})</Text>
+              <Text size="T200" priority="400">
+                {localTime} ({profile.timezone})
+              </Text>
             </Box>
           )}
         </Box>
@@ -149,17 +165,28 @@ function UserExtendedSection({ profile, htmlReactParserOptions, linkifyOpts }: U
             after={<Icon size="50" src={showMore ? Icons.ChevronTop : Icons.ChevronBottom} />}
             style={{ padding: '1rem', justifyContent: 'flex-start', width: 'fit-content' }}
           >
-            <Text size="T200" priority="400">{showMore ? "Show less" : `+ ${unknownFields.length} more info`}</Text>
+            <Text size="T200" priority="400">
+              {showMore ? 'Show less' : `+ ${unknownFields.length} more info`}
+            </Text>
           </Button>
 
           {showMore && (
-            <Box direction="Column" style={{ padding: config.space.S200, backgroundColor: 'var(--sable-surface-container)', borderRadius: config.radii.R400 }}>
+            <Box
+              direction="Column"
+              style={{
+                padding: config.space.S200,
+                backgroundColor: 'var(--sable-surface-container)',
+                borderRadius: config.radii.R400,
+              }}
+            >
               {unknownFields.map(([key, value]) => (
                 <Box key={key} direction="Column" style={{ marginBottom: config.space.S100 }}>
                   <Text size="T200" priority="400" style={{ letterSpacing: '0.05em' }}>
                     {clamp(key, 64).split('.').pop()?.replace(/_/g, ' ')}
                   </Text>
-                  <Text size="T200" priority="300">{String(clamp(value, 64))}</Text>
+                  <Text size="T200" priority="300">
+                    {String(clamp(value, 64))}
+                  </Text>
                 </Box>
               ))}
             </Box>
@@ -169,7 +196,6 @@ function UserExtendedSection({ profile, htmlReactParserOptions, linkifyOpts }: U
     </Box>
   );
 }
-
 
 type UserRoomProfileProps = {
   userId: string;
@@ -210,16 +236,18 @@ export function UserRoomProfile({ userId, initialProfile }: UserRoomProfileProps
   const presence = useUserPresence(userId);
 
   const fetchedProfile = useUserProfile(userId);
-  const extendedProfile = (fetchedProfile && Object.keys(fetchedProfile).length > 0)
-    ? fetchedProfile
-    : (initialProfile as UserProfile) || fetchedProfile;
+  const extendedProfile =
+    fetchedProfile && Object.keys(fetchedProfile).length > 0
+      ? fetchedProfile
+      : (initialProfile as UserProfile) || fetchedProfile;
 
-  const parsedBanner = typeof extendedProfile.bannerUrl === 'string'
-    ? extendedProfile.bannerUrl.replace(/^"|"$/g, '')
-    : undefined;
+  const parsedBanner =
+    typeof extendedProfile.bannerUrl === 'string'
+      ? extendedProfile.bannerUrl.replace(/^"|"$/g, '')
+      : undefined;
 
   const bannerHttpUrl = parsedBanner
-    ? mxcUrlToHttp(mx, parsedBanner, useAuthentication) ?? undefined
+    ? (mxcUrlToHttp(mx, parsedBanner, useAuthentication) ?? undefined)
     : undefined;
 
   const handleMessage = () => {
@@ -239,7 +267,13 @@ export function UserRoomProfile({ userId, initialProfile }: UserRoomProfileProps
     () => ({
       ...LINKIFY_OPTS,
       render: factoryRenderLinkifyWithMention((href) =>
-        renderMatrixMention(mx, room.roomId, href, makeMentionCustomProps(mentionClickHandler), nicknames)
+        renderMatrixMention(
+          mx,
+          room.roomId,
+          href,
+          makeMentionCustomProps(mentionClickHandler),
+          nicknames
+        )
       ),
     }),
     [mx, room, mentionClickHandler, nicknames]

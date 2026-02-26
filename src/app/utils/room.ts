@@ -1,4 +1,4 @@
-import {IconName, IconSrc} from 'folds';
+import { IconName, IconSrc } from 'folds';
 
 import {
   EventTimeline,
@@ -16,9 +16,9 @@ import {
   RelationType,
   Room,
   RoomMember,
-} from 'matrix-js-sdk';
-import {CryptoBackend} from 'matrix-js-sdk/lib/common-crypto/CryptoBackend';
-import {AccountDataEvent} from '../../types/matrix/accountData';
+} from '$types/matrix-sdk';
+import { CryptoBackend } from '$types/matrix-sdk';
+import { AccountDataEvent } from '$types/matrix/accountData';
 import {
   IRoomCreateContent,
   Membership,
@@ -28,7 +28,7 @@ import {
   RoomType,
   StateEvent,
   UnreadInfo,
-} from '../../types/matrix/room';
+} from '$types/matrix/room';
 
 export const getStateEvent = (
   room: Room,
@@ -152,9 +152,7 @@ export const getRoomToParents = (mx: MatrixClient): RoomToParents => {
 
 export const getOrphanParents = (roomToParents: RoomToParents, roomId: string): string[] => {
   const parents = getAllParents(roomToParents, roomId);
-  return Array.from(parents).filter(
-      (parentRoomId) => !roomToParents.has(parentRoomId)
-  );
+  return Array.from(parents).filter((parentRoomId) => !roomToParents.has(parentRoomId));
 };
 
 export const isMutedRule = (rule: IPushRule) =>
@@ -201,8 +199,6 @@ export const isNotificationEvent = (mEvent: MatrixEvent) => {
 
   if (mEvent.isRedacted()) return false;
   return mEvent.getRelation()?.rel_type !== 'm.replace';
-
-
 };
 
 export const roomHaveNotification = (room: Room): boolean => {
@@ -303,7 +299,8 @@ export const getRoomAvatarUrl = (
 ): string | undefined => {
   const mxcUrl = room.getMxcAvatarUrl();
   return mxcUrl
-    ? mx.mxcUrlToHttp(mxcUrl, size, size, 'crop', undefined, false, useAuthentication) ?? undefined
+    ? (mx.mxcUrlToHttp(mxcUrl, size, size, 'crop', undefined, false, useAuthentication) ??
+        undefined)
     : undefined;
 };
 

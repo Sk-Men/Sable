@@ -1,7 +1,7 @@
 /* eslint-disable react/destructuring-assignment */
 import React, { forwardRef, MouseEventHandler, useCallback, useMemo, useRef } from 'react';
-import { MatrixEvent, Room } from 'matrix-js-sdk';
-import { RoomPinnedEventsEventContent } from 'matrix-js-sdk/lib/types';
+import { MatrixEvent, Room } from '$types/matrix-sdk';
+import { RoomPinnedEventsEventContent } from '$types/matrix-sdk';
 import {
   Avatar,
   Box,
@@ -22,11 +22,11 @@ import { Opts as LinkifyOpts } from 'linkifyjs';
 import { HTMLReactParserOptions } from 'html-react-parser';
 import { useAtomValue } from 'jotai';
 import { useVirtualizer } from '@tanstack/react-virtual';
-import { useRoomPinnedEvents } from '../../../hooks/useRoomPinnedEvents';
+import { useRoomPinnedEvents } from '$hooks/useRoomPinnedEvents';
 import * as css from './RoomPinMenu.css';
-import { SequenceCard } from '../../../components/sequence-card';
-import { useRoomEvent } from '../../../hooks/useRoomEvent';
-import { useMediaAuthentication } from '../../../hooks/useMediaAuthentication';
+import { SequenceCard } from '$components/sequence-card';
+import { useRoomEvent } from '$hooks/useRoomEvent';
+import { useMediaAuthentication } from '$hooks/useMediaAuthentication';
 import {
   AvatarBase,
   DefaultPlaceholder,
@@ -40,54 +40,54 @@ import {
   Time,
   Username,
   UsernameBold,
-} from '../../../components/message';
-import { UserAvatar } from '../../../components/user-avatar';
-import { getMxIdLocalPart, mxcUrlToHttp } from '../../../utils/matrix';
-import { useMatrixClient } from '../../../hooks/useMatrixClient';
+} from '$components/message';
+import { UserAvatar } from '$components/user-avatar';
+import { getMxIdLocalPart, mxcUrlToHttp } from '$appUtils/matrix';
+import { useMatrixClient } from '$hooks/useMatrixClient';
 import {
   getEditedEvent,
   getMemberAvatarMxc,
   getMemberDisplayName,
   getStateEvent,
-} from '../../../utils/room';
-import { GetContentCallback, MessageEvent, StateEvent } from '../../../../types/matrix/room';
-import { useMentionClickHandler } from '../../../hooks/useMentionClickHandler';
-import { useSpoilerClickHandler } from '../../../hooks/useSpoilerClickHandler';
+} from '$appUtils/room';
+import { GetContentCallback, MessageEvent, StateEvent } from '$types/matrix/room';
+import { useMentionClickHandler } from '$hooks/useMentionClickHandler';
+import { useSpoilerClickHandler } from '$hooks/useSpoilerClickHandler';
 import {
   factoryRenderLinkifyWithMention,
   getReactCustomHtmlParser,
   LINKIFY_OPTS,
   makeMentionCustomProps,
   renderMatrixMention,
-} from '../../../plugins/react-custom-html-parser';
-import { RenderMatrixEvent, useMatrixEventRenderer } from '../../../hooks/useMatrixEventRenderer';
-import { RenderMessageContent } from '../../../components/RenderMessageContent';
-import { useSetting } from '../../../state/hooks/settings';
-import { settingsAtom } from '../../../state/settings';
-import * as customHtmlCss from '../../../styles/CustomHtml.css';
+} from '$plugins/react-custom-html-parser';
+import { RenderMatrixEvent, useMatrixEventRenderer } from '$hooks/useMatrixEventRenderer';
+import { RenderMessageContent } from '$components/RenderMessageContent';
+import { useSetting } from '$state/hooks/settings';
+import { settingsAtom } from '$state/settings';
+import * as customHtmlCss from '$styles/CustomHtml.css';
 import { EncryptedContent } from '../message';
-import { Image } from '../../../components/media';
-import { ImageViewer } from '../../../components/image-viewer';
-import { useRoomNavigate } from '../../../hooks/useRoomNavigate';
-import { VirtualTile } from '../../../components/virtualizer';
-import { usePowerLevelsContext } from '../../../hooks/usePowerLevels';
-import { AsyncStatus, useAsyncCallback } from '../../../hooks/useAsyncCallback';
-import { ContainerColor } from '../../../styles/ContainerColor.css';
-import { usePowerLevelTags } from '../../../hooks/usePowerLevelTags';
-import { useTheme } from '../../../hooks/useTheme';
-import { PowerIcon } from '../../../components/power';
-import colorMXID from '../../../../util/colorMXID';
-import { useIsDirectRoom } from '../../../hooks/useRoom';
-import { useRoomCreators } from '../../../hooks/useRoomCreators';
-import { useRoomPermissions } from '../../../hooks/useRoomPermissions';
+import { Image } from '$components/media';
+import { ImageViewer } from '$components/image-viewer';
+import { useRoomNavigate } from '$hooks/useRoomNavigate';
+import { VirtualTile } from '$components/virtualizer';
+import { usePowerLevelsContext } from '$hooks/usePowerLevels';
+import { AsyncStatus, useAsyncCallback } from '$hooks/useAsyncCallback';
+import { ContainerColor } from '$styles/ContainerColor.css';
+import { usePowerLevelTags } from '$hooks/usePowerLevelTags';
+import { useTheme } from '$hooks/useTheme';
+import { PowerIcon } from '$components/power';
+import colorMXID from '$util/colorMXID';
+import { useIsDirectRoom } from '$hooks/useRoom';
+import { useRoomCreators } from '$hooks/useRoomCreators';
+import { useRoomPermissions } from '$hooks/useRoomPermissions';
 import {
   GetMemberPowerTag,
   getPowerTagIconSrc,
   useAccessiblePowerTagColors,
   useGetMemberPowerTag,
-} from '../../../hooks/useMemberPowerTag';
-import { useRoomCreatorsTag } from '../../../hooks/useRoomCreatorsTag';
-import { nicknamesAtom } from '../../../state/nicknames';
+} from '$hooks/useMemberPowerTag';
+import { useRoomCreatorsTag } from '$hooks/useRoomCreatorsTag';
+import { nicknamesAtom } from '$state/nicknames';
 
 type PinnedMessageProps = {
   room: Room;
@@ -178,7 +178,8 @@ function PinnedMessage({
     );
 
   const sender = pinnedEvent.getSender()!;
-  const displayName = getMemberDisplayName(room, sender, nicknames) ?? getMxIdLocalPart(sender) ?? sender;
+  const displayName =
+    getMemberDisplayName(room, sender, nicknames) ?? getMxIdLocalPart(sender) ?? sender;
   const senderAvatarMxc = getMemberAvatarMxc(room, sender);
   const getContent = (() => pinnedEvent.getContent()) as GetContentCallback;
 
@@ -201,8 +202,8 @@ function PinnedMessage({
               userId={sender}
               src={
                 senderAvatarMxc
-                  ? mxcUrlToHttp(mx, senderAvatarMxc, useAuthentication, 48, 48, 'crop') ??
-                  undefined
+                  ? (mxcUrlToHttp(mx, senderAvatarMxc, useAuthentication, 48, 48, 'crop') ??
+                    undefined)
                   : undefined
               }
               alt={displayName}
@@ -298,7 +299,13 @@ export const RoomPinMenu = forwardRef<HTMLDivElement, RoomPinMenuProps>(
       () => ({
         ...LINKIFY_OPTS,
         render: factoryRenderLinkifyWithMention((href) =>
-          renderMatrixMention(mx, room.roomId, href, makeMentionCustomProps(mentionClickHandler), nicknames)
+          renderMatrixMention(
+            mx,
+            room.roomId,
+            href,
+            makeMentionCustomProps(mentionClickHandler),
+            nicknames
+          )
         ),
       }),
       [mx, room, mentionClickHandler, nicknames]
@@ -312,7 +319,15 @@ export const RoomPinMenu = forwardRef<HTMLDivElement, RoomPinMenuProps>(
           handleMentionClick: mentionClickHandler,
           nicknames,
         }),
-      [mx, room, linkifyOpts, mentionClickHandler, spoilerClickHandler, useAuthentication, nicknames]
+      [
+        mx,
+        room,
+        linkifyOpts,
+        mentionClickHandler,
+        spoilerClickHandler,
+        useAuthentication,
+        nicknames,
+      ]
     );
 
     const renderMatrixEvent = useMatrixEventRenderer<[MatrixEvent, string, GetContentCallback]>(

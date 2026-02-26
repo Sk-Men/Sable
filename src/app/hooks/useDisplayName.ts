@@ -1,5 +1,5 @@
 import { useAtomValue } from 'jotai';
-import type { Room } from 'matrix-js-sdk';
+import type { Room } from '$types/matrix-sdk';
 import { nicknamesAtom } from '../state/nicknames';
 import { getMemberDisplayName } from '../utils/room';
 import { getMxIdLocalPart } from '../utils/matrix';
@@ -15,4 +15,3 @@ export const useDisplayName = (userId: string, room?: Room): string => {
   }
   return nicknames[userId] ?? getMxIdLocalPart(userId) ?? userId;
 };
-

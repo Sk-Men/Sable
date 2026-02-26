@@ -4,8 +4,8 @@ import FileSaver from 'file-saver';
 import classNames from 'classnames';
 import { Box, Chip, Header, Icon, IconButton, Icons, Text, as } from 'folds';
 import * as css from './ImageViewer.css';
-import { downloadMedia } from '../../utils/matrix';
-import { useImageGestures } from '../../hooks/useImageGestures';
+import { useImageGestures } from '$hooks/useImageGestures';
+import { downloadMedia } from '$appUtils/matrix';
 
 export type ImageViewerProps = {
   alt: string;
@@ -15,15 +15,10 @@ export type ImageViewerProps = {
 
 export const ImageViewer = as<'div', ImageViewerProps>(
   ({ className, alt, src, requestClose, ...props }, ref) => {
-    const {
-      zoom,
-      pan,
-      cursor,
-      onPointerDown,
-      setZoom,
-      zoomIn,
-      zoomOut
-    } = useImageGestures(true, 0.2);
+    const { zoom, pan, cursor, onPointerDown, setZoom, zoomIn, zoomOut } = useImageGestures(
+      true,
+      0.2
+    );
 
     const handleDownload = async () => {
       const fileContent = await downloadMedia(src);

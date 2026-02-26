@@ -1,27 +1,23 @@
 import React, { useEffect, KeyboardEvent as ReactKeyboardEvent } from 'react';
 import { Editor } from 'slate';
 import { Avatar, Icon, Icons, MenuItem, Text } from 'folds';
-import { MatrixClient, Room, RoomMember } from 'matrix-js-sdk';
+import { MatrixClient, Room, RoomMember } from '$types/matrix-sdk';
 
 import { AutocompleteQuery } from './autocompleteQuery';
 import { AutocompleteMenu } from './AutocompleteMenu';
-import { useRoomMembers } from '../../../hooks/useRoomMembers';
-import { useMatrixClient } from '../../../hooks/useMatrixClient';
-import {
-  SearchItemStrGetter,
-  UseAsyncSearchOptions,
-  useAsyncSearch,
-} from '../../../hooks/useAsyncSearch';
-import { onTabPress } from '../../../utils/keyboard';
+import { useRoomMembers } from '$hooks/useRoomMembers';
+import { useMatrixClient } from '$hooks/useMatrixClient';
+import { SearchItemStrGetter, UseAsyncSearchOptions, useAsyncSearch } from '$hooks/useAsyncSearch';
+import { onTabPress } from '$appUtils/keyboard';
 import { createMentionElement, moveCursor, replaceWithElement } from '../utils';
-import { useKeyDown } from '../../../hooks/useKeyDown';
-import { getMxIdLocalPart, getMxIdServer, isUserId } from '../../../utils/matrix';
-import { getMemberDisplayName, getMemberSearchStr } from '../../../utils/room';
-import { UserAvatar } from '../../user-avatar';
-import { useMediaAuthentication } from '../../../hooks/useMediaAuthentication';
-import { Membership } from '../../../../types/matrix/room';
+import { useKeyDown } from '$hooks/useKeyDown';
+import { getMxIdLocalPart, getMxIdServer, isUserId } from '$appUtils/matrix';
+import { getMemberDisplayName, getMemberSearchStr } from '$appUtils/room';
+import { UserAvatar } from '$components/user-avatar';
+import { useMediaAuthentication } from '$hooks/useMediaAuthentication';
+import { Membership } from '$types/matrix/room';
 import { useAtomValue } from 'jotai';
-import { nicknamesAtom } from '../../../state/nicknames';
+import { nicknamesAtom } from '$state/nicknames';
 
 type MentionAutoCompleteHandler = (userId: string, name: string) => void;
 
@@ -137,7 +133,9 @@ export function UserMentionAutocomplete({
   });
 
   const getName = (member: RoomMember) =>
-    getMemberDisplayName(room, member.userId, nicknames) ?? getMxIdLocalPart(member.userId) ?? member.userId;
+    getMemberDisplayName(room, member.userId, nicknames) ??
+    getMxIdLocalPart(member.userId) ??
+    member.userId;
 
   return (
     <AutocompleteMenu headerContent={<Text size="L400">Mentions</Text>} requestClose={requestClose}>

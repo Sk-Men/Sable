@@ -79,6 +79,22 @@ export default defineConfig({
   appType: 'spa',
   publicDir: false,
   base: buildConfig.base,
+  resolve: {
+    alias: {
+      $hooks: path.resolve(__dirname, 'src/app/hooks'),
+      $plugins: path.resolve(__dirname, 'src/app/plugins'),
+      $components: path.resolve(__dirname, 'src/app/components'),
+      $features: path.resolve(__dirname, 'src/app/features'),
+      $state: path.resolve(__dirname, 'src/app/state'),
+      $styles: path.resolve(__dirname, 'src/app/styles'),
+      $appUtils: path.resolve(__dirname, 'src/app/utils'),
+      $pages: path.resolve(__dirname, 'src/app/pages'),
+      $types: path.resolve(__dirname, 'src/types'),
+      $public: path.resolve(__dirname, 'public'),
+      $util: path.resolve(__dirname, 'src/util'),
+      $client: path.resolve(__dirname, 'src/client'),
+    },
+  },
   server: {
     port: 8080,
     host: true,
@@ -100,7 +116,7 @@ export default defineConfig({
     wasm(),
     react(),
     svgr({
-      exportAsDefault: true
+      exportAsDefault: true,
     }),
     VitePWA({
       srcDir: 'src',

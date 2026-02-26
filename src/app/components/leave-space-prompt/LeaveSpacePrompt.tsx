@@ -16,10 +16,10 @@ import {
   Button,
   Spinner,
 } from 'folds';
-import { MatrixError } from 'matrix-js-sdk';
-import { useMatrixClient } from '../../hooks/useMatrixClient';
-import { AsyncStatus, useAsyncCallback } from '../../hooks/useAsyncCallback';
-import { stopPropagation } from '../../utils/keyboard';
+import { MatrixError } from '$types/matrix-sdk';
+import { useMatrixClient } from '$hooks/useMatrixClient';
+import { AsyncStatus, useAsyncCallback } from '$hooks/useAsyncCallback';
+import { stopPropagation } from '$appUtils/keyboard';
 
 type LeaveSpacePromptProps = {
   roomId: string;

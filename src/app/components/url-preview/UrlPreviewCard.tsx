@@ -1,17 +1,16 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { IPreviewUrlResponse } from 'matrix-js-sdk';
+import { IPreviewUrlResponse } from '$types/matrix-sdk';
 import { Box, Icon, IconButton, Icons, Scroll, Spinner, Text, as, color, config } from 'folds';
-import { AsyncStatus, useAsyncCallback } from '../../hooks/useAsyncCallback';
-import { useMatrixClient } from '../../hooks/useMatrixClient';
+import { AsyncStatus, useAsyncCallback } from '$hooks/useAsyncCallback';
+import { useMatrixClient } from '$hooks/useMatrixClient';
 import { UrlPreview, UrlPreviewContent, UrlPreviewDescription, UrlPreviewImg } from './UrlPreview';
 import {
   getIntersectionObserverEntry,
   useIntersectionObserver,
-} from '../../hooks/useIntersectionObserver';
+} from '$hooks/useIntersectionObserver';
 import * as css from './UrlPreviewCard.css';
-import { tryDecodeURIComponent } from '../../utils/dom';
-import { mxcUrlToHttp } from '../../utils/matrix';
-import { useMediaAuthentication } from '../../hooks/useMediaAuthentication';
+import { mxcUrlToHttp } from '$appUtils/matrix';
+import { useMediaAuthentication } from '$hooks/useMediaAuthentication';
 import { ImageViewer } from '../image-viewer';
 import { Image, Video } from '../media';
 import { ImageContent, VideoContent } from '../message';
@@ -19,7 +18,7 @@ import { ImageContent, VideoContent } from '../message';
 const linkStyles = { color: color.Success.Main };
 const TARGET_HEIGHT = 300;
 
-export const UrlPreviewCard = as<'div', { url: string; ts: number, mediaType?: string | null }>(
+export const UrlPreviewCard = as<'div', { url: string; ts: number; mediaType?: string | null }>(
   ({ url, ts, mediaType, ...props }, ref) => {
     const mx = useMatrixClient();
     const useAuthentication = useMediaAuthentication();
@@ -27,7 +26,9 @@ export const UrlPreviewCard = as<'div', { url: string; ts: number, mediaType?: s
     const isDirect = !!mediaType;
 
     const [mediaDim, setMediaDim] = useState<{ w: number; h: number } | null>(null);
-    const calculatedWidth = mediaDim ? Math.ceil((TARGET_HEIGHT * mediaDim.w) / mediaDim.h) : undefined;
+    const calculatedWidth = mediaDim
+      ? Math.ceil((TARGET_HEIGHT * mediaDim.w) / mediaDim.h)
+      : undefined;
 
     const [previewStatus, loadPreview] = useAsyncCallback(
       useCallback(() => {
@@ -42,98 +43,19 @@ export const UrlPreviewCard = as<'div', { url: string; ts: number, mediaType?: s
 
     if (previewStatus.status === AsyncStatus.Error) return null;
 
-    const renderContent = (prev: IPreviewUrlResponse | null) => {
-      const imgUrl = isDirect
-        ? url
-        : mxcUrlToHttp(mx, prev?.['og:image'] || '', useAuthentication, 256, 256, 'scale', false);
-
-      const title = prev?.['og:title'] || (isDirect ? 'Image Preview' : '');
-      const siteName = prev?.['og:site_name'];
-      const description = prev?.['og:description'];
-
-      if (isDirect) {
-        if (!imgUrl) return null;
-        if (mediaType === 'video') {
-          return (
-            <VideoContent
-              body={title}
-              mimeType="video/mp4"
-              url={imgUrl}
-              info={{} as any}
-              autoPlay
-              style={{
-                display: 'block',
-                height: TARGET_HEIGHT,
-                width: calculatedWidth ? `${calculatedWidth}px` : 'auto',
-                minWidth: calculatedWidth ? 0 : 200,
-                position: 'relative',
-              }}
-              renderVideo={(p) => (
-                <Video
-                  {...p}
-                  src={p.src || imgUrl}
-                  autoPlay
-                  muted
-                  loop
-                  controls={false}
-                  playsInline
-                  onLoadedMetadata={(e: any) => {
-                    const vid = e.target;
-                    if (vid && vid.videoWidth && vid.videoHeight) {
-                      setMediaDim({ w: vid.videoWidth, h: vid.videoHeight });
-                    }
-                    if (p.onLoadedMetadata) p.onLoadedMetadata();
-                  }}
-                  style={{
-                    width: '100%',
-                    height: '100%',
-                    display: 'block',
-                    borderRadius: 8,
-                    objectFit: 'contain',
-                  }}
-                />
-              )}
-            />
-          );
-        }
-
-        return (
-          <ImageContent
-            body={title}
-            url={imgUrl}
-            autoPlay
-            style={{
-              display: 'block',
-              height: TARGET_HEIGHT,
-              width: calculatedWidth ? `${calculatedWidth}px` : 'auto',
-              minWidth: calculatedWidth ? 0 : 100,
-              position: 'relative',
-            }}
-            renderImage={(p) => (
-              <Image
-                {...p}
-                src={p.src || imgUrl}
-                loading="lazy"
-                onLoad={(e: any) => {
-                  const img = e.target;
-                  if (img && img.naturalWidth && img.naturalHeight) {
-                    setMediaDim({ w: img.naturalWidth, h: img.naturalHeight });
-                  }
-                  if (p.onLoad) p.onLoad();
-                }}
-                style={{
-                  width: '100%',
-                  height: '100%',
-                  display: 'block',
-                  borderRadius: 8,
-                  objectFit: 'contain',
-                }}
-              />
-            )}
-            renderViewer={(p) => <ImageViewer {...p} src={p.src || imgUrl} />}
-          />
-        );
-      }
+    const renderContent = (prev: IPreviewUrlResponse) => {
+      const siteName = prev['og:site_name'];
+      const title = prev['og:title'];
+      const description = prev['og:description'];
+      const imgUrl = mxcUrlToHttp(
+        mx,
+        prev['og:image'] || '',
+        useAuthentication,
+        256,
+        256,
+        'scale',
+        false
+      );
 
       return (
         <>
@@ -164,7 +86,7 @@ export const UrlPreviewCard = as<'div', { url: string; ts: number, mediaType?: s
               priority="300"
             >
               {typeof siteName === 'string' && `${siteName} | `}
-              {tryDecodeURIComponent(url)}
+              {decodeURIComponent(url)}
             </Text>
             {title && (
               <Text truncate priority="400">
@@ -181,7 +103,6 @@ export const UrlPreviewCard = as<'div', { url: string; ts: number, mediaType?: s
       );
     };
 
-
     return (
       <UrlPreview
         {...props}
@@ -189,24 +110,41 @@ export const UrlPreviewCard = as<'div', { url: string; ts: number, mediaType?: s
         style={
           isDirect
             ? {
-              background: 'transparent',
-              border: 'none',
-              padding: 0,
-              boxShadow: 'none',
-              display: 'inline-block',
-              verticalAlign: 'middle',
-              width: calculatedWidth ? `${calculatedWidth}px` : 'max-content',
-              minWidth: 0,
-              maxWidth: '100%',
-              margin: 0,
-            }
+                background: 'transparent',
+                border: 'none',
+                padding: 0,
+                boxShadow: 'none',
+                display: 'inline-block',
+                verticalAlign: 'middle',
+                width: calculatedWidth ? `${calculatedWidth}px` : 'max-content',
+                minWidth: 0,
+                maxWidth: '100%',
+                margin: 0,
+              }
             : {
-              width: '600px',
-            }
+                width: '600px',
+              }
         }
       >
         {previewStatus.status === AsyncStatus.Success ? (
-          renderContent(previewStatus.data)
+          previewStatus.data ? (
+            renderContent(previewStatus.data)
+          ) : (
+            <UrlPreviewContent>
+              <Text
+                style={linkStyles}
+                truncate
+                as="a"
+                href={url}
+                target="_blank"
+                rel="noreferrer"
+                size="T200"
+                priority="300"
+              >
+                {decodeURIComponent(url)}
+              </Text>
+            </UrlPreviewContent>
+          )
         ) : (
           <Box grow="Yes" alignItems="Center" justifyContent="Center">
             <Spinner variant="Secondary" size="400" />

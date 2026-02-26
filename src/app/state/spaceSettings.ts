@@ -7,7 +7,7 @@ export enum SpaceSettingsPage {
   EmojisStickersPage,
   DeveloperToolsPage,
   // Sable pages
-  CosmeticsPage
+  CosmeticsPage,
 }
 
 export type SpaceSettingsState = {

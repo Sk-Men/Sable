@@ -1,34 +1,34 @@
 import { useAtomValue, useSetAtom } from 'jotai';
 import React, { ReactNode, useCallback, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { RoomEvent, RoomEventHandlerMap } from 'matrix-js-sdk';
-import { roomToUnreadAtom, unreadEqual, unreadInfoToUnread } from '../../state/room/roomToUnread';
-import LogoSVG from '../../../../public/res/svg/cinny.svg';
-import LogoUnreadSVG from '../../../../public/res/svg/cinny-unread.svg';
-import LogoHighlightSVG from '../../../../public/res/svg/cinny-highlight.svg';
-import NotificationSound from '../../../../public/sound/notification.ogg';
-import InviteSound from '../../../../public/sound/invite.ogg';
-import { notificationPermission, setFavicon } from '../../utils/dom';
-import { useSetting } from '../../state/hooks/settings';
-import { settingsAtom } from '../../state/settings';
-import { nicknamesAtom } from '../../state/nicknames';
-import { allInvitesAtom } from '../../state/room-list/inviteList';
-import { usePreviousValue } from '../../hooks/usePreviousValue';
-import { useMatrixClient } from '../../hooks/useMatrixClient';
+import { RoomEvent, RoomEventHandlerMap } from '$types/matrix-sdk';
+import { roomToUnreadAtom, unreadEqual, unreadInfoToUnread } from '$state/room/roomToUnread';
+import LogoSVG from '$public/res/svg/cinny.svg';
+import LogoUnreadSVG from '$public/res/svg/cinny-unread.svg';
+import LogoHighlightSVG from '$public/res/svg/cinny-highlight.svg';
+import NotificationSound from '$public/sound/notification.ogg';
+import InviteSound from '$public/sound/invite.ogg';
+import { notificationPermission, setFavicon } from '$appUtils/dom';
+import { useSetting } from '$state/hooks/settings';
+import { settingsAtom } from '$state/settings';
+import { nicknamesAtom } from '$state/nicknames';
+import { allInvitesAtom } from '$state/room-list/inviteList';
+import { usePreviousValue } from '$hooks/usePreviousValue';
+import { useMatrixClient } from '$hooks/useMatrixClient';
 import { getInboxInvitesPath } from '../pathUtils';
 import {
   getMemberDisplayName,
   getNotificationType,
   getUnreadInfo,
   isNotificationEvent,
-} from '../../utils/room';
-import { NotificationType, UnreadInfo } from '../../../types/matrix/room';
-import { getMxIdLocalPart, mxcUrlToHttp } from '../../utils/matrix';
-import { useSelectedRoom } from '../../hooks/router/useSelectedRoom';
-import { useInboxNotificationsSelected } from '../../hooks/router/useInbox';
-import { useMediaAuthentication } from '../../hooks/useMediaAuthentication';
+} from '$appUtils/room';
+import { NotificationType, UnreadInfo } from '$types/matrix/room';
+import { getMxIdLocalPart, mxcUrlToHttp } from '$appUtils/matrix';
+import { useSelectedRoom } from '$hooks/router/useSelectedRoom';
+import { useInboxNotificationsSelected } from '$hooks/router/useInbox';
+import { useMediaAuthentication } from '$hooks/useMediaAuthentication';
 import { BackgroundNotifications } from './BackgroundNotifications';
-import { pendingNotificationAtom } from '../../state/sessions';
+import { pendingNotificationAtom } from '$state/sessions';
 
 function SystemEmojiFeature() {
   const [twitterEmoji] = useSetting(settingsAtom, 'twitterEmoji');
@@ -228,9 +228,12 @@ function MessageNotifications() {
         notify({
           roomName: room.name ?? 'Unknown',
           roomAvatar: avatarMxc
-            ? mxcUrlToHttp(mx, avatarMxc, useAuthentication, 96, 96, 'crop') ?? undefined
+            ? (mxcUrlToHttp(mx, avatarMxc, useAuthentication, 96, 96, 'crop') ?? undefined)
             : undefined,
-          username: getMemberDisplayName(room, sender, nicknamesRef.current) ?? getMxIdLocalPart(sender) ?? sender,
+          username:
+            getMemberDisplayName(room, sender, nicknamesRef.current) ??
+            getMxIdLocalPart(sender) ??
+            sender,
           roomId: room.roomId,
           eventId,
         });

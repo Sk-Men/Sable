@@ -1,17 +1,13 @@
 import React, { ReactNode, useEffect } from 'react';
 import { Box, Chip, Icon, IconButton, Icons, Text, color, config, toRem } from 'folds';
 import { UploadCard, UploadCardError, UploadCardProgress } from './UploadCard';
-import { UploadStatus, UploadSuccess, useBindUploadAtom } from '../../state/upload';
-import { useMatrixClient } from '../../hooks/useMatrixClient';
-import { TUploadContent } from '../../utils/matrix';
-import { bytesToSize, getFileTypeIcon } from '../../utils/common';
-import {
-  roomUploadAtomFamily,
-  TUploadItem,
-  TUploadMetadata,
-} from '../../state/room/roomInputDrafts';
-import { useObjectURL } from '../../hooks/useObjectURL';
-import { useMediaConfig } from '../../hooks/useMediaConfig';
+import { UploadStatus, UploadSuccess, useBindUploadAtom } from '$state/upload';
+import { useMatrixClient } from '$hooks/useMatrixClient';
+import { TUploadContent } from '$appUtils/matrix';
+import { bytesToSize, getFileTypeIcon } from '$appUtils/common';
+import { roomUploadAtomFamily, TUploadItem, TUploadMetadata } from '$state/room/roomInputDrafts';
+import { useObjectURL } from '$hooks/useObjectURL';
+import { useMediaConfig } from '$hooks/useMediaConfig';
 
 type PreviewImageProps = {
   fileItem: TUploadItem;

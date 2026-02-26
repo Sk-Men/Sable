@@ -12,13 +12,10 @@ import {
   Text,
 } from 'folds';
 import FocusTrap from 'focus-trap-react';
-import { Room } from 'matrix-js-sdk';
+import { Room } from '$types/matrix-sdk';
 
 import * as css from './IntegrationManager.css';
-import {
-  useIntegrationManager,
-  buildIntegrationManagerUrl,
-} from '../../hooks/useIntegrationManager';
+import { useIntegrationManager, buildIntegrationManagerUrl } from '$hooks/useIntegrationManager';
 
 interface IntegrationManagerProps {
   room: Room;
@@ -151,4 +148,3 @@ export function IntegrationManager({ room, open, onClose }: IntegrationManagerPr
     </Overlay>
   );
 }
-

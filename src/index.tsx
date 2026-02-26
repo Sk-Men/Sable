@@ -1,7 +1,12 @@
-/* eslint-disable import/first */
 import React from 'react';
 import { createRoot } from 'react-dom/client';
 import { enableMapSet } from 'immer';
+import '@fontsource-variable/nunito';
+import '@fontsource-variable/nunito/wght-italic.css';
+import '@fontsource/space-mono/400.css';
+import '@fontsource/space-mono/700.css';
+import '@fontsource/space-mono/400-italic.css';
+import '@fontsource/space-mono/700-italic.css';
 import 'folds/dist/style.css';
 import { configClass, varsClass } from 'folds';
 
@@ -18,7 +23,12 @@ import App from './app/pages/App';
 // import i18n (needs to be bundled ;))
 import './app/i18n';
 import { pushSessionToSW } from './sw-session';
-import { getFallbackSession, MATRIX_SESSIONS_KEY, Sessions, ACTIVE_SESSION_KEY } from './app/state/sessions';
+import {
+  getFallbackSession,
+  MATRIX_SESSIONS_KEY,
+  Sessions,
+  ACTIVE_SESSION_KEY,
+} from './app/state/sessions';
 import { getLocalStorageItem } from './app/state/utils/atomWithLocalStorage';
 
 document.body.classList.add(configClass, varsClass);
@@ -34,15 +44,18 @@ if ('serviceWorker' in navigator) {
     // Use the active session from the new multi-session store, fall back to legacy
     const sessions = getLocalStorageItem<Sessions>(MATRIX_SESSIONS_KEY, []);
     const activeId = getLocalStorageItem<string | undefined>(ACTIVE_SESSION_KEY, undefined);
-    const active = sessions.find((s) => s.userId === activeId) ?? sessions[0] ?? getFallbackSession();
+    const active =
+      sessions.find((s) => s.userId === activeId) ?? sessions[0] ?? getFallbackSession();
     pushSessionToSW(active?.baseUrl, active?.accessToken);
   };
 
-  navigator.serviceWorker.register(swUrl).then(sendSessionToSW);
-  navigator.serviceWorker.ready.then(sendSessionToSW);
+  void navigator.serviceWorker.register(swUrl).then(sendSessionToSW);
+  void navigator.serviceWorker.ready.then(sendSessionToSW);
 
   navigator.serviceWorker.addEventListener('message', (ev) => {
-    const { type } = ev.data ?? {};
+    const data: unknown = ev.data;
+    if (!data || typeof data !== 'object') return;
+    const { type } = data as { type?: unknown };
 
     if (type === 'requestSession') {
       sendSessionToSW();
@@ -74,8 +87,7 @@ const mountApp = () => {
   const rootContainer = document.getElementById('root');
 
   if (rootContainer === null) {
-    console.error('Root container element not found!');
-    return;
+    throw new Error('Root container element not found!');
   }
 
   const root = createRoot(rootContainer);

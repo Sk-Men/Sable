@@ -24,7 +24,7 @@ import { RenderElement, RenderLeaf } from './Elements';
 import { CustomElement } from './slate';
 import * as css from './Editor.css';
 import { toggleKeyboardShortcut } from './keyboard';
-import { mobileOrTablet } from '../../utils/user-agent';
+import { mobileOrTablet } from '$appUtils/user-agent';
 
 const initialValue: CustomElement[] = [
   {
@@ -74,7 +74,7 @@ type CustomEditorProps = {
   onChange?: EditorChangeHandler;
   onPaste?: ClipboardEventHandler;
   className?: string;
-  variant?: "Surface" | "SurfaceVariant" | "Background";
+  variant?: 'Surface' | 'SurfaceVariant' | 'Background';
 };
 export const CustomEditor = forwardRef<HTMLDivElement, CustomEditorProps>(
   (
@@ -92,7 +92,7 @@ export const CustomEditor = forwardRef<HTMLDivElement, CustomEditorProps>(
       onChange,
       onPaste,
       className,
-      variant = "SurfaceVariant",
+      variant = 'SurfaceVariant',
     },
     ref
   ) => {
@@ -159,7 +159,9 @@ export const CustomEditor = forwardRef<HTMLDivElement, CustomEditorProps>(
                 onKeyUp={onKeyUp}
                 onPaste={onPaste}
                 // keeps focus after pressing send.
-                onBlur={() => { if (mobileOrTablet()) ReactEditor.focus(editor); }}
+                onBlur={() => {
+                  if (mobileOrTablet()) ReactEditor.focus(editor);
+                }}
               />
             </Scroll>
             {after && (

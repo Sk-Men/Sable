@@ -16,29 +16,29 @@ import {
   Icons,
 } from 'folds';
 import FocusTrap from 'focus-trap-react';
-import { MatrixError, Method } from 'matrix-js-sdk';
-import { RoomTombstoneEventContent } from 'matrix-js-sdk/lib/types';
-import { SequenceCard } from '../../../components/sequence-card';
-import { SequenceCardStyle } from '../../room-settings/styles.css';
-import { SettingTile } from '../../../components/setting-tile';
-import { useRoom } from '../../../hooks/useRoom';
-import { AsyncStatus, useAsyncCallback } from '../../../hooks/useAsyncCallback';
-import { IRoomCreateContent, StateEvent } from '../../../../types/matrix/room';
-import { useMatrixClient } from '../../../hooks/useMatrixClient';
-import { useStateEvent } from '../../../hooks/useStateEvent';
-import { useRoomNavigate } from '../../../hooks/useRoomNavigate';
-import { useCapabilities } from '../../../hooks/useCapabilities';
-import { stopPropagation } from '../../../utils/keyboard';
-import { RoomPermissionsAPI } from '../../../hooks/useRoomPermissions';
+import { MatrixError, Method } from '$types/matrix-sdk';
+import { RoomTombstoneEventContent } from '$types/matrix-sdk';
+import { SequenceCard } from '$components/sequence-card';
+import { SequenceCardStyle } from '$features/room-settings/styles.css';
+import { SettingTile } from '$components/setting-tile';
+import { useRoom } from '$hooks/useRoom';
+import { AsyncStatus, useAsyncCallback } from '$hooks/useAsyncCallback';
+import { IRoomCreateContent, StateEvent } from '$types/matrix/room';
+import { useMatrixClient } from '$hooks/useMatrixClient';
+import { useStateEvent } from '$hooks/useStateEvent';
+import { useRoomNavigate } from '$hooks/useRoomNavigate';
+import { useCapabilities } from '$hooks/useCapabilities';
+import { stopPropagation } from '$appUtils/keyboard';
+import { RoomPermissionsAPI } from '$hooks/useRoomPermissions';
 import {
   AdditionalCreatorInput,
   RoomVersionSelector,
   useAdditionalCreators,
-} from '../../../components/create-room';
-import { useAlive } from '../../../hooks/useAlive';
-import { creatorsSupported } from '../../../utils/matrix';
-import { useRoomCreators } from '../../../hooks/useRoomCreators';
-import { BreakWord } from '../../../styles/Text.css';
+} from '$components/create-room';
+import { useAlive } from '$hooks/useAlive';
+import { creatorsSupported } from '$appUtils/matrix';
+import { useRoomCreators } from '$hooks/useRoomCreators';
+import { BreakWord } from '$styles/Text.css';
 
 function RoomUpgradeDialog({ requestClose }: { requestClose: () => void }) {
   const mx = useMatrixClient();

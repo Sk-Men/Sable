@@ -23,10 +23,10 @@ import {
 import FocusTrap from 'focus-trap-react';
 import FileSaver from 'file-saver';
 import * as css from './PdfViewer.css';
-import { AsyncStatus } from '../../hooks/useAsyncCallback';
-import { createPage, usePdfDocumentLoader, usePdfJSLoader } from '../../plugins/pdfjs-dist';
-import { stopPropagation } from '../../utils/keyboard';
-import { useImageGestures } from '../../hooks/useImageGestures';
+import { AsyncStatus } from '$hooks/useAsyncCallback';
+import { useImageGestures } from '$hooks/useImageGestures';
+import { createPage, usePdfDocumentLoader, usePdfJSLoader } from '$plugins/pdfjs-dist';
+import { stopPropagation } from '$appUtils/keyboard';
 
 export type PdfViewerProps = {
   name: string;
@@ -182,13 +182,10 @@ export const PdfViewer = as<'div', PdfViewerProps>(
               style={{
                 width: '100%',
                 height: '100%',
-                touchAction: 'pan-x pan-y'
+                touchAction: 'pan-x pan-y',
               }}
             >
-              <Box
-                style={{ minWidth: '100%', minHeight: '100%' }}
-                onPointerDown={onPointerDown}
-              >
+              <Box style={{ minWidth: '100%', minHeight: '100%' }} onPointerDown={onPointerDown}>
                 <div className={css.PdfViewerContent} ref={containerRef} />
               </Box>
             </Scroll>

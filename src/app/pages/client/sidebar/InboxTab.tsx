@@ -7,18 +7,18 @@ import {
   SidebarItem,
   SidebarItemBadge,
   SidebarItemTooltip,
-} from '../../../components/sidebar';
-import { allInvitesAtom } from '../../../state/room-list/inviteList';
+} from '$components/sidebar';
+import { allInvitesAtom } from '$state/room-list/inviteList';
 import {
   getInboxInvitesPath,
   getInboxNotificationsPath,
   getInboxPath,
   joinPathComponent,
-} from '../../pathUtils';
-import { useInboxSelected } from '../../../hooks/router/useInbox';
-import { UnreadBadge } from '../../../components/unread-badge';
-import { ScreenSize, useScreenSizeContext } from '../../../hooks/useScreenSize';
-import { useNavToActivePathAtom } from '../../../state/hooks/navToActivePath';
+} from '$pages/pathUtils';
+import { useInboxSelected } from '$hooks/router/useInbox';
+import { UnreadBadge } from '$components/unread-badge';
+import { ScreenSize, useScreenSizeContext } from '$hooks/useScreenSize';
+import { useNavToActivePathAtom } from '$state/hooks/navToActivePath';
 
 export function InboxTab() {
   const screenSize = useScreenSizeContext();

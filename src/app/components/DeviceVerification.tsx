@@ -3,9 +3,9 @@ import {
   VerificationPhase,
   VerificationRequest,
   Verifier,
-} from 'matrix-js-sdk/lib/crypto-api';
+} from '$types/matrix-sdk';
 import React, { CSSProperties, useCallback, useEffect, useState } from 'react';
-import { VerificationMethod } from 'matrix-js-sdk/lib/types';
+import { VerificationMethod } from '$types/matrix-sdk';
 import {
   Box,
   Button,

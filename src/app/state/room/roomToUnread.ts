@@ -1,4 +1,4 @@
-import produce from 'immer';
+import { produce } from 'immer';
 import { atom, useSetAtom } from 'jotai';
 import {
   IRoomTimelineData,
@@ -7,8 +7,8 @@ import {
   Room,
   RoomEvent,
   SyncState,
-} from 'matrix-js-sdk';
-import { ReceiptContent, ReceiptType } from 'matrix-js-sdk/lib/@types/read_receipts';
+} from '$types/matrix-sdk';
+import { ReceiptContent, ReceiptType } from '$types/matrix-sdk';
 import { useCallback, useEffect } from 'react';
 import {
   Membership,
@@ -17,18 +17,18 @@ import {
   UnreadInfo,
   Unread,
   StateEvent,
-} from '../../../types/matrix/room';
+} from '$types/matrix/room';
 import {
   getAllParents,
   getNotificationType,
   getUnreadInfo,
   getUnreadInfos,
   isNotificationEvent,
-} from '../../utils/room';
+} from '$appUtils/room';
 import { roomToParentsAtom } from './roomToParents';
-import { useStateEventCallback } from '../../hooks/useStateEventCallback';
-import { useSyncState } from '../../hooks/useSyncState';
-import { useRoomsNotificationPreferencesContext } from '../../hooks/useRoomsNotificationPreferences';
+import { useStateEventCallback } from '$hooks/useStateEventCallback';
+import { useSyncState } from '$hooks/useSyncState';
+import { useRoomsNotificationPreferencesContext } from '$hooks/useRoomsNotificationPreferences';
 
 export type RoomToUnreadAction =
   | {

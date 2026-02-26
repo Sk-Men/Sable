@@ -1,6 +1,6 @@
 import { Descendant, Editor, Text } from 'slate';
-import { MatrixClient } from 'matrix-js-sdk';
-import { sanitizeText } from '../../utils/sanitize';
+import { MatrixClient } from '$types/matrix-sdk';
+import { sanitizeText } from '$appUtils/sanitize';
 import { BlockType } from './types';
 import { CustomElement } from './slate';
 import {
@@ -8,10 +8,10 @@ import {
   parseInlineMD,
   unescapeMarkdownBlockSequences,
   unescapeMarkdownInlineSequences,
-} from '../../plugins/markdown';
-import { findAndReplace } from '../../utils/findAndReplace';
-import { sanitizeForRegex } from '../../utils/regex';
-import { getCanonicalAliasOrRoomId, isUserId } from '../../utils/matrix';
+} from '$plugins/markdown';
+import { findAndReplace } from '$appUtils/findAndReplace';
+import { sanitizeForRegex } from '$appUtils/regex';
+import { getCanonicalAliasOrRoomId, isUserId } from '$appUtils/matrix';
 
 export type OutputOptions = {
   allowTextFormatting?: boolean;
@@ -215,7 +215,7 @@ export const getMentions = (mx: MatrixClient, roomId: string, editor: Editor): M
       if (node.name === '@room') {
         mentionData.room = true;
       }
-      
+
       if (isUserId(node.id) && node.id !== mx.getUserId()) {
         mentionData.users.add(node.id);
       }

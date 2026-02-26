@@ -1,5 +1,5 @@
 import { ReactNode } from 'react';
-import { CryptoApi } from 'matrix-js-sdk/lib/crypto-api';
+import { CryptoApi } from '$types/matrix-sdk';
 import {
   useDeviceVerificationStatus,
   VerificationStatus,

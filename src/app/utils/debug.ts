@@ -24,4 +24,3 @@ export const createLogger = (namespace: string) => ({
   warn: (...args: unknown[]) => fmt(namespace, 'warn', ...args),
   error: (...args: unknown[]) => fmt(namespace, 'error', ...args),
 });
-

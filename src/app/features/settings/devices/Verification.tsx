@@ -19,22 +19,22 @@ import {
   MenuItem,
 } from 'folds';
 import FocusTrap from 'focus-trap-react';
-import { CryptoApi, VerificationRequest } from 'matrix-js-sdk/lib/crypto-api';
-import { VerificationStatus } from '../../../hooks/useDeviceVerificationStatus';
-import { InfoCard } from '../../../components/info-card';
-import { ManualVerificationTile } from '../../../components/ManualVerification';
-import { SecretStorageKeyContent } from '../../../../types/matrix/accountData';
-import { AsyncState, AsyncStatus, useAsync } from '../../../hooks/useAsyncCallback';
-import { useMatrixClient } from '../../../hooks/useMatrixClient';
-import { DeviceVerification } from '../../../components/DeviceVerification';
+import { CryptoApi, VerificationRequest } from '$types/matrix-sdk';
+import { VerificationStatus } from '$hooks/useDeviceVerificationStatus';
+import { InfoCard } from '$components/info-card';
+import { ManualVerificationTile } from '$components/ManualVerification';
+import { SecretStorageKeyContent } from '$types/matrix/accountData';
+import { AsyncState, AsyncStatus, useAsync } from '$hooks/useAsyncCallback';
+import { useMatrixClient } from '$hooks/useMatrixClient';
+import { DeviceVerification } from '$components/DeviceVerification';
 import {
   DeviceVerificationReset,
   DeviceVerificationSetup,
-} from '../../../components/DeviceVerificationSetup';
-import { stopPropagation } from '../../../utils/keyboard';
-import { useAuthMetadata } from '../../../hooks/useAuthMetadata';
-import { withSearchParam } from '../../../pages/pathUtils';
-import { useAccountManagementActions } from '../../../hooks/useAccountManagement';
+} from '$components/DeviceVerificationSetup';
+import { stopPropagation } from '$appUtils/keyboard';
+import { useAuthMetadata } from '$hooks/useAuthMetadata';
+import { withSearchParam } from '$pages/pathUtils';
+import { useAccountManagementActions } from '$hooks/useAccountManagement';
 
 type VerificationStatusBadgeProps = {
   verificationStatus: VerificationStatus;

@@ -1,8 +1,15 @@
-import React, { KeyboardEventHandler, MouseEventHandler, useCallback, useMemo, useRef, useState } from 'react';
+import React, {
+  KeyboardEventHandler,
+  MouseEventHandler,
+  useCallback,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { useNavigate } from 'react-router-dom';
 import FocusTrap from 'focus-trap-react';
 import { isKeyHotkey } from 'is-hotkey';
-import { Room } from 'matrix-js-sdk';
+import { Room } from '$types/matrix-sdk';
 import {
   PopOut,
   Menu,
@@ -20,28 +27,28 @@ import {
   Scroll,
   Avatar,
 } from 'folds';
-import { useMatrixClient } from '../../hooks/useMatrixClient';
-import { getMxIdServer } from '../../utils/matrix';
-import { useCloseUserRoomProfile } from '../../state/hooks/userRoomProfile';
-import { stopPropagation } from '../../utils/keyboard';
-import { copyToClipboard } from '../../utils/dom';
-import { getExploreServerPath } from '../../pages/pathUtils';
-import { AsyncStatus, useAsyncCallback } from '../../hooks/useAsyncCallback';
-import { factoryRoomIdByAtoZ } from '../../utils/sort';
-import { useMutualRooms, useMutualRoomsSupport } from '../../hooks/useMutualRooms';
-import { useRoomNavigate } from '../../hooks/useRoomNavigate';
-import { useDirectRooms } from '../../pages/client/direct/useDirectRooms';
-import { useMediaAuthentication } from '../../hooks/useMediaAuthentication';
-import { useAllJoinedRoomsSet, useGetRoom } from '../../hooks/useGetRoom';
+import { useMatrixClient } from '$hooks/useMatrixClient';
+import { getMxIdServer } from '$appUtils/matrix';
+import { useCloseUserRoomProfile } from '$state/hooks/userRoomProfile';
+import { stopPropagation } from '$appUtils/keyboard';
+import { copyToClipboard } from '$appUtils/dom';
+import { getExploreServerPath } from '$pages/pathUtils';
+import { AsyncStatus, useAsyncCallback } from '$hooks/useAsyncCallback';
+import { factoryRoomIdByAtoZ } from '$appUtils/sort';
+import { useMutualRooms, useMutualRoomsSupport } from '$hooks/useMutualRooms';
+import { useRoomNavigate } from '$hooks/useRoomNavigate';
+import { useDirectRooms } from '$pages/client/direct/useDirectRooms';
+import { useMediaAuthentication } from '$hooks/useMediaAuthentication';
+import { useAllJoinedRoomsSet, useGetRoom } from '$hooks/useGetRoom';
 import { RoomAvatar, RoomIcon } from '../room-avatar';
-import { getDirectRoomAvatarUrl, getRoomAvatarUrl } from '../../utils/room';
-import { nameInitials } from '../../utils/common';
-import { getMatrixToUser } from '../../plugins/matrix-to';
-import { useTimeoutToggle } from '../../hooks/useTimeoutToggle';
-import { useIgnoredUsers } from '../../hooks/useIgnoredUsers';
+import { getDirectRoomAvatarUrl, getRoomAvatarUrl } from '$appUtils/room';
+import { nameInitials } from '$appUtils/common';
+import { getMatrixToUser } from '$plugins/matrix-to';
+import { useTimeoutToggle } from '$hooks/useTimeoutToggle';
+import { useIgnoredUsers } from '$hooks/useIgnoredUsers';
 import { CutoutCard } from '../cutout-card';
 import { SettingTile } from '../setting-tile';
-import { useNickname, useSetNickname } from '../../hooks/useNickname';
+import { useNickname, useSetNickname } from '$hooks/useNickname';
 
 export function ServerChip({ server }: { server: string }) {
   const mx = useMatrixClient();
@@ -498,7 +505,11 @@ export function OptionsChip({ userId }: { userId: string }) {
           <Menu>
             <div style={{ padding: config.space.S100 }}>
               {editingNick ? (
-                <Box direction="Column" gap="100" style={{ padding: `${config.space.S100} ${config.space.S200}` }}>
+                <Box
+                  direction="Column"
+                  gap="100"
+                  style={{ padding: `${config.space.S100} ${config.space.S200}` }}
+                >
                   <Text size="L400">Nickname</Text>
                   <input
                     ref={nickInputRef}
@@ -518,11 +529,26 @@ export function OptionsChip({ userId }: { userId: string }) {
                     }}
                   />
                   <Box gap="200">
-                    <MenuItem size="300" radii="300" variant="Success" fill="None" onClick={handleSaveNick}>
+                    <MenuItem
+                      size="300"
+                      radii="300"
+                      variant="Success"
+                      fill="None"
+                      onClick={handleSaveNick}
+                    >
                       <Text size="B300">Save</Text>
                     </MenuItem>
                     {currentNick && (
-                      <MenuItem size="300" radii="300" variant="Critical" fill="None" onClick={() => { setNickname(userId, undefined); close(); }}>
+                      <MenuItem
+                        size="300"
+                        radii="300"
+                        variant="Critical"
+                        fill="None"
+                        onClick={() => {
+                          setNickname(userId, undefined);
+                          close();
+                        }}
+                      >
                         <Text size="B300">Clear</Text>
                       </MenuItem>
                     )}

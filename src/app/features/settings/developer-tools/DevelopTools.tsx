@@ -1,17 +1,14 @@
 import React, { useCallback, useState } from 'react';
 import { Box, Text, IconButton, Icon, Icons, Scroll, Switch, Button } from 'folds';
-import { Page, PageContent, PageHeader } from '../../../components/page';
-import { SequenceCard } from '../../../components/sequence-card';
+import { Page, PageContent, PageHeader } from '$components/page';
+import { SequenceCard } from '$components/sequence-card';
 import { SequenceCardStyle } from '../styles.css';
-import { SettingTile } from '../../../components/setting-tile';
-import { useSetting } from '../../../state/hooks/settings';
-import { settingsAtom } from '../../../state/settings';
-import { useMatrixClient } from '../../../hooks/useMatrixClient';
-import {
-  AccountDataEditor,
-  AccountDataSubmitCallback,
-} from '../../../components/AccountDataEditor';
-import { copyToClipboard } from '../../../utils/dom';
+import { SettingTile } from '$components/setting-tile';
+import { useSetting } from '$state/hooks/settings';
+import { settingsAtom } from '$state/settings';
+import { useMatrixClient } from '$hooks/useMatrixClient';
+import { AccountDataEditor, AccountDataSubmitCallback } from '$components/AccountDataEditor';
+import { copyToClipboard } from '$appUtils/dom';
 import { AccountData } from './AccountData';
 
 type DeveloperToolsProps = {
@@ -25,7 +22,8 @@ export function DeveloperTools({ requestClose }: DeveloperToolsProps) {
 
   const submitAccountData: AccountDataSubmitCallback = useCallback(
     async (type, content) => {
-      await mx.setAccountData(type, content);
+      // TODO: remove cast once account data typing is unified.
+      await mx.setAccountData(type as never, content as never);
     },
     [mx]
   );
@@ -34,7 +32,12 @@ export function DeveloperTools({ requestClose }: DeveloperToolsProps) {
     return (
       <AccountDataEditor
         type={accountDataType ?? undefined}
-        content={accountDataType ? mx.getAccountData(accountDataType)?.getContent() : undefined}
+        content={
+          accountDataType
+            ? // TODO: remove cast once account data typing is unified.
+              mx.getAccountData(accountDataType as never)?.getContent()
+            : undefined
+        }
         submitChange={submitAccountData}
         requestClose={() => setAccountDataType(undefined)}
       />

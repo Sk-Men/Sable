@@ -1,7 +1,7 @@
 import React from 'react';
 import { Box, Button, Icon, Icons, Text, config, toRem } from 'folds';
-import { Page, PageHero, PageHeroSection } from '../../components/page';
-import CinnySVG from '../../../../public/res/svg/cinny.svg';
+import { Page, PageHero, PageHeroSection } from '$components/page';
+import CinnySVG from '$public/res/svg/cinny.svg';
 
 export function WelcomePage() {
   return (
@@ -19,11 +19,7 @@ export function WelcomePage() {
             subTitle={
               <span>
                 Yet another matrix client fork.{' '}
-                <a
-                  href="https://github.com/7w1/sable"
-                  target="_blank"
-                  rel="noreferrer noopener"
-                >
+                <a href="https://github.com/7w1/sable" target="_blank" rel="noreferrer noopener">
                   v1.1.7
                 </a>
               </span>

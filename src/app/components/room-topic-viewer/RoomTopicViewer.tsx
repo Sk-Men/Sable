@@ -3,7 +3,7 @@ import { as, Box, Header, Icon, IconButton, Icons, Modal, Scroll, Text } from 'f
 import classNames from 'classnames';
 import Linkify from 'linkify-react';
 import * as css from './style.css';
-import { LINKIFY_OPTS, scaleSystemEmoji } from '../../plugins/react-custom-html-parser';
+import { LINKIFY_OPTS, scaleSystemEmoji } from '$plugins/react-custom-html-parser';
 
 export const RoomTopicViewer = as<
   'div',

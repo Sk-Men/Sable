@@ -1,6 +1,6 @@
 import React, { ReactNode } from 'react';
 import { Box, Text } from 'folds';
-import { BreakWord } from '../../styles/Text.css';
+import { BreakWord } from '$styles/Text.css';
 
 type SettingTileProps = {
   title?: ReactNode;

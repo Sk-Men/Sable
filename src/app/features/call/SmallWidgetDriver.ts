@@ -25,7 +25,7 @@ import {
   type IWidgetApiErrorResponseDataDetails,
   type ISearchUserDirectoryResult,
   type IGetMediaConfigResult,
-  type UpdateDelayedEventAction,
+  UpdateDelayedEventAction,
   OpenIDRequestState,
   SimpleObservable,
   IOpenIDUpdate,
@@ -40,7 +40,7 @@ import {
   type StateEvents,
   type TimelineEvents,
   MatrixClient,
-} from 'matrix-js-sdk';
+} from '$types/matrix-sdk';
 
 export class SmallWidgetDriver extends WidgetDriver {
   private allowedCapabilities: Set<Capability>;

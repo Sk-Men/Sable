@@ -16,23 +16,23 @@ import {
 } from 'folds';
 import FocusTrap from 'focus-trap-react';
 import { General } from './general';
-import { PageNav, PageNavContent, PageNavHeader, PageRoot } from '../../components/page';
-import { ScreenSize, useScreenSizeContext } from '../../hooks/useScreenSize';
+import { PageNav, PageNavContent, PageNavHeader, PageRoot } from '$components/page';
+import { ScreenSize, useScreenSizeContext } from '$hooks/useScreenSize';
 import { Account } from './account';
-import { useUserProfile } from '../../hooks/useUserProfile';
-import { useMatrixClient } from '../../hooks/useMatrixClient';
-import { getMxIdLocalPart, mxcUrlToHttp } from '../../utils/matrix';
-import { useMediaAuthentication } from '../../hooks/useMediaAuthentication';
-import { UserAvatar } from '../../components/user-avatar';
-import { nameInitials } from '../../utils/common';
+import { useUserProfile } from '$hooks/useUserProfile';
+import { useMatrixClient } from '$hooks/useMatrixClient';
+import { getMxIdLocalPart, mxcUrlToHttp } from '$appUtils/matrix';
+import { useMediaAuthentication } from '$hooks/useMediaAuthentication';
+import { UserAvatar } from '$components/user-avatar';
+import { nameInitials } from '$appUtils/common';
 import { Notifications } from './notifications';
 import { Devices } from './devices';
 import { EmojisStickers } from './emojis-stickers';
 import { DeveloperTools } from './developer-tools';
 import { About } from './about';
-import { UseStateProvider } from '../../components/UseStateProvider';
-import { stopPropagation } from '../../utils/keyboard';
-import { LogoutDialog } from '../../components/LogoutDialog';
+import { UseStateProvider } from '$components/UseStateProvider';
+import { stopPropagation } from '$appUtils/keyboard';
+import { LogoutDialog } from '$components/LogoutDialog';
 import { Cosmetics } from './cosmetics/Cosmetics';
 
 export enum SettingsPages {
@@ -112,7 +112,7 @@ export function Settings({ initialPage, requestClose }: SettingsProps) {
   const profile = useUserProfile(userId);
   const displayName = profile.displayName ?? getMxIdLocalPart(userId) ?? userId;
   const avatarUrl = profile.avatarUrl
-    ? mxcUrlToHttp(mx, profile.avatarUrl, useAuthentication, 96, 96, 'crop') ?? undefined
+    ? (mxcUrlToHttp(mx, profile.avatarUrl, useAuthentication, 96, 96, 'crop') ?? undefined)
     : undefined;
 
   const screenSize = useScreenSizeContext();
@@ -160,9 +160,8 @@ export function Settings({ initialPage, requestClose }: SettingsProps) {
               <PageNavContent>
                 <div style={{ flexGrow: 1 }}>
                   {menuItems.map((item) => {
-                    const currentIcon = (activePage === item.page && item.activeIcon)
-                      ? item.activeIcon
-                      : item.icon;
+                    const currentIcon =
+                      activePage === item.page && item.activeIcon ? item.activeIcon : item.icon;
 
                     return (
                       <MenuItem
@@ -170,12 +169,15 @@ export function Settings({ initialPage, requestClose }: SettingsProps) {
                         variant="Background"
                         radii="400"
                         aria-pressed={activePage === item.page}
-                        before={<Icon src={currentIcon} size="100" filled={activePage === item.page} />}
+                        before={
+                          <Icon src={currentIcon} size="100" filled={activePage === item.page} />
+                        }
                         onClick={() => setActivePage(item.page)}
                       >
                         <Text
                           style={{
-                            fontWeight: activePage === item.page ? config.fontWeight.W600 : undefined,
+                            fontWeight:
+                              activePage === item.page ? config.fontWeight.W600 : undefined,
                           }}
                           size="T300"
                           truncate

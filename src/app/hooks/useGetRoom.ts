@@ -1,4 +1,4 @@
-import { Room } from 'matrix-js-sdk';
+import { Room } from '$types/matrix-sdk';
 import { useAtomValue } from 'jotai';
 import { useCallback, useMemo } from 'react';
 import { allRoomsAtom } from '../state/room-list/roomList';

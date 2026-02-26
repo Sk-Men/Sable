@@ -55,7 +55,7 @@ export interface Settings {
   privacyBlur: boolean;
   privacyBlurAvatars: boolean;
   privacyBlurEmotes: boolean;
-  showPronouns: boolean,
+  showPronouns: boolean;
   renderGlobalNameColors: boolean;
 
   // Sable features!

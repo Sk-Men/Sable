@@ -1,8 +1,8 @@
 import React, { ReactNode } from 'react';
 import { Box, Dialog, config, Text, Button, Spinner } from 'folds';
-import { SpecVersionsLoader } from '../../components/SpecVersionsLoader';
-import { SpecVersionsProvider } from '../../hooks/useSpecVersions';
-import { SplashScreen } from '../../components/splash-screen';
+import { SpecVersionsLoader } from '$components/SpecVersionsLoader';
+import { SpecVersionsProvider } from '$hooks/useSpecVersions';
+import { SplashScreen } from '$components/splash-screen';
 
 export function SpecVersions({ baseUrl, children }: { baseUrl: string; children: ReactNode }) {
   return (

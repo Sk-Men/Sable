@@ -24,19 +24,24 @@ import {
   Text,
 } from 'folds';
 import FocusTrap from 'focus-trap-react';
-import { Page, PageContent, PageHeader } from '../../../components/page';
-import { SequenceCard } from '../../../components/sequence-card';
-import { useSetting } from '../../../state/hooks/settings';
-import { DateFormat, MessageLayout, MessageSpacing, RightSwipeAction, settingsAtom } from '../../../state/settings';
-import { SettingTile } from '../../../components/setting-tile';
-import { KeySymbol } from '../../../utils/key-symbol';
-import { isMacOS, mobileOrTablet } from '../../../utils/user-agent';
-import { stopPropagation } from '../../../utils/keyboard';
-import { useMessageLayoutItems } from '../../../hooks/useMessageLayout';
-import { useMessageSpacingItems } from '../../../hooks/useMessageSpacing';
-import { useDateFormatItems } from '../../../hooks/useDateFormat';
+import { Page, PageContent, PageHeader } from '$components/page';
+import { SequenceCard } from '$components/sequence-card';
+import { useSetting } from '$state/hooks/settings';
+import {
+  DateFormat,
+  MessageLayout,
+  MessageSpacing,
+  RightSwipeAction,
+  settingsAtom,
+} from '$state/settings';
+import { SettingTile } from '$components/setting-tile';
+import { KeySymbol } from '$appUtils/key-symbol';
+import { isMacOS, mobileOrTablet } from '$appUtils/user-agent';
+import { stopPropagation } from '$appUtils/keyboard';
+import { useMessageLayoutItems } from '$hooks/useMessageLayout';
+import { useMessageSpacingItems } from '$hooks/useMessageSpacing';
+import { useDateFormatItems } from '$hooks/useDateFormat';
 import { SequenceCardStyle } from '../styles.css';
-
 
 type DateHintProps = {
   hasChanges: boolean;
@@ -399,11 +404,23 @@ function Editor({ isMobile }: { isMobile: boolean }) {
   return (
     <Box direction="Column" gap="100">
       <Text size="L400">Editor</Text>
-      <SequenceCard className={SequenceCardStyle} variant="SurfaceVariant" direction="Column" style={{ opacity: isMobile ? 0.5 : 1 }}>
+      <SequenceCard
+        className={SequenceCardStyle}
+        variant="SurfaceVariant"
+        direction="Column"
+        style={{ opacity: isMobile ? 0.5 : 1 }}
+      >
         <SettingTile
           title="ENTER for Newline"
           description={`Use ${isMacOS() ? KeySymbol.Command : 'Ctrl'} + ENTER to send message. ${isMobile ? '(Disabled on Mobile)' : ''}`}
-          after={<Switch variant="Primary" value={enterForNewline} onChange={setEnterForNewline} disabled={isMobile} />}
+          after={
+            <Switch
+              variant="Primary"
+              value={enterForNewline}
+              onChange={setEnterForNewline}
+              disabled={isMobile}
+            />
+          }
         />
       </SequenceCard>
       <SequenceCard className={SequenceCardStyle} variant="SurfaceVariant" direction="Column">
@@ -591,9 +608,7 @@ function SelectRightSwipeAction({ disabled }: { disabled?: boolean }) {
         after={<Icon size="300" src={Icons.ChevronBottom} />}
         onClick={handleMenu}
       >
-        <Text size="T300">
-          {options.find((o) => o.id === action)?.name ?? action}
-        </Text>
+        <Text size="T300">{options.find((o) => o.id === action)?.name ?? action}</Text>
       </Button>
       <PopOut
         anchor={menuCords}
@@ -636,7 +651,7 @@ function Gestures({ isMobile }: { isMobile: boolean }) {
 
   return (
     <Box direction="Column" gap="100" style={{ opacity: isMobile ? 1 : 0.5 }}>
-      <Text size="L400">Gestures {!isMobile && "(Mobile Only)"}</Text>
+      <Text size="L400">Gestures {!isMobile && '(Mobile Only)'}</Text>
       <SequenceCard className={SequenceCardStyle} variant="SurfaceVariant" direction="Column">
         <SettingTile
           title="Enable Swiping"
@@ -655,11 +670,7 @@ function Gestures({ isMobile }: { isMobile: boolean }) {
         <SettingTile
           title="Right Swipe Action"
           description="What happens when you swipe right on a message."
-          after={
-            <SelectRightSwipeAction
-              disabled={!isMobile || !mobileGestures}
-            />
-          }
+          after={<SelectRightSwipeAction disabled={!isMobile || !mobileGestures} />}
         />
       </SequenceCard>
     </Box>
@@ -679,7 +690,10 @@ function Messages() {
   const [urlPreview, setUrlPreview] = useSetting(settingsAtom, 'urlPreview');
   const [encUrlPreview, setEncUrlPreview] = useSetting(settingsAtom, 'encUrlPreview');
   const [showHiddenEvents, setShowHiddenEvents] = useSetting(settingsAtom, 'showHiddenEvents');
-  const [hideMembershipInReadOnly, setHideMembershipInReadOnly] = useSetting(settingsAtom, 'hideMembershipInReadOnly');
+  const [hideMembershipInReadOnly, setHideMembershipInReadOnly] = useSetting(
+    settingsAtom,
+    'hideMembershipInReadOnly'
+  );
 
   return (
     <Box direction="Column" gap="100">
@@ -742,7 +756,11 @@ function Messages() {
         <SettingTile
           title="Hide Member Events in Read-Only Rooms"
           after={
-            <Switch variant="Primary" value={hideMembershipInReadOnly} onChange={setHideMembershipInReadOnly} />
+            <Switch
+              variant="Primary"
+              value={hideMembershipInReadOnly}
+              onChange={setHideMembershipInReadOnly}
+            />
           }
         />
       </SequenceCard>

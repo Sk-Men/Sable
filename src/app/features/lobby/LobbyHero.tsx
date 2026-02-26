@@ -1,18 +1,18 @@
 import React from 'react';
 import { Avatar, Overlay, OverlayBackdrop, OverlayCenter, Text } from 'folds';
 import FocusTrap from 'focus-trap-react';
-import { useRoomAvatar, useRoomName, useRoomTopic } from '../../hooks/useRoomMeta';
-import { useSpace } from '../../hooks/useSpace';
-import { useMatrixClient } from '../../hooks/useMatrixClient';
-import { RoomAvatar } from '../../components/room-avatar';
-import { nameInitials } from '../../utils/common';
-import { UseStateProvider } from '../../components/UseStateProvider';
-import { RoomTopicViewer } from '../../components/room-topic-viewer';
+import { useRoomAvatar, useRoomName, useRoomTopic } from '$hooks/useRoomMeta';
+import { useSpace } from '$hooks/useSpace';
+import { useMatrixClient } from '$hooks/useMatrixClient';
+import { RoomAvatar } from '$components/room-avatar';
+import { nameInitials } from '$appUtils/common';
+import { UseStateProvider } from '$components/UseStateProvider';
+import { RoomTopicViewer } from '$components/room-topic-viewer';
 import * as css from './LobbyHero.css';
-import { PageHero } from '../../components/page';
-import { onEnterOrSpace, stopPropagation } from '../../utils/keyboard';
-import { mxcUrlToHttp } from '../../utils/matrix';
-import { useMediaAuthentication } from '../../hooks/useMediaAuthentication';
+import { PageHero } from '$components/page';
+import { onEnterOrSpace, stopPropagation } from '$appUtils/keyboard';
+import { mxcUrlToHttp } from '$appUtils/matrix';
+import { useMediaAuthentication } from '$hooks/useMediaAuthentication';
 
 export function LobbyHero() {
   const mx = useMatrixClient();
@@ -22,7 +22,9 @@ export function LobbyHero() {
   const name = useRoomName(space);
   const topic = useRoomTopic(space);
   const avatarMxc = useRoomAvatar(space);
-  const avatarUrl = avatarMxc ? mxcUrlToHttp(mx, avatarMxc, useAuthentication, 96, 96, 'crop') ?? undefined : undefined;
+  const avatarUrl = avatarMxc
+    ? (mxcUrlToHttp(mx, avatarMxc, useAuthentication, 96, 96, 'crop') ?? undefined)
+    : undefined;
 
   return (
     <PageHero

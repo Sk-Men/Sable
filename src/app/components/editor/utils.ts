@@ -1,6 +1,13 @@
 import { BasePoint, BaseRange, Editor, Element, Point, Range, Text, Transforms } from 'slate';
 import { BlockType, MarkType } from './types';
-import { CommandElement, EmoticonElement, FormattedText, HeadingLevel, LinkElement, MentionElement } from './slate';
+import {
+  CommandElement,
+  EmoticonElement,
+  FormattedText,
+  HeadingLevel,
+  LinkElement,
+  MentionElement,
+} from './slate';
 
 const ALL_MARK_TYPE: MarkType[] = [
   MarkType.Bold,

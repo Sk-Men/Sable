@@ -1,5 +1,9 @@
 import { atom } from 'jotai';
-import { atomWithLocalStorage, getLocalStorageItem, setLocalStorageItem, } from './utils/atomWithLocalStorage';
+import {
+  atomWithLocalStorage,
+  getLocalStorageItem,
+  setLocalStorageItem,
+} from './utils/atomWithLocalStorage';
 import { createLogger } from '../utils/debug';
 
 const log = createLogger('sessions');
@@ -107,13 +111,13 @@ const baseSessionsAtom = atomWithLocalStorage<Sessions>(
 
 export type SessionsAction =
   | {
-    type: 'PUT';
-    session: Session;
-  }
+      type: 'PUT';
+      session: Session;
+    }
   | {
-    type: 'DELETE';
-    session: Session;
-  };
+      type: 'DELETE';
+      session: Session;
+    };
 
 export const sessionsAtom = atom<Sessions, [SessionsAction], void>(
   (get) => get(baseSessionsAtom),

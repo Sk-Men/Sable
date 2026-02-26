@@ -1,5 +1,5 @@
 import React, { FormEventHandler, useCallback, useEffect, useState } from 'react';
-import { MatrixError, Room } from 'matrix-js-sdk';
+import { MatrixError, Room } from '$types/matrix-sdk';
 import {
   Box,
   Button,
@@ -14,19 +14,19 @@ import {
   Text,
   TextArea,
 } from 'folds';
-import { SettingTile } from '../../components/setting-tile';
-import { SequenceCard } from '../../components/sequence-card';
+import { SettingTile } from '$components/setting-tile';
+import { SequenceCard } from '$components/sequence-card';
 import {
   creatorsSupported,
   knockRestrictedSupported,
   knockSupported,
   restrictedSupported,
-} from '../../utils/matrix';
-import { useMatrixClient } from '../../hooks/useMatrixClient';
-import { millisecondsToMinutes, replaceSpaceWithDash } from '../../utils/common';
-import { AsyncStatus, useAsyncCallback } from '../../hooks/useAsyncCallback';
-import { useCapabilities } from '../../hooks/useCapabilities';
-import { useAlive } from '../../hooks/useAlive';
+} from '$appUtils/matrix';
+import { useMatrixClient } from '$hooks/useMatrixClient';
+import { millisecondsToMinutes, replaceSpaceWithDash } from '$appUtils/common';
+import { AsyncStatus, useAsyncCallback } from '$hooks/useAsyncCallback';
+import { useCapabilities } from '$hooks/useCapabilities';
+import { useAlive } from '$hooks/useAlive';
 import { ErrorCode } from '../../cs-errorcode';
 import {
   AdditionalCreatorInput,
@@ -37,8 +37,8 @@ import {
   CreateRoomAccessSelector,
   RoomVersionSelector,
   useAdditionalCreators,
-} from '../../components/create-room';
-import { RoomType } from '../../../types/matrix/room';
+} from '$components/create-room';
+import { RoomType } from '$types/matrix/room';
 
 const getCreateSpaceAccessToIcon = (access: CreateRoomAccess) => {
   if (access === CreateRoomAccess.Private) return Icons.SpaceLock;

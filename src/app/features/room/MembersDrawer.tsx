@@ -26,42 +26,38 @@ import {
   TooltipProvider,
   config,
 } from 'folds';
-import { MatrixClient, Room, RoomMember } from 'matrix-js-sdk';
+import { MatrixClient, Room, RoomMember } from '$types/matrix-sdk';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import classNames from 'classnames';
 
 import * as css from './MembersDrawer.css';
-import { useMatrixClient } from '../../hooks/useMatrixClient';
-import { UseStateProvider } from '../../components/UseStateProvider';
-import {
-  SearchItemStrGetter,
-  UseAsyncSearchOptions,
-  useAsyncSearch,
-} from '../../hooks/useAsyncSearch';
-import { useDebounce } from '../../hooks/useDebounce';
-import { TypingIndicator } from '../../components/typing-indicator';
-import { getMemberDisplayName, getMemberSearchStr } from '../../utils/room';
-import { getMxIdLocalPart } from '../../utils/matrix';
-import { useSetSetting, useSetting } from '../../state/hooks/settings';
-import { settingsAtom } from '../../state/settings';
+import { useMatrixClient } from '$hooks/useMatrixClient';
+import { UseStateProvider } from '$components/UseStateProvider';
+import { SearchItemStrGetter, UseAsyncSearchOptions, useAsyncSearch } from '$hooks/useAsyncSearch';
+import { useDebounce } from '$hooks/useDebounce';
+import { TypingIndicator } from '$components/typing-indicator';
+import { getMemberDisplayName, getMemberSearchStr } from '$appUtils/room';
+import { getMxIdLocalPart } from '$appUtils/matrix';
+import { useSetSetting, useSetting } from '$state/hooks/settings';
+import { settingsAtom } from '$state/settings';
 import { useAtomValue } from 'jotai';
-import { nicknamesAtom } from '../../state/nicknames';
-import { millify } from '../../plugins/millify';
-import { ScrollTopContainer } from '../../components/scroll-top-container';
-import { UserAvatar } from '../../components/user-avatar';
-import { useRoomTypingMember } from '../../hooks/useRoomTypingMembers';
-import { useMediaAuthentication } from '../../hooks/useMediaAuthentication';
-import { useMembershipFilter, useMembershipFilterMenu } from '../../hooks/useMemberFilter';
-import { useMemberPowerSort, useMemberSort, useMemberSortMenu } from '../../hooks/useMemberSort';
-import { useGetMemberPowerLevel, usePowerLevelsContext } from '../../hooks/usePowerLevels';
-import { MembershipFilterMenu } from '../../components/MembershipFilterMenu';
-import { MemberSortMenu } from '../../components/MemberSortMenu';
-import { useOpenUserRoomProfile, useUserRoomProfileState } from '../../state/hooks/userRoomProfile';
-import { useSpaceOptionally } from '../../hooks/useSpace';
-import { ContainerColor } from '../../styles/ContainerColor.css';
-import { useFlattenPowerTagMembers, useGetMemberPowerTag } from '../../hooks/useMemberPowerTag';
-import { useRoomCreators } from '../../hooks/useRoomCreators';
-import { useSableCosmetics } from '../../hooks/useSableCosmetics';
+import { nicknamesAtom } from '$state/nicknames';
+import { millify } from '$plugins/millify';
+import { ScrollTopContainer } from '$components/scroll-top-container';
+import { UserAvatar } from '$components/user-avatar';
+import { useRoomTypingMember } from '$hooks/useRoomTypingMembers';
+import { useMediaAuthentication } from '$hooks/useMediaAuthentication';
+import { useMembershipFilter, useMembershipFilterMenu } from '$hooks/useMemberFilter';
+import { useMemberPowerSort, useMemberSort, useMemberSortMenu } from '$hooks/useMemberSort';
+import { useGetMemberPowerLevel, usePowerLevelsContext } from '$hooks/usePowerLevels';
+import { MembershipFilterMenu } from '$components/MembershipFilterMenu';
+import { MemberSortMenu } from '$components/MemberSortMenu';
+import { useOpenUserRoomProfile, useUserRoomProfileState } from '$state/hooks/userRoomProfile';
+import { useSpaceOptionally } from '$hooks/useSpace';
+import { ContainerColor } from '$styles/ContainerColor.css';
+import { useFlattenPowerTagMembers, useGetMemberPowerTag } from '$hooks/useMemberPowerTag';
+import { useRoomCreators } from '$hooks/useRoomCreators';
+import { useSableCosmetics } from '$hooks/useSableCosmetics';
 
 type MemberDrawerHeaderProps = {
   room: Room;
@@ -124,7 +120,9 @@ function MemberItem({
 }: MemberItemProps) {
   const nicknames = useAtomValue(nicknamesAtom);
   const name =
-    getMemberDisplayName(room, member.userId, nicknames) ?? getMxIdLocalPart(member.userId) ?? member.userId;
+    getMemberDisplayName(room, member.userId, nicknames) ??
+    getMxIdLocalPart(member.userId) ??
+    member.userId;
   const avatarMxcUrl = member.getMxcAvatarUrl();
   const avatarUrl = avatarMxcUrl
     ? mx.mxcUrlToHttp(avatarMxcUrl, 100, 100, 'crop', undefined, false, useAuthentication)
@@ -353,8 +351,9 @@ export function MembersDrawer({ room, members }: MembersDrawerProps) {
                         }}
                         after={<Icon size="50" src={Icons.Cross} />}
                       >
-                        <Text size="B300">{`${result.items.length || 'No'} ${result.items.length === 1 ? 'Result' : 'Results'
-                          }`}</Text>
+                        <Text size="B300">{`${result.items.length || 'No'} ${
+                          result.items.length === 1 ? 'Result' : 'Results'
+                        }`}</Text>
                       </Chip>
                     )
                   }

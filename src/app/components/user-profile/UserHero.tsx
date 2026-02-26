@@ -14,17 +14,17 @@ import classNames from 'classnames';
 import FocusTrap from 'focus-trap-react';
 import * as css from './styles.css';
 import { UserAvatar } from '../user-avatar';
-import colorMXID from '../../../util/colorMXID';
-import { getMxIdLocalPart } from '../../utils/matrix';
-import { BreakWord, LineClamp3 } from '../../styles/Text.css';
-import { UserPresence } from '../../hooks/useUserPresence';
+import colorMXID from '$util/colorMXID';
+import { getMxIdLocalPart } from '$appUtils/matrix';
+import { BreakWord, LineClamp3 } from '$styles/Text.css';
+import { UserPresence } from '$hooks/useUserPresence';
 import { AvatarPresence, PresenceBadge } from '../presence';
 import { ImageViewer } from '../image-viewer';
-import { stopPropagation } from '../../utils/keyboard';
-import { useRoom } from '../../hooks/useRoom';
-import { useSableCosmetics } from '../../hooks/useSableCosmetics';
-import { useNickname } from '../../hooks/useNickname';
-import { useBlobCache } from '../../hooks/useBlobCache';
+import { stopPropagation } from '$appUtils/keyboard';
+import { useRoom } from '$hooks/useRoom';
+import { useSableCosmetics } from '$hooks/useSableCosmetics';
+import { useNickname } from '$hooks/useNickname';
+import { useBlobCache } from '$hooks/useBlobCache';
 
 type UserHeroProps = {
   userId: string;
@@ -51,10 +51,7 @@ export function UserHero({ userId, avatarUrl, bannerUrl, presence }: UserHeroPro
       >
         {coverUrl && (
           <img
-            className={classNames(
-              css.UserHeroCover,
-              isFallbackCover && css.UserHeroCoverFallback
-            )}
+            className={classNames(css.UserHeroCover, isFallbackCover && css.UserHeroCoverFallback)}
             src={coverUrl}
             alt={`${userId} cover`}
             draggable="false"

@@ -9,8 +9,8 @@ import {
   Room,
   RoomMember,
   Visibility,
-} from 'matrix-js-sdk';
-import { RoomServerAclEventContent } from 'matrix-js-sdk/lib/types';
+} from '$types/matrix-sdk';
+import { RoomServerAclEventContent } from '$types/matrix-sdk';
 import { useMemo } from 'react';
 import {
   addRoomIdToMDirect,
@@ -24,11 +24,11 @@ import {
   removeRoomIdFromMDirect,
 } from '../utils/matrix';
 import { useRoomNavigate } from './useRoomNavigate';
-import { Membership, StateEvent } from '../../types/matrix/room';
+import { Membership, StateEvent } from '$types/matrix/room';
 import { getStateEvent } from '../utils/room';
 import { splitWithSpace } from '../utils/common';
 import { createRoomEncryptionState } from '../components/create-room';
-import { AccountDataEvent } from '../../types/matrix/accountData';
+import { AccountDataEvent } from '$types/matrix/accountData';
 import { enrichWidgetUrl } from './useRoomWidgets';
 
 export const SHRUG = '¯\\_(ツ)_/¯';
@@ -563,27 +563,40 @@ export const useCommands = (mx: MatrixClient, room: Room): CommandRecord => {
 
           try {
             if (input === 'reset' || input === 'clear') {
-              await mx.sendStateEvent(room.roomId, StateEvent.RoomCosmeticsColor as any, {}, userId);
+              await mx.sendStateEvent(
+                room.roomId,
+                StateEvent.RoomCosmeticsColor as any,
+                {},
+                userId
+              );
               sendFeedback('Room color has been reset.');
               return;
             }
 
             if (/^#[0-9A-F]{6}$/i.test(input)) {
-              await mx.sendStateEvent(room.roomId, StateEvent.RoomCosmeticsColor as any, { color: input }, userId);
+              await mx.sendStateEvent(
+                room.roomId,
+                StateEvent.RoomCosmeticsColor as any,
+                { color: input },
+                userId
+              );
               sendFeedback(`Room color set to ${input}.`);
             } else {
               sendFeedback('Invalid format. Use #RRGGBB.');
             }
           } catch (e: any) {
             if (e.errcode === 'M_FORBIDDEN') {
-              sendFeedback('Permission Denied. An admin must enable "Room Colors" in Settings > Cosmetics in app.sable.moe or another supported client.');
+              sendFeedback(
+                'Permission Denied. An admin must enable "Room Colors" in Settings > Cosmetics in app.sable.moe or another supported client.'
+              );
             }
           }
-        }
+        },
       },
       [Command.GColor]: {
         name: Command.GColor,
-        description: 'Set your global color for the current Space. Example: /gcolor #ff00ff | /gcolor reset',
+        description:
+          'Set your global color for the current Space. Example: /gcolor #ff00ff | /gcolor reset',
         exe: async (payload) => {
           const input = payload.trim().toLowerCase();
           const userId = mx.getSafeUserId();
@@ -599,30 +612,42 @@ export const useCommands = (mx: MatrixClient, room: Room): CommandRecord => {
             (room as any).addLiveEvents([localNotice], { duplicateStrategy: 'ignore' } as any);
           };
 
-          const parents = room.getLiveTimeline()
+          const parents = room
+            .getLiveTimeline()
             .getState(EventTimeline.FORWARDS)
             ?.getStateEvents(StateEvent.SpaceParent);
 
-          const targetSpaceId = parents && parents.length > 0
-            ? parents[0].getStateKey()
-            : room.roomId;
+          const targetSpaceId =
+            parents && parents.length > 0 ? parents[0].getStateKey() : room.roomId;
 
           try {
             if (input === 'reset' || input === 'clear') {
-              await mx.sendStateEvent(targetSpaceId as any, StateEvent.RoomCosmeticsColor as any, {}, userId);
+              await mx.sendStateEvent(
+                targetSpaceId as any,
+                StateEvent.RoomCosmeticsColor as any,
+                {},
+                userId
+              );
               sendFeedback('Global space color reset.');
               return;
             }
 
             if (/^#[0-9A-F]{6}$/i.test(input)) {
-              await mx.sendStateEvent(targetSpaceId as any, StateEvent.RoomCosmeticsColor as any, { color: input }, userId);
+              await mx.sendStateEvent(
+                targetSpaceId as any,
+                StateEvent.RoomCosmeticsColor as any,
+                { color: input },
+                userId
+              );
               sendFeedback(`Global space color set to ${input}.`);
             } else {
               sendFeedback('Invalid format. Use #RRGGBB.');
             }
           } catch (e: any) {
             if (e.errcode === 'M_FORBIDDEN') {
-              sendFeedback('Permission Denied. An admin must enable "Space-Wide Colors" in Settings > Cosmetics in app.sable.moe or another supported client.');
+              sendFeedback(
+                'Permission Denied. An admin must enable "Space-Wide Colors" in Settings > Cosmetics in app.sable.moe or another supported client.'
+              );
             }
           }
         },
@@ -631,7 +656,10 @@ export const useCommands = (mx: MatrixClient, room: Room): CommandRecord => {
         name: Command.Font,
         description: 'Set a room-specific font. Example: /font Courier New | /font reset',
         exe: async (payload) => {
-          const input = payload.trim().replace(/[;{}<>]/g, '').slice(0, 32);
+          const input = payload
+            .trim()
+            .replace(/[;{}<>]/g, '')
+            .slice(0, 32);
           const userId = mx.getSafeUserId();
 
           const sendFeedback = (msg: string) => {
@@ -652,20 +680,31 @@ export const useCommands = (mx: MatrixClient, room: Room): CommandRecord => {
               return;
             }
 
-            await mx.sendStateEvent(room.roomId, StateEvent.RoomCosmeticsFont as any, { font: input }, userId);
+            await mx.sendStateEvent(
+              room.roomId,
+              StateEvent.RoomCosmeticsFont as any,
+              { font: input },
+              userId
+            );
             sendFeedback(`Room font set to "${input}".`);
           } catch (e: any) {
             if (e.errcode === 'M_FORBIDDEN') {
-              sendFeedback('Permission Denied. An admin must enable "Room Fonts" in Settings > Cosmetics in app.sable.moe or another supported client.');
+              sendFeedback(
+                'Permission Denied. An admin must enable "Room Fonts" in Settings > Cosmetics in app.sable.moe or another supported client.'
+              );
             }
           }
-        }
+        },
       },
       [Command.GFont]: {
         name: Command.GFont,
-        description: 'Set a global font for the current Space. Example: /gfont Courier New | /gfont reset',
+        description:
+          'Set a global font for the current Space. Example: /gfont Courier New | /gfont reset',
         exe: async (payload) => {
-          const input = payload.trim().replace(/[;{}<>]/g, '').slice(0, 32);
+          const input = payload
+            .trim()
+            .replace(/[;{}<>]/g, '')
+            .slice(0, 32);
           const userId = mx.getSafeUserId();
 
           const sendFeedback = (msg: string) => {
@@ -679,26 +718,38 @@ export const useCommands = (mx: MatrixClient, room: Room): CommandRecord => {
             (room as any).addLiveEvents([localNotice], { duplicateStrategy: 'ignore' } as any);
           };
 
-          const parents = room.getLiveTimeline()
+          const parents = room
+            .getLiveTimeline()
             .getState(EventTimeline.FORWARDS)
             ?.getStateEvents(StateEvent.SpaceParent);
 
-          const targetSpaceId = parents && parents.length > 0
-            ? parents[0].getStateKey()
-            : room.roomId;
+          const targetSpaceId =
+            parents && parents.length > 0 ? parents[0].getStateKey() : room.roomId;
 
           try {
             if (input.toLowerCase() === 'reset' || input === '') {
-              await mx.sendStateEvent(targetSpaceId as any, StateEvent.RoomCosmeticsFont as any, {}, userId);
+              await mx.sendStateEvent(
+                targetSpaceId as any,
+                StateEvent.RoomCosmeticsFont as any,
+                {},
+                userId
+              );
               sendFeedback('Space font reset.');
               return;
             }
 
-            await mx.sendStateEvent(targetSpaceId as any, StateEvent.RoomCosmeticsFont as any, { font: input }, userId);
+            await mx.sendStateEvent(
+              targetSpaceId as any,
+              StateEvent.RoomCosmeticsFont as any,
+              { font: input },
+              userId
+            );
             sendFeedback(`Space font set to "${input}".`);
           } catch (e: any) {
             if (e.errcode === 'M_FORBIDDEN') {
-              sendFeedback('Permission Denied. An admin must enable "Space-Wide Fonts" in Settings > Cosmetics in app.sable.moe or another supported client.');
+              sendFeedback(
+                'Permission Denied. An admin must enable "Space-Wide Fonts" in Settings > Cosmetics in app.sable.moe or another supported client.'
+              );
             }
           }
         },
@@ -738,17 +789,24 @@ export const useCommands = (mx: MatrixClient, room: Room): CommandRecord => {
 
           try {
             const widgetId = `${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
-            await mx.sendStateEvent(room.roomId, StateEvent.RoomWidget as any, {
-              type: 'm.custom',
-              url: enrichWidgetUrl(url),
-              name,
-              id: widgetId,
-              creatorUserId: userId,
-            } as any, widgetId);
+            await mx.sendStateEvent(
+              room.roomId,
+              StateEvent.RoomWidget as any,
+              {
+                type: 'm.custom',
+                url: enrichWidgetUrl(url),
+                name,
+                id: widgetId,
+                creatorUserId: userId,
+              } as any,
+              widgetId
+            );
             sendFeedback(`Widget "${name}" added.`);
           } catch (e: any) {
             if (e.errcode === 'M_FORBIDDEN') {
-              sendFeedback('Permission denied. You need permission to manage widgets in this room.');
+              sendFeedback(
+                'Permission denied. You need permission to manage widgets in this room.'
+              );
             } else {
               sendFeedback(`Failed to add widget: ${e.message || 'Unknown error'}`);
             }

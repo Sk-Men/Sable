@@ -12,17 +12,17 @@ import {
   toRem,
 } from 'folds';
 import classNames from 'classnames';
-import { Room } from 'matrix-js-sdk';
-import { type Relations } from 'matrix-js-sdk/lib/models/relations';
+import { Room } from '$types/matrix-sdk';
+import { type Relations } from '$types/matrix-sdk';
 import FocusTrap from 'focus-trap-react';
-import { useMatrixClient } from '../../../hooks/useMatrixClient';
-import { factoryEventSentBy } from '../../../utils/matrix';
-import { Reaction, ReactionTooltipMsg } from '../../../components/message';
-import { useRelations } from '../../../hooks/useRelations';
+import { useMatrixClient } from '$hooks/useMatrixClient';
+import { factoryEventSentBy } from '$appUtils/matrix';
+import { Reaction, ReactionTooltipMsg } from '$components/message';
+import { useRelations } from '$hooks/useRelations';
 import * as css from './styles.css';
 import { ReactionViewer } from '../reaction-viewer';
-import { stopPropagation } from '../../../utils/keyboard';
-import { useMediaAuthentication } from '../../../hooks/useMediaAuthentication';
+import { stopPropagation } from '$appUtils/keyboard';
+import { useMediaAuthentication } from '$hooks/useMediaAuthentication';
 
 export type ReactionsProps = {
   room: Room;

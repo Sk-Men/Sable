@@ -8,7 +8,16 @@ import {
   getInboxPath,
   getSpacePath,
 } from '../pages/pathUtils';
-import { DIRECT_PATH, EXPLORE_PATH, HOME_PATH, INBOX_PATH, SPACE_PATH, HOME_ROOM_PATH, DIRECT_ROOM_PATH, SPACE_ROOM_PATH } from '../pages/paths';
+import {
+  DIRECT_PATH,
+  EXPLORE_PATH,
+  HOME_PATH,
+  INBOX_PATH,
+  SPACE_PATH,
+  HOME_ROOM_PATH,
+  DIRECT_ROOM_PATH,
+  SPACE_ROOM_PATH,
+} from '../pages/paths';
 import { lastVisitedRoomIdAtom } from '../state/room/lastRoom';
 
 type BackRouteHandlerProps = {

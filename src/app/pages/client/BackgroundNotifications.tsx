@@ -7,21 +7,26 @@ import {
   Room,
   RoomEvent,
   SyncState,
-} from 'matrix-js-sdk';
-import { PushProcessor } from 'matrix-js-sdk/lib/pushprocessor';
+} from '$types/matrix-sdk';
+import { PushProcessor } from '$types/matrix-sdk';
 import { useAtomValue, useSetAtom } from 'jotai';
 import { useNavigate } from 'react-router-dom';
-import { sessionsAtom, activeSessionIdAtom, Session, pendingNotificationAtom } from '../../state/sessions';
-import { useSetting } from '../../state/hooks/settings';
-import { settingsAtom } from '../../state/settings';
-import { getMxIdLocalPart, mxcUrlToHttp } from '../../utils/matrix';
-import { getMemberDisplayName, getNotificationType, isNotificationEvent } from '../../utils/room';
-import { NotificationType } from '../../../types/matrix/room';
-import { createLogger } from '../../utils/debug';
-import LogoSVG from '../../../../public/res/svg/cinny.svg';
-import { nicknamesAtom } from '../../state/nicknames';
-import { useMatrixClient } from '../../hooks/useMatrixClient';
-import { useRoomNavigate } from '../../hooks/useRoomNavigate';
+import {
+  sessionsAtom,
+  activeSessionIdAtom,
+  Session,
+  pendingNotificationAtom,
+} from '$state/sessions';
+import { useSetting } from '$state/hooks/settings';
+import { settingsAtom } from '$state/settings';
+import { getMxIdLocalPart, mxcUrlToHttp } from '$appUtils/matrix';
+import { getMemberDisplayName, getNotificationType, isNotificationEvent } from '$appUtils/room';
+import { NotificationType } from '$types/matrix/room';
+import { createLogger } from '$appUtils/debug';
+import LogoSVG from '$public/res/svg/cinny.svg';
+import { nicknamesAtom } from '$state/nicknames';
+import { useMatrixClient } from '$hooks/useMatrixClient';
+import { useRoomNavigate } from '$hooks/useRoomNavigate';
 
 const log = createLogger('BackgroundNotifications');
 
@@ -94,10 +99,7 @@ export function BackgroundNotifications() {
     const { current } = clientsRef;
     const activeIds = new Set(inactiveSessions.map((s) => s.userId));
 
-    async function sendNotification(
-      opts: NotifyOptions
-    ): Promise<Notification | undefined> {
-
+    async function sendNotification(opts: NotifyOptions): Promise<Notification | undefined> {
       if ('Notification' in window && window.Notification.permission === 'granted') {
         const noti = new window.Notification(opts.title, {
           icon: opts.icon,
@@ -166,12 +168,15 @@ export function BackgroundNotifications() {
             if (!pushActions?.notify) return;
 
             const senderName =
-              getMemberDisplayName(room, sender, nicknamesRef.current) ?? getMxIdLocalPart(sender) ?? sender;
+              getMemberDisplayName(room, sender, nicknamesRef.current) ??
+              getMxIdLocalPart(sender) ??
+              sender;
             const accountLabel = getMxIdLocalPart(session.userId) ?? session.userId;
 
-            const avatarMxc = room.getAvatarFallbackMember()?.getMxcAvatarUrl() ?? room.getMxcAvatarUrl();
+            const avatarMxc =
+              room.getAvatarFallbackMember()?.getMxcAvatarUrl() ?? room.getMxcAvatarUrl();
             const roomAvatar = avatarMxc
-              ? mxcUrlToHttp(mx, avatarMxc, false, 96, 96, 'crop') ?? undefined
+              ? (mxcUrlToHttp(mx, avatarMxc, false, 96, 96, 'crop') ?? undefined)
               : LogoSVG;
 
             const isHighlight = pushActions.tweaks?.highlight === true;
@@ -212,7 +217,15 @@ export function BackgroundNotifications() {
       current.forEach((mx) => mx.stopClient());
       current.clear();
     };
-  }, [inactiveSessions, showNotifications, activeMx, activeSessionId, setActiveSessionId, setPending, navigateRoom]);
+  }, [
+    inactiveSessions,
+    showNotifications,
+    activeMx,
+    activeSessionId,
+    setActiveSessionId,
+    setPending,
+    navigateRoom,
+  ]);
 
   return null;
 }

@@ -7,11 +7,11 @@ import {
   SmallWidget,
   getWidgetData,
   getWidgetUrl,
-} from '../../../features/call/SmallWidget';
-import { useMatrixClient } from '../../../hooks/useMatrixClient';
-import { useClientConfig } from '../../../hooks/useClientConfig';
-import { ScreenSize, useScreenSizeContext } from '../../../hooks/useScreenSize';
-import { ThemeKind, useTheme } from '../../../hooks/useTheme';
+} from '$features/call/SmallWidget';
+import { useMatrixClient } from '$hooks/useMatrixClient';
+import { useClientConfig } from '$hooks/useClientConfig';
+import { ScreenSize, useScreenSizeContext } from '$hooks/useScreenSize';
+import { ThemeKind, useTheme } from '$hooks/useTheme';
 
 interface PersistentCallContainerProps {
   children: ReactNode;
@@ -47,7 +47,7 @@ export function PersistentCallContainer({ children }: PersistentCallContainerPro
       smallWidgetRef: React.MutableRefObject<SmallWidget | null>,
       iframeRef: React.MutableRefObject<HTMLIFrameElement | null>,
       skipLobby: boolean,
-      themeKind: ThemeKind | null,
+      themeKind: ThemeKind | null
     ) => {
       if (mx?.getUserId()) {
         if (activeCallRoomId && !isActiveCallReady) {
@@ -65,7 +65,7 @@ export function PersistentCallContainer({ children }: PersistentCallContainerPro
               perParticipantE2EE: 'true',
               theme: themeKind,
               callIntent: 'audio',
-            },
+            }
           );
 
           if (
@@ -98,7 +98,7 @@ export function PersistentCallContainer({ children }: PersistentCallContainerPro
             newUrl,
             false,
             getWidgetData(mx, roomIdToSet, {}, { skipLobby: true, callIntent: 'audio' }),
-            roomIdToSet,
+            roomIdToSet
           );
 
           const smallWidget = new SmallWidget(app);
@@ -110,7 +110,7 @@ export function PersistentCallContainer({ children }: PersistentCallContainerPro
             roomIdToSet,
             widgetApiRef.current,
             smallWidget,
-            iframeElement,
+            iframeElement
           );
         }
       }
@@ -122,7 +122,7 @@ export function PersistentCallContainer({ children }: PersistentCallContainerPro
       clientConfig.elementCallUrl,
       activeClientWidget,
       registerActiveClientWidgetApi,
-    ],
+    ]
   );
 
   useEffect(() => {

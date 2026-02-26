@@ -2,18 +2,18 @@ import { Chip, config, Icon, Icons, Menu, MenuItem, PopOut, RectCords, Text } fr
 import React, { MouseEventHandler, useState } from 'react';
 import FocusTrap from 'focus-trap-react';
 import { isKeyHotkey } from 'is-hotkey';
-import { useRoomCreatorsTag } from '../../hooks/useRoomCreatorsTag';
+import { useRoomCreatorsTag } from '$hooks/useRoomCreatorsTag';
 import { PowerColorBadge, PowerIcon } from '../power';
-import { getPowerTagIconSrc } from '../../hooks/useMemberPowerTag';
-import { useMatrixClient } from '../../hooks/useMatrixClient';
-import { useMediaAuthentication } from '../../hooks/useMediaAuthentication';
-import { stopPropagation } from '../../utils/keyboard';
-import { useRoom } from '../../hooks/useRoom';
-import { useSpaceOptionally } from '../../hooks/useSpace';
-import { useOpenRoomSettings } from '../../state/hooks/roomSettings';
-import { useOpenSpaceSettings } from '../../state/hooks/spaceSettings';
-import { SpaceSettingsPage } from '../../state/spaceSettings';
-import { RoomSettingsPage } from '../../state/roomSettings';
+import { getPowerTagIconSrc } from '$hooks/useMemberPowerTag';
+import { useMatrixClient } from '$hooks/useMatrixClient';
+import { useMediaAuthentication } from '$hooks/useMediaAuthentication';
+import { stopPropagation } from '$appUtils/keyboard';
+import { useRoom } from '$hooks/useRoom';
+import { useSpaceOptionally } from '$hooks/useSpace';
+import { useOpenRoomSettings } from '$state/hooks/roomSettings';
+import { useOpenSpaceSettings } from '$state/hooks/spaceSettings';
+import { SpaceSettingsPage } from '$state/spaceSettings';
+import { RoomSettingsPage } from '$state/roomSettings';
 
 export function CreatorChip() {
   const mx = useMatrixClient();

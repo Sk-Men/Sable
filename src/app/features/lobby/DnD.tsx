@@ -8,7 +8,7 @@ import { autoScrollForElements } from '@atlaskit/pragmatic-drag-and-drop-auto-sc
 import { combine } from '@atlaskit/pragmatic-drag-and-drop/combine';
 import classNames from 'classnames';
 import { Box, Icon, Icons, as } from 'folds';
-import { HierarchyItem } from '../../hooks/useSpaceHierarchy';
+import { HierarchyItem } from '$hooks/useSpaceHierarchy';
 import * as css from './DnD.css';
 
 export type DropContainerData = {
@@ -19,9 +19,9 @@ export type CanDropCallback = (item: HierarchyItem, container: DropContainerData
 
 export const useDraggableItem = (
   item: HierarchyItem,
-  targetRef: RefObject<HTMLElement>,
+  targetRef: RefObject<HTMLElement | null>,
   onDragging: (item?: HierarchyItem) => void,
-  dragHandleRef?: RefObject<HTMLElement>
+  dragHandleRef?: RefObject<HTMLElement | null>
 ): boolean => {
   const [dragging, setDragging] = useState(false);
 
@@ -119,7 +119,7 @@ export function AfterItemDropTarget({
 }
 
 export const useDnDMonitor = (
-  scrollRef: RefObject<HTMLElement>,
+  scrollRef: RefObject<HTMLElement | null>,
   onDragging: (item?: HierarchyItem) => void,
   onReorder: (item: HierarchyItem, container: DropContainerData) => void
 ) => {

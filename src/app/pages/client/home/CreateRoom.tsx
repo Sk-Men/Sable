@@ -7,11 +7,11 @@ import {
   PageHeader,
   PageHero,
   PageHeroSection,
-} from '../../../components/page';
-import { ScreenSize, useScreenSizeContext } from '../../../hooks/useScreenSize';
-import { BackRouteHandler } from '../../../components/BackRouteHandler';
-import { CreateRoomForm } from '../../../features/create-room';
-import { useRoomNavigate } from '../../../hooks/useRoomNavigate';
+} from '$components/page';
+import { ScreenSize, useScreenSizeContext } from '$hooks/useScreenSize';
+import { BackRouteHandler } from '$components/BackRouteHandler';
+import { CreateRoomForm } from '$features/create-room';
+import { useRoomNavigate } from '$hooks/useRoomNavigate';
 
 export function HomeCreateRoom() {
   const screenSize = useScreenSizeContext();

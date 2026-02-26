@@ -1,5 +1,5 @@
 import React, { ReactNode, useCallback, useRef, useState } from 'react';
-import { MatrixError, Room } from 'matrix-js-sdk';
+import { MatrixError, Room } from '$types/matrix-sdk';
 import {
   Avatar,
   Badge,
@@ -21,18 +21,18 @@ import classNames from 'classnames';
 import FocusTrap from 'focus-trap-react';
 import * as css from './style.css';
 import { RoomAvatar } from '../room-avatar';
-import { getMxIdLocalPart, mxcUrlToHttp } from '../../utils/matrix';
-import { nameInitials } from '../../utils/common';
-import { millify } from '../../plugins/millify';
-import { useMatrixClient } from '../../hooks/useMatrixClient';
-import { AsyncStatus, useAsyncCallback } from '../../hooks/useAsyncCallback';
-import { onEnterOrSpace, stopPropagation } from '../../utils/keyboard';
-import { RoomType, StateEvent } from '../../../types/matrix/room';
-import { useJoinedRoomId } from '../../hooks/useJoinedRoomId';
-import { useElementSizeObserver } from '../../hooks/useElementSizeObserver';
-import { getRoomAvatarUrl, getStateEvent } from '../../utils/room';
-import { useStateEventCallback } from '../../hooks/useStateEventCallback';
-import { useMediaAuthentication } from '../../hooks/useMediaAuthentication';
+import { getMxIdLocalPart, mxcUrlToHttp } from '$appUtils/matrix';
+import { nameInitials } from '$appUtils/common';
+import { millify } from '$plugins/millify';
+import { useMatrixClient } from '$hooks/useMatrixClient';
+import { AsyncStatus, useAsyncCallback } from '$hooks/useAsyncCallback';
+import { onEnterOrSpace, stopPropagation } from '$appUtils/keyboard';
+import { RoomType, StateEvent } from '$types/matrix/room';
+import { useJoinedRoomId } from '$hooks/useJoinedRoomId';
+import { useElementSizeObserver } from '$hooks/useElementSizeObserver';
+import { getRoomAvatarUrl, getStateEvent } from '$appUtils/room';
+import { useStateEventCallback } from '$hooks/useStateEventCallback';
+import { useMediaAuthentication } from '$hooks/useMediaAuthentication';
 
 type GridColumnCount = '1' | '2' | '3';
 const getGridColumnCount = (gridWidth: number): GridColumnCount => {

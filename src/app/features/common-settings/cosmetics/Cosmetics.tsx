@@ -1,23 +1,15 @@
 import React, { useCallback } from 'react';
-import {
-  Box,
-  Text,
-  IconButton,
-  Icon,
-  Icons,
-  Scroll,
-  Switch,
-} from 'folds';
-import { Page, PageContent, PageHeader } from '../../../components/page';
-import { SequenceCard } from '../../../components/sequence-card';
+import { Box, Text, IconButton, Icon, Icons, Scroll, Switch } from 'folds';
+import { Page, PageContent, PageHeader } from '$components/page';
+import { SequenceCard } from '$components/sequence-card';
 import { SequenceCardStyle } from '../styles.css';
-import { SettingTile } from '../../../components/setting-tile';
-import { useRoom } from '../../../hooks/useRoom';
-import { usePowerLevels } from '../../../hooks/usePowerLevels';
-import { useMatrixClient } from '../../../hooks/useMatrixClient';
-import { StateEvent } from '../../../../types/matrix/room';
-import { useRoomCreators } from '../../../hooks/useRoomCreators';
-import { useRoomPermissions } from '../../../hooks/useRoomPermissions';
+import { SettingTile } from '$components/setting-tile';
+import { useRoom } from '$hooks/useRoom';
+import { usePowerLevels } from '$hooks/usePowerLevels';
+import { useMatrixClient } from '$hooks/useMatrixClient';
+import { StateEvent } from '$types/matrix/room';
+import { useRoomCreators } from '$hooks/useRoomCreators';
+import { useRoomPermissions } from '$hooks/useRoomPermissions';
 
 type CosmeticsProps = {
   requestClose: () => void;
@@ -35,29 +27,34 @@ export function Cosmetics({ requestClose }: CosmeticsProps) {
 
   const getLevel = (eventType: string) => (powerLevels as any).events?.[eventType] ?? 50;
 
-  const handleToggle = useCallback(async (eventType: string, enabled: boolean) => {
-    const newLevel = enabled ? 0 : 50;
-    const newContent = {
-      ...powerLevels,
-      events: {
-        ...((powerLevels as any).events || {}),
-        [eventType]: newLevel,
-      },
-    };
+  const handleToggle = useCallback(
+    async (eventType: string, enabled: boolean) => {
+      const newLevel = enabled ? 0 : 50;
+      const newContent = {
+        ...powerLevels,
+        events: {
+          ...((powerLevels as any).events || {}),
+          [eventType]: newLevel,
+        },
+      };
 
-    try {
-      await mx.sendStateEvent(room.roomId, StateEvent.RoomPowerLevels as any, newContent, "");
-    } catch (e) {
-      console.error(`Failed to update permissions for ${eventType}:`, e);
-    }
-  }, [mx, room.roomId, powerLevels]);
+      try {
+        await mx.sendStateEvent(room.roomId, StateEvent.RoomPowerLevels as any, newContent, '');
+      } catch (e) {
+        console.error(`Failed to update permissions for ${eventType}:`, e);
+      }
+    },
+    [mx, room.roomId, powerLevels]
+  );
 
   return (
     <Page>
       <PageHeader outlined={false}>
         <Box grow="Yes" gap="200">
           <Box grow="Yes" alignItems="Center" gap="200">
-            <Text size="H3" truncate>Cosmetics</Text>
+            <Text size="H3" truncate>
+              Cosmetics
+            </Text>
           </Box>
           <Box shrink="No">
             <IconButton onClick={requestClose} variant="Surface">
@@ -80,8 +77,12 @@ export function Cosmetics({ requestClose }: CosmeticsProps) {
                   gap="400"
                 >
                   <SettingTile
-                    title={isSpace ? "Space-Wide Colors" : "Room Colors"}
-                    description={isSpace ? "Allow everyone to use /gcolor in this space." : "Allow everyone to use /color in this room."}
+                    title={isSpace ? 'Space-Wide Colors' : 'Room Colors'}
+                    description={
+                      isSpace
+                        ? 'Allow everyone to use /gcolor in this space.'
+                        : 'Allow everyone to use /color in this room.'
+                    }
                     after={
                       <Switch
                         variant="Primary"
@@ -100,8 +101,12 @@ export function Cosmetics({ requestClose }: CosmeticsProps) {
                   gap="400"
                 >
                   <SettingTile
-                    title={isSpace ? "Space-Wide Fonts" : "Room Fonts"}
-                    description={isSpace ? "Allow everyone to use /gfont in this space." : "Allow everyone to use /font in this room."}
+                    title={isSpace ? 'Space-Wide Fonts' : 'Room Fonts'}
+                    description={
+                      isSpace
+                        ? 'Allow everyone to use /gfont in this space.'
+                        : 'Allow everyone to use /font in this room.'
+                    }
                     after={
                       <Switch
                         variant="Primary"
@@ -127,20 +132,25 @@ export function Cosmetics({ requestClose }: CosmeticsProps) {
                   <Box direction="Column" gap="200">
                     <Box direction="Column">
                       <Text size="T300">/color [hex]</Text>
-                      <Text size="T200" priority="300">Set room-specific name color. (e.g. /color #ff00ff)</Text>
+                      <Text size="T200" priority="300">
+                        Set room-specific name color. (e.g. /color #ff00ff)
+                      </Text>
                     </Box>
                     <Box direction="Column">
                       <Text size="T300">/font [name]</Text>
-                      <Text size="T200" priority="300">Set room-specific name font. (e.g. /font monospace)</Text>
+                      <Text size="T200" priority="300">
+                        Set room-specific name font. (e.g. /font monospace)
+                      </Text>
                     </Box>
                     <Box direction="Column">
                       <Text size="T300">/gcolor | /gfont</Text>
-                      <Text size="T200" priority="300">Apply colors/fonts to the entire space.</Text>
+                      <Text size="T200" priority="300">
+                        Apply colors/fonts to the entire space.
+                      </Text>
                     </Box>
                   </Box>
                 </SequenceCard>
               </Box>
-
             </Box>
           </PageContent>
         </Scroll>

@@ -1,4 +1,4 @@
-import produce from 'immer';
+import { produce } from 'immer';
 import { atom, useSetAtom } from 'jotai';
 import {
   ClientEvent,
@@ -7,16 +7,16 @@ import {
   Room,
   RoomEvent,
   RoomStateEvent,
-} from 'matrix-js-sdk';
+} from '$types/matrix-sdk';
 import { useEffect } from 'react';
-import { Membership, RoomToParents, StateEvent } from '../../../types/matrix/room';
+import { Membership, RoomToParents, StateEvent } from '$types/matrix/room';
 import {
   getRoomToParents,
   getSpaceChildren,
   isSpace,
   isValidChild,
   mapParentWithChildren,
-} from '../../utils/room';
+} from '$appUtils/room';
 
 export type RoomToParentsAction =
   | {

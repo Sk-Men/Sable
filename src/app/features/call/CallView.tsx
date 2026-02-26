@@ -1,4 +1,4 @@
-import { EventType, Room } from 'matrix-js-sdk';
+import { EventType, Room } from '$types/matrix-sdk';
 import React, {
   useContext,
   useCallback,
@@ -9,24 +9,24 @@ import React, {
   ReactNode,
 } from 'react';
 import { Box, Button, config, Spinner, Text } from 'folds';
-import { useCallState } from '../../pages/client/call/CallProvider';
-import { useCallMembers } from '../../hooks/useCallMemberships';
+import { useCallState } from '$pages/client/call/CallProvider';
+import { useCallMembers } from '$hooks/useCallMemberships';
 
-import { CallRefContext } from '../../pages/client/call/PersistentCallContainer';
-import { ScreenSize, useScreenSizeContext } from '../../hooks/useScreenSize';
-import { useDebounce } from '../../hooks/useDebounce';
-import { useMatrixClient } from '../../hooks/useMatrixClient';
+import { CallRefContext } from '$pages/client/call/PersistentCallContainer';
+import { ScreenSize, useScreenSizeContext } from '$hooks/useScreenSize';
+import { useDebounce } from '$hooks/useDebounce';
+import { useMatrixClient } from '$hooks/useMatrixClient';
 import { CallViewUser } from './CallViewUser';
-import { useRoomNavigate } from '../../hooks/useRoomNavigate';
-import { getMemberDisplayName } from '../../utils/room';
-import { getMxIdLocalPart } from '../../utils/matrix';
+import { useRoomNavigate } from '$hooks/useRoomNavigate';
+import { getMemberDisplayName } from '$appUtils/room';
+import { getMxIdLocalPart } from '$appUtils/matrix';
 import * as css from './CallView.css';
-import { useRoomPermissions } from '../../hooks/useRoomPermissions';
-import { useRoomCreators } from '../../hooks/useRoomCreators';
-import { usePowerLevelsContext } from '../../hooks/usePowerLevels';
-import { useRoomName } from '../../hooks/useRoomMeta';
+import { useRoomPermissions } from '$hooks/useRoomPermissions';
+import { useRoomCreators } from '$hooks/useRoomCreators';
+import { usePowerLevelsContext } from '$hooks/usePowerLevels';
+import { useRoomName } from '$hooks/useRoomMeta';
 import { useAtomValue } from 'jotai';
-import { nicknamesAtom } from '../../state/nicknames';
+import { nicknamesAtom } from '$state/nicknames';
 
 type OriginalStyles = {
   position?: string;

@@ -18,7 +18,7 @@ import {
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { useAtom, useAtomValue } from 'jotai';
 import FocusTrap from 'focus-trap-react';
-import { factoryRoomIdByActivity, factoryRoomIdByAtoZ } from '../../../utils/sort';
+import { factoryRoomIdByActivity, factoryRoomIdByAtoZ } from '$appUtils/sort';
 import {
   NavButton,
   NavCategory,
@@ -28,7 +28,7 @@ import {
   NavItem,
   NavItemContent,
   NavLink,
-} from '../../../components/nav';
+} from '$components/nav';
 import {
   encodeSearchParamValueArray,
   getExplorePath,
@@ -36,36 +36,33 @@ import {
   getHomeRoomPath,
   getHomeSearchPath,
   withSearchParam,
-} from '../../pathUtils';
-import { getCanonicalAliasOrRoomId } from '../../../utils/matrix';
-import { useSelectedRoom } from '../../../hooks/router/useSelectedRoom';
-import {
-  useHomeCreateSelected,
-  useHomeSearchSelected,
-} from '../../../hooks/router/useHomeSelected';
+} from '$pages/pathUtils';
+import { getCanonicalAliasOrRoomId } from '$appUtils/matrix';
+import { useSelectedRoom } from '$hooks/router/useSelectedRoom';
+import { useHomeCreateSelected, useHomeSearchSelected } from '$hooks/router/useHomeSelected';
 import { useHomeRooms } from './useHomeRooms';
-import { useMatrixClient } from '../../../hooks/useMatrixClient';
-import { VirtualTile } from '../../../components/virtualizer';
-import { RoomNavCategoryButton, RoomNavItem } from '../../../features/room-nav';
-import { makeNavCategoryId } from '../../../state/closedNavCategories';
-import { roomToUnreadAtom } from '../../../state/room/roomToUnread';
-import { useCategoryHandler } from '../../../hooks/useCategoryHandler';
-import { useNavToActivePathMapper } from '../../../hooks/useNavToActivePathMapper';
-import { PageNav, PageNavHeader, PageNavContent } from '../../../components/page';
-import { useRoomsUnread } from '../../../state/hooks/unread';
-import { markAsRead } from '../../../utils/notifications';
-import { useClosedNavCategoriesAtom } from '../../../state/hooks/closedNavCategories';
-import { stopPropagation } from '../../../utils/keyboard';
-import { useSetting } from '../../../state/hooks/settings';
-import { settingsAtom } from '../../../state/settings';
+import { useMatrixClient } from '$hooks/useMatrixClient';
+import { VirtualTile } from '$components/virtualizer';
+import { RoomNavCategoryButton, RoomNavItem } from '$features/room-nav';
+import { makeNavCategoryId } from '$state/closedNavCategories';
+import { roomToUnreadAtom } from '$state/room/roomToUnread';
+import { useCategoryHandler } from '$hooks/useCategoryHandler';
+import { useNavToActivePathMapper } from '$hooks/useNavToActivePathMapper';
+import { PageNav, PageNavHeader, PageNavContent } from '$components/page';
+import { useRoomsUnread } from '$state/hooks/unread';
+import { markAsRead } from '$appUtils/notifications';
+import { useClosedNavCategoriesAtom } from '$state/hooks/closedNavCategories';
+import { stopPropagation } from '$appUtils/keyboard';
+import { useSetting } from '$state/hooks/settings';
+import { settingsAtom } from '$state/settings';
 import {
   getRoomNotificationMode,
   useRoomsNotificationPreferencesContext,
-} from '../../../hooks/useRoomsNotificationPreferences';
-import { UseStateProvider } from '../../../components/UseStateProvider';
-import { JoinAddressPrompt } from '../../../components/join-address-prompt';
-import { _RoomSearchParams } from '../../paths';
-import { CallNavStatus } from '../../../features/room-nav/RoomCallNavStatus';
+} from '$hooks/useRoomsNotificationPreferences';
+import { UseStateProvider } from '$components/UseStateProvider';
+import { JoinAddressPrompt } from '$components/join-address-prompt';
+import { _RoomSearchParams } from '$pages/paths';
+import { CallNavStatus } from '$features/room-nav/RoomCallNavStatus';
 
 type HomeMenuProps = {
   requestClose: () => void;

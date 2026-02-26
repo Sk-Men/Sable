@@ -1,17 +1,17 @@
 import { as, Avatar, Box, Icon, Icons, Text } from 'folds';
 import React from 'react';
 import classNames from 'classnames';
-import { Room } from 'matrix-js-sdk';
-import { CallMembership } from 'matrix-js-sdk/lib/matrixrtc/CallMembership';
-import { UserAvatar } from '../../components/user-avatar';
-import { useMatrixClient } from '../../hooks/useMatrixClient';
-import { getMxIdLocalPart } from '../../utils/matrix';
-import { getMemberAvatarMxc, getMemberDisplayName } from '../../utils/room';
+import { Room } from '$types/matrix-sdk';
+import { CallMembership } from '$types/matrix-sdk';
+import { UserAvatar } from '$components/user-avatar';
+import { useMatrixClient } from '$hooks/useMatrixClient';
+import { getMxIdLocalPart } from '$appUtils/matrix';
+import { getMemberAvatarMxc, getMemberDisplayName } from '$appUtils/room';
 import { useAtomValue } from 'jotai';
-import { nicknamesAtom } from '../../state/nicknames';
-import { useMediaAuthentication } from '../../hooks/useMediaAuthentication';
-import { useOpenUserRoomProfile } from '../../state/hooks/userRoomProfile';
-import { useSpaceOptionally } from '../../hooks/useSpace';
+import { nicknamesAtom } from '$state/nicknames';
+import { useMediaAuthentication } from '$hooks/useMediaAuthentication';
+import { useOpenUserRoomProfile } from '$state/hooks/userRoomProfile';
+import { useSpaceOptionally } from '$hooks/useSpace';
 import * as css from './CallView.css';
 
 type CallViewUserProps = {

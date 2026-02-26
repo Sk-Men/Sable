@@ -19,25 +19,25 @@ import {
   toRem,
 } from 'folds';
 import FocusTrap from 'focus-trap-react';
-import { JoinRule, MatrixError, Room } from 'matrix-js-sdk';
-import { IHierarchyRoom } from 'matrix-js-sdk/lib/@types/spaces';
-import { RoomAvatar, RoomIcon } from '../../components/room-avatar';
-import { SequenceCard } from '../../components/sequence-card';
-import { useMatrixClient } from '../../hooks/useMatrixClient';
-import { HierarchyItem } from '../../hooks/useSpaceHierarchy';
-import { millify } from '../../plugins/millify';
-import { LocalRoomSummaryLoader } from '../../components/RoomSummaryLoader';
-import { UseStateProvider } from '../../components/UseStateProvider';
-import { RoomTopicViewer } from '../../components/room-topic-viewer';
-import { onEnterOrSpace, stopPropagation } from '../../utils/keyboard';
-import { Membership } from '../../../types/matrix/room';
+import { JoinRule, MatrixError, Room } from '$types/matrix-sdk';
+import { IHierarchyRoom } from '$types/matrix-sdk';
+import { RoomAvatar, RoomIcon } from '$components/room-avatar';
+import { SequenceCard } from '$components/sequence-card';
+import { useMatrixClient } from '$hooks/useMatrixClient';
+import { HierarchyItem } from '$hooks/useSpaceHierarchy';
+import { millify } from '$plugins/millify';
+import { LocalRoomSummaryLoader } from '$components/RoomSummaryLoader';
+import { UseStateProvider } from '$components/UseStateProvider';
+import { RoomTopicViewer } from '$components/room-topic-viewer';
+import { onEnterOrSpace, stopPropagation } from '$appUtils/keyboard';
+import { Membership } from '$types/matrix/room';
 import * as css from './RoomItem.css';
 import * as styleCss from './style.css';
-import { AsyncStatus, useAsyncCallback } from '../../hooks/useAsyncCallback';
-import { getDirectRoomAvatarUrl, getRoomAvatarUrl } from '../../utils/room';
+import { AsyncStatus, useAsyncCallback } from '$hooks/useAsyncCallback';
+import { getDirectRoomAvatarUrl, getRoomAvatarUrl } from '$appUtils/room';
 import { ItemDraggableTarget, useDraggableItem } from './DnD';
-import { mxcUrlToHttp } from '../../utils/matrix';
-import { useMediaAuthentication } from '../../hooks/useMediaAuthentication';
+import { mxcUrlToHttp } from '$appUtils/matrix';
+import { useMediaAuthentication } from '$hooks/useMediaAuthentication';
 
 type RoomJoinButtonProps = {
   roomId: string;
@@ -402,8 +402,8 @@ export const RoomItemCard = as<'div', RoomItemCardProps>(
                   topic={summary.topic}
                   avatarUrl={
                     summary?.avatar_url
-                      ? mxcUrlToHttp(mx, summary.avatar_url, useAuthentication, 96, 96, 'crop') ??
-                        undefined
+                      ? (mxcUrlToHttp(mx, summary.avatar_url, useAuthentication, 96, 96, 'crop') ??
+                        undefined)
                       : undefined
                   }
                   memberCount={summary.num_joined_members}

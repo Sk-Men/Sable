@@ -1,4 +1,4 @@
-import { IImageInfo } from '../../../types/matrix/common';
+import { IImageInfo } from '$types/matrix/common';
 import { ImageUsage, PackImage } from './types';
 
 export class PackImageReader {

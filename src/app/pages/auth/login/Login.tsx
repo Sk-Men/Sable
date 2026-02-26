@@ -1,18 +1,18 @@
 import React, { useMemo } from 'react';
 import { Box, Text, color } from 'folds';
 import { Link, useSearchParams } from 'react-router-dom';
-import { SSOAction } from 'matrix-js-sdk';
-import { useAuthFlows } from '../../../hooks/useAuthFlows';
-import { useAuthServer } from '../../../hooks/useAuthServer';
-import { useParsedLoginFlows } from '../../../hooks/useParsedLoginFlows';
+import { SSOAction } from '$types/matrix-sdk';
+import { useAuthFlows } from '$hooks/useAuthFlows';
+import { useAuthServer } from '$hooks/useAuthServer';
+import { useParsedLoginFlows } from '$hooks/useParsedLoginFlows';
 import { PasswordLoginForm } from './PasswordLoginForm';
 import { SSOLogin } from '../SSOLogin';
 import { TokenLogin } from './TokenLogin';
 import { OrDivider } from '../OrDivider';
-import { getLoginPath, getRegisterPath, withSearchParam } from '../../pathUtils';
-import { usePathWithOrigin } from '../../../hooks/usePathWithOrigin';
-import { LoginPathSearchParams } from '../../paths';
-import { useClientConfig } from '../../../hooks/useClientConfig';
+import { getLoginPath, getRegisterPath, withSearchParam } from '$pages/pathUtils';
+import { usePathWithOrigin } from '$hooks/usePathWithOrigin';
+import { LoginPathSearchParams } from '$pages/paths';
+import { useClientConfig } from '$hooks/useClientConfig';
 
 const getLoginTokenSearchParam = () => {
   // when using hasRouter query params in existing route

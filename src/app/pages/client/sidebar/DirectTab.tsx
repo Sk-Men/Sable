@@ -3,28 +3,28 @@ import { useNavigate } from 'react-router-dom';
 import { Box, Icon, Icons, Menu, MenuItem, PopOut, RectCords, Text, config, toRem } from 'folds';
 import FocusTrap from 'focus-trap-react';
 import { useAtomValue } from 'jotai';
-import { useDirects } from '../../../state/hooks/roomList';
-import { useMatrixClient } from '../../../hooks/useMatrixClient';
-import { mDirectAtom } from '../../../state/mDirectList';
-import { allRoomsAtom } from '../../../state/room-list/roomList';
-import { roomToUnreadAtom } from '../../../state/room/roomToUnread';
-import { getDirectPath, joinPathComponent } from '../../pathUtils';
-import { useRoomsUnread } from '../../../state/hooks/unread';
+import { useDirects } from '$state/hooks/roomList';
+import { useMatrixClient } from '$hooks/useMatrixClient';
+import { mDirectAtom } from '$state/mDirectList';
+import { allRoomsAtom } from '$state/room-list/roomList';
+import { roomToUnreadAtom } from '$state/room/roomToUnread';
+import { getDirectPath, joinPathComponent } from '$pages/pathUtils';
+import { useRoomsUnread } from '$state/hooks/unread';
 import {
   SidebarAvatar,
   SidebarItem,
   SidebarItemBadge,
   SidebarItemTooltip,
-} from '../../../components/sidebar';
-import { useDirectSelected } from '../../../hooks/router/useDirectSelected';
-import { UnreadBadge } from '../../../components/unread-badge';
-import { ScreenSize, useScreenSizeContext } from '../../../hooks/useScreenSize';
-import { useNavToActivePathAtom } from '../../../state/hooks/navToActivePath';
+} from '$components/sidebar';
+import { useDirectSelected } from '$hooks/router/useDirectSelected';
+import { UnreadBadge } from '$components/unread-badge';
+import { ScreenSize, useScreenSizeContext } from '$hooks/useScreenSize';
+import { useNavToActivePathAtom } from '$state/hooks/navToActivePath';
 import { useDirectRooms } from '../direct/useDirectRooms';
-import { markAsRead } from '../../../utils/notifications';
-import { stopPropagation } from '../../../utils/keyboard';
-import { settingsAtom } from '../../../state/settings';
-import { useSetting } from '../../../state/hooks/settings';
+import { markAsRead } from '$appUtils/notifications';
+import { stopPropagation } from '$appUtils/keyboard';
+import { settingsAtom } from '$state/settings';
+import { useSetting } from '$state/hooks/settings';
 
 type DirectMenuProps = {
   requestClose: () => void;

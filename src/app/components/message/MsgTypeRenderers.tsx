@@ -1,8 +1,8 @@
 import React, { CSSProperties, ReactNode } from 'react';
 import { Box, Chip, Icon, Icons, Text, toRem } from 'folds';
-import { IContent } from 'matrix-js-sdk';
-import { JUMBO_EMOJI_REG, URL_REG } from '../../utils/regex';
-import { trimReplyFromBody } from '../../utils/room';
+import { IContent } from '$types/matrix-sdk';
+import { JUMBO_EMOJI_REG, URL_REG } from '$appUtils/regex';
+import { trimReplyFromBody } from '$appUtils/room';
 import { MessageTextBody } from './layout';
 import {
   MessageBadEncryptedContent,
@@ -24,13 +24,13 @@ import {
   IVideoInfo,
   MATRIX_SPOILER_PROPERTY_NAME,
   MATRIX_SPOILER_REASON_PROPERTY_NAME,
-} from '../../../types/matrix/common';
-import { FALLBACK_MIMETYPE, getBlobSafeMimeType } from '../../utils/mimeTypes';
-import { parseGeoUri, scaleYDimension } from '../../utils/common';
+} from '$types/matrix/common';
+import { FALLBACK_MIMETYPE, getBlobSafeMimeType } from '$appUtils/mimeTypes';
+import { parseGeoUri, scaleYDimension } from '$appUtils/common';
 import { Attachment, AttachmentBox, AttachmentContent, AttachmentHeader } from './attachment';
 import { FileHeader, FileDownloadButton } from './FileHeader';
-import { useSetting } from '../../state/hooks/settings';
-import { settingsAtom } from '../../state/settings';
+import { useSetting } from '$state/hooks/settings';
+import { settingsAtom } from '$state/settings';
 
 export function MBadEncrypted() {
   return (
@@ -86,9 +86,9 @@ export function MText({ edited, content, renderBody, renderUrlsPreview, style }:
 
   const trimmedBody = trimReplyFromBody(body);
 
-  let safeCustomBody = customBody;
-  if (customBody && customBody.length > 8000) {
-    const imageTags = customBody.match(/<img[^>]*>/g);
+  let safeCustomBody: string | undefined = typeof customBody === 'string' ? customBody : undefined;
+  if (safeCustomBody && safeCustomBody.length > 8000) {
+    const imageTags = safeCustomBody.match(/<img[^>]*>/g);
     if (imageTags) {
       safeCustomBody = imageTags.join(' ');
     } else {
@@ -117,7 +117,6 @@ export function MText({ edited, content, renderBody, renderUrlsPreview, style }:
     </>
   );
 }
-
 
 type MEmoteProps = {
   displayName: string;

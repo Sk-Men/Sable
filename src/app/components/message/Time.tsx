@@ -1,6 +1,6 @@
 import React, { ComponentProps } from 'react';
 import { Text, as } from 'folds';
-import { timeDayMonYear, timeHourMinute, today, yesterday } from '../../utils/time';
+import { timeDayMonYear, timeHourMinute, today, yesterday } from '$appUtils/time';
 
 export type TimeProps = {
   compact?: boolean;

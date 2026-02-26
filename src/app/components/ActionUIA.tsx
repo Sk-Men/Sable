@@ -1,5 +1,5 @@
 import React, { ReactNode } from 'react';
-import { AuthDict, AuthType, IAuthData, UIAFlow } from 'matrix-js-sdk';
+import { AuthDict, AuthType, IAuthData, UIAFlow } from '$types/matrix-sdk';
 import { getUIAFlowForStages } from '../utils/matrix-uia';
 import { useSupportedUIAFlows, useUIACompleted, useUIAFlow } from '../hooks/useUIAFlows';
 import { UIAFlowOverlay } from './UIAFlowOverlay';

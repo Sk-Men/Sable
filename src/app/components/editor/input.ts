@@ -1,9 +1,8 @@
-/* eslint-disable no-param-reassign */
 import { Descendant, Text } from 'slate';
 import parse from 'html-dom-parser';
 import { ChildNode, Element, isText, isTag } from 'domhandler';
 
-import { sanitizeCustomHtml } from '../../utils/sanitize';
+import { sanitizeCustomHtml } from '$appUtils/sanitize';
 import { BlockType, MarkType } from './types';
 import {
   BlockQuoteElement,
@@ -24,12 +23,8 @@ import {
   parseMatrixToRoomEvent,
   parseMatrixToUser,
   testMatrixTo,
-} from '../../plugins/matrix-to';
-import { tryDecodeURIComponent } from '../../utils/dom';
-import {
-  escapeMarkdownInlineSequences,
-  escapeMarkdownBlockSequences,
-} from '../../plugins/markdown';
+} from '$plugins/matrix-to';
+import { escapeMarkdownInlineSequences, escapeMarkdownBlockSequences } from '$plugins/markdown';
 
 type ProcessTextCallback = (text: string) => string;
 
@@ -101,8 +96,9 @@ const getInlineNonMarkElement = (node: Element): MentionElement | EmoticonElemen
     return createEmoticonElement(src, alt || 'Unknown Emoji');
   }
   if (node.name === 'a') {
-    const href = tryDecodeURIComponent(node.attribs.href);
-    if (typeof href !== 'string') return undefined;
+    const encodedHref = node.attribs.href;
+    const href = encodedHref && decodeURIComponent(encodedHref);
+    if (!href) return undefined;
     if (testMatrixTo(href)) {
       const userMention = parseMatrixToUser(href);
       if (userMention) {
@@ -229,7 +225,7 @@ const parseCodeBlockNode = (node: Element): CodeBlockElement[] | ParagraphElemen
     }));
     const childCode = node.children[0];
     const className =
-      isTag(childCode) && childCode.tagName === 'code' ? childCode.attribs.class ?? '' : '';
+      isTag(childCode) && childCode.tagName === 'code' ? (childCode.attribs.class ?? '') : '';
     const prefix = { text: `${mdSequence}${className.replace('language-', '')}` };
     const suffix = { text: mdSequence };
     return [

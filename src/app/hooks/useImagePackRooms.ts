@@ -1,4 +1,4 @@
-import { Room } from 'matrix-js-sdk';
+import { Room } from '$types/matrix-sdk';
 import { useMemo } from 'react';
 import { getAllParents } from '../utils/room';
 import { useMatrixClient } from './useMatrixClient';

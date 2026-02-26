@@ -1,8 +1,8 @@
 import { useAtomValue, useSetAtom } from 'jotai';
 import { useCallback, useEffect } from 'react';
-import { ClientEvent, MatrixClient, MatrixEvent } from 'matrix-js-sdk';
+import { ClientEvent, MatrixClient, MatrixEvent } from '$types/matrix-sdk';
 import { nicknamesAtom, setNicknameAtom } from '../state/nicknames';
-import { AccountDataEvent } from '../../types/matrix/accountData';
+import { AccountDataEvent } from '$types/matrix/accountData';
 import { useAccountDataCallback } from './useAccountDataCallback';
 import { useMatrixClient } from './useMatrixClient';
 
@@ -45,4 +45,4 @@ export const useSyncNicknames = (mx?: MatrixClient) => {
       [setNicknames]
     )
   );
-}
+};

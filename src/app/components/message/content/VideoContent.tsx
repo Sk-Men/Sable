@@ -19,19 +19,14 @@ import {
   IThumbnailContent,
   IVideoInfo,
   MATRIX_BLUR_HASH_PROPERTY_NAME,
-} from '../../../../types/matrix/common';
+} from '$types/matrix/common';
 import * as css from './style.css';
-import { useMatrixClient } from '../../../hooks/useMatrixClient';
-import { AsyncStatus, useAsyncCallback } from '../../../hooks/useAsyncCallback';
-import { bytesToSize, millisecondsToMinutesAndSeconds } from '../../../utils/common';
-import {
-  decryptFile,
-  downloadEncryptedMedia,
-  downloadMedia,
-  mxcUrlToHttp,
-} from '../../../utils/matrix';
-import { useMediaAuthentication } from '../../../hooks/useMediaAuthentication';
-import { validBlurHash } from '../../../utils/blurHash';
+import { useMatrixClient } from '$hooks/useMatrixClient';
+import { AsyncStatus, useAsyncCallback } from '$hooks/useAsyncCallback';
+import { bytesToSize, millisecondsToMinutesAndSeconds } from '$appUtils/common';
+import { decryptFile, downloadEncryptedMedia, downloadMedia, mxcUrlToHttp } from '$appUtils/matrix';
+import { useMediaAuthentication } from '$hooks/useMediaAuthentication';
+import { validBlurHash } from '$appUtils/blurHash';
 
 type RenderVideoProps = {
   title: string;
@@ -87,8 +82,8 @@ export const VideoContent = as<'div', VideoContentProps>(
         if (!mediaUrl) throw new Error('Invalid media URL');
         const fileContent = encInfo
           ? await downloadEncryptedMedia(mediaUrl, (encBuf) =>
-            decryptFile(encBuf, mimeType, encInfo)
-          )
+              decryptFile(encBuf, mimeType, encInfo)
+            )
           : await downloadMedia(mediaUrl);
         return URL.createObjectURL(fileContent);
       }, [mx, url, useAuthentication, mimeType, encInfo])

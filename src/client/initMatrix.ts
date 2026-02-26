@@ -1,9 +1,20 @@
-import { createClient, MatrixClient, IndexedDBStore, IndexedDBCryptoStore } from 'matrix-js-sdk';
+import {
+  createClient,
+  MatrixClient,
+  IndexedDBStore,
+  IndexedDBCryptoStore,
+} from '$types/matrix-sdk';
 
 import { cryptoCallbacks } from './secretStorageKeys';
 import { clearNavToActivePathStore } from '../app/state/navToActivePath';
 import { pushSessionToSW } from '../sw-session';
-import { Session, Sessions, SessionStoreName, getSessionStoreName, MATRIX_SESSIONS_KEY } from '../app/state/sessions';
+import {
+  Session,
+  Sessions,
+  SessionStoreName,
+  getSessionStoreName,
+  MATRIX_SESSIONS_KEY,
+} from '../app/state/sessions';
 import { getLocalStorageItem } from '../app/state/utils/atomWithLocalStorage';
 import { createLogger } from '../app/utils/debug';
 
@@ -46,9 +57,16 @@ const readStoredAccount = (dbName: string): Promise<string | undefined> =>
             resolve(undefined);
           }
         };
-        getReq.onerror = () => { db.close(); resolve(undefined); };
+        getReq.onerror = () => {
+          db.close();
+          resolve(undefined);
+        };
       } catch {
-        try { db.close(); } catch { /* ignore */ }
+        try {
+          db.close();
+        } catch {
+          /* ignore */
+        }
         resolve(undefined);
       }
     };
@@ -63,10 +81,12 @@ const readStoredAccount = (dbName: string): Promise<string | undefined> =>
 export const clearMismatchedStores = async (): Promise<void> => {
   const sessions = getLocalStorageItem<Sessions>(MATRIX_SESSIONS_KEY, []);
   const knownUserIds = new Set(sessions.map((s) => s.userId));
-  const knownStoreNames = new Set(sessions.flatMap((s) => {
-    const sn = getSessionStoreName(s);
-    return [sn.sync, sn.crypto, `${sn.rustCryptoPrefix}::matrix-sdk-crypto`];
-  }));
+  const knownStoreNames = new Set(
+    sessions.flatMap((s) => {
+      const sn = getSessionStoreName(s);
+      return [sn.sync, sn.crypto, `${sn.rustCryptoPrefix}::matrix-sdk-crypto`];
+    })
+  );
 
   let allDbs: IDBDatabaseInfo[] = [];
   try {
@@ -98,7 +118,9 @@ export const clearMismatchedStores = async (): Promise<void> => {
         } else {
           const expectedStore = `sync${storedUserId}`;
           if (name !== expectedStore && !knownStoreNames.has(name)) {
-            log.warn(`clearMismatchedStores: "${name}" is misplaced for ${storedUserId} — deleting`);
+            log.warn(
+              `clearMismatchedStores: "${name}" is misplaced for ${storedUserId} — deleting`
+            );
             await deleteDatabase(name);
             await deleteDatabase(name.replace(/^sync/, 'crypto'));
             await deleteDatabase(`${name}::matrix-sdk-crypto`);
@@ -112,7 +134,9 @@ export const clearMismatchedStores = async (): Promise<void> => {
     const sn = getSessionStoreName(session);
     const storedUserId = await readStoredAccount(sn.sync);
     if (storedUserId && storedUserId !== session.userId) {
-      log.warn(`clearMismatchedStores: "${sn.sync}" has ${storedUserId} but session is ${session.userId} — deleting`);
+      log.warn(
+        `clearMismatchedStores: "${sn.sync}" has ${storedUserId} but session is ${session.userId} — deleting`
+      );
       await deleteDatabase(sn.sync);
       await deleteDatabase(sn.crypto);
       await deleteDatabase(`${sn.rustCryptoPrefix}::matrix-sdk-crypto`);

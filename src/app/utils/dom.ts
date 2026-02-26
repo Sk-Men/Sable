@@ -211,14 +211,6 @@ export const setFavicon = (url: string): void => {
   favicon.setAttribute('href', url);
 };
 
-export const tryDecodeURIComponent = (encodedURIComponent: string): string => {
-  try {
-    return decodeURIComponent(encodedURIComponent);
-  } catch {
-    return encodedURIComponent;
-  }
-};
-
 export const syntaxErrorPosition = (error: SyntaxError): number | undefined => {
   const match = error.message.match(/position\s(\d+)\s/);
   if (!match) return undefined;

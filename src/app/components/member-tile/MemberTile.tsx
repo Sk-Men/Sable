@@ -1,16 +1,18 @@
 import React, { ReactNode } from 'react';
 import { as, Avatar, Box, Icon, Icons, Text } from 'folds';
-import { MatrixClient, Room, RoomMember } from 'matrix-js-sdk';
-import { getMemberDisplayName } from '../../utils/room';
-import { getMxIdLocalPart } from '../../utils/matrix';
+import { MatrixClient, Room, RoomMember } from '$types/matrix-sdk';
+import { getMemberDisplayName } from '$appUtils/room';
+import { getMxIdLocalPart } from '$appUtils/matrix';
 import { UserAvatar } from '../user-avatar';
 import * as css from './style.css';
-import { useSableCosmetics } from '../../hooks/useSableCosmetics';
+import { useSableCosmetics } from '$hooks/useSableCosmetics';
 import { useAtomValue } from 'jotai';
-import { nicknamesAtom } from '../../state/nicknames';
+import { nicknamesAtom } from '$state/nicknames';
 
 const getName = (room: Room, member: RoomMember, nicknames: Record<string, string>) =>
-  getMemberDisplayName(room, member.userId, nicknames) ?? getMxIdLocalPart(member.userId) ?? member.userId;
+  getMemberDisplayName(room, member.userId, nicknames) ??
+  getMxIdLocalPart(member.userId) ??
+  member.userId;
 
 type MemberTileProps = {
   mx: MatrixClient;
@@ -30,7 +32,6 @@ export const MemberTile = as<'button', MemberTileProps>(
       ? mx.mxcUrlToHttp(avatarMxcUrl, 100, 100, 'crop', undefined, false, useAuthentication)
       : undefined;
 
-
     // Sable username color and fonts
     const { color, font } = useSableCosmetics(member.userId, room);
 
@@ -45,8 +46,7 @@ export const MemberTile = as<'button', MemberTileProps>(
           />
         </Avatar>
         <Box grow="Yes" as="span" direction="Column">
-          <Text as="span" size="T300" truncate
-            style={{ color, fontFamily: font }}>
+          <Text as="span" size="T300" truncate style={{ color, fontFamily: font }}>
             <b>{name}</b>
           </Text>
           <Box alignItems="Center" justifyContent="SpaceBetween" gap="100">

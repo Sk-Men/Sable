@@ -1,25 +1,25 @@
 import React, { useMemo, useState } from 'react';
 import { useAtomValue } from 'jotai';
 import { Avatar, Box, config, Icon, IconButton, Icons, IconSrc, MenuItem, Text } from 'folds';
-import { JoinRule } from 'matrix-js-sdk';
-import { PageNav, PageNavContent, PageNavHeader, PageRoot } from '../../components/page';
-import { ScreenSize, useScreenSizeContext } from '../../hooks/useScreenSize';
-import { useMatrixClient } from '../../hooks/useMatrixClient';
-import { mxcUrlToHttp } from '../../utils/matrix';
-import { useMediaAuthentication } from '../../hooks/useMediaAuthentication';
-import { useRoomAvatar, useRoomJoinRule, useRoomName } from '../../hooks/useRoomMeta';
-import { mDirectAtom } from '../../state/mDirectList';
-import { RoomAvatar, RoomIcon } from '../../components/room-avatar';
+import { JoinRule } from '$types/matrix-sdk';
+import { PageNav, PageNavContent, PageNavHeader, PageRoot } from '$components/page';
+import { ScreenSize, useScreenSizeContext } from '$hooks/useScreenSize';
+import { useMatrixClient } from '$hooks/useMatrixClient';
+import { mxcUrlToHttp } from '$appUtils/matrix';
+import { useMediaAuthentication } from '$hooks/useMediaAuthentication';
+import { useRoomAvatar, useRoomJoinRule, useRoomName } from '$hooks/useRoomMeta';
+import { mDirectAtom } from '$state/mDirectList';
+import { RoomAvatar, RoomIcon } from '$components/room-avatar';
 import { General } from './general';
 import { Members } from '../common-settings/members';
 import { EmojisStickers } from '../common-settings/emojis-stickers';
 import { Permissions } from './permissions';
-import { RoomSettingsPage } from '../../state/roomSettings';
-import { useRoom } from '../../hooks/useRoom';
+import { RoomSettingsPage } from '$state/roomSettings';
+import { useRoom } from '$hooks/useRoom';
 import { DeveloperTools } from '../common-settings/developer-tools';
 import { Cosmetics } from '../common-settings/cosmetics/Cosmetics';
-import { SwipeableChatWrapper } from '../../components/SwipeableChatWrapper';
-import { SwipeableOverlayWrapper } from '../../components/SwipeableOverlayWrapper';
+import { SwipeableChatWrapper } from '$components/SwipeableChatWrapper';
+import { SwipeableOverlayWrapper } from '$components/SwipeableOverlayWrapper';
 
 type RoomSettingsMenuItem = {
   page: RoomSettingsPage;
@@ -79,7 +79,7 @@ export function RoomSettings({ initialPage, requestClose }: RoomSettingsProps) {
   const joinRuleContent = useRoomJoinRule(room);
 
   const avatarUrl = roomAvatar
-    ? mxcUrlToHttp(mx, roomAvatar, useAuthentication, 96, 96, 'crop') ?? undefined
+    ? (mxcUrlToHttp(mx, roomAvatar, useAuthentication, 96, 96, 'crop') ?? undefined)
     : undefined;
 
   const screenSize = useScreenSizeContext();
@@ -146,12 +146,15 @@ export function RoomSettings({ initialPage, requestClose }: RoomSettingsProps) {
                         variant="Background"
                         radii="400"
                         aria-pressed={activePage === item.page}
-                        before={<Icon src={item.icon} size="100" filled={activePage === item.page} />}
+                        before={
+                          <Icon src={item.icon} size="100" filled={activePage === item.page} />
+                        }
                         onClick={() => setActivePage(item.page)}
                       >
                         <Text
                           style={{
-                            fontWeight: activePage === item.page ? config.fontWeight.W600 : undefined,
+                            fontWeight:
+                              activePage === item.page ? config.fontWeight.W600 : undefined,
                           }}
                           size="T300"
                           truncate

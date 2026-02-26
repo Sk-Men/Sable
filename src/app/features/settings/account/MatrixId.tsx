@@ -1,10 +1,10 @@
 import React from 'react';
 import { Box, Text, Chip } from 'folds';
-import { useMatrixClient } from '../../../hooks/useMatrixClient';
-import { SequenceCard } from '../../../components/sequence-card';
+import { useMatrixClient } from '$hooks/useMatrixClient';
+import { SequenceCard } from '$components/sequence-card';
 import { SequenceCardStyle } from '../styles.css';
-import { SettingTile } from '../../../components/setting-tile';
-import { copyToClipboard } from '../../../utils/dom';
+import { SettingTile } from '$components/setting-tile';
+import { copyToClipboard } from '$appUtils/dom';
 
 export function MatrixId() {
   const mx = useMatrixClient();

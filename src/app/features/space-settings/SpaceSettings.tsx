@@ -1,17 +1,17 @@
 import React, { useMemo, useState } from 'react';
 import { useAtomValue } from 'jotai';
 import { Avatar, Box, config, Icon, IconButton, Icons, IconSrc, MenuItem, Text } from 'folds';
-import { JoinRule } from 'matrix-js-sdk';
-import { PageNav, PageNavContent, PageNavHeader, PageRoot } from '../../components/page';
-import { ScreenSize, useScreenSizeContext } from '../../hooks/useScreenSize';
-import { useMatrixClient } from '../../hooks/useMatrixClient';
-import { mxcUrlToHttp } from '../../utils/matrix';
-import { useMediaAuthentication } from '../../hooks/useMediaAuthentication';
-import { useRoomAvatar, useRoomJoinRule, useRoomName } from '../../hooks/useRoomMeta';
-import { mDirectAtom } from '../../state/mDirectList';
-import { RoomAvatar, RoomIcon } from '../../components/room-avatar';
-import { SpaceSettingsPage } from '../../state/spaceSettings';
-import { useRoom } from '../../hooks/useRoom';
+import { JoinRule } from '$types/matrix-sdk';
+import { PageNav, PageNavContent, PageNavHeader, PageRoot } from '$components/page';
+import { ScreenSize, useScreenSizeContext } from '$hooks/useScreenSize';
+import { useMatrixClient } from '$hooks/useMatrixClient';
+import { mxcUrlToHttp } from '$appUtils/matrix';
+import { useMediaAuthentication } from '$hooks/useMediaAuthentication';
+import { useRoomAvatar, useRoomJoinRule, useRoomName } from '$hooks/useRoomMeta';
+import { mDirectAtom } from '$state/mDirectList';
+import { RoomAvatar, RoomIcon } from '$components/room-avatar';
+import { SpaceSettingsPage } from '$state/spaceSettings';
+import { useRoom } from '$hooks/useRoom';
 import { EmojisStickers } from '../common-settings/emojis-stickers';
 import { Members } from '../common-settings/members';
 import { DeveloperTools } from '../common-settings/developer-tools';
@@ -77,7 +77,7 @@ export function SpaceSettings({ initialPage, requestClose }: SpaceSettingsProps)
   const joinRuleContent = useRoomJoinRule(room);
 
   const avatarUrl = roomAvatar
-    ? mxcUrlToHttp(mx, roomAvatar, useAuthentication, 96, 96, 'crop') ?? undefined
+    ? (mxcUrlToHttp(mx, roomAvatar, useAuthentication, 96, 96, 'crop') ?? undefined)
     : undefined;
 
   const screenSize = useScreenSizeContext();

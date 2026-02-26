@@ -9,14 +9,14 @@ import {
 } from 'slate-react';
 import { useAtomValue } from 'jotai';
 
-import * as css from '../../styles/CustomHtml.css';
+import * as css from '$styles/CustomHtml.css';
 import { CommandElement, EmoticonElement, LinkElement, MentionElement } from './slate';
-import { useMatrixClient } from '../../hooks/useMatrixClient';
+import { useMatrixClient } from '$hooks/useMatrixClient';
 import { getBeginCommand } from './utils';
 import { BlockType } from './types';
-import { mxcUrlToHttp } from '../../utils/matrix';
-import { useMediaAuthentication } from '../../hooks/useMediaAuthentication';
-import { nicknamesAtom } from '../../state/nicknames';
+import { mxcUrlToHttp } from '$appUtils/matrix';
+import { useMediaAuthentication } from '$hooks/useMediaAuthentication';
+import { nicknamesAtom } from '$state/nicknames';
 
 // Put this at the start and end of an inline component to work around this Chromium bug:
 // https://bugs.chromium.org/p/chromium/issues/detail?id=1249405
@@ -128,9 +128,13 @@ export function RenderElement({ attributes, element, children }: RenderElementPr
   switch (element.type) {
     case BlockType.Paragraph:
       return (
-        <Text {...attributes} className={css.Paragraph} style={{ fontSize: '1rem', lineHeight: 'inherit' }} >
+        <Text
+          {...attributes}
+          className={css.Paragraph}
+          style={{ fontSize: '1rem', lineHeight: 'inherit' }}
+        >
           {children}
-        </ Text>
+        </Text>
       );
     case BlockType.Heading:
       if (element.level === 1)
@@ -224,7 +228,11 @@ export function RenderElement({ attributes, element, children }: RenderElementPr
       );
     default:
       return (
-        <Text className={css.Paragraph} {...attributes} style={{ fontSize: '1rem', lineHeight: 'inherit' }}>
+        <Text
+          className={css.Paragraph}
+          {...attributes}
+          style={{ fontSize: '1rem', lineHeight: 'inherit' }}
+        >
           {children}
         </Text>
       );

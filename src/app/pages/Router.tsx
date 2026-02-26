@@ -247,9 +247,12 @@ export const createRouter = (clientConfig: ClientConfig, screenSize: ScreenSize)
             <Route
               index
               loader={({ params }) => {
-                const { spaceIdOrAlias } = params;
-                if (spaceIdOrAlias) {
-                  return redirect(getSpaceLobbyPath(spaceIdOrAlias));
+                const encodedSpaceIdOrAlias = params.spaceIdOrAlias;
+                const decodedSpaceIdOrAlias =
+                  encodedSpaceIdOrAlias && decodeURIComponent(encodedSpaceIdOrAlias);
+
+                if (decodedSpaceIdOrAlias) {
+                  return redirect(getSpaceLobbyPath(decodedSpaceIdOrAlias));
                 }
                 return null;
               }}

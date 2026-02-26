@@ -1,33 +1,33 @@
 import React, { useCallback, useRef } from 'react';
 import { Box, Text, config, toRem } from 'folds';
-import { EventType, Room } from 'matrix-js-sdk';
+import { EventType, Room } from '$types/matrix-sdk';
 import { ReactEditor } from 'slate-react';
 import { isKeyHotkey } from 'is-hotkey';
-import { useStateEvent } from '../../hooks/useStateEvent';
-import { StateEvent } from '../../../types/matrix/room';
-import { usePowerLevelsContext } from '../../hooks/usePowerLevels';
-import { useMatrixClient } from '../../hooks/useMatrixClient';
-import { useEditor } from '../../components/editor';
+import { useStateEvent } from '$hooks/useStateEvent';
+import { StateEvent } from '$types/matrix/room';
+import { usePowerLevelsContext } from '$hooks/usePowerLevels';
+import { useMatrixClient } from '$hooks/useMatrixClient';
+import { useEditor } from '$components/editor';
 import { RoomInputPlaceholder } from './RoomInputPlaceholder';
 import { RoomTimeline } from './RoomTimeline';
 import { RoomViewTyping } from './RoomViewTyping';
 import { RoomTombstone } from './RoomTombstone';
 import { RoomInput } from './RoomInput';
 import { RoomViewFollowing, RoomViewFollowingPlaceholder } from './RoomViewFollowing';
-import { Page } from '../../components/page';
-import { useKeyDown } from '../../hooks/useKeyDown';
-import { editableActiveElement } from '../../utils/dom';
-import { settingsAtom } from '../../state/settings';
-import { useSetting } from '../../state/hooks/settings';
-import { useRoomPermissions } from '../../hooks/useRoomPermissions';
-import { useRoomCreators } from '../../hooks/useRoomCreators';
-import { ScreenSize, useScreenSizeContext } from '../../hooks/useScreenSize';
-import { SwipeableChatWrapper } from '../../components/SwipeableChatWrapper';
-import { BackRouteHandler } from '../../components/BackRouteHandler';
-import { useOpenRoomSettings } from '../../state/hooks/roomSettings';
-import { useSpaceOptionally } from '../../hooks/useSpace';
-import { RoomSettingsPage } from '../../state/roomSettings';
-import { GlobalModalManager } from '../../components/message/modals/GlobalModalManager';
+import { Page } from '$components/page';
+import { useKeyDown } from '$hooks/useKeyDown';
+import { editableActiveElement } from '$appUtils/dom';
+import { settingsAtom } from '$state/settings';
+import { useSetting } from '$state/hooks/settings';
+import { useRoomPermissions } from '$hooks/useRoomPermissions';
+import { useRoomCreators } from '$hooks/useRoomCreators';
+import { ScreenSize, useScreenSizeContext } from '$hooks/useScreenSize';
+import { SwipeableChatWrapper } from '$components/SwipeableChatWrapper';
+import { BackRouteHandler } from '$components/BackRouteHandler';
+import { useOpenRoomSettings } from '$state/hooks/roomSettings';
+import { useSpaceOptionally } from '$hooks/useSpace';
+import { RoomSettingsPage } from '$state/roomSettings';
+import { GlobalModalManager } from '$components/message/modals/GlobalModalManager';
 
 const FN_KEYS_REGEX = /^F\d+$/;
 const shouldFocusMessageField = (evt: KeyboardEvent): boolean => {
@@ -116,10 +116,7 @@ export function RoomView({ room, eventId }: { room: Room; eventId?: string }) {
               : {}
           }
         >
-          <SwipeableChatWrapper
-            onOpenSidebar={onBack}
-            onOpenMembers={handleOpenMembers}
-          >
+          <SwipeableChatWrapper onOpenSidebar={onBack} onOpenMembers={handleOpenMembers}>
             <Box grow="Yes" direction="Column">
               <RoomTimeline
                 key={roomId}

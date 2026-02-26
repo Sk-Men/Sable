@@ -25,4 +25,3 @@ export const IntegrationManagerIframe = style({
   border: 'none',
   display: 'block',
 });
-

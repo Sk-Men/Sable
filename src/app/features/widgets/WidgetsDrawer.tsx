@@ -15,18 +15,18 @@ import {
   Button,
   Line,
 } from 'folds';
-import { Room } from 'matrix-js-sdk';
+import { Room } from '$types/matrix-sdk';
 
 import * as css from './WidgetsDrawer.css';
-import { useMatrixClient } from '../../hooks/useMatrixClient';
-import { useRoomWidgets, RoomWidget, enrichWidgetUrl } from '../../hooks/useRoomWidgets';
+import { useMatrixClient } from '$hooks/useMatrixClient';
+import { useRoomWidgets, RoomWidget, enrichWidgetUrl } from '$hooks/useRoomWidgets';
 import { WidgetIframe } from './WidgetIframe';
-import { useSetSetting } from '../../state/hooks/settings';
-import { settingsAtom } from '../../state/settings';
-import { usePowerLevelsContext } from '../../hooks/usePowerLevels';
-import { useRoomCreators } from '../../hooks/useRoomCreators';
-import { useRoomPermissions } from '../../hooks/useRoomPermissions';
-import { StateEvent } from '../../../types/matrix/room';
+import { useSetSetting } from '$state/hooks/settings';
+import { settingsAtom } from '$state/settings';
+import { usePowerLevelsContext } from '$hooks/usePowerLevels';
+import { useRoomCreators } from '$hooks/useRoomCreators';
+import { useRoomPermissions } from '$hooks/useRoomPermissions';
+import { StateEvent } from '$types/matrix/room';
 import { IntegrationManager } from './IntegrationManager';
 
 type WidgetsDrawerHeaderProps = {
@@ -98,13 +98,18 @@ function AddWidgetForm({ room, onAdded }: AddWidgetFormProps) {
     setAdding(true);
     try {
       const widgetId = `${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
-      await mx.sendStateEvent(room.roomId, StateEvent.RoomWidget as any, {
-        type: 'm.custom',
-        url: enrichWidgetUrl(url.trim()),
-        name: name.trim(),
-        id: widgetId,
-        creatorUserId: mx.getUserId(),
-      } as any, widgetId);
+      await mx.sendStateEvent(
+        room.roomId,
+        StateEvent.RoomWidget as any,
+        {
+          type: 'm.custom',
+          url: enrichWidgetUrl(url.trim()),
+          name: name.trim(),
+          id: widgetId,
+          creatorUserId: mx.getUserId(),
+        } as any,
+        widgetId
+      );
       setName('');
       setUrl('');
       onAdded();
@@ -118,7 +123,9 @@ function AddWidgetForm({ room, onAdded }: AddWidgetFormProps) {
   return (
     <form onSubmit={handleSubmit}>
       <Box className={css.AddWidgetForm} direction="Column" gap="200">
-        <Text size="L400" priority="300">Add Widget</Text>
+        <Text size="L400" priority="300">
+          Add Widget
+        </Text>
         <Input
           className={css.AddWidgetInput}
           size="300"
@@ -133,7 +140,12 @@ function AddWidgetForm({ room, onAdded }: AddWidgetFormProps) {
           value={url}
           onChange={(e: any) => setUrl(e.target.value)}
         />
-        <Button type="submit" size="300" variant="Primary" disabled={adding || !name.trim() || !url.trim()}>
+        <Button
+          type="submit"
+          size="300"
+          variant="Primary"
+          disabled={adding || !name.trim() || !url.trim()}
+        >
           <Text size="B300">{adding ? 'Adding...' : 'Add Widget'}</Text>
         </Button>
       </Box>
@@ -230,12 +242,7 @@ export function WidgetsDrawer({ room }: WidgetsDrawerProps) {
       <WidgetDrawerHeader room={room} activeWidget={activeWidget} onBack={handleBack} />
       {activeWidget ? (
         <Box className={css.WidgetIframeContainer} grow="Yes">
-          <WidgetIframe
-            key={activeWidget.id}
-            widget={activeWidget}
-            roomId={room.roomId}
-            mx={mx}
-          />
+          <WidgetIframe key={activeWidget.id} widget={activeWidget} roomId={room.roomId} mx={mx} />
         </Box>
       ) : (
         <Scroll variant="Background" visibility="Hover">
@@ -300,4 +307,3 @@ export function WidgetsDrawer({ room }: WidgetsDrawerProps) {
     </Box>
   );
 }
-

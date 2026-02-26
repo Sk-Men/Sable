@@ -2,9 +2,9 @@ import { atom } from 'jotai';
 import { atomFamily } from 'jotai/utils';
 import { Descendant } from 'slate';
 import { EncryptedAttachmentInfo } from 'browser-encrypt-attachment';
-import { IEventRelation } from 'matrix-js-sdk';
+import { IEventRelation } from '$types/matrix-sdk';
 import { createUploadAtomFamily } from '../upload';
-import { TUploadContent } from '../../utils/matrix';
+import { TUploadContent } from '$appUtils/matrix';
 import { createListAtom } from '../list';
 
 export type TUploadMetadata = {
@@ -20,9 +20,7 @@ export type TUploadItem = {
 
 export type TUploadListAtom = ReturnType<typeof createListAtom<TUploadItem>>;
 
-export const roomIdToUploadItemsAtomFamily = atomFamily<string, TUploadListAtom>(
-  createListAtom
-);
+export const roomIdToUploadItemsAtomFamily = atomFamily<string, TUploadListAtom>(createListAtom);
 
 export const roomUploadAtomFamily = createUploadAtomFamily();
 
