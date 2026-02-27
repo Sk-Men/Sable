@@ -320,8 +320,10 @@ export function RoomViewHeader() {
         const newPins = pinnedIds.slice(lastSeenIndex + 1);
         setUnreadPinsCount(newPins.length);
       } else {
-        const countDiff = pinnedIds.length - (pinMarker?.count ?? 0);
-        setUnreadPinsCount(countDiff > 0 ? countDiff : 0);
+        const oldCount = pinMarker?.count ?? 0;
+        const startIndex = Math.max(0, oldCount - 1);
+        const newCount = pinnedIds.length > 0 ? pinnedIds.length - startIndex : 0;
+        setUnreadPinsCount(Math.max(0, newCount));
       }
     };
     checkUnreads();

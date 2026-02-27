@@ -298,10 +298,12 @@ export const RoomPinMenu = forwardRef<HTMLDivElement, RoomPinMenuProps>(
     const pinMarker = useMemo(() => 
       room.getAccountData(AccountDataEvent.SablePinStatus)?.getContent(), 
     [room]);
+
     const lastSeenIndex = useMemo(() => {
       if (!pinMarker?.last_seen_id) return -1;
       return pinnedEvents.indexOf(pinMarker.last_seen_id);
     }, [pinnedEvents, pinMarker]);
+
     const hasNewContent = pinMarker?.hash !== currentHash;
 
     const virtualizer = useVirtualizer({
@@ -513,7 +515,15 @@ export const RoomPinMenu = forwardRef<HTMLDivElement, RoomPinMenuProps>(
                       if (!eventId) return null;
 
                       const originalIndex = pinnedEvents.indexOf(eventId);
-                      const isNew = hasNewContent && (lastSeenIndex === -1 || originalIndex > lastSeenIndex);
+                      let isNew = false;
+                      if (pinMarker?.hash !== currentHash) {
+                        if (lastSeenIndex !== -1) {
+                          isNew = originalIndex > lastSeenIndex;
+                        } else {
+                          const oldCount = pinMarker?.count ?? 0;
+                          isNew = originalIndex >= (oldCount - 1);
+                        }
+                      }
 
                       return (
                         <VirtualTile
