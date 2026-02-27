@@ -351,7 +351,7 @@ export function RoomViewHeader() {
     setMenuAnchor(evt.currentTarget.getBoundingClientRect());
   };
 
-  const handleOpenPinMenu: MouseEventHandler<HTMLButtonElement> = (evt) => {\
+  const handleOpenPinMenu: MouseEventHandler<HTMLButtonElement> = (evt) => {
     setPinMenuAnchor(evt.currentTarget.getBoundingClientRect());
 
     const updateMarker = async () => {
