@@ -12,7 +12,7 @@ The web app is available at [app.sable.moe](https://app.sable.moe/) and gets upd
 You can also download our desktop app for windows and linux from [releases](https://github.com/7w1/sable/releases/latest).
 
 ## Self-hosting
-To host Cinny on your own, download this repo and built with nginx.
+To host Sable on your own, download this repo and built with nginx.
 
 ```sh
 npm ci # Installs all dependencies
