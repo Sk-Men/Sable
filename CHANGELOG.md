@@ -1,5 +1,9 @@
 # Sable Client Changelog
 
+## 1.2.1 - in dev
+
+- Fix jumbo-ified non-emojis with colons. ([#32](https://github.com/7w1/sable/issues/32))
+
 ## 1.2.0
 
 - Codebase cleanup ([#22](https://github.com/7w1/sable/pull/22))
