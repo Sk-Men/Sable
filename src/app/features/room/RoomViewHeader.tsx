@@ -78,8 +78,14 @@ async function getPinsHash(pinnedIds: string[]): Promise<string> {
   const data = encoder.encode(sorted);
   const hashBuffer = await crypto.subtle.digest('SHA-256', data);
   const hashArray = Array.from(new Uint8Array(hashBuffer));
-  const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+  const hashHex = hashArray.map((b) => b.toString(16).padStart(2, '0')).join('');
   return hashHex.slice(0, 10);
+}
+
+interface PinReadMarker {
+  hash: string;
+  count: number;
+  last_seen_id: string;
 }
 
 type RoomMenuProps = {
@@ -292,13 +298,15 @@ export function RoomViewHeader() {
   const widgets = useRoomWidgets(room);
 
   const pinnedIds = useRoomPinnedEvents(room);
-  const pinMarker = room.getAccountData(AccountDataEvent.SablePinStatus)?.getContent();
+  const pinMarker = room
+    .getAccountData(AccountDataEvent.SablePinStatus)
+    ?.getContent() as PinReadMarker;
   const [unreadPinsCount, setUnreadPinsCount] = useState(0);
 
   const [currentHash, setCurrentHash] = useState<string>('');
 
   useEffect(() => {
-    getPinsHash(pinnedIds).then(setCurrentHash);
+    void getPinsHash(pinnedIds).then(setCurrentHash);
   }, [pinnedIds]);
 
   useEffect(() => {
@@ -308,9 +316,9 @@ export function RoomViewHeader() {
         return;
       }
 
-      const currentHash = await getPinsHash(pinnedIds);
+      const hash = await getPinsHash(pinnedIds);
 
-      if (pinMarker?.hash === currentHash) {
+      if (pinMarker?.hash === hash) {
         setUnreadPinsCount(0);
         return;
       }
@@ -326,7 +334,7 @@ export function RoomViewHeader() {
         setUnreadPinsCount(Math.max(0, newCount));
       }
     };
-    checkUnreads();
+    void checkUnreads();
   }, [pinnedIds, pinMarker]);
 
   const handleSearchClick = () => {
@@ -343,17 +351,22 @@ export function RoomViewHeader() {
     setMenuAnchor(evt.currentTarget.getBoundingClientRect());
   };
 
-  const handleOpenPinMenu: MouseEventHandler<HTMLButtonElement> = async (evt) => {
+  const handleOpenPinMenu: MouseEventHandler<HTMLButtonElement> = (evt) => {\
     setPinMenuAnchor(evt.currentTarget.getBoundingClientRect());
-    
-    const currentHash = await getPinsHash(pinnedIds);
-    mx.setRoomAccountData(room.roomId, AccountDataEvent.SablePinStatus, {
-      hash: currentHash,
-      count: pinnedIds.length,
-      last_seen_id: pinnedIds[pinnedIds.length - 1],
-    });
-  };
 
+    const updateMarker = async () => {
+      if (pinnedIds.length === 0) return;
+
+      const currentHash = await getPinsHash(pinnedIds);
+      await mx.setRoomAccountData(room.roomId, AccountDataEvent.SablePinStatus, {
+        hash: currentHash,
+        count: pinnedIds.length,
+        last_seen_id: pinnedIds[pinnedIds.length - 1],
+      });
+    };
+
+    void updateMarker();
+  };
 
   return (
     <PageHeader
@@ -502,9 +515,9 @@ export function RoomViewHeader() {
                       escapeDeactivates: stopPropagation,
                     }}
                   >
-                    <RoomPinMenu 
-                      room={room} 
-                      requestClose={() => setPinMenuAnchor(undefined)} 
+                    <RoomPinMenu
+                      room={room}
+                      requestClose={() => setPinMenuAnchor(undefined)}
                       currentHash={currentHash}
                     />
                   </FocusTrap>
