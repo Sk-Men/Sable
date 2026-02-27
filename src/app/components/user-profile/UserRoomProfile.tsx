@@ -63,7 +63,7 @@ function UserExtendedSection({
   const clamp = (str: string, len: number) => (str.length > len ? `${str.slice(0, len)}...` : str);
   const [showMore, setShowMore] = useState(false);
 
-  const pronouns = profile.pronouns?.map((p: any) => clamp(p.summary, 20)).join('/');
+  const pronouns = profile.pronouns?.map((p: any) => clamp(p.summary, 16)).join(', ');
   const timezone = profile.timezone ? clamp(profile.timezone, 64) : null;
   const localTime = timezone
     ? new Intl.DateTimeFormat([], {

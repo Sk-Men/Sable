@@ -5,6 +5,7 @@ import { SettingTile } from '$components/setting-tile';
 type PronounSet = {
   summary: string;
   language?: string;
+  grammatical_gender?: string;
 };
 
 type PronounEditorProps = {
@@ -13,7 +14,7 @@ type PronounEditorProps = {
 };
 
 export function PronounEditor({ current, onSave }: PronounEditorProps) {
-  const initialString = current.map((p) => p.summary).join('/');
+  const initialString = current.map((p) => p.summary).join(', ');
   const [val, setVal] = useState(initialString);
 
   useEffect(() => setVal(initialString), [initialString]);
@@ -22,10 +23,10 @@ export function PronounEditor({ current, onSave }: PronounEditorProps) {
     if (val === initialString) return;
     const safeVal = val.slice(0, 128);
     const next = safeVal
-      .split('/')
+      .split(',')
       .map((s) => s.trim())
       .filter(Boolean)
-      .map((s) => ({ summary: s.slice(0, 16) }));
+      .map((s) => ({ summary: s.slice(0, 16), language: "en" }));
     onSave(next);
   };
 
@@ -36,7 +37,7 @@ export function PronounEditor({ current, onSave }: PronounEditorProps) {
   return (
     <SettingTile
       title="Pronouns"
-      description="Separate with slashes (e.g. they/them)."
+      description="Separate sets with commas (e.g. 'they/them, it/its')."
       after={
         <Input
           value={val}
