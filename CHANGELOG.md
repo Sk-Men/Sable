@@ -5,6 +5,7 @@
 - Fix jumbo-ified non-emojis with colons. ([#32](https://github.com/7w1/sable/issues/32))
 - Show full timestamps on hover. ([cinnyapp#2699](https://github.com/cinnyapp/cinny/issues/2699))
 - Enable Twitter-style emojis by default.
+- Make inline editor buttons buttons.
 
 ## 1.2.0
 
