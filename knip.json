@@ -1,6 +1,15 @@
 {
   "$schema": "https://unpkg.com/knip@5/schema.json",
-  "tags": [
-    "-lintignore"
-  ]
+  "entry": ["src/sw.ts", "scripts/normalize-imports.js"],
+  "ignoreExportsUsedInFile": {
+    "interface": true,
+    "type": true
+  },
+  "ignoreDependencies": ["buffer", "@element-hq/element-call-embedded"],
+  "rules": {
+    "exports": "off",
+    "types": "off",
+    "enumMembers": "off"
+  },
+  "tags": ["-lintignore"]
 }

@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
     "sourceMap": true,
-    "jsx": "react",
+    "jsx": "react-jsx",
     "target": "ES2022",
     "module": "ES2022",
     "allowJs": true,
