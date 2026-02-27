@@ -1,4 +1,3 @@
-/* eslint-disable react/destructuring-assignment */
 import React, { forwardRef, MouseEventHandler, useCallback, useMemo, useRef } from 'react';
 import { MatrixEvent, Room } from '$types/matrix-sdk';
 import { RoomPinnedEventsEventContent } from '$types/matrix-sdk';
@@ -76,8 +75,6 @@ import { ContainerColor } from '$styles/ContainerColor.css';
 import { usePowerLevelTags } from '$hooks/usePowerLevelTags';
 import { useTheme } from '$hooks/useTheme';
 import { PowerIcon } from '$components/power';
-import colorMXID from '$util/colorMXID';
-import { useIsDirectRoom } from '$hooks/useRoom';
 import { useRoomCreators } from '$hooks/useRoomCreators';
 import { useRoomPermissions } from '$hooks/useRoomPermissions';
 import {
@@ -89,6 +86,8 @@ import {
 import { useRoomCreatorsTag } from '$hooks/useRoomCreatorsTag';
 import { nicknamesAtom } from '$state/nicknames';
 import { AccountDataEvent } from '$types/matrix/accountData';
+import { useSableCosmetics } from '$hooks/useSableCosmetics';
+import { PinReadMarker } from '../RoomViewHeader';
 
 type PinnedMessageProps = {
   room: Room;
@@ -98,109 +97,45 @@ type PinnedMessageProps = {
   canPinEvent: boolean;
   getMemberPowerTag: GetMemberPowerTag;
   accessibleTagColors: Map<string, string>;
-  legacyUsernameColor: boolean;
   hour24Clock: boolean;
   dateFormatString: string;
   isNew: boolean;
 };
-function PinnedMessage({
-  room,
-  eventId,
-  renderContent,
-  onOpen,
-  canPinEvent,
-  getMemberPowerTag,
-  accessibleTagColors,
-  legacyUsernameColor,
-  hour24Clock,
-  dateFormatString,
-  isNew,
-}: PinnedMessageProps) {
-  const pinnedEvent = useRoomEvent(room, eventId);
-  const useAuthentication = useMediaAuthentication();
+
+const PinnedMessageActiveContent = (
+  props: PinnedMessageProps & {
+    pinnedEvent: MatrixEvent;
+    renderOptions: () => React.ReactNode;
+    handleOpenClick: MouseEventHandler;
+  }
+) => {
+  const {
+    pinnedEvent,
+    room,
+    renderContent,
+    hour24Clock,
+    dateFormatString,
+    getMemberPowerTag,
+    renderOptions,
+    handleOpenClick,
+  } = props;
+
   const mx = useMatrixClient();
+  const useAuthentication = useMediaAuthentication();
   const nicknames = useAtomValue(nicknamesAtom);
 
-  const [unpinState, unpin] = useAsyncCallback(
-    useCallback(() => {
-      const pinEvent = getStateEvent(room, StateEvent.RoomPinnedEvents);
-      const content = pinEvent?.getContent<RoomPinnedEventsEventContent>() ?? { pinned: [] };
-      const newContent: RoomPinnedEventsEventContent = {
-        pinned: content.pinned.filter((id: string) => id !== eventId),
-      };
-
-      return mx.sendStateEvent(room.roomId, StateEvent.RoomPinnedEvents as any, newContent);
-    }, [room, eventId, mx])
-  );
-
-  const handleOpenClick: MouseEventHandler = (evt) => {
-    evt.stopPropagation();
-    const evtId = evt.currentTarget.getAttribute('data-event-id');
-    if (!evtId) return;
-    onOpen(room.roomId, evtId);
-  };
-
-  const handleUnpinClick: MouseEventHandler = (evt) => {
-    evt.stopPropagation();
-    unpin();
-  };
-
-  const renderOptions = () => (
-    <Box shrink="No" gap="200" alignItems="Center">
-      <Chip 
-        data-event-id={eventId} 
-        onClick={handleOpenClick} 
-        // Maybe change colors later. design not finalized
-        //variant={isNew ? "Primary" : "Secondary"} 
-        radii="Pill"
-      >
-        <Text size="T200">Jump</Text>
-      </Chip>
-      {canPinEvent && (
-        <IconButton
-          data-event-id={eventId}
-          //variant={isNew ? "Primary" : "Secondary"}
-          size="300"
-          radii="Pill"
-          onClick={unpinState.status === AsyncStatus.Loading ? undefined : handleUnpinClick}
-          aria-disabled={unpinState.status === AsyncStatus.Loading}
-        >
-          {unpinState.status === AsyncStatus.Loading ? (
-            <Spinner size="100" />
-          ) : (
-            <Icon src={Icons.Cross} size="100" />
-          )}
-        </IconButton>
-      )}
-    </Box>
-  );
-
-  if (pinnedEvent === undefined) return <DefaultPlaceholder variant="Secondary" />;
-  if (pinnedEvent === null)
-    return (
-      <Box gap="300" justifyContent="SpaceBetween" alignItems="Center">
-        <Box>
-          <Text style={{ color: color.Critical.Main }}>Failed to load message!</Text>
-        </Box>
-        {renderOptions()}
-      </Box>
-    );
-
   const sender = pinnedEvent.getSender()!;
+  const { color: usernameColor, font: usernameFont } = useSableCosmetics(sender, room);
+
   const displayName =
     getMemberDisplayName(room, sender, nicknames) ?? getMxIdLocalPart(sender) ?? sender;
   const senderAvatarMxc = getMemberAvatarMxc(room, sender);
   const getContent = (() => pinnedEvent.getContent()) as GetContentCallback;
 
   const memberPowerTag = getMemberPowerTag(sender);
-  const tagColor = memberPowerTag?.color
-    ? accessibleTagColors?.get(memberPowerTag.color)
-    : undefined;
   const tagIconSrc = memberPowerTag?.icon
     ? getPowerTagIconSrc(mx, useAuthentication, memberPowerTag.icon)
     : undefined;
-
-  const usernameColor = legacyUsernameColor ? colorMXID(sender) : tagColor;
 
   return (
     <ModernLayout
@@ -225,7 +160,7 @@ function PinnedMessage({
       <Box gap="300" justifyContent="SpaceBetween" alignItems="Center" grow="Yes">
         <Box gap="200" alignItems="Baseline">
           <Box alignItems="Center" gap="200">
-            <Username style={{ color: usernameColor }}>
+            <Username style={{ color: usernameColor, font: usernameFont }}>
               <Text as="span" truncate>
                 <UsernameBold>{displayName}</UsernameBold>
               </Text>
@@ -251,6 +186,85 @@ function PinnedMessage({
       {renderContent(pinnedEvent.getType(), false, pinnedEvent, displayName, getContent)}
     </ModernLayout>
   );
+};
+
+function PinnedMessage(props: PinnedMessageProps) {
+  const { room, eventId, onOpen, canPinEvent } = props;
+  const pinnedEvent = useRoomEvent(room, eventId);
+  const mx = useMatrixClient();
+
+  const [unpinState, unpin] = useAsyncCallback(
+    useCallback(() => {
+      const pinEvent = getStateEvent(room, StateEvent.RoomPinnedEvents);
+      const content = pinEvent?.getContent<RoomPinnedEventsEventContent>() ?? { pinned: [] };
+      const newContent: RoomPinnedEventsEventContent = {
+        pinned: content.pinned.filter((id: string) => id !== eventId),
+      };
+
+      return mx.sendStateEvent(room.roomId, StateEvent.RoomPinnedEvents as any, newContent);
+    }, [room, eventId, mx])
+  );
+
+  const handleOpenClick: MouseEventHandler = useCallback(
+    (evt) => {
+      evt.stopPropagation();
+      onOpen(room.roomId, eventId);
+    },
+    [onOpen, room.roomId, eventId]
+  );
+
+  const handleUnpinClick: MouseEventHandler = useCallback(
+    (evt) => {
+      evt.stopPropagation();
+      void unpin();
+    },
+    [unpin]
+  );
+
+  const renderOptions = () => (
+    <Box shrink="No" gap="200" alignItems="Center">
+      <Chip data-event-id={eventId} onClick={handleOpenClick} radii="Pill">
+        <Text size="T200">Jump</Text>
+      </Chip>
+      {canPinEvent && (
+        <IconButton
+          data-event-id={eventId}
+          size="300"
+          radii="Pill"
+          onClick={unpinState.status === AsyncStatus.Loading ? undefined : handleUnpinClick}
+          aria-disabled={unpinState.status === AsyncStatus.Loading}
+        >
+          {unpinState.status === AsyncStatus.Loading ? (
+            <Spinner size="100" />
+          ) : (
+            <Icon src={Icons.Cross} size="100" />
+          )}
+        </IconButton>
+      )}
+    </Box>
+  );
+
+  if (pinnedEvent === undefined) return <DefaultPlaceholder variant="Secondary" />;
+
+  if (pinnedEvent === null) {
+    return (
+      <Box gap="300" justifyContent="SpaceBetween" alignItems="Center">
+        <Box>
+          <Text style={{ color: color.Critical.Main }}>Failed to load message!</Text>
+        </Box>
+        {renderOptions()}
+      </Box>
+    );
+  }
+
+  return (
+    <PinnedMessageActiveContent
+      {...props}
+      pinnedEvent={pinnedEvent}
+      renderOptions={renderOptions}
+      handleOpenClick={handleOpenClick}
+    />
+  );
 }
 
 type RoomPinMenuProps = {
@@ -258,6 +272,7 @@ type RoomPinMenuProps = {
   requestClose: () => void;
   currentHash: string;
 };
+
 export const RoomPinMenu = forwardRef<HTMLDivElement, RoomPinMenuProps>(
   ({ room, requestClose, currentHash }, ref) => {
     const mx = useMatrixClient();
@@ -286,25 +301,21 @@ export const RoomPinMenu = forwardRef<HTMLDivElement, RoomPinMenuProps>(
     const [mediaAutoLoad] = useSetting(settingsAtom, 'mediaAutoLoad');
     const [urlPreview] = useSetting(settingsAtom, 'urlPreview');
 
-    const direct = useIsDirectRoom();
-    const [legacyUsernameColor] = useSetting(settingsAtom, 'legacyUsernameColor');
-
     const [hour24Clock] = useSetting(settingsAtom, 'hour24Clock');
     const [dateFormatString] = useSetting(settingsAtom, 'dateFormatString');
 
     const { navigateRoom } = useRoomNavigate();
     const scrollRef = useRef<HTMLDivElement>(null);
 
-    const pinMarker = useMemo(() => 
-      room.getAccountData(AccountDataEvent.SablePinStatus)?.getContent(), 
-    [room]);
+    const pinMarker = useMemo(
+      () => room.getAccountData(AccountDataEvent.SablePinStatus)?.getContent() as PinReadMarker,
+      [room]
+    );
 
     const lastSeenIndex = useMemo(() => {
       if (!pinMarker?.last_seen_id) return -1;
       return pinnedEvents.indexOf(pinMarker.last_seen_id);
     }, [pinnedEvents, pinMarker]);
-
-    const hasNewContent = pinMarker?.hash !== currentHash;
 
     const virtualizer = useVirtualizer({
       count: sortedPinnedEvent.length,
@@ -355,9 +366,11 @@ export const RoomPinMenu = forwardRef<HTMLDivElement, RoomPinMenuProps>(
       {
         [MessageEvent.RoomMessage]: (event, displayName, getContent) => {
           if (event.isRedacted()) {
-            return (
-              <RedactedContent reason={event.getUnsigned().redacted_because?.content.reason} />
-            );
+            const unsigned = event.getUnsigned();
+            const redactionContent = unsigned.redacted_because?.content as
+              | { reason?: string }
+              | undefined;
+            return <RedactedContent reason={redactionContent?.reason} />;
           }
 
           return (
@@ -396,7 +409,7 @@ export const RoomPinMenu = forwardRef<HTMLDivElement, RoomPinMenuProps>(
             <EncryptedContent mEvent={mEvent}>
               {() => {
                 if (mEvent.isRedacted()) return <RedactedContent />;
-                if (mEvent.getType() === MessageEvent.Sticker)
+                if ((mEvent.getType() as MessageEvent) === MessageEvent.Sticker)
                   return (
                     <MSticker
                       content={mEvent.getContent()}
@@ -410,11 +423,16 @@ export const RoomPinMenu = forwardRef<HTMLDivElement, RoomPinMenuProps>(
                       )}
                     />
                   );
-                if (mEvent.getType() === MessageEvent.RoomMessage) {
+                if ((mEvent.getType() as MessageEvent) === MessageEvent.RoomMessage) {
                   const editedEvent = getEditedEvent(eventId, mEvent, evtTimeline.getTimelineSet());
-                  const getContent = (() =>
-                    editedEvent?.getContent()['m.new_content'] ??
-                    mEvent.getContent()) as GetContentCallback;
+                  const getContent = (() => {
+                    const eventContent = mEvent.getContent();
+                    const editContent = editedEvent?.getContent();
+                    return (editContent?.['m.new_content'] ?? eventContent) as Record<
+                      string,
+                      unknown
+                    >;
+                  }) as GetContentCallback;
 
                   return (
                     <RenderMessageContent
@@ -430,7 +448,7 @@ export const RoomPinMenu = forwardRef<HTMLDivElement, RoomPinMenuProps>(
                     />
                   );
                 }
-                if (mEvent.getType() === MessageEvent.RoomMessageEncrypted)
+                if ((mEvent.getType() as MessageEvent) === MessageEvent.RoomMessageEncrypted)
                   return (
                     <Text>
                       <MessageNotDecryptedContent />
@@ -445,11 +463,14 @@ export const RoomPinMenu = forwardRef<HTMLDivElement, RoomPinMenuProps>(
             </EncryptedContent>
           );
         },
-        [MessageEvent.Sticker]: (event, displayName, getContent) => {
+        [MessageEvent.Sticker]: (event, _displayName, getContent) => {
           if (event.isRedacted()) {
-            return (
-              <RedactedContent reason={event.getUnsigned().redacted_because?.content.reason} />
-            );
+            const unsigned = event.getUnsigned();
+            const redactionContent = unsigned.redacted_because?.content as
+              | Record<string, unknown>
+              | undefined;
+
+            return <RedactedContent reason={redactionContent?.reason as string | undefined} />;
           }
           return (
             <MSticker
@@ -469,7 +490,11 @@ export const RoomPinMenu = forwardRef<HTMLDivElement, RoomPinMenuProps>(
       undefined,
       (event) => {
         if (event.isRedacted()) {
-          return <RedactedContent reason={event.getUnsigned().redacted_because?.content.reason} />;
+          const unsigned = event.getUnsigned();
+          const redactionContent = unsigned.redacted_because?.content as
+            | Record<string, unknown>
+            | undefined;
+          return <RedactedContent reason={redactionContent?.reason as string | undefined} />;
         }
         return (
           <Box grow="Yes" direction="Column">
@@ -521,7 +546,7 @@ export const RoomPinMenu = forwardRef<HTMLDivElement, RoomPinMenuProps>(
                           isNew = originalIndex > lastSeenIndex;
                         } else {
                           const oldCount = pinMarker?.count ?? 0;
-                          isNew = originalIndex >= (oldCount - 1);
+                          isNew = originalIndex >= oldCount - 1;
                         }
                       }
 
@@ -533,12 +558,14 @@ export const RoomPinMenu = forwardRef<HTMLDivElement, RoomPinMenuProps>(
                           key={vItem.index}
                         >
                           <SequenceCard
-                            style={{ 
-                              padding: config.space.S400, 
+                            style={{
+                              padding: config.space.S400,
                               borderRadius: config.radii.R300,
-                              border: isNew ? `${config.borderWidth.B700} solid ${color.Secondary.ContainerActive}` : undefined,
+                              border: isNew
+                                ? `${config.borderWidth.B700} solid ${color.Secondary.ContainerActive}`
+                                : undefined,
                             }}
-                            variant={"Background"}
+                            variant={'Background'}
                             direction="Column"
                           >
                             <PinnedMessage
@@ -549,7 +576,6 @@ export const RoomPinMenu = forwardRef<HTMLDivElement, RoomPinMenuProps>(
                               canPinEvent={canPinEvent}
                               getMemberPowerTag={getMemberPowerTag}
                               accessibleTagColors={accessibleTagColors}
-                              legacyUsernameColor={legacyUsernameColor || direct}
                               hour24Clock={hour24Clock}
                               isNew={isNew}
                               dateFormatString={dateFormatString}
@@ -584,7 +610,7 @@ export const RoomPinMenu = forwardRef<HTMLDivElement, RoomPinMenuProps>(
                         No Pinned Messages
                       </Text>
                       <Text size="T400" align="Center">
-                        Users with sufficient power level can pin a messages from its context menu.
+                        Users with sufficient power level can pin messages from the context menu.
                       </Text>
                     </Box>
                   </Box>
@@ -597,3 +623,5 @@ export const RoomPinMenu = forwardRef<HTMLDivElement, RoomPinMenuProps>(
     );
   }
 );
+
+RoomPinMenu.displayName = 'RoomPinMenu';

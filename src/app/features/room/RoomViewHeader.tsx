@@ -82,7 +82,7 @@ async function getPinsHash(pinnedIds: string[]): Promise<string> {
   return hashHex.slice(0, 10);
 }
 
-interface PinReadMarker {
+export interface PinReadMarker {
   hash: string;
   count: number;
   last_seen_id: string;

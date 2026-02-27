@@ -6,6 +6,7 @@
 - Show full timestamps on hover. ([cinnyapp#2699](https://github.com/cinnyapp/cinny/issues/2699))
 - Enable Twitter-style emojis by default.
 - Make inline editor buttons buttons.
+- Name colors in pinned messages.
 
 ## 1.2.0
 
