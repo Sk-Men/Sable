@@ -1,6 +1,6 @@
 # Sable Client Changelog
 
-## 1.2.0 - in dev
+## 1.2.0
 
 - Codebase cleanup ([#22](https://github.com/7w1/sable/pull/22))
 - Fix mono font ([#18](https://github.com/7w1/sable/pull/18))
