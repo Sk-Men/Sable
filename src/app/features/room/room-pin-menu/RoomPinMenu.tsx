@@ -88,6 +88,7 @@ import {
 } from '$hooks/useMemberPowerTag';
 import { useRoomCreatorsTag } from '$hooks/useRoomCreatorsTag';
 import { nicknamesAtom } from '$state/nicknames';
+import { AccountDataEvent } from '$types/matrix/accountData';
 
 type PinnedMessageProps = {
   room: Room;
@@ -100,6 +101,7 @@ type PinnedMessageProps = {
   legacyUsernameColor: boolean;
   hour24Clock: boolean;
   dateFormatString: string;
+  isNew: boolean;
 };
 function PinnedMessage({
   room,
@@ -112,6 +114,7 @@ function PinnedMessage({
   legacyUsernameColor,
   hour24Clock,
   dateFormatString,
+  isNew,
 }: PinnedMessageProps) {
   const pinnedEvent = useRoomEvent(room, eventId);
   const useAuthentication = useMediaAuthentication();
@@ -144,13 +147,19 @@ function PinnedMessage({
 
   const renderOptions = () => (
     <Box shrink="No" gap="200" alignItems="Center">
-      <Chip data-event-id={eventId} onClick={handleOpenClick} variant="Secondary" radii="Pill">
+      <Chip 
+        data-event-id={eventId} 
+        onClick={handleOpenClick} 
+        // Maybe change colors later. design not finalized
+        //variant={isNew ? "Primary" : "Secondary"} 
+        radii="Pill"
+      >
         <Text size="T200">Jump</Text>
       </Chip>
       {canPinEvent && (
         <IconButton
           data-event-id={eventId}
-          variant="Secondary"
+          //variant={isNew ? "Primary" : "Secondary"}
           size="300"
           radii="Pill"
           onClick={unpinState.status === AsyncStatus.Loading ? undefined : handleUnpinClick}
@@ -247,9 +256,10 @@ function PinnedMessage({
 type RoomPinMenuProps = {
   room: Room;
   requestClose: () => void;
+  currentHash: string;
 };
 export const RoomPinMenu = forwardRef<HTMLDivElement, RoomPinMenuProps>(
-  ({ room, requestClose }, ref) => {
+  ({ room, requestClose, currentHash }, ref) => {
     const mx = useMatrixClient();
     const userId = mx.getUserId()!;
     const nicknames = useAtomValue(nicknamesAtom);
@@ -284,6 +294,17 @@ export const RoomPinMenu = forwardRef<HTMLDivElement, RoomPinMenuProps>(
 
     const { navigateRoom } = useRoomNavigate();
     const scrollRef = useRef<HTMLDivElement>(null);
+
+    const pinMarker = useMemo(() => 
+      room.getAccountData(AccountDataEvent.SablePinStatus)?.getContent(), 
+    [room]);
+
+    const lastSeenIndex = useMemo(() => {
+      if (!pinMarker?.last_seen_id) return -1;
+      return pinnedEvents.indexOf(pinMarker.last_seen_id);
+    }, [pinnedEvents, pinMarker]);
+
+    const hasNewContent = pinMarker?.hash !== currentHash;
 
     const virtualizer = useVirtualizer({
       count: sortedPinnedEvent.length,
@@ -493,6 +514,17 @@ export const RoomPinMenu = forwardRef<HTMLDivElement, RoomPinMenuProps>(
                       const eventId = sortedPinnedEvent[vItem.index];
                       if (!eventId) return null;
 
+                      const originalIndex = pinnedEvents.indexOf(eventId);
+                      let isNew = false;
+                      if (pinMarker?.hash !== currentHash) {
+                        if (lastSeenIndex !== -1) {
+                          isNew = originalIndex > lastSeenIndex;
+                        } else {
+                          const oldCount = pinMarker?.count ?? 0;
+                          isNew = originalIndex >= (oldCount - 1);
+                        }
+                      }
+
                       return (
                         <VirtualTile
                           virtualItem={vItem}
@@ -501,8 +533,12 @@ export const RoomPinMenu = forwardRef<HTMLDivElement, RoomPinMenuProps>(
                           key={vItem.index}
                         >
                           <SequenceCard
-                            style={{ padding: config.space.S400, borderRadius: config.radii.R300 }}
-                            variant="SurfaceVariant"
+                            style={{ 
+                              padding: config.space.S400, 
+                              borderRadius: config.radii.R300,
+                              border: isNew ? `${config.borderWidth.B700} solid ${color.Secondary.ContainerActive}` : undefined,
+                            }}
+                            variant={"Background"}
                             direction="Column"
                           >
                             <PinnedMessage
@@ -515,6 +551,7 @@ export const RoomPinMenu = forwardRef<HTMLDivElement, RoomPinMenuProps>(
                               accessibleTagColors={accessibleTagColors}
                               legacyUsernameColor={legacyUsernameColor || direct}
                               hour24Clock={hour24Clock}
+                              isNew={isNew}
                               dateFormatString={dateFormatString}
                             />
                           </SequenceCard>

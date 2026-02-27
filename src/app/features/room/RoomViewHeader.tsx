@@ -1,4 +1,4 @@
-import React, { MouseEventHandler, forwardRef, useState } from 'react';
+import React, { MouseEventHandler, forwardRef, useEffect, useState } from 'react';
 import FocusTrap from 'focus-trap-react';
 import {
   Box,
@@ -47,7 +47,6 @@ import { roomToUnreadAtom } from '$state/room/roomToUnread';
 import { copyToClipboard } from '$appUtils/dom';
 import { LeaveRoomPrompt } from '$components/leave-room-prompt';
 import { useRoomAvatar, useRoomName, useRoomTopic } from '$hooks/useRoomMeta';
-import { mDirectAtom } from '$state/mDirectList';
 import { ScreenSize, useScreenSizeContext } from '$hooks/useScreenSize';
 import { stopPropagation } from '$appUtils/keyboard';
 import { getMatrixToRoom } from '$plugins/matrix-to';
@@ -71,6 +70,23 @@ import { InviteUserPrompt } from '$components/invite-user-prompt';
 import { useCallState } from '$pages/client/call/CallProvider';
 import { ContainerColor } from '$styles/ContainerColor.css';
 import { useRoomWidgets } from '$hooks/useRoomWidgets';
+import { AccountDataEvent } from '$types/matrix/accountData';
+
+async function getPinsHash(pinnedIds: string[]): Promise<string> {
+  const sorted = [...pinnedIds].sort().join(',');
+  const encoder = new TextEncoder();
+  const data = encoder.encode(sorted);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  const hashHex = hashArray.map((b) => b.toString(16).padStart(2, '0')).join('');
+  return hashHex.slice(0, 10);
+}
+
+interface PinReadMarker {
+  hash: string;
+  count: number;
+  last_seen_id: string;
+}
 
 type RoomMenuProps = {
   room: Room;
@@ -268,7 +284,6 @@ export function RoomViewHeader() {
   const direct = useIsDirectRoom();
 
   const { isChatOpen, toggleChat } = useCallState();
-  const pinnedEvents = useRoomPinnedEvents(room);
   const encryptionEvent = useStateEvent(room, StateEvent.RoomEncryption);
   const encryptedRoom = !!encryptionEvent;
   const avatarMxc = useRoomAvatar(room, direct);
@@ -281,6 +296,46 @@ export function RoomViewHeader() {
   const [peopleDrawer, setPeopleDrawer] = useSetting(settingsAtom, 'isPeopleDrawer');
   const [widgetDrawer, setWidgetDrawer] = useSetting(settingsAtom, 'isWidgetDrawer');
   const widgets = useRoomWidgets(room);
+
+  const pinnedIds = useRoomPinnedEvents(room);
+  const pinMarker = room
+    .getAccountData(AccountDataEvent.SablePinStatus)
+    ?.getContent() as PinReadMarker;
+  const [unreadPinsCount, setUnreadPinsCount] = useState(0);
+
+  const [currentHash, setCurrentHash] = useState<string>('');
+
+  useEffect(() => {
+    void getPinsHash(pinnedIds).then(setCurrentHash);
+  }, [pinnedIds]);
+
+  useEffect(() => {
+    const checkUnreads = async () => {
+      if (!pinnedIds.length) {
+        setUnreadPinsCount(0);
+        return;
+      }
+
+      const hash = await getPinsHash(pinnedIds);
+
+      if (pinMarker?.hash === hash) {
+        setUnreadPinsCount(0);
+        return;
+      }
+
+      const lastSeenIndex = pinnedIds.indexOf(pinMarker?.last_seen_id);
+      if (lastSeenIndex !== -1) {
+        const newPins = pinnedIds.slice(lastSeenIndex + 1);
+        setUnreadPinsCount(newPins.length);
+      } else {
+        const oldCount = pinMarker?.count ?? 0;
+        const startIndex = Math.max(0, oldCount - 1);
+        const newCount = pinnedIds.length > 0 ? pinnedIds.length - startIndex : 0;
+        setUnreadPinsCount(Math.max(0, newCount));
+      }
+    };
+    void checkUnreads();
+  }, [pinnedIds, pinMarker]);
 
   const handleSearchClick = () => {
     const searchParams: _SearchPathSearchParams = {
@@ -298,6 +353,19 @@ export function RoomViewHeader() {
 
   const handleOpenPinMenu: MouseEventHandler<HTMLButtonElement> = (evt) => {
     setPinMenuAnchor(evt.currentTarget.getBoundingClientRect());
+
+    const updateMarker = async () => {
+      if (pinnedIds.length === 0) return;
+
+      const hash = await getPinsHash(pinnedIds);
+      await mx.setRoomAccountData(room.roomId, AccountDataEvent.SablePinStatus, {
+        hash: hash,
+        count: pinnedIds.length,
+        last_seen_id: pinnedIds[pinnedIds.length - 1],
+      });
+    };
+
+    void updateMarker();
   };
 
   return (
@@ -411,7 +479,7 @@ export function RoomViewHeader() {
                     ref={triggerRef}
                     aria-pressed={!!pinMenuAnchor}
                   >
-                    {pinnedEvents.length > 0 && (
+                    {unreadPinsCount > 0 && (
                       <Badge
                         style={{
                           position: 'absolute',
@@ -424,7 +492,7 @@ export function RoomViewHeader() {
                         radii="Pill"
                       >
                         <Text as="span" size="L400">
-                          {pinnedEvents.length}
+                          {unreadPinsCount}
                         </Text>
                       </Badge>
                     )}
@@ -447,7 +515,11 @@ export function RoomViewHeader() {
                       escapeDeactivates: stopPropagation,
                     }}
                   >
-                    <RoomPinMenu room={room} requestClose={() => setPinMenuAnchor(undefined)} />
+                    <RoomPinMenu
+                      room={room}
+                      requestClose={() => setPinMenuAnchor(undefined)}
+                      currentHash={currentHash}
+                    />
                   </FocusTrap>
                 }
               />
