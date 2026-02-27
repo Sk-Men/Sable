@@ -357,9 +357,9 @@ export function RoomViewHeader() {
     const updateMarker = async () => {
       if (pinnedIds.length === 0) return;
 
-      const currentHash = await getPinsHash(pinnedIds);
+      const hash = await getPinsHash(pinnedIds);
       await mx.setRoomAccountData(room.roomId, AccountDataEvent.SablePinStatus, {
-        hash: currentHash,
+        hash: hash,
         count: pinnedIds.length,
         last_seen_id: pinnedIds[pinnedIds.length - 1],
       });
