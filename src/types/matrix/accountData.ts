@@ -20,6 +20,7 @@ export enum AccountDataEvent {
 
   // Sable account data
   SableNicknames = 'moe.sable.app.nicknames',
+  SablePinStatus = 'moe.sable.app.pins_read_marker',
 }
 
 export type MDirectContent = Record<string, string[]>;

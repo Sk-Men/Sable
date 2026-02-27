@@ -5,6 +5,7 @@
 - Codebase cleanup ([#22](https://github.com/7w1/sable/pull/22))
 - Fix mono font ([#18](https://github.com/7w1/sable/pull/18))
 - Merge final commits from ([cinnyapp#2599](https://github.com/cinnyapp/cinny/pull/2599))
+- Pin counter tracks unread pins
 
 ## 1.1.7
 

@@ -1,4 +1,4 @@
-import React, { MouseEventHandler, forwardRef, useState } from 'react';
+import React, { MouseEventHandler, forwardRef, useEffect, useState } from 'react';
 import FocusTrap from 'focus-trap-react';
 import {
   Box,
@@ -47,7 +47,6 @@ import { roomToUnreadAtom } from '$state/room/roomToUnread';
 import { copyToClipboard } from '$appUtils/dom';
 import { LeaveRoomPrompt } from '$components/leave-room-prompt';
 import { useRoomAvatar, useRoomName, useRoomTopic } from '$hooks/useRoomMeta';
-import { mDirectAtom } from '$state/mDirectList';
 import { ScreenSize, useScreenSizeContext } from '$hooks/useScreenSize';
 import { stopPropagation } from '$appUtils/keyboard';
 import { getMatrixToRoom } from '$plugins/matrix-to';
@@ -71,6 +70,17 @@ import { InviteUserPrompt } from '$components/invite-user-prompt';
 import { useCallState } from '$pages/client/call/CallProvider';
 import { ContainerColor } from '$styles/ContainerColor.css';
 import { useRoomWidgets } from '$hooks/useRoomWidgets';
+import { AccountDataEvent } from '$types/matrix/accountData';
+
+async function getPinsHash(pinnedIds: string[]): Promise<string> {
+  const sorted = [...pinnedIds].sort().join(',');
+  const encoder = new TextEncoder();
+  const data = encoder.encode(sorted);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+  return hashHex.slice(0, 10);
+}
 
 type RoomMenuProps = {
   room: Room;
@@ -268,7 +278,6 @@ export function RoomViewHeader() {
   const direct = useIsDirectRoom();
 
   const { isChatOpen, toggleChat } = useCallState();
-  const pinnedEvents = useRoomPinnedEvents(room);
   const encryptionEvent = useStateEvent(room, StateEvent.RoomEncryption);
   const encryptedRoom = !!encryptionEvent;
   const avatarMxc = useRoomAvatar(room, direct);
@@ -281,6 +290,42 @@ export function RoomViewHeader() {
   const [peopleDrawer, setPeopleDrawer] = useSetting(settingsAtom, 'isPeopleDrawer');
   const [widgetDrawer, setWidgetDrawer] = useSetting(settingsAtom, 'isWidgetDrawer');
   const widgets = useRoomWidgets(room);
+
+  const pinnedIds = useRoomPinnedEvents(room);
+  const pinMarker = room.getAccountData(AccountDataEvent.SablePinStatus)?.getContent();
+  const [unreadPinsCount, setUnreadPinsCount] = useState(0);
+
+  const [currentHash, setCurrentHash] = useState<string>('');
+
+  useEffect(() => {
+    getPinsHash(pinnedIds).then(setCurrentHash);
+  }, [pinnedIds]);
+
+  useEffect(() => {
+    const checkUnreads = async () => {
+      if (!pinnedIds.length) {
+        setUnreadPinsCount(0);
+        return;
+      }
+
+      const currentHash = await getPinsHash(pinnedIds);
+
+      if (pinMarker?.hash === currentHash) {
+        setUnreadPinsCount(0);
+        return;
+      }
+
+      const lastSeenIndex = pinnedIds.indexOf(pinMarker?.last_seen_id);
+      if (lastSeenIndex !== -1) {
+        const newPins = pinnedIds.slice(lastSeenIndex + 1);
+        setUnreadPinsCount(newPins.length);
+      } else {
+        const countDiff = pinnedIds.length - (pinMarker?.count ?? 0);
+        setUnreadPinsCount(countDiff > 0 ? countDiff : 0);
+      }
+    };
+    checkUnreads();
+  }, [pinnedIds, pinMarker]);
 
   const handleSearchClick = () => {
     const searchParams: _SearchPathSearchParams = {
@@ -296,9 +341,17 @@ export function RoomViewHeader() {
     setMenuAnchor(evt.currentTarget.getBoundingClientRect());
   };
 
-  const handleOpenPinMenu: MouseEventHandler<HTMLButtonElement> = (evt) => {
+  const handleOpenPinMenu: MouseEventHandler<HTMLButtonElement> = async (evt) => {
     setPinMenuAnchor(evt.currentTarget.getBoundingClientRect());
+    
+    const currentHash = await getPinsHash(pinnedIds);
+    mx.setRoomAccountData(room.roomId, AccountDataEvent.SablePinStatus, {
+      hash: currentHash,
+      count: pinnedIds.length,
+      last_seen_id: pinnedIds[pinnedIds.length - 1],
+    });
   };
+
 
   return (
     <PageHeader
@@ -411,7 +464,7 @@ export function RoomViewHeader() {
                     ref={triggerRef}
                     aria-pressed={!!pinMenuAnchor}
                   >
-                    {pinnedEvents.length > 0 && (
+                    {unreadPinsCount > 0 && (
                       <Badge
                         style={{
                           position: 'absolute',
@@ -424,7 +477,7 @@ export function RoomViewHeader() {
                         radii="Pill"
                       >
                         <Text as="span" size="L400">
-                          {pinnedEvents.length}
+                          {unreadPinsCount}
                         </Text>
                       </Badge>
                     )}
@@ -447,7 +500,11 @@ export function RoomViewHeader() {
                       escapeDeactivates: stopPropagation,
                     }}
                   >
-                    <RoomPinMenu room={room} requestClose={() => setPinMenuAnchor(undefined)} />
+                    <RoomPinMenu 
+                      room={room} 
+                      requestClose={() => setPinMenuAnchor(undefined)} 
+                      currentHash={currentHash}
+                    />
                   </FocusTrap>
                 }
               />
