@@ -1,4 +1,4 @@
-import React, { MutableRefObject, ReactNode, useImperativeHandle, useRef } from 'react';
+import { MutableRefObject, ReactNode, useImperativeHandle, useRef } from 'react';
 import { Badge, Box, Chip, Header, Icon, Icons, Spinner, Text, as, percent } from 'folds';
 import classNames from 'classnames';
 import { useAtomValue } from 'jotai';
@@ -66,7 +66,7 @@ export function UploadBoardHeader({
     if (sendingRef.current) return;
     sendingRef.current = true;
     await onSend(
-      uploads.filter((upload) => upload.status === UploadStatus.Success) as UploadSuccess[]
+      uploads.filter((upload) => upload.status === UploadStatus.Success)
     );
     sendingRef.current = false;
   };

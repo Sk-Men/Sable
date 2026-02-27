@@ -1,5 +1,5 @@
 import { Box, Button, color, config, Icon, Icons, Input, Spinner, Switch, Text } from 'folds';
-import React, { FormEventHandler, useCallback, useState } from 'react';
+import { FormEventHandler, useCallback, useState } from 'react';
 import { ICreateRoomStateEvent, MatrixError, Preset, Visibility } from '$types/matrix-sdk';
 import { useNavigate } from 'react-router-dom';
 import { SettingTile } from '$components/setting-tile';

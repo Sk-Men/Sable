@@ -1,6 +1,5 @@
 import React from 'react';
-import { Room } from '$types/matrix-sdk';
-import { Relations } from '$types/matrix-sdk';
+import { Room, Relations  } from '$types/matrix-sdk';
 import { useSetAtom } from 'jotai';
 import { Icon, Icons, Text, MenuItem } from 'folds';
 import { modalAtom, ModalType } from '$state/modal';

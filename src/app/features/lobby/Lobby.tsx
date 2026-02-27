@@ -1,11 +1,9 @@
-import React, { MouseEventHandler, useCallback, useMemo, useRef, useState } from 'react';
+import { MouseEventHandler, useCallback, useMemo, useRef, useState } from 'react';
 import { Box, Chip, Icon, IconButton, Icons, Line, Scroll, Spinner, Text, config } from 'folds';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { useAtom, useAtomValue } from 'jotai';
 import { useNavigate } from 'react-router-dom';
-import { JoinRule, RestrictedAllowType, Room } from '$types/matrix-sdk';
-import { RoomJoinRulesEventContent } from '$types/matrix-sdk';
-import { IHierarchyRoom } from '$types/matrix-sdk';
+import { JoinRule, RestrictedAllowType, Room, RoomJoinRulesEventContent , IHierarchyRoom  } from '$types/matrix-sdk';
 import { produce } from 'immer';
 import { useSpace } from '$hooks/useSpace';
 import { Page, PageContent, PageContentCenter, PageHeroSection } from '$components/page';
@@ -215,7 +213,7 @@ export function Lobby() {
 
             return [getRoom(i.space.roomId), ...childRooms];
           })
-          .filter((r) => !!r) as Room[],
+          .filter((r) => !!r),
       [hierarchy, getRoom]
     )
   );

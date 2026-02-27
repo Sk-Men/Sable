@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import { useCallback, useState } from 'react';
 import classNames from 'classnames';
 import {
   Avatar,
@@ -14,8 +14,7 @@ import {
   as,
   config,
 } from 'folds';
-import { MatrixEvent, Room, RoomMember } from '$types/matrix-sdk';
-import { Relations } from '$types/matrix-sdk';
+import { MatrixEvent, Room, RoomMember, Relations  } from '$types/matrix-sdk';
 import { getMemberDisplayName } from '$appUtils/room';
 import { eventWithShortcode, getMxIdLocalPart } from '$appUtils/matrix';
 import * as css from './ReactionViewer.css';

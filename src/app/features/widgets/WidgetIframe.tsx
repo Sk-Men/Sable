@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ClientWidgetApi, IWidget, IRoomEvent, Widget, WidgetKind } from 'matrix-widget-api';
 import {
   ClientEvent,
@@ -129,7 +129,7 @@ export function WidgetIframe({ widget, roomId, mx, onCapabilityRequest }: Widget
       messagingRef.current = null;
       setReady(false);
     };
-  }, [widget.id, roomId, mx]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [widget.id, roomId, mx]);  
 
   return (
     <iframe

@@ -1,4 +1,4 @@
-import React, { MouseEventHandler, useCallback, useState } from 'react';
+import { MouseEventHandler, useCallback, useState } from 'react';
 import { useAtom } from 'jotai';
 import { CryptoApi, KeyBackupInfo } from '$types/matrix-sdk';
 import {

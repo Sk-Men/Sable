@@ -1,7 +1,6 @@
-/* eslint-disable react/destructuring-assignment */
-import React, { forwardRef, MouseEventHandler, useCallback, useMemo, useRef } from 'react';
-import { MatrixEvent, Room } from '$types/matrix-sdk';
-import { RoomPinnedEventsEventContent } from '$types/matrix-sdk';
+ 
+import { forwardRef, MouseEventHandler, useCallback, useMemo, useRef } from 'react';
+import { MatrixEvent, Room, RoomPinnedEventsEventContent  } from '$types/matrix-sdk';
 import {
   Avatar,
   Box,

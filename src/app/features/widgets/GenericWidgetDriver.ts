@@ -93,7 +93,7 @@ export class GenericWidgetDriver extends WidgetDriver {
         content as TimelineEvents[keyof TimelineEvents]
       );
     }
-    return { roomId, eventId: r!.event_id };
+    return { roomId, eventId: r.event_id };
   }
 
   public async sendDelayedEvent<K extends keyof StateEvents>(

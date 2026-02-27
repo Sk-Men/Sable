@@ -86,7 +86,7 @@ async function deriveKeys(salt, iterations, password) {
       throw friendlyError(`subtleCrypto.importKey failed for HMAC key: ${e}`, cryptoFailMsg());
     });
 
-  // eslint-disable-next-line no-return-await
+   
   return await Promise.all([aesProm, hmacProm]);
 }
 

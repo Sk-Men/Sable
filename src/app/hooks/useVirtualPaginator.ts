@@ -397,10 +397,10 @@ export const useVirtualPaginator = <TScrollElement extends HTMLElement>(
     if (!scrollElement) return;
     const backAnchor = scrollElement.querySelector(
       `[${PAGINATOR_ANCHOR_ATTR}="${Direction.Backward}"]`
-    ) as HTMLElement | null;
+    );
     const frontAnchor = scrollElement.querySelector(
       `[${PAGINATOR_ANCHOR_ATTR}="${Direction.Forward}"]`
-    ) as HTMLElement | null;
+    );
 
     if (backAnchor && isIntersectingScrollView(scrollElement, backAnchor)) {
       paginate(Direction.Backward);

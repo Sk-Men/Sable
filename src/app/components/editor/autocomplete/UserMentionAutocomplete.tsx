@@ -1,4 +1,4 @@
-import React, { useEffect, KeyboardEvent as ReactKeyboardEvent } from 'react';
+import { useEffect, KeyboardEvent as ReactKeyboardEvent } from 'react';
 import { Editor } from 'slate';
 import { Avatar, Icon, Icons, MenuItem, Text } from 'folds';
 import { MatrixClient, Room, RoomMember } from '$types/matrix-sdk';
@@ -91,7 +91,7 @@ export function UserMentionAutocomplete({
   const mx = useMatrixClient();
   const useAuthentication = useMediaAuthentication();
   const nicknames = useAtomValue(nicknamesAtom);
-  const roomId: string = room.roomId!;
+  const roomId: string = room.roomId;
   const roomAliasOrId = room.getCanonicalAlias() || roomId;
   const members = useRoomMembers(mx, roomId);
 

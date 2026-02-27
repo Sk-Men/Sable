@@ -1,4 +1,4 @@
-import React, {
+import {
   createContext,
   useState,
   useContext,
@@ -9,7 +9,6 @@ import React, {
 } from 'react';
 import {
   WidgetApiToWidgetAction,
-  WidgetApiAction,
   ClientWidgetApi,
   IWidgetApiRequestData,
 } from 'matrix-widget-api';
@@ -148,7 +147,7 @@ export function CallProvider({ children }: CallProviderProps) {
         return Promise.reject(new Error('Mismatched active call clientWidgetApi'));
       }
 
-      await activeClientWidgetApi.transport.send(action as WidgetApiAction, data);
+      await activeClientWidgetApi.transport.send(action, data);
 
       return Promise.resolve();
     },
@@ -209,7 +208,7 @@ export function CallProvider({ children }: CallProviderProps) {
       if (!isActiveCallReady) return;
       ev.preventDefault();
 
-      /* eslint-disable camelcase */
+       
       const { audio_enabled, video_enabled } = ev.detail.data ?? {};
 
       if (typeof audio_enabled === 'boolean' && audio_enabled !== isAudioEnabled) {
@@ -218,7 +217,7 @@ export function CallProvider({ children }: CallProviderProps) {
       if (typeof video_enabled === 'boolean' && video_enabled !== isVideoEnabled) {
         setIsVideoEnabledState(video_enabled);
       }
-      /* eslint-enable camelcase */
+       
     };
 
     const handleOnScreenStateUpdate = (ev: CustomEvent) => {

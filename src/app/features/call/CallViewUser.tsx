@@ -1,8 +1,7 @@
 import { as, Avatar, Box, Icon, Icons, Text } from 'folds';
 import React from 'react';
 import classNames from 'classnames';
-import { Room } from '$types/matrix-sdk';
-import { CallMembership } from '$types/matrix-sdk';
+import { Room, CallMembership  } from '$types/matrix-sdk';
 import { UserAvatar } from '$components/user-avatar';
 import { useMatrixClient } from '$hooks/useMatrixClient';
 import { getMxIdLocalPart } from '$appUtils/matrix';

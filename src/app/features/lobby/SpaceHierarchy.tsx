@@ -1,6 +1,5 @@
-import React, { forwardRef, MouseEventHandler, useEffect, useMemo } from 'react';
-import { MatrixError, Room } from '$types/matrix-sdk';
-import { IHierarchyRoom } from '$types/matrix-sdk';
+import { forwardRef, MouseEventHandler, useEffect, useMemo } from 'react';
+import { MatrixError, Room, IHierarchyRoom  } from '$types/matrix-sdk';
 import { Box, config, Text } from 'folds';
 import {
   HierarchyItem,

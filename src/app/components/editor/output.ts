@@ -11,7 +11,7 @@ import {
 } from '$plugins/markdown';
 import { findAndReplace } from '$appUtils/findAndReplace';
 import { sanitizeForRegex } from '$appUtils/regex';
-import { getCanonicalAliasOrRoomId, isUserId } from '$appUtils/matrix';
+import { isUserId } from '$appUtils/matrix';
 
 export type OutputOptions = {
   allowTextFormatting?: boolean;

@@ -1,4 +1,4 @@
-import React, { MouseEventHandler, forwardRef, useEffect, useState } from 'react';
+import { MouseEventHandler, forwardRef, useEffect, useState } from 'react';
 import FocusTrap from 'focus-trap-react';
 import {
   Box,

@@ -1,5 +1,5 @@
 /* eslint-disable jsx-a11y/media-has-caption */
-import React, { ReactNode, useCallback, useRef, useState } from 'react';
+import { ReactNode, useCallback, useRef, useState } from 'react';
 import { Badge, Chip, Icon, IconButton, Icons, ProgressBar, Spinner, Text, toRem } from 'folds';
 import { EncryptedAttachmentInfo } from 'browser-encrypt-attachment';
 import { Range } from 'react-range';

@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
 import { as, ContainerColor, toRem } from 'folds';
 import { randomNumberBetween } from '$appUtils/common';
 import { LinePlaceholder } from './LinePlaceholder';

@@ -1,5 +1,5 @@
 import { useAtomValue, useSetAtom } from 'jotai';
-import React, { ReactNode, useCallback, useEffect, useRef } from 'react';
+import { ReactNode, useCallback, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { RoomEvent, RoomEventHandlerMap } from '$types/matrix-sdk';
 import { roomToUnreadAtom, unreadEqual, unreadInfoToUnread } from '$state/room/roomToUnread';

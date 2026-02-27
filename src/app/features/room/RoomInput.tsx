@@ -116,13 +116,6 @@ import { roomToParentsAtom } from '$state/room/roomToParents';
 import { nicknamesAtom } from '$state/nicknames';
 import { useMediaAuthentication } from '$hooks/useMediaAuthentication';
 import { useImagePackRooms } from '$hooks/useImagePackRooms';
-import { usePowerLevelsContext } from '$hooks/usePowerLevels';
-import { useIsDirectRoom } from '$hooks/useRoom';
-import { useAccessiblePowerTagColors, useGetMemberPowerTag } from '$hooks/useMemberPowerTag';
-import { useRoomCreators } from '$hooks/useRoomCreators';
-import { useTheme } from '$hooks/useTheme';
-import { useRoomCreatorsTag } from '$hooks/useRoomCreatorsTag';
-import { usePowerLevelTags } from '$hooks/usePowerLevelTags';
 import { useComposingCheck } from '$hooks/useComposingCheck';
 import { useSableCosmetics } from '$hooks/useSableCosmetics';
 
@@ -495,7 +488,7 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
                     .reverse()
                     .map((fileItem, index) => (
                       <UploadCardRenderer
-                        // eslint-disable-next-line react/no-array-index-key
+                         
                         key={index}
                         isEncrypted={!!fileItem.encInfo}
                         fileItem={fileItem}

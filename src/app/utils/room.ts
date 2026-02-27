@@ -15,9 +15,8 @@ import {
   NotificationCountType,
   RelationType,
   Room,
-  RoomMember,
+  RoomMember, CryptoBackend 
 } from '$types/matrix-sdk';
-import { CryptoBackend } from '$types/matrix-sdk';
 import { AccountDataEvent } from '$types/matrix/accountData';
 import {
   IRoomCreateContent,

@@ -1,8 +1,8 @@
-/* eslint-disable no-return-await */
-/* eslint-disable no-param-reassign */
-/* eslint-disable no-continue */
-/* eslint-disable class-methods-use-this */
-/* eslint-disable no-dupe-class-members */
+ 
+ 
+ 
+ 
+ 
 /*
  * Copyright 2024 New Vector Ltd.
  * Copyright 2020-2023 The Matrix.org Foundation C.I.C.
@@ -127,7 +127,7 @@ export class SmallWidgetDriver extends WidgetDriver {
       EventType.RoomRedaction,
       'io.element.call.reaction',
     ];
-    // eslint-disable-next-line no-restricted-syntax
+     
     for (const eventType of sendRecvRoomEvents) {
       this.allowedCapabilities.add(
         WidgetEventCapability.forRoomEvent(EventDirection.Send, eventType).raw
@@ -150,7 +150,7 @@ export class SmallWidgetDriver extends WidgetDriver {
       EventType.CallReplaces,
       EventType.CallEncryptionKeysPrefix,
     ];
-    // eslint-disable-next-line no-restricted-syntax
+     
     for (const eventType of sendRecvToDevice) {
       this.allowedCapabilities.add(
         WidgetEventCapability.forToDeviceEvent(EventDirection.Send, eventType).raw
@@ -325,10 +325,10 @@ export class SmallWidgetDriver extends WidgetDriver {
       // attempt to re-batch these up into a single request
       const invertedContentMap: { [content: string]: { userId: string; deviceId: string }[] } = {};
 
-      // eslint-disable-next-line no-restricted-syntax
+       
       for (const userId of Object.keys(contentMap)) {
         const userContentMap = contentMap[userId];
-        // eslint-disable-next-line no-restricted-syntax
+         
         for (const deviceId of Object.keys(userContentMap)) {
           const content = userContentMap[deviceId];
           const stringifiedContent = JSON.stringify(content);
