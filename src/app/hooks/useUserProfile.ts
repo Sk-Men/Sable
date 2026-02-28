@@ -9,6 +9,8 @@ import { useSetting } from '../state/hooks/settings';
 import { settingsAtom } from '../state/settings';
 import colorMXID from '$util/colorMXID';
 
+const inFlightProfiles = new Map<string, Promise<any>>();
+
 export type UserProfile = {
   avatarUrl?: string;
   displayName?: string;
@@ -54,9 +56,19 @@ export const useUserProfile = (
 
   useEffect(() => {
     if (!needsFetch) return;
+
+    let fetchPromise = inFlightProfiles.get(userId);
+
+    if (!fetchPromise) {
+      fetchPromise = mx.getProfileInfo(userId).finally(() => {
+        inFlightProfiles.delete(userId);
+      });
+      inFlightProfiles.set(userId, fetchPromise);
+    }
+
     let isMounted = true;
 
-    mx.getProfileInfo(userId)
+    fetchPromise
       .then((info: any) => {
         if (!isMounted) return;
         const normalized = normalizeInfo(info);
@@ -66,11 +78,13 @@ export const useUserProfile = (
         }));
       })
       .catch(() => {
+        if (!isMounted) return;
         setGlobalProfiles((prev) => ({
           ...prev,
           [userId]: { ...prev[userId], _fetched: true },
         }));
       });
+
     return () => {
       isMounted = false;
     };

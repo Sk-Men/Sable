@@ -10,6 +10,7 @@
 - Make inline editor buttons buttons.
 - Name colors in pinned messages.
 - Rename "Heating up" to "Petting cats"
+- Concurrency guard for profile lookups.
 
 ## 1.2.0
 
