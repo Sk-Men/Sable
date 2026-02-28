@@ -1,6 +1,12 @@
 import React, { ComponentProps } from 'react';
 import { Text, as } from 'folds';
-import { timeDayMonYear, timeHourMinute, today, yesterday } from '../../utils/time';
+import {
+  timeDayMonYear,
+  timeHourMinute,
+  timeHourMinuteSecond,
+  today,
+  yesterday,
+} from '../../utils/time';
 
 export type TimeProps = {
   compact?: boolean;
@@ -36,8 +42,21 @@ export const Time = as<'span', TimeProps & ComponentProps<typeof Text>>(
       time = `${timeDayMonYear(ts, dateFormatString)} ${formattedTime}`;
     }
 
+    const timeTitle = `Sent ${timeDayMonYear(ts, dateFormatString)}, at ${timeHourMinuteSecond(
+      ts,
+      hour24Clock
+    )}`;
+
     return (
-      <Text as="time" style={{ flexShrink: 0 }} size="T200" priority="300" {...props} ref={ref}>
+      <Text
+        as="time"
+        style={{ flexShrink: 0 }}
+        size="T200"
+        priority="300"
+        {...props}
+        title={timeTitle}
+        ref={ref}
+      >
         {time}
       </Text>
     );
