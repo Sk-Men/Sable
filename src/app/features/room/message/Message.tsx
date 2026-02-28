@@ -35,6 +35,7 @@ import {
   CompactLayout,
   MessageBase,
   ModernLayout,
+  PronounPill,
   Time,
   Username,
   UsernameBold,
@@ -249,47 +250,33 @@ function useMobileDoubleTap(callback: () => void, delay = 300) {
   );
 }
 
-function PronounPill({ summary, tagColor }: { summary: string; tagColor: string }) {
-  return (
-    <Box
-      alignItems="Center"
-      style={{
-        backgroundColor: 'var(--sable-surface-var-container)',
-        padding: '0 5px',
-        borderRadius: config.radii.Pill,
-        height: '16px',
-        display: 'inline-flex',
-      }}
-    >
-      <Text
-        style={{
-          color: tagColor,
-          fontSize: '0.7rem',
-          lineHeight: '1',
-          textTransform: 'lowercase',
-          opacity: 0.8,
-        }}
-      >
-        {summary}
-      </Text>
-    </Box>
-  );
-}
-
-function PronounTag({ pronouns, tagColor }: { pronouns?: any[]; tagColor: string }) {
+const Pronouns = as<
+  'div',
+  {
+    pronouns?: any[];
+    tagColor: string;
+  }
+>(({ pronouns, tagColor, ...props }, ref) => {
   if (!pronouns || pronouns.length === 0) return null;
 
   const clamp = (str: string, len: number) => (str.length > len ? `${str.slice(0, len)}...` : str);
+  const limit = mobileOrTablet() ? 1 : 3;
 
-  const display = pronouns
-    .slice(0, 3)
-    .map((p) => <PronounPill summary={clamp(p.summary, 16)} tagColor={tagColor} />);
+  const display = pronouns.slice(0, limit).map((p) => (
+    <PronounPill style={{ color: tagColor }} {...props} ref={ref}>
+      {clamp(p.summary, 16)}
+    </PronounPill>
+  ));
 
-  if (pronouns.length > 3) {
-    display.push(<PronounPill summary="..." tagColor={tagColor} />);
+  if (pronouns.length > limit) {
+    display.push(
+      <PronounPill style={{ color: tagColor }} {...props} ref={ref}>
+        ...
+      </PronounPill>
+    );
   }
-  return display;
-}
+  return <>{display}</>;
+});
 
 function MessageInternal(
   {
@@ -405,7 +392,7 @@ function MessageInternal(
           </Text>
         </Username>
         {showPronouns && (
-          <PronounTag pronouns={profile.pronouns} tagColor={usernameColor ?? 'currentColor'} />
+          <Pronouns pronouns={profile.pronouns} tagColor={usernameColor ?? 'currentColor'} />
         )}
         {tagIconSrc && <PowerIcon size="100" iconSrc={tagIconSrc} />}
       </Box>
