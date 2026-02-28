@@ -2,6 +2,8 @@
 
 ## 1.2.1 - in dev
 
+- Update pronouns to match [MSC4247](https://github.com/matrix-org/matrix-spec-proposals/pull/4247) format better and support up to 3 pronoun pills on desktop, 1 on mobile ([#23](https://github.com/7w1/sable/issues/23), [#33](https://github.com/7w1/sable/pull/33)) - [ranidspace](https://github.com/ranidspace)
+  - Unfortunately, **everyone who set pronouns in Sable will need to reset them.**
 - Fix jumbo-ified non-emojis with colons. ([#32](https://github.com/7w1/sable/issues/32))
 - Show full timestamps on hover. ([cinnyapp#2699](https://github.com/cinnyapp/cinny/issues/2699))
 - Enable Twitter-style emojis by default.
@@ -10,8 +12,8 @@
 
 ## 1.2.0
 
-- Codebase cleanup ([#22](https://github.com/7w1/sable/pull/22))
-- Fix mono font ([#18](https://github.com/7w1/sable/pull/18))
+- Codebase cleanup ([#22](https://github.com/7w1/sable/pull/22)) - [haz](https://github.com/hazre)
+- Fix mono font ([#18](https://github.com/7w1/sable/pull/18)) - [Alexia](https://github.com/cyrneko)
 - Merge final commits from ([cinnyapp#2599](https://github.com/cinnyapp/cinny/pull/2599))
 - Unread pin counter & highlighting ([#25](https://github.com/7w1/sable/pull/25), [#31](https://github.com/7w1/sable/pull/31))
 
