@@ -181,6 +181,16 @@ export const UsernameBold = style({
   fontWeight: 550,
 });
 
+export const PronounPill = style({
+  borderRadius: config.radii.Pill,
+  backgroundColor: 'var(--sable-surface-var-container)',
+  paddingInline: toRem(5),
+  opacity: 0.8,
+  fontSize: '0.7rem',
+  whiteSpace: 'nowrap',
+  textTransform: 'lowercase',
+});
+
 export const MessageTextBody = recipe({
   base: {
     wordBreak: 'break-word',
