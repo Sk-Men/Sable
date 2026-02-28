@@ -21,4 +21,6 @@ export enum BlockType {
   Emoticon = 'emoticon',
   Link = 'link',
   Command = 'command',
+  Small = 'small',
+  HorizontalRule = 'hr',
 }

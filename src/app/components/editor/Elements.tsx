@@ -226,6 +226,19 @@ export function RenderElement({ attributes, element, children }: RenderElementPr
           {children}
         </RenderCommandElement>
       );
+    case BlockType.Small:
+      return (
+        <Text {...attributes} className={css.Small}>
+          {children}
+        </Text>
+      );
+    case BlockType.HorizontalRule:
+      return (
+        <div {...attributes}>
+          <div contentEditable={false} className={css.HorizontalRule} />
+          {children}
+        </div>
+      );
     default:
       return (
         <Text

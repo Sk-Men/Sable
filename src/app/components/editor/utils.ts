@@ -130,6 +130,19 @@ export const toggleBlock = (editor: Editor, format: BlockType, option?: BlockOpt
     });
   }
 
+  if (format === BlockType.HorizontalRule) {
+    Transforms.insertNodes(editor, {
+      type: BlockType.HorizontalRule,
+      children: [{ text: '' }],
+    });
+    return;
+  }
+
+  if (format === BlockType.Small) {
+    Transforms.setNodes(editor, { type: BlockType.Small });
+    return;
+  }
+
   Transforms.setNodes(editor, {
     type: format,
   });

@@ -1,5 +1,10 @@
 # Sable Client Changelog
 
+## 1.2.2 - in dev
+
+- Fixed/updated unknown extended profile keys rendering.
+- Added support for `---`, `-#`, and fixed `-` to be unordered.
+
 ## 1.2.1
 
 - Update pronouns to match [MSC4247](https://github.com/matrix-org/matrix-spec-proposals/pull/4247) format better and support up to 3 pronoun pills on desktop, 1 on mobile ([#23](https://github.com/7w1/sable/issues/23), [#33](https://github.com/7w1/sable/pull/33)) - [ranidspace](https://github.com/ranidspace)

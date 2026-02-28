@@ -11,10 +11,12 @@ import {
   EmoticonElement,
   HeadingElement,
   HeadingLevel,
+  HorizontalRuleElement,
   InlineElement,
   MentionElement,
   OrderedListElement,
   ParagraphElement,
+  SmallElement,
   UnorderedListElement,
 } from './slate';
 import { createEmoticonElement, createMentionElement } from './utils';
@@ -342,6 +344,42 @@ const parseHeadingNode = (
   };
 };
 
+const parseSmallNode = (
+  node: Element,
+  processText: ProcessTextCallback
+): SmallElement | ParagraphElement => {
+  const children = node.children.flatMap((child) => getInlineElement(child, processText));
+  const mdSequence = node.attribs['data-md'];
+
+  if (mdSequence !== undefined) {
+    return {
+      type: BlockType.Paragraph,
+      children: [{ text: `${mdSequence} ` }, ...children],
+    };
+  }
+
+  return {
+    type: BlockType.Small,
+    children,
+  };
+};
+
+const parseHorizontalRuleNode = (node: Element): HorizontalRuleElement | ParagraphElement => {
+  const mdSequence = node.attribs['data-md'];
+
+  if (mdSequence !== undefined) {
+    return {
+      type: BlockType.Paragraph,
+      children: [{ text: mdSequence }],
+    };
+  }
+
+  return {
+    type: BlockType.HorizontalRule,
+    children: [{ text: '' }],
+  };
+};
+
 export const domToEditorInput = (
   domNodes: ChildNode[],
   processText: ProcessTextCallback,
@@ -377,6 +415,18 @@ export const domToEditorInput = (
       if (node.name === 'br') {
         lineHolder.push({ text: '' });
         appendLine();
+        return;
+      }
+
+      if (node.name === 'small') {
+        appendLine();
+        children.push(parseSmallNode(node, processText));
+        return;
+      }
+
+      if (node.name === 'hr') {
+        appendLine();
+        children.push(parseHorizontalRuleNode(node));
         return;
       }
 

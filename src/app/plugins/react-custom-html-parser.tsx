@@ -391,6 +391,18 @@ export const getReactCustomHtmlParser = (
           );
         }
 
+        if (name === 'small') {
+          return (
+            <Text {...props} className={css.Small} size="Inherit">
+              {renderChildren()}
+            </Text>
+          );
+        }
+
+        if (name === 'hr') {
+          return <hr {...props} className={css.HorizontalRule} />;
+        }
+
         if (name === 'pre') {
           return <CodeBlock opts={opts}>{children}</CodeBlock>;
         }
