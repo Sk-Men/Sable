@@ -11,6 +11,7 @@
 - Name colors in pinned messages.
 - Rename "Heating up" to "Petting cats"
 - Concurrency guard for profile lookups.
+- Hex color input for power level editor.
 
 ## 1.2.0
 
