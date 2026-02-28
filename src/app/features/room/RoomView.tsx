@@ -1,4 +1,4 @@
-import React, { useCallback, useRef } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 import { Box, Text, config, toRem } from 'folds';
 import { EventType, Room } from '$types/matrix-sdk';
 import { ReactEditor } from 'slate-react';
@@ -79,6 +79,9 @@ export function RoomView({ room, eventId }: { room: Room; eventId?: string }) {
   const permissions = useRoomPermissions(creators, powerLevels);
   const canMessage = permissions.event(EventType.RoomMessage, mx.getSafeUserId());
 
+  const [editorResetKey, setEditorResetKey] = useState(0);
+  const handleResetEditor = useCallback(() => setEditorResetKey((prev) => prev + 1), []);
+
   useKeyDown(
     window,
     useCallback(
@@ -124,6 +127,7 @@ export function RoomView({ room, eventId }: { room: Room; eventId?: string }) {
                 eventId={eventId}
                 roomInputRef={roomInputRef}
                 editor={editor}
+                onEditorReset={handleResetEditor}
               />
               <RoomViewTyping room={room} />
               <GlobalModalManager />
@@ -140,6 +144,7 @@ export function RoomView({ room, eventId }: { room: Room; eventId?: string }) {
                   <>
                     {canMessage && (
                       <RoomInput
+                        key={`${roomId}-${editorResetKey}`}
                         room={room}
                         editor={editor}
                         roomId={roomId}
