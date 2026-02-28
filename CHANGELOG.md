@@ -12,6 +12,7 @@
 - Rename "Heating up" to "Petting cats"
 - Concurrency guard for profile lookups.
 - Hex color input for power level editor.
+- Editing previous messages with keybinds no longer breaks message bar ([#36](https://github.com/7w1/sable/issues/36))
 
 ## 1.2.0
 
