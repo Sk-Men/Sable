@@ -9,6 +9,7 @@
 - Enable Twitter-style emojis by default.
 - Make inline editor buttons buttons.
 - Name colors in pinned messages.
+- Rename "Heating up" to "Petting cats"
 
 ## 1.2.0
 
