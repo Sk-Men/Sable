@@ -1,6 +1,6 @@
 import React from 'react';
-import * as css from './style.css';
 import { JUMBO_EMOJI_REG } from '$appUtils/regex';
+import * as css from './style.css';
 
 type PowerIconProps = css.PowerIconVariants & {
   iconSrc: string;

@@ -5,8 +5,8 @@ import {
   MatrixClient,
   RestrictedAllowType,
   Room,
+  RoomJoinRulesEventContent,
 } from '$types/matrix-sdk';
-import { RoomJoinRulesEventContent } from '$types/matrix-sdk';
 import { RoomType, StateEvent } from '$types/matrix/room';
 import { getViaServers } from '$plugins/via-servers';
 import { getMxIdServer } from '$appUtils/matrix';

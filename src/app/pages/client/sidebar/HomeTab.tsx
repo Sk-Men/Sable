@@ -21,11 +21,11 @@ import { useHomeSelected } from '$hooks/router/useHomeSelected';
 import { UnreadBadge } from '$components/unread-badge';
 import { ScreenSize, useScreenSizeContext } from '$hooks/useScreenSize';
 import { useNavToActivePathAtom } from '$state/hooks/navToActivePath';
-import { useHomeRooms } from '../home/useHomeRooms';
 import { markAsRead } from '$appUtils/notifications';
 import { stopPropagation } from '$appUtils/keyboard';
 import { useSetting } from '$state/hooks/settings';
 import { settingsAtom } from '$state/settings';
+import { useHomeRooms } from '../home/useHomeRooms';
 
 type HomeMenuProps = {
   requestClose: () => void;

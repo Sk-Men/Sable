@@ -16,8 +16,6 @@ import { Room } from '$types/matrix-sdk';
 import { atom, PrimitiveAtom, useAtom, useSetAtom } from 'jotai';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { IEmoji, emojiGroups, emojis } from '$plugins/emoji';
-import { useEmojiGroupLabels } from './useEmojiGroupLabels';
-import { useEmojiGroupIcons } from './useEmojiGroupIcons';
 import { preventScrollWithArrowKey, stopPropagation } from '$appUtils/keyboard';
 import { useRelevantImagePacks } from '$hooks/useImagePacks';
 import { useMatrixClient } from '$hooks/useMatrixClient';
@@ -31,6 +29,8 @@ import { addRecentEmoji } from '$plugins/recent-emoji';
 import { useMediaAuthentication } from '$hooks/useMediaAuthentication';
 import { ImagePack, ImageUsage, PackImageReader } from '$plugins/custom-emoji';
 import { getEmoticonSearchStr } from '$plugins/utils';
+import { useEmojiGroupIcons } from './useEmojiGroupIcons';
+import { useEmojiGroupLabels } from './useEmojiGroupLabels';
 import {
   SearchInput,
   EmojiBoardTabs,

@@ -34,6 +34,7 @@ export type CapabilityApprovalCallback = (requested: Set<Capability>) => Promise
 // this driver provides a capability approval mechanism for untrusted widgets.
 export class GenericWidgetDriver extends WidgetDriver {
   private readonly mxClient: MatrixClient;
+
   private readonly approveCapabilities: CapabilityApprovalCallback;
 
   public constructor(
@@ -300,7 +301,7 @@ export class GenericWidgetDriver extends WidgetDriver {
   }
 
   public async getMediaConfig(): Promise<IGetMediaConfigResult> {
-    return await this.mxClient.getMediaConfig();
+    return this.mxClient.getMediaConfig();
   }
 
   public async uploadFile(file: XMLHttpRequestBodyInit): Promise<{ contentUri: string }> {

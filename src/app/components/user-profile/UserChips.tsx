@@ -40,15 +40,15 @@ import { useRoomNavigate } from '$hooks/useRoomNavigate';
 import { useDirectRooms } from '$pages/client/direct/useDirectRooms';
 import { useMediaAuthentication } from '$hooks/useMediaAuthentication';
 import { useAllJoinedRoomsSet, useGetRoom } from '$hooks/useGetRoom';
-import { RoomAvatar, RoomIcon } from '../room-avatar';
 import { getDirectRoomAvatarUrl, getRoomAvatarUrl } from '$appUtils/room';
 import { nameInitials } from '$appUtils/common';
 import { getMatrixToUser } from '$plugins/matrix-to';
 import { useTimeoutToggle } from '$hooks/useTimeoutToggle';
 import { useIgnoredUsers } from '$hooks/useIgnoredUsers';
+import { useNickname, useSetNickname } from '$hooks/useNickname';
 import { CutoutCard } from '../cutout-card';
 import { SettingTile } from '../setting-tile';
-import { useNickname, useSetNickname } from '$hooks/useNickname';
+import { RoomAvatar, RoomIcon } from '../room-avatar';
 
 export function ServerChip({ server }: { server: string }) {
   const mx = useMatrixClient();

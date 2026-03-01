@@ -8,7 +8,6 @@ import {
 } from '$components/sidebar';
 import { useDeviceIds, useDeviceList, useSplitCurrentDevice } from '$hooks/useDeviceList';
 import { useMatrixClient } from '$hooks/useMatrixClient';
-import * as css from './UnverifiedTab.css';
 import {
   useDeviceVerificationStatus,
   useUnverifiedDeviceCount,
@@ -17,6 +16,7 @@ import {
 import { useCrossSigningActive } from '$hooks/useCrossSigning';
 import { Modal500 } from '$components/Modal500';
 import { Settings, SettingsPages } from '$features/settings';
+import * as css from './UnverifiedTab.css';
 
 function UnverifiedIndicator() {
   const mx = useMatrixClient();

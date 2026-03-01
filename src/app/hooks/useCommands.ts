@@ -9,9 +9,11 @@ import {
   Room,
   RoomMember,
   Visibility,
+  RoomServerAclEventContent,
 } from '$types/matrix-sdk';
-import { RoomServerAclEventContent } from '$types/matrix-sdk';
 import { useMemo } from 'react';
+import { Membership, StateEvent } from '$types/matrix/room';
+import { AccountDataEvent } from '$types/matrix/accountData';
 import {
   addRoomIdToMDirect,
   getDMRoomFor,
@@ -24,11 +26,9 @@ import {
   removeRoomIdFromMDirect,
 } from '../utils/matrix';
 import { useRoomNavigate } from './useRoomNavigate';
-import { Membership, StateEvent } from '$types/matrix/room';
 import { getStateEvent } from '../utils/room';
 import { splitWithSpace } from '../utils/common';
 import { createRoomEncryptionState } from '../components/create-room';
-import { AccountDataEvent } from '$types/matrix/accountData';
 import { enrichWidgetUrl } from './useRoomWidgets';
 
 export const SHRUG = '¯\\_(ツ)_/¯';

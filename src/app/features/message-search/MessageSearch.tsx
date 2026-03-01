@@ -18,11 +18,11 @@ import { decodeSearchParamValueArray, encodeSearchParamValueArray } from '$pages
 import { useRooms } from '$state/hooks/roomList';
 import { allRoomsAtom } from '$state/room-list/roomList';
 import { mDirectAtom } from '$state/mDirectList';
+import { VirtualTile } from '$components/virtualizer';
 import { MessageSearchParams, useMessageSearch } from './useMessageSearch';
 import { SearchResultGroup } from './SearchResultGroup';
 import { SearchInput } from './SearchInput';
 import { SearchFilters } from './SearchFilters';
-import { VirtualTile } from '$components/virtualizer';
 
 const useSearchPathSearchParams = (searchParams: URLSearchParams): _SearchPathSearchParams =>
   useMemo(

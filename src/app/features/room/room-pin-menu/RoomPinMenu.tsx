@@ -1,6 +1,5 @@
 import React, { forwardRef, MouseEventHandler, useCallback, useMemo, useRef } from 'react';
-import { MatrixEvent, Room } from '$types/matrix-sdk';
-import { RoomPinnedEventsEventContent } from '$types/matrix-sdk';
+import { MatrixEvent, Room, RoomPinnedEventsEventContent } from '$types/matrix-sdk';
 import {
   Avatar,
   Box,
@@ -22,7 +21,6 @@ import { HTMLReactParserOptions } from 'html-react-parser';
 import { useAtomValue } from 'jotai';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { useRoomPinnedEvents } from '$hooks/useRoomPinnedEvents';
-import * as css from './RoomPinMenu.css';
 import { SequenceCard } from '$components/sequence-card';
 import { useRoomEvent } from '$hooks/useRoomEvent';
 import { useMediaAuthentication } from '$hooks/useMediaAuthentication';
@@ -64,7 +62,6 @@ import { RenderMessageContent } from '$components/RenderMessageContent';
 import { useSetting } from '$state/hooks/settings';
 import { settingsAtom } from '$state/settings';
 import * as customHtmlCss from '$styles/CustomHtml.css';
-import { EncryptedContent } from '../message';
 import { Image } from '$components/media';
 import { ImageViewer } from '$components/image-viewer';
 import { useRoomNavigate } from '$hooks/useRoomNavigate';
@@ -87,6 +84,8 @@ import { useRoomCreatorsTag } from '$hooks/useRoomCreatorsTag';
 import { nicknamesAtom } from '$state/nicknames';
 import { AccountDataEvent } from '$types/matrix/accountData';
 import { useSableCosmetics } from '$hooks/useSableCosmetics';
+import { EncryptedContent } from '../message';
+import * as css from './RoomPinMenu.css';
 import { PinReadMarker } from '../RoomViewHeader';
 
 type PinnedMessageProps = {
@@ -102,13 +101,13 @@ type PinnedMessageProps = {
   isNew: boolean;
 };
 
-const PinnedMessageActiveContent = (
+function PinnedMessageActiveContent(
   props: PinnedMessageProps & {
     pinnedEvent: MatrixEvent;
     renderOptions: () => React.ReactNode;
     handleOpenClick: MouseEventHandler;
   }
-) => {
+) {
   const {
     pinnedEvent,
     room,
@@ -186,7 +185,7 @@ const PinnedMessageActiveContent = (
       {renderContent(pinnedEvent.getType(), false, pinnedEvent, displayName, getContent)}
     </ModernLayout>
   );
-};
+}
 
 function PinnedMessage(props: PinnedMessageProps) {
   const { room, eventId, onOpen, canPinEvent } = props;
@@ -565,7 +564,7 @@ export const RoomPinMenu = forwardRef<HTMLDivElement, RoomPinMenuProps>(
                                 ? `${config.borderWidth.B700} solid ${color.Secondary.ContainerActive}`
                                 : undefined,
                             }}
-                            variant={'Background'}
+                            variant="Background"
                             direction="Column"
                           >
                             <PinnedMessage

@@ -19,8 +19,6 @@ import {
 } from 'folds';
 import classNames from 'classnames';
 import FocusTrap from 'focus-trap-react';
-import * as css from './style.css';
-import { RoomAvatar } from '../room-avatar';
 import { getMxIdLocalPart, mxcUrlToHttp } from '$appUtils/matrix';
 import { nameInitials } from '$appUtils/common';
 import { millify } from '$plugins/millify';
@@ -33,6 +31,8 @@ import { useElementSizeObserver } from '$hooks/useElementSizeObserver';
 import { getRoomAvatarUrl, getStateEvent } from '$appUtils/room';
 import { useStateEventCallback } from '$hooks/useStateEventCallback';
 import { useMediaAuthentication } from '$hooks/useMediaAuthentication';
+import { RoomAvatar } from '../room-avatar';
+import * as css from './style.css';
 
 type GridColumnCount = '1' | '2' | '3';
 const getGridColumnCount = (gridWidth: number): GridColumnCount => {

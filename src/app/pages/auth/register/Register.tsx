@@ -5,13 +5,13 @@ import { SSOAction } from '$types/matrix-sdk';
 import { useAuthServer } from '$hooks/useAuthServer';
 import { RegisterFlowStatus, useAuthFlows } from '$hooks/useAuthFlows';
 import { useParsedLoginFlows } from '$hooks/useParsedLoginFlows';
-import { PasswordRegisterForm, SUPPORTED_REGISTER_STAGES } from './PasswordRegisterForm';
-import { OrDivider } from '../OrDivider';
-import { SSOLogin } from '../SSOLogin';
 import { SupportedUIAFlowsLoader } from '$components/SupportedUIAFlowsLoader';
 import { getLoginPath } from '$pages/pathUtils';
 import { usePathWithOrigin } from '$hooks/usePathWithOrigin';
 import { RegisterPathSearchParams } from '$pages/paths';
+import { SSOLogin } from '../SSOLogin';
+import { OrDivider } from '../OrDivider';
+import { PasswordRegisterForm, SUPPORTED_REGISTER_STAGES } from './PasswordRegisterForm';
 
 const useRegisterSearchParams = (searchParams: URLSearchParams): RegisterPathSearchParams =>
   useMemo(

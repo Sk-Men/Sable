@@ -8,11 +8,11 @@ import { RoomAvatar } from '$components/room-avatar';
 import { nameInitials } from '$appUtils/common';
 import { UseStateProvider } from '$components/UseStateProvider';
 import { RoomTopicViewer } from '$components/room-topic-viewer';
-import * as css from './LobbyHero.css';
 import { PageHero } from '$components/page';
 import { onEnterOrSpace, stopPropagation } from '$appUtils/keyboard';
 import { mxcUrlToHttp } from '$appUtils/matrix';
 import { useMediaAuthentication } from '$hooks/useMediaAuthentication';
+import * as css from './LobbyHero.css';
 
 export function LobbyHero() {
   const mx = useMatrixClient();

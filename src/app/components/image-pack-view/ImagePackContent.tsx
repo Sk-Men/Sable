@@ -10,20 +10,20 @@ import {
   PackMetaReader,
 } from '$plugins/custom-emoji';
 import { useMediaAuthentication } from '$hooks/useMediaAuthentication';
-import { SequenceCard } from '../sequence-card';
-import { ImageTile, ImageTileEdit, ImageTileUpload } from './ImageTile';
-import { SettingTile } from '../setting-tile';
-import { UsageSwitcher } from './UsageSwitcher';
-import { ImagePackProfile, ImagePackProfileEdit } from './PackMeta';
-import * as css from './style.css';
 import { useFilePicker } from '$hooks/useFilePicker';
-import { CompactUploadCardRenderer } from '../upload-card';
 import { UploadSuccess } from '$state/upload';
 import { getImageInfo, TUploadContent } from '$appUtils/matrix';
 import { getImageFileUrl, loadImageElement, renameFile } from '$appUtils/dom';
 import { replaceSpaceWithDash, suffixRename } from '$appUtils/common';
 import { getFileNameWithoutExt } from '$appUtils/mimeTypes';
 import { AsyncStatus, useAsyncCallback } from '$hooks/useAsyncCallback';
+import { SequenceCard } from '../sequence-card';
+import { ImageTile, ImageTileEdit, ImageTileUpload } from './ImageTile';
+import { SettingTile } from '../setting-tile';
+import { UsageSwitcher } from './UsageSwitcher';
+import { ImagePackProfile, ImagePackProfileEdit } from './PackMeta';
+import * as css from './style.css';
+import { CompactUploadCardRenderer } from '../upload-card';
 
 export type ImagePackContentProps = {
   imagePack: ImagePack;

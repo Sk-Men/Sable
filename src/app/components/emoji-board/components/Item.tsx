@@ -1,11 +1,11 @@
 import React from 'react';
 import { Box } from 'folds';
 import { MatrixClient } from '$types/matrix-sdk';
-import { EmojiItemInfo, EmojiType } from '../types';
-import * as css from './styles.css';
 import { PackImageReader } from '$plugins/custom-emoji';
 import { IEmoji } from '$plugins/emoji';
 import { mxcUrlToHttp } from '$appUtils/matrix';
+import * as css from './styles.css';
+import { EmojiItemInfo, EmojiType } from '../types';
 
 export const getEmojiItemInfo = (element: Element): EmojiItemInfo | undefined => {
   const label = element.getAttribute('title');

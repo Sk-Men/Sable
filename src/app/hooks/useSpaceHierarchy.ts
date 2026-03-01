@@ -1,11 +1,10 @@
 import { atom, useAtom, useAtomValue } from 'jotai';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { MatrixError, Room } from '$types/matrix-sdk';
-import { IHierarchyRoom } from '$types/matrix-sdk';
+import { MatrixError, Room, IHierarchyRoom } from '$types/matrix-sdk';
 import { QueryFunction, useInfiniteQuery } from '@tanstack/react-query';
+import { MSpaceChildContent, StateEvent } from '$types/matrix/room';
 import { useMatrixClient } from './useMatrixClient';
 import { roomToParentsAtom } from '../state/room/roomToParents';
-import { MSpaceChildContent, StateEvent } from '$types/matrix/room';
 import { getAllParents, getStateEvents, isValidChild } from '../utils/room';
 import { isRoomId } from '../utils/matrix';
 import { SortFunc, byOrderKey, byTsOldToNew, factoryRoomIdByActivity } from '../utils/sort';

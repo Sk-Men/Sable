@@ -297,7 +297,7 @@ export async function encryptMegolmKeyFile(data, password, options) {
       encodedData
     );
   } catch (e) {
-    throw friendlyError('subtleCrypto.encrypt failed: ' + e, cryptoFailMsg());
+    throw friendlyError(`subtleCrypto.encrypt failed: ${e}`, cryptoFailMsg());
   }
 
   const cipherArray = new Uint8Array(ciphertext);
@@ -322,7 +322,7 @@ export async function encryptMegolmKeyFile(data, password, options) {
   try {
     hmac = await subtleCrypto.sign({ name: 'HMAC' }, hmacKey, toSign);
   } catch (e) {
-    throw friendlyError('subtleCrypto.sign failed: ' + e, cryptoFailMsg());
+    throw friendlyError(`subtleCrypto.sign failed: ${e}`, cryptoFailMsg());
   }
 
   const hmacArray = new Uint8Array(hmac);

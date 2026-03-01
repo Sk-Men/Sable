@@ -15,7 +15,6 @@ import { nicknamesAtom } from '$state/nicknames';
 import { allInvitesAtom } from '$state/room-list/inviteList';
 import { usePreviousValue } from '$hooks/usePreviousValue';
 import { useMatrixClient } from '$hooks/useMatrixClient';
-import { getInboxInvitesPath } from '../pathUtils';
 import {
   getMemberDisplayName,
   getNotificationType,
@@ -27,8 +26,9 @@ import { getMxIdLocalPart, mxcUrlToHttp } from '$appUtils/matrix';
 import { useSelectedRoom } from '$hooks/router/useSelectedRoom';
 import { useInboxNotificationsSelected } from '$hooks/router/useInbox';
 import { useMediaAuthentication } from '$hooks/useMediaAuthentication';
-import { BackgroundNotifications } from './BackgroundNotifications';
 import { pendingNotificationAtom } from '$state/sessions';
+import { BackgroundNotifications } from './BackgroundNotifications';
+import { getInboxInvitesPath } from '../pathUtils';
 
 function SystemEmojiFeature() {
   const [twitterEmoji] = useSetting(settingsAtom, 'twitterEmoji');

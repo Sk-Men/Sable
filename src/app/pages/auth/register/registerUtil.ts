@@ -9,7 +9,6 @@ import {
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { LoginPathSearchParams } from '$pages/paths';
-import { ErrorCode } from '../../../cs-errorcode';
 import {
   deleteAfterLoginRedirectPath,
   getAfterLoginRedirectPath,
@@ -17,6 +16,7 @@ import {
 import { getHomePath, getLoginPath, withSearchParam } from '$pages/pathUtils';
 import { getMxIdLocalPart, getMxIdServer } from '$appUtils/matrix';
 import { setFallbackSession } from '$state/sessions';
+import { ErrorCode } from '../../../cs-errorcode';
 
 export enum RegisterError {
   UserTaken = 'UserTaken',

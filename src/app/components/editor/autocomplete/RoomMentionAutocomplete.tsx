@@ -4,11 +4,8 @@ import { Avatar, Icon, Icons, MenuItem, Text } from 'folds';
 import { JoinRule, MatrixClient } from '$types/matrix-sdk';
 import { useAtomValue } from 'jotai';
 
-import { createMentionElement, moveCursor, replaceWithElement } from '../utils';
 import { getDirectRoomAvatarUrl } from '$appUtils/room';
 import { useMatrixClient } from '$hooks/useMatrixClient';
-import { AutocompleteQuery } from './autocompleteQuery';
-import { AutocompleteMenu } from './AutocompleteMenu';
 import { getMxIdServer, isRoomAlias } from '$appUtils/matrix';
 import { UseAsyncSearchOptions, useAsyncSearch } from '$hooks/useAsyncSearch';
 import { onTabPress } from '$appUtils/keyboard';
@@ -18,6 +15,9 @@ import { allRoomsAtom } from '$state/room-list/roomList';
 import { factoryRoomIdByActivity } from '$appUtils/sort';
 import { RoomAvatar, RoomIcon } from '$components/room-avatar';
 import { getViaServers } from '$plugins/via-servers';
+import { AutocompleteMenu } from './AutocompleteMenu';
+import { AutocompleteQuery } from './autocompleteQuery';
+import { createMentionElement, moveCursor, replaceWithElement } from '../utils';
 
 type MentionAutoCompleteHandler = (roomAliasOrId: string, name: string) => void;
 

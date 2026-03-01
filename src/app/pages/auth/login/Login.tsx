@@ -5,14 +5,14 @@ import { SSOAction } from '$types/matrix-sdk';
 import { useAuthFlows } from '$hooks/useAuthFlows';
 import { useAuthServer } from '$hooks/useAuthServer';
 import { useParsedLoginFlows } from '$hooks/useParsedLoginFlows';
-import { PasswordLoginForm } from './PasswordLoginForm';
-import { SSOLogin } from '../SSOLogin';
-import { TokenLogin } from './TokenLogin';
-import { OrDivider } from '../OrDivider';
 import { getLoginPath, getRegisterPath, withSearchParam } from '$pages/pathUtils';
 import { usePathWithOrigin } from '$hooks/usePathWithOrigin';
 import { LoginPathSearchParams } from '$pages/paths';
 import { useClientConfig } from '$hooks/useClientConfig';
+import { PasswordLoginForm } from './PasswordLoginForm';
+import { SSOLogin } from '../SSOLogin';
+import { TokenLogin } from './TokenLogin';
+import { OrDivider } from '../OrDivider';
 
 const getLoginTokenSearchParam = () => {
   // when using hasRouter query params in existing route

@@ -27,7 +27,6 @@ import { millisecondsToMinutes, replaceSpaceWithDash } from '$appUtils/common';
 import { AsyncStatus, useAsyncCallback } from '$hooks/useAsyncCallback';
 import { useCapabilities } from '$hooks/useCapabilities';
 import { useAlive } from '$hooks/useAlive';
-import { ErrorCode } from '../../cs-errorcode';
 import {
   AdditionalCreatorInput,
   createRoom,
@@ -39,6 +38,7 @@ import {
   useAdditionalCreators,
 } from '$components/create-room';
 import { RoomType } from '$types/matrix/room';
+import { ErrorCode } from '../../cs-errorcode';
 
 const getCreateSpaceAccessToIcon = (access: CreateRoomAccess) => {
   if (access === CreateRoomAccess.Private) return Icons.SpaceLock;

@@ -3,6 +3,13 @@ import parse from 'html-dom-parser';
 import { ChildNode, Element, isText, isTag } from 'domhandler';
 
 import { sanitizeCustomHtml } from '$appUtils/sanitize';
+import {
+  parseMatrixToRoom,
+  parseMatrixToRoomEvent,
+  parseMatrixToUser,
+  testMatrixTo,
+} from '$plugins/matrix-to';
+import { escapeMarkdownInlineSequences, escapeMarkdownBlockSequences } from '$plugins/markdown';
 import { BlockType, MarkType } from './types';
 import {
   BlockQuoteElement,
@@ -20,13 +27,6 @@ import {
   UnorderedListElement,
 } from './slate';
 import { createEmoticonElement, createMentionElement } from './utils';
-import {
-  parseMatrixToRoom,
-  parseMatrixToRoomEvent,
-  parseMatrixToUser,
-  testMatrixTo,
-} from '$plugins/matrix-to';
-import { escapeMarkdownInlineSequences, escapeMarkdownBlockSequences } from '$plugins/markdown';
 
 type ProcessTextCallback = (text: string) => string;
 

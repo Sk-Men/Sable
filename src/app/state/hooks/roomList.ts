@@ -3,8 +3,8 @@ import { selectAtom } from 'jotai/utils';
 import { MatrixClient } from '$types/matrix-sdk';
 import { useCallback, useMemo } from 'react';
 import { getAllParents, isRoom, isSpace, isUnsupportedRoom } from '$appUtils/room';
-import { compareRoomsEqual } from '../room-list/utils';
 import { RoomToParents } from '$types/matrix/room';
+import { compareRoomsEqual } from '../room-list/utils';
 
 export type RoomsAtom = Atom<string[]>;
 export type RoomSelector = (roomId: string) => boolean | undefined;

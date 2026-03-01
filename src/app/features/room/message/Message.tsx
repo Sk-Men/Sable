@@ -24,11 +24,9 @@ import React, {
 } from 'react';
 import FocusTrap from 'focus-trap-react';
 import { useHover, useFocusWithin } from 'react-aria';
-import { MatrixEvent, Room } from '$types/matrix-sdk';
-import { Relations } from '$types/matrix-sdk';
+import { MatrixEvent, Room, Relations, RoomPinnedEventsEventContent } from '$types/matrix-sdk';
 import classNames from 'classnames';
 import { useAtomValue, useSetAtom } from 'jotai';
-import { RoomPinnedEventsEventContent } from '$types/matrix-sdk';
 import {
   AvatarBase,
   BubbleLayout,
@@ -46,13 +44,10 @@ import { MessageLayout, MessageSpacing, settingsAtom } from '$state/settings';
 import { nicknamesAtom, setNicknameAtom } from '$state/nicknames';
 import { useMatrixClient } from '$hooks/useMatrixClient';
 import { useRecentEmoji } from '$hooks/useRecentEmoji';
-import * as css from './styles.css';
 import { EventReaders } from '$components/event-readers';
 import { TextViewer } from '$components/text-viewer';
 import { AsyncStatus, useAsyncCallback } from '$hooks/useAsyncCallback';
 import { EmojiBoard } from '$components/emoji-board';
-import { ReactionViewer } from '../reaction-viewer';
-import { MessageEditor } from './MessageEditor';
 import { UserAvatar } from '$components/user-avatar';
 import { copyToClipboard } from '$appUtils/dom';
 import { stopPropagation } from '$appUtils/keyboard';
@@ -74,12 +69,13 @@ import { MessageReadReceiptItem } from '$components/message/modals/MessageReadRe
 import { MessageSourceCodeItem } from '$components/message/modals/MessageSource';
 import { MessageDeleteItem } from '$components/message/modals/MessageDelete';
 import { MessageReportItem } from '$components/message/modals/MessageReport';
+import { MessageEditor } from './MessageEditor';
+import { ReactionViewer } from '../reaction-viewer';
+import * as css from './styles.css';
 
 export type ReactionHandler = (keyOrMxc: string, shortcode: string) => void;
 
-const MemoizedBody = React.memo(({ children }: { children: ReactNode }) => {
-  return <>{children}</>;
-});
+const MemoizedBody = React.memo(({ children }: { children: ReactNode }) => <>{children}</>);
 type MessageQuickReactionsProps = {
   onReaction: ReactionHandler;
 };
@@ -438,9 +434,7 @@ function MessageInternal(
     </AvatarBase>
   );
 
-  const stableContent = useMemo(() => {
-    return mEvent.getContent().body || '';
-  }, [mEvent]);
+  const stableContent = useMemo(() => mEvent.getContent().body || '', [mEvent]);
 
   const MSG_CONTENT_STYLE = { maxWidth: '100%' };
 

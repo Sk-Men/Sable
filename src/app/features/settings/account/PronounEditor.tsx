@@ -26,7 +26,7 @@ export function PronounEditor({ current, onSave }: PronounEditorProps) {
       .split(',')
       .map((s) => s.trim())
       .filter(Boolean)
-      .map((s) => ({ summary: s.slice(0, 16), language: "en" }));
+      .map((s) => ({ summary: s.slice(0, 16), language: 'en' }));
     onSave(next);
   };
 

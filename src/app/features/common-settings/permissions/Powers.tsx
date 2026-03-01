@@ -15,7 +15,6 @@ import {
   color,
 } from 'folds';
 import { SequenceCard } from '$components/sequence-card';
-import { SequenceCardStyle } from '../styles.css';
 import { getPowers, usePowerLevelTags } from '$hooks/usePowerLevelTags';
 import { SettingTile } from '$components/setting-tile';
 import { getPermissionPower, IPowerLevels } from '$hooks/usePowerLevels';
@@ -24,10 +23,11 @@ import { PowerColorBadge, PowerIcon } from '$components/power';
 import { useMatrixClient } from '$hooks/useMatrixClient';
 import { useMediaAuthentication } from '$hooks/useMediaAuthentication';
 import { stopPropagation } from '$appUtils/keyboard';
-import { PermissionGroup } from './types';
 import { getPowerTagIconSrc } from '$hooks/useMemberPowerTag';
 import { useRoomCreatorsTag } from '$hooks/useRoomCreatorsTag';
 import { useRoomCreators } from '$hooks/useRoomCreators';
+import { PermissionGroup } from './types';
+import { SequenceCardStyle } from '../styles.css';
 
 type PeekPermissionsProps = {
   powerLevels: IPowerLevels;

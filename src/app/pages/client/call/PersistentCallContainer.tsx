@@ -1,7 +1,6 @@
 import React, { createContext, ReactNode, useCallback, useEffect, useMemo, useRef } from 'react';
 import { ClientWidgetApi } from 'matrix-widget-api';
 import { Box } from 'folds';
-import { useCallState } from './CallProvider';
 import {
   createVirtualWidget,
   SmallWidget,
@@ -12,6 +11,7 @@ import { useMatrixClient } from '$hooks/useMatrixClient';
 import { useClientConfig } from '$hooks/useClientConfig';
 import { ScreenSize, useScreenSizeContext } from '$hooks/useScreenSize';
 import { ThemeKind, useTheme } from '$hooks/useTheme';
+import { useCallState } from './CallProvider';
 
 interface PersistentCallContainerProps {
   children: ReactNode;

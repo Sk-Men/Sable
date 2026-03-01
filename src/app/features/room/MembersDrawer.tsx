@@ -30,7 +30,6 @@ import { MatrixClient, Room, RoomMember } from '$types/matrix-sdk';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import classNames from 'classnames';
 
-import * as css from './MembersDrawer.css';
 import { useMatrixClient } from '$hooks/useMatrixClient';
 import { UseStateProvider } from '$components/UseStateProvider';
 import { SearchItemStrGetter, UseAsyncSearchOptions, useAsyncSearch } from '$hooks/useAsyncSearch';
@@ -58,6 +57,7 @@ import { ContainerColor } from '$styles/ContainerColor.css';
 import { useFlattenPowerTagMembers, useGetMemberPowerTag } from '$hooks/useMemberPowerTag';
 import { useRoomCreators } from '$hooks/useRoomCreators';
 import { useSableCosmetics } from '$hooks/useSableCosmetics';
+import * as css from './MembersDrawer.css';
 
 type MemberDrawerHeaderProps = {
   room: Room;

@@ -3,14 +3,6 @@ import { Box, Chip, Icon, Icons, Text, toRem } from 'folds';
 import { IContent } from '$types/matrix-sdk';
 import { JUMBO_EMOJI_REG, URL_REG } from '$appUtils/regex';
 import { trimReplyFromBody } from '$appUtils/room';
-import { MessageTextBody } from './layout';
-import {
-  MessageBadEncryptedContent,
-  MessageBrokenContent,
-  MessageDeletedContent,
-  MessageEditedContent,
-  MessageUnsupportedContent,
-} from './content';
 import {
   IAudioContent,
   IAudioInfo,
@@ -27,10 +19,18 @@ import {
 } from '$types/matrix/common';
 import { FALLBACK_MIMETYPE, getBlobSafeMimeType } from '$appUtils/mimeTypes';
 import { parseGeoUri, scaleYDimension } from '$appUtils/common';
-import { Attachment, AttachmentBox, AttachmentContent, AttachmentHeader } from './attachment';
-import { FileHeader, FileDownloadButton } from './FileHeader';
 import { useSetting } from '$state/hooks/settings';
 import { settingsAtom } from '$state/settings';
+import { Attachment, AttachmentBox, AttachmentContent, AttachmentHeader } from './attachment';
+import { FileHeader, FileDownloadButton } from './FileHeader';
+import {
+  MessageBadEncryptedContent,
+  MessageBrokenContent,
+  MessageDeletedContent,
+  MessageEditedContent,
+  MessageUnsupportedContent,
+} from './content';
+import { MessageTextBody } from './layout';
 
 export function MBadEncrypted() {
   return (

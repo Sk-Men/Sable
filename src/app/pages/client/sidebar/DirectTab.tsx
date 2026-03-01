@@ -20,11 +20,11 @@ import { useDirectSelected } from '$hooks/router/useDirectSelected';
 import { UnreadBadge } from '$components/unread-badge';
 import { ScreenSize, useScreenSizeContext } from '$hooks/useScreenSize';
 import { useNavToActivePathAtom } from '$state/hooks/navToActivePath';
-import { useDirectRooms } from '../direct/useDirectRooms';
 import { markAsRead } from '$appUtils/notifications';
 import { stopPropagation } from '$appUtils/keyboard';
 import { settingsAtom } from '$state/settings';
 import { useSetting } from '$state/hooks/settings';
+import { useDirectRooms } from '../direct/useDirectRooms';
 
 type DirectMenuProps = {
   requestClose: () => void;

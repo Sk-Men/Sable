@@ -3,13 +3,10 @@ import { Editor } from 'slate';
 import { Avatar, Icon, Icons, MenuItem, Text } from 'folds';
 import { MatrixClient, Room, RoomMember } from '$types/matrix-sdk';
 
-import { AutocompleteQuery } from './autocompleteQuery';
-import { AutocompleteMenu } from './AutocompleteMenu';
 import { useRoomMembers } from '$hooks/useRoomMembers';
 import { useMatrixClient } from '$hooks/useMatrixClient';
 import { SearchItemStrGetter, UseAsyncSearchOptions, useAsyncSearch } from '$hooks/useAsyncSearch';
 import { onTabPress } from '$appUtils/keyboard';
-import { createMentionElement, moveCursor, replaceWithElement } from '../utils';
 import { useKeyDown } from '$hooks/useKeyDown';
 import { getMxIdLocalPart, getMxIdServer, isUserId } from '$appUtils/matrix';
 import { getMemberDisplayName, getMemberSearchStr } from '$appUtils/room';
@@ -18,6 +15,9 @@ import { useMediaAuthentication } from '$hooks/useMediaAuthentication';
 import { Membership } from '$types/matrix/room';
 import { useAtomValue } from 'jotai';
 import { nicknamesAtom } from '$state/nicknames';
+import { createMentionElement, moveCursor, replaceWithElement } from '../utils';
+import { AutocompleteMenu } from './AutocompleteMenu';
+import { AutocompleteQuery } from './autocompleteQuery';
 
 type MentionAutoCompleteHandler = (userId: string, name: string) => void;
 

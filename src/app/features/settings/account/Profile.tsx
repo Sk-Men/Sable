@@ -27,7 +27,6 @@ import {
 import FocusTrap from 'focus-trap-react';
 import { useSetAtom } from 'jotai';
 import { SequenceCard } from '$components/sequence-card';
-import { SequenceCardStyle } from '../styles.css';
 import { SettingTile } from '$components/setting-tile';
 import { useMatrixClient } from '$hooks/useMatrixClient';
 import { UserProfile, useUserProfile } from '$hooks/useUserProfile';
@@ -44,11 +43,12 @@ import { ModalWide } from '$styles/Modal.css';
 import { createUploadAtom, UploadSuccess } from '$state/upload';
 import { CompactUploadCardRenderer } from '$components/upload-card';
 import { useCapabilities } from '$hooks/useCapabilities';
+import { profilesCacheAtom } from '$state/userRoomProfile';
 import { TimezoneEditor } from './TimezoneEditor';
 import { PronounEditor } from './PronounEditor';
 import { BioEditor } from './BioEditor';
 import { NameColorEditor } from './NameColorEditor';
-import { profilesCacheAtom } from '$state/userRoomProfile';
+import { SequenceCardStyle } from '../styles.css';
 
 type PronounSet = {
   summary: string;

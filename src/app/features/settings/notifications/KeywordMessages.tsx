@@ -4,7 +4,6 @@ import { Box, Text, Badge, Button, Input, config, IconButton, Icons, Icon, Spinn
 import { useAccountData } from '$hooks/useAccountData';
 import { AccountDataEvent } from '$types/matrix/accountData';
 import { SequenceCard } from '$components/sequence-card';
-import { SequenceCardStyle } from '../styles.css';
 import { SettingTile } from '$components/setting-tile';
 import { useMatrixClient } from '$hooks/useMatrixClient';
 import {
@@ -13,8 +12,9 @@ import {
   NotificationModeOptions,
   useNotificationModeActions,
 } from '$hooks/useNotificationMode';
-import { NotificationModeSwitcher } from './NotificationModeSwitcher';
 import { AsyncStatus, useAsyncCallback } from '$hooks/useAsyncCallback';
+import { NotificationModeSwitcher } from './NotificationModeSwitcher';
+import { SequenceCardStyle } from '../styles.css';
 
 const NOTIFY_MODE_OPS: NotificationModeOptions = {
   highlight: true,

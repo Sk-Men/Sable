@@ -8,8 +8,8 @@ import {
   MatrixEvent,
   MatrixEventEvent,
 } from '$types/matrix-sdk';
-import { GenericWidgetDriver, CapabilityApprovalCallback } from './GenericWidgetDriver';
 import { resolveWidgetUrl } from '$hooks/useRoomWidgets';
+import { GenericWidgetDriver, CapabilityApprovalCallback } from './GenericWidgetDriver';
 
 interface WidgetIframeProps {
   widget: IWidget;

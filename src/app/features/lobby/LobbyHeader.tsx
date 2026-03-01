@@ -25,7 +25,6 @@ import { useSpace } from '$hooks/useSpace';
 import { useMatrixClient } from '$hooks/useMatrixClient';
 import { RoomAvatar } from '$components/room-avatar';
 import { nameInitials } from '$appUtils/common';
-import * as css from './LobbyHeader.css';
 import { IPowerLevels } from '$hooks/usePowerLevels';
 import { UseStateProvider } from '$components/UseStateProvider';
 import { LeaveSpacePrompt } from '$components/leave-space-prompt';
@@ -38,6 +37,7 @@ import { useOpenSpaceSettings } from '$state/hooks/spaceSettings';
 import { useRoomCreators } from '$hooks/useRoomCreators';
 import { useRoomPermissions } from '$hooks/useRoomPermissions';
 import { InviteUserPrompt } from '$components/invite-user-prompt';
+import * as css from './LobbyHeader.css';
 
 type LobbyMenuProps = {
   powerLevels: IPowerLevels;

@@ -2,9 +2,9 @@ import React from 'react';
 import parse, { HTMLReactParserOptions } from 'html-react-parser';
 import Linkify from 'linkify-react';
 import { Opts } from 'linkifyjs';
-import { MessageEmptyContent } from './content';
 import { sanitizeCustomHtml } from '$appUtils/sanitize';
 import { highlightText, scaleSystemEmoji } from '$plugins/react-custom-html-parser';
+import { MessageEmptyContent } from './content';
 
 type RenderBodyProps = {
   body: string;

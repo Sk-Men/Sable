@@ -96,18 +96,11 @@ import { fulfilledPromiseSettledResult } from '$appUtils/common';
 import { useSetting } from '$state/hooks/settings';
 import { settingsAtom } from '$state/settings';
 import {
-  getAudioMsgContent,
-  getFileMsgContent,
-  getImageMsgContent,
-  getVideoMsgContent,
-} from './msgContent';
-import {
   getMemberDisplayName,
   getMentionContent,
   trimReplyFromBody,
   trimReplyFromFormattedBody,
 } from '$appUtils/room';
-import { CommandAutocomplete } from './CommandAutocomplete';
 import { Command, SHRUG, TABLEFLIP, UNFLIP, useCommands } from '$hooks/useCommands';
 import { mobileOrTablet } from '$appUtils/user-agent';
 import { useElementSizeObserver } from '$hooks/useElementSizeObserver';
@@ -125,6 +118,13 @@ import { useRoomCreatorsTag } from '$hooks/useRoomCreatorsTag';
 import { usePowerLevelTags } from '$hooks/usePowerLevelTags';
 import { useComposingCheck } from '$hooks/useComposingCheck';
 import { useSableCosmetics } from '$hooks/useSableCosmetics';
+import { CommandAutocomplete } from './CommandAutocomplete';
+import {
+  getAudioMsgContent,
+  getFileMsgContent,
+  getImageMsgContent,
+  getVideoMsgContent,
+} from './msgContent';
 
 interface RoomInputProps {
   editor: Editor;

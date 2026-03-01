@@ -19,10 +19,10 @@ import { useMatrixClient } from '$hooks/useMatrixClient';
 import { factoryEventSentBy } from '$appUtils/matrix';
 import { Reaction, ReactionTooltipMsg } from '$components/message';
 import { useRelations } from '$hooks/useRelations';
-import * as css from './styles.css';
-import { ReactionViewer } from '../reaction-viewer';
 import { stopPropagation } from '$appUtils/keyboard';
 import { useMediaAuthentication } from '$hooks/useMediaAuthentication';
+import * as css from './styles.css';
+import { ReactionViewer } from '../reaction-viewer';
 
 export type ReactionsProps = {
   room: Room;

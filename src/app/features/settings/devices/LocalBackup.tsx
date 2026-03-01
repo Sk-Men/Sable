@@ -3,7 +3,6 @@ import { Box, Button, color, Icon, Icons, Spinner, Text, toRem } from 'folds';
 import FileSaver from 'file-saver';
 import { SequenceCard } from '$components/sequence-card';
 import { SettingTile } from '$components/setting-tile';
-import { SequenceCardStyle } from '../styles.css';
 import { PasswordInput } from '$components/password-input';
 import { ConfirmPasswordMatch } from '$components/ConfirmPasswordMatch';
 import { useMatrixClient } from '$hooks/useMatrixClient';
@@ -11,6 +10,7 @@ import { AsyncStatus, useAsyncCallback } from '$hooks/useAsyncCallback';
 import { decryptMegolmKeyFile, encryptMegolmKeyFile } from '$util/cryptE2ERoomKeys';
 import { useAlive } from '$hooks/useAlive';
 import { useFilePicker } from '$hooks/useFilePicker';
+import { SequenceCardStyle } from '../styles.css';
 
 function ExportKeys() {
   const mx = useMatrixClient();

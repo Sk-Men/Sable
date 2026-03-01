@@ -22,9 +22,9 @@ import { ContainerColor } from '$styles/ContainerColor.css';
 import { useFilePicker } from '$hooks/useFilePicker';
 import { useObjectURL } from '$hooks/useObjectURL';
 import { createUploadAtom, UploadSuccess } from '$state/upload';
-import { CompactUploadCardRenderer } from '../upload-card';
 import { useMediaAuthentication } from '$hooks/useMediaAuthentication';
 import { PackMetaReader } from '$plugins/custom-emoji';
+import { CompactUploadCardRenderer } from '../upload-card';
 
 type ImagePackAvatarProps = {
   url?: string;

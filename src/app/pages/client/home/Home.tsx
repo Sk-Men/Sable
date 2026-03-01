@@ -40,7 +40,6 @@ import {
 import { getCanonicalAliasOrRoomId } from '$appUtils/matrix';
 import { useSelectedRoom } from '$hooks/router/useSelectedRoom';
 import { useHomeCreateSelected, useHomeSearchSelected } from '$hooks/router/useHomeSelected';
-import { useHomeRooms } from './useHomeRooms';
 import { useMatrixClient } from '$hooks/useMatrixClient';
 import { VirtualTile } from '$components/virtualizer';
 import { RoomNavCategoryButton, RoomNavItem } from '$features/room-nav';
@@ -63,6 +62,7 @@ import { UseStateProvider } from '$components/UseStateProvider';
 import { JoinAddressPrompt } from '$components/join-address-prompt';
 import { _RoomSearchParams } from '$pages/paths';
 import { CallNavStatus } from '$features/room-nav/RoomCallNavStatus';
+import { useHomeRooms } from './useHomeRooms';
 
 type HomeMenuProps = {
   requestClose: () => void;

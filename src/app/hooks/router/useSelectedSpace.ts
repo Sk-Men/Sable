@@ -1,7 +1,7 @@
 import { useMatch, useParams } from 'react-router-dom';
 import { getCanonicalAliasRoomId, isRoomAlias } from '$appUtils/matrix';
-import { useMatrixClient } from '../useMatrixClient';
 import { getSpaceLobbyPath, getSpaceSearchPath } from '$pages/pathUtils';
+import { useMatrixClient } from '../useMatrixClient';
 
 export const useSelectedSpace = (): string | undefined => {
   const mx = useMatrixClient();

@@ -18,8 +18,7 @@ import {
 } from 'folds';
 import FocusTrap from 'focus-trap-react';
 import classNames from 'classnames';
-import { MatrixError, Room } from '$types/matrix-sdk';
-import { IHierarchyRoom } from '$types/matrix-sdk';
+import { MatrixError, Room, IHierarchyRoom } from '$types/matrix-sdk';
 import { HierarchyItem } from '$hooks/useSpaceHierarchy';
 import { useMatrixClient } from '$hooks/useMatrixClient';
 import { RoomAvatar } from '$components/room-avatar';
@@ -27,16 +26,16 @@ import { nameInitials } from '$appUtils/common';
 import { LocalRoomSummaryLoader } from '$components/RoomSummaryLoader';
 import { getRoomAvatarUrl } from '$appUtils/room';
 import { AsyncStatus, useAsyncCallback } from '$hooks/useAsyncCallback';
-import * as css from './SpaceItem.css';
-import * as styleCss from './style.css';
-import { useDraggableItem } from './DnD';
 import { stopPropagation } from '$appUtils/keyboard';
 import { mxcUrlToHttp } from '$appUtils/matrix';
 import { useMediaAuthentication } from '$hooks/useMediaAuthentication';
 import { useOpenCreateRoomModal } from '$state/hooks/createRoomModal';
 import { useOpenCreateSpaceModal } from '$state/hooks/createSpaceModal';
-import { AddExistingModal } from '../add-existing';
 import { CreateRoomType } from '$components/create-room/types';
+import { AddExistingModal } from '../add-existing';
+import { useDraggableItem } from './DnD';
+import * as styleCss from './style.css';
+import * as css from './SpaceItem.css';
 
 function SpaceProfileLoading() {
   return (

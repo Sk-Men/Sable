@@ -17,16 +17,16 @@ import {
 } from 'folds';
 import { Room } from '$types/matrix-sdk';
 
-import * as css from './WidgetsDrawer.css';
 import { useMatrixClient } from '$hooks/useMatrixClient';
 import { useRoomWidgets, RoomWidget, enrichWidgetUrl } from '$hooks/useRoomWidgets';
-import { WidgetIframe } from './WidgetIframe';
 import { useSetSetting } from '$state/hooks/settings';
 import { settingsAtom } from '$state/settings';
 import { usePowerLevelsContext } from '$hooks/usePowerLevels';
 import { useRoomCreators } from '$hooks/useRoomCreators';
 import { useRoomPermissions } from '$hooks/useRoomPermissions';
 import { StateEvent } from '$types/matrix/room';
+import { WidgetIframe } from './WidgetIframe';
+import * as css from './WidgetsDrawer.css';
 import { IntegrationManager } from './IntegrationManager';
 
 type WidgetsDrawerHeaderProps = {

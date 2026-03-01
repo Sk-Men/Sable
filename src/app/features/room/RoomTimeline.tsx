@@ -87,7 +87,6 @@ import { useSetting } from '$state/hooks/settings';
 import { MessageLayout, settingsAtom } from '$state/settings';
 import { nicknamesAtom } from '$state/nicknames';
 import { useMatrixEventRenderer } from '$hooks/useMatrixEventRenderer';
-import { EncryptedContent, Event, Message, Reactions } from './message';
 import { useMemberEventParser } from '$hooks/useMemberEventParser';
 import * as customHtmlCss from '$styles/CustomHtml.css';
 import { RoomIntro } from '$components/room-intro';
@@ -98,7 +97,6 @@ import {
 import { markAsRead } from '$appUtils/notifications';
 import { useDebounce } from '$hooks/useDebounce';
 import { getResizeObserverEntry, useResizeObserver } from '$hooks/useResizeObserver';
-import * as css from './RoomTimeline.css';
 import { inSameDay, minuteDifference, timeDayMonthYear, today, yesterday } from '$appUtils/time';
 import { createMentionElement, isEmptyEditor, moveCursor } from '$components/editor';
 import { roomIdToReplyDraftAtomFamily } from '$state/room/roomInputDrafts';
@@ -128,6 +126,8 @@ import { useTheme } from '$hooks/useTheme';
 import { useRoomCreatorsTag } from '$hooks/useRoomCreatorsTag';
 import { usePowerLevelTags } from '$hooks/usePowerLevelTags';
 import { profilesCacheAtom } from '$state/userRoomProfile';
+import * as css from './RoomTimeline.css';
+import { EncryptedContent, Event, Message, Reactions } from './message';
 
 const TimelineFloat = as<'div', css.TimelineFloatVariants>(
   ({ position, className, ...props }, ref) => (
@@ -272,8 +272,8 @@ const useEventTimelineLoader = (
   room: Room,
   onLoad: (eventId: string, linkedTimelines: EventTimeline[], evtAbsIndex: number) => void,
   onError: (err: Error | null) => void
-) => {
-  return useCallback(
+) =>
+  useCallback(
     async (eventId: string) => {
       const [err, replyEvtTimeline] = await to(
         mx.getEventTimeline(room.getUnfilteredTimelineSet(), eventId)
@@ -294,7 +294,6 @@ const useEventTimelineLoader = (
     },
     [mx, room, onLoad, onError]
   );
-};
 
 const useTimelinePagination = (
   mx: MatrixClient,
@@ -1028,8 +1027,8 @@ export function RoomTimeline({
         delete cleanExtended['m.tz'];
         delete cleanExtended['chat.commet.profile_banner'];
         delete cleanExtended['moe.sable.app.name_color'];
-        delete cleanExtended['avatar_url'];
-        delete cleanExtended['displayname'];
+        delete cleanExtended.avatar_url;
+        delete cleanExtended.displayname;
       }
 
       openUserRoomProfile(

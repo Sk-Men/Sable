@@ -39,7 +39,6 @@ import { useSpaceOptionally } from '$hooks/useSpace';
 import { getHomeSearchPath, getSpaceSearchPath, withSearchParam } from '$pages/pathUtils';
 import { getCanonicalAliasOrRoomId, isRoomAlias, mxcUrlToHttp } from '$appUtils/matrix';
 import { _SearchPathSearchParams } from '$pages/paths';
-import * as css from './RoomViewHeader.css';
 import { useRoomUnread } from '$state/hooks/unread';
 import { usePowerLevelsContext } from '$hooks/usePowerLevels';
 import { markAsRead } from '$appUtils/notifications';
@@ -54,7 +53,6 @@ import { getViaServers } from '$plugins/via-servers';
 import { BackRouteHandler } from '$components/BackRouteHandler';
 import { useMediaAuthentication } from '$hooks/useMediaAuthentication';
 import { useRoomPinnedEvents } from '$hooks/useRoomPinnedEvents';
-import { RoomPinMenu } from './room-pin-menu';
 import { useOpenRoomSettings } from '$state/hooks/roomSettings';
 import { RoomNotificationModeSwitcher } from '$components/RoomNotificationSwitcher';
 import {
@@ -62,7 +60,6 @@ import {
   getRoomNotificationModeIcon,
   useRoomsNotificationPreferencesContext,
 } from '$hooks/useRoomsNotificationPreferences';
-import { JumpToTime } from './jump-to-time';
 import { useRoomNavigate } from '$hooks/useRoomNavigate';
 import { useRoomCreators } from '$hooks/useRoomCreators';
 import { useRoomPermissions } from '$hooks/useRoomPermissions';
@@ -71,6 +68,9 @@ import { useCallState } from '$pages/client/call/CallProvider';
 import { ContainerColor } from '$styles/ContainerColor.css';
 import { useRoomWidgets } from '$hooks/useRoomWidgets';
 import { AccountDataEvent } from '$types/matrix/accountData';
+import { JumpToTime } from './jump-to-time';
+import { RoomPinMenu } from './room-pin-menu';
+import * as css from './RoomViewHeader.css';
 
 async function getPinsHash(pinnedIds: string[]): Promise<string> {
   const sorted = [...pinnedIds].sort().join(',');
@@ -359,7 +359,7 @@ export function RoomViewHeader() {
 
       const hash = await getPinsHash(pinnedIds);
       await mx.setRoomAccountData(room.roomId, AccountDataEvent.SablePinStatus, {
-        hash: hash,
+        hash,
         count: pinnedIds.length,
         last_seen_id: pinnedIds[pinnedIds.length - 1],
       });

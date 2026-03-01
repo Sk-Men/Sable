@@ -8,12 +8,6 @@ import { StateEvent } from '$types/matrix/room';
 import { usePowerLevelsContext } from '$hooks/usePowerLevels';
 import { useMatrixClient } from '$hooks/useMatrixClient';
 import { useEditor } from '$components/editor';
-import { RoomInputPlaceholder } from './RoomInputPlaceholder';
-import { RoomTimeline } from './RoomTimeline';
-import { RoomViewTyping } from './RoomViewTyping';
-import { RoomTombstone } from './RoomTombstone';
-import { RoomInput } from './RoomInput';
-import { RoomViewFollowing, RoomViewFollowingPlaceholder } from './RoomViewFollowing';
 import { Page } from '$components/page';
 import { useKeyDown } from '$hooks/useKeyDown';
 import { editableActiveElement } from '$appUtils/dom';
@@ -28,6 +22,12 @@ import { useOpenRoomSettings } from '$state/hooks/roomSettings';
 import { useSpaceOptionally } from '$hooks/useSpace';
 import { RoomSettingsPage } from '$state/roomSettings';
 import { GlobalModalManager } from '$components/message/modals/GlobalModalManager';
+import { RoomViewFollowing, RoomViewFollowingPlaceholder } from './RoomViewFollowing';
+import { RoomInput } from './RoomInput';
+import { RoomTombstone } from './RoomTombstone';
+import { RoomViewTyping } from './RoomViewTyping';
+import { RoomTimeline } from './RoomTimeline';
+import { RoomInputPlaceholder } from './RoomInputPlaceholder';
 
 const FN_KEYS_REGEX = /^F\d+$/;
 const shouldFocusMessageField = (evt: KeyboardEvent): boolean => {

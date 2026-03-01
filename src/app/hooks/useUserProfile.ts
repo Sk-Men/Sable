@@ -2,12 +2,12 @@ import { useEffect, useMemo } from 'react';
 import { useAtomValue, useSetAtom } from 'jotai';
 import { selectAtom } from 'jotai/utils';
 import { EventTimeline, Room } from '$types/matrix-sdk';
+import { StateEvent } from '$types/matrix/room';
+import colorMXID from '$util/colorMXID';
 import { useMatrixClient } from './useMatrixClient';
 import { profilesCacheAtom } from '../state/userRoomProfile';
-import { StateEvent } from '$types/matrix/room';
 import { useSetting } from '../state/hooks/settings';
 import { settingsAtom } from '../state/settings';
-import colorMXID from '$util/colorMXID';
 
 const inFlightProfiles = new Map<string, Promise<any>>();
 

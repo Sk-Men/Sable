@@ -26,11 +26,11 @@ import React, {
 } from 'react';
 import { getMxIdLocalPart, getMxIdServer, isUserId } from '$appUtils/matrix';
 import { useDirectUsers } from '$hooks/useDirectUsers';
-import { SettingTile } from '../setting-tile';
 import { useMatrixClient } from '$hooks/useMatrixClient';
 import { stopPropagation } from '$appUtils/keyboard';
 import { useAsyncSearch, UseAsyncSearchOptions } from '$hooks/useAsyncSearch';
 import { highlightText, makeHighlightRegex } from '$plugins/react-custom-html-parser';
+import { SettingTile } from '../setting-tile';
 
 export const useAdditionalCreators = (defaultCreators?: string[]) => {
   const mx = useMatrixClient();

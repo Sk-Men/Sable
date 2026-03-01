@@ -5,10 +5,10 @@ import { useRoom } from '$hooks/useRoom';
 import { usePowerLevels } from '$hooks/usePowerLevels';
 import { useMatrixClient } from '$hooks/useMatrixClient';
 import { StateEvent } from '$types/matrix/room';
-import { usePermissionGroups } from './usePermissionItems';
 import { PermissionGroups, Powers, PowersEditor } from '$features/common-settings/permissions';
 import { useRoomCreators } from '$hooks/useRoomCreators';
 import { useRoomPermissions } from '$hooks/useRoomPermissions';
+import { usePermissionGroups } from './usePermissionItems';
 
 type PermissionsProps = {
   requestClose: () => void;

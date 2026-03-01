@@ -14,19 +14,19 @@ import {
 } from 'folds';
 import { Page, PageContent, PageHeader } from '$components/page';
 import { SequenceCard } from '$components/sequence-card';
-import { SequenceCardStyle } from '../styles.css';
 import { SettingTile } from '$components/setting-tile';
 import { useSetting } from '$state/hooks/settings';
 import { settingsAtom } from '$state/settings';
 import { copyToClipboard } from '$appUtils/dom';
 import { useRoom } from '$hooks/useRoom';
 import { useRoomState } from '$hooks/useRoomState';
-import { StateEventEditor, StateEventInfo } from './StateEventEditor';
-import { SendRoomEvent } from './SendRoomEvent';
 import { useRoomAccountData } from '$hooks/useRoomAccountData';
 import { CutoutCard } from '$components/cutout-card';
 import { AccountDataEditor, AccountDataSubmitCallback } from '$components/AccountDataEditor';
 import { useMatrixClient } from '$hooks/useMatrixClient';
+import { SendRoomEvent } from './SendRoomEvent';
+import { StateEventEditor, StateEventInfo } from './StateEventEditor';
+import { SequenceCardStyle } from '../styles.css';
 
 type DeveloperToolsProps = {
   requestClose: () => void;

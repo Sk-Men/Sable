@@ -13,9 +13,9 @@ import {
   toRem,
 } from 'folds';
 import FocusTrap from 'focus-trap-react';
+import { stopPropagation } from '$appUtils/keyboard';
 import { SettingTile } from '../setting-tile';
 import { SequenceCard } from '../sequence-card';
-import { stopPropagation } from '$appUtils/keyboard';
 
 export function RoomVersionSelector({
   versions,

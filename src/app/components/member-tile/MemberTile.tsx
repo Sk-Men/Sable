@@ -3,11 +3,11 @@ import { as, Avatar, Box, Icon, Icons, Text } from 'folds';
 import { MatrixClient, Room, RoomMember } from '$types/matrix-sdk';
 import { getMemberDisplayName } from '$appUtils/room';
 import { getMxIdLocalPart } from '$appUtils/matrix';
-import { UserAvatar } from '../user-avatar';
-import * as css from './style.css';
 import { useSableCosmetics } from '$hooks/useSableCosmetics';
 import { useAtomValue } from 'jotai';
 import { nicknamesAtom } from '$state/nicknames';
+import * as css from './style.css';
+import { UserAvatar } from '../user-avatar';
 
 const getName = (room: Room, member: RoomMember, nicknames: Record<string, string>) =>
   getMemberDisplayName(room, member.userId, nicknames) ??

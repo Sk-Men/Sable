@@ -96,7 +96,7 @@ self.addEventListener('message', (event: ExtendableMessageEvent) => {
   const client = event.source as Client | null;
   if (!client) return;
 
-  const data: unknown = event.data;
+  const { data } = event;
   if (!data || typeof data !== 'object') return;
   const { type, accessToken, baseUrl } = data as Record<string, unknown>;
 

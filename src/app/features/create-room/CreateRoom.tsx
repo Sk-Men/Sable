@@ -27,7 +27,6 @@ import { millisecondsToMinutes, replaceSpaceWithDash } from '$appUtils/common';
 import { AsyncStatus, useAsyncCallback } from '$hooks/useAsyncCallback';
 import { useCapabilities } from '$hooks/useCapabilities';
 import { useAlive } from '$hooks/useAlive';
-import { ErrorCode } from '../../cs-errorcode';
 import {
   AdditionalCreatorInput,
   createRoom,
@@ -42,6 +41,7 @@ import {
 import { RoomType } from '$types/matrix/room';
 import { CreateRoomTypeSelector } from '$components/create-room/CreateRoomTypeSelector';
 import { getRoomIconSrc } from '$appUtils/room';
+import { ErrorCode } from '../../cs-errorcode';
 
 const getCreateRoomAccessToIcon = (access: CreateRoomAccess, type?: CreateRoomType) => {
   const isVoiceRoom = type === CreateRoomType.VoiceRoom;

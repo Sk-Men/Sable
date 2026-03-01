@@ -23,7 +23,6 @@ import { useAtomValue } from 'jotai';
 import { Page, PageContent, PageHeader } from '$components/page';
 import { IPowerLevels } from '$hooks/usePowerLevels';
 import { SequenceCard } from '$components/sequence-card';
-import { SequenceCardStyle } from '../styles.css';
 import { SettingTile } from '$components/setting-tile';
 import {
   getPowers,
@@ -49,6 +48,7 @@ import { useAlive } from '$hooks/useAlive';
 import { BetaNoticeBadge } from '$components/BetaNoticeBadge';
 import { getPowerTagIconSrc } from '$hooks/useMemberPowerTag';
 import { creatorsSupported } from '$appUtils/matrix';
+import { SequenceCardStyle } from '../styles.css';
 
 type EditPowerProps = {
   maxPower: number;

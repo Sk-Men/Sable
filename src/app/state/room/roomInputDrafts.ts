@@ -3,8 +3,8 @@ import { atomFamily } from 'jotai/utils';
 import { Descendant } from 'slate';
 import { EncryptedAttachmentInfo } from 'browser-encrypt-attachment';
 import { IEventRelation } from '$types/matrix-sdk';
-import { createUploadAtomFamily } from '../upload';
 import { TUploadContent } from '$appUtils/matrix';
+import { createUploadAtomFamily } from '../upload';
 import { createListAtom } from '../list';
 
 export type TUploadMetadata = {

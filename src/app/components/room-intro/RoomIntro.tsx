@@ -10,13 +10,13 @@ import { getMxIdLocalPart, mxcUrlToHttp } from '$appUtils/matrix';
 import { AsyncStatus, useAsyncCallback } from '$hooks/useAsyncCallback';
 import { timeDayMonthYear, timeHourMinute } from '$appUtils/time';
 import { useRoomNavigate } from '$hooks/useRoomNavigate';
-import { RoomAvatar } from '../room-avatar';
 import { nameInitials } from '$appUtils/common';
 import { useRoomAvatar, useRoomName, useRoomTopic } from '$hooks/useRoomMeta';
 import { mDirectAtom } from '$state/mDirectList';
 import { useMediaAuthentication } from '$hooks/useMediaAuthentication';
 import { useSetting } from '$state/hooks/settings';
 import { settingsAtom } from '$state/settings';
+import { RoomAvatar } from '../room-avatar';
 import { InviteUserPrompt } from '../invite-user-prompt';
 
 export type RoomIntroProps = {

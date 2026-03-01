@@ -18,13 +18,13 @@ import { useAtomValue } from 'jotai';
 
 import { getMemberDisplayName } from '$appUtils/room';
 import { getMxIdLocalPart } from '$appUtils/matrix';
-import * as css from './RoomViewFollowing.css';
 import { useMatrixClient } from '$hooks/useMatrixClient';
 import { useRoomLatestRenderedEvent } from '$hooks/useRoomLatestRenderedEvent';
 import { useRoomEventReaders } from '$hooks/useRoomEventReaders';
 import { EventReaders } from '$components/event-readers';
 import { stopPropagation } from '$appUtils/keyboard';
 import { nicknamesAtom } from '$state/nicknames';
+import * as css from './RoomViewFollowing.css';
 
 export function RoomViewFollowingPlaceholder() {
   return <div className={css.RoomViewFollowingPlaceholder} />;

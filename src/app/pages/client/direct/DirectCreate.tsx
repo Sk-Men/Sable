@@ -5,7 +5,6 @@ import { useMatrixClient } from '$hooks/useMatrixClient';
 import { getDirectCreateSearchParams } from '$pages/pathSearchParam';
 import { getDirectRoomPath } from '$pages/pathUtils';
 import { getDMRoomFor } from '$appUtils/matrix';
-import { useDirectRooms } from './useDirectRooms';
 import { ScreenSize, useScreenSizeContext } from '$hooks/useScreenSize';
 import {
   Page,
@@ -17,6 +16,7 @@ import {
 } from '$components/page';
 import { BackRouteHandler } from '$components/BackRouteHandler';
 import { CreateChat } from '$features/create-chat';
+import { useDirectRooms } from './useDirectRooms';
 
 export function DirectCreate() {
   const mx = useMatrixClient();

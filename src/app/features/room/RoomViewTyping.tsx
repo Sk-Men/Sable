@@ -7,10 +7,10 @@ import { roomIdToTypingMembersAtom } from '$state/typingMembers';
 import { TypingIndicator } from '$components/typing-indicator';
 import { getMemberDisplayName } from '$appUtils/room';
 import { getMxIdLocalPart } from '$appUtils/matrix';
-import * as css from './RoomViewTyping.css';
 import { useMatrixClient } from '$hooks/useMatrixClient';
 import { useRoomTypingMember } from '$hooks/useRoomTypingMembers';
 import { nicknamesAtom } from '$state/nicknames';
+import * as css from './RoomViewTyping.css';
 
 export type RoomViewTypingProps = {
   room: Room;

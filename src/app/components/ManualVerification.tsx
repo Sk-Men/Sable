@@ -13,13 +13,13 @@ import {
   color,
 } from 'folds';
 import FocusTrap from 'focus-trap-react';
+import { SecretStorageKeyContent } from '$types/matrix/accountData';
+import { storePrivateKey } from '$client/secretStorageKeys';
 import { stopPropagation } from '../utils/keyboard';
 import { SettingTile } from './setting-tile';
-import { SecretStorageKeyContent } from '$types/matrix/accountData';
 import { SecretStorageRecoveryKey, SecretStorageRecoveryPassphrase } from './SecretStorage';
 import { useMatrixClient } from '../hooks/useMatrixClient';
 import { AsyncStatus, useAsyncCallback } from '../hooks/useAsyncCallback';
-import { storePrivateKey } from '$client/secretStorageKeys';
 
 export enum ManualVerificationMethod {
   RecoveryPassphrase = 'passphrase',

@@ -2,7 +2,6 @@ import React, { useCallback } from 'react';
 import { Box, Text, IconButton, Icon, Icons, Scroll, Switch } from 'folds';
 import { Page, PageContent, PageHeader } from '$components/page';
 import { SequenceCard } from '$components/sequence-card';
-import { SequenceCardStyle } from '../styles.css';
 import { SettingTile } from '$components/setting-tile';
 import { useRoom } from '$hooks/useRoom';
 import { usePowerLevels } from '$hooks/usePowerLevels';
@@ -10,6 +9,7 @@ import { useMatrixClient } from '$hooks/useMatrixClient';
 import { StateEvent } from '$types/matrix/room';
 import { useRoomCreators } from '$hooks/useRoomCreators';
 import { useRoomPermissions } from '$hooks/useRoomPermissions';
+import { SequenceCardStyle } from '../styles.css';
 
 type CosmeticsProps = {
   requestClose: () => void;

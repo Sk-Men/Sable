@@ -96,7 +96,7 @@ export const clearMismatchedStores = async (): Promise<void> => {
   }
 
   for (const dbInfo of allDbs) {
-    const name = dbInfo.name;
+    const { name } = dbInfo;
     if (!name) continue;
 
     const containsKnownUser = Array.from(knownUserIds).some((uid) => name.includes(uid));

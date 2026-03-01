@@ -209,7 +209,6 @@ export function CallProvider({ children }: CallProviderProps) {
       if (!isActiveCallReady) return;
       ev.preventDefault();
 
-      /* eslint-disable camelcase */
       const { audio_enabled, video_enabled } = ev.detail.data ?? {};
 
       if (typeof audio_enabled === 'boolean' && audio_enabled !== isAudioEnabled) {
@@ -218,7 +217,6 @@ export function CallProvider({ children }: CallProviderProps) {
       if (typeof video_enabled === 'boolean' && video_enabled !== isVideoEnabled) {
         setIsVideoEnabledState(video_enabled);
       }
-      /* eslint-enable camelcase */
     };
 
     const handleOnScreenStateUpdate = (ev: CustomEvent) => {

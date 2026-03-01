@@ -7,8 +7,8 @@ import {
   Room,
   RoomEvent,
   SyncState,
+  PushProcessor,
 } from '$types/matrix-sdk';
-import { PushProcessor } from '$types/matrix-sdk';
 import { useAtomValue, useSetAtom } from 'jotai';
 import { useNavigate } from 'react-router-dom';
 import {

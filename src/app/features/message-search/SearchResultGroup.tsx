@@ -35,7 +35,6 @@ import { RoomAvatar, RoomIcon } from '$components/room-avatar';
 import { getMemberAvatarMxc, getMemberDisplayName, getRoomAvatarUrl } from '$appUtils/room';
 import { useAtomValue } from 'jotai';
 import { nicknamesAtom } from '$state/nicknames';
-import { ResultItem } from './useMessageSearch';
 import { SequenceCard } from '$components/sequence-card';
 import { UserAvatar } from '$components/user-avatar';
 import { useMentionClickHandler } from '$hooks/useMentionClickHandler';
@@ -53,6 +52,7 @@ import {
 } from '$hooks/useMemberPowerTag';
 import { useRoomCreators } from '$hooks/useRoomCreators';
 import { useRoomCreatorsTag } from '$hooks/useRoomCreatorsTag';
+import { ResultItem } from './useMessageSearch';
 
 type SearchResultGroupProps = {
   room: Room;

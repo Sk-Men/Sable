@@ -30,8 +30,6 @@ import {
 import { useUIACompleted, useUIAFlow, useUIAParams } from '$hooks/useUIAFlows';
 import { AsyncState, AsyncStatus, useAsyncCallback } from '$hooks/useAsyncCallback';
 import { useAutoDiscoveryInfo } from '$hooks/useAutoDiscoveryInfo';
-import { RegisterError, RegisterResult, register, useRegisterComplete } from './registerUtil';
-import { FieldError } from '../FiledError';
 import {
   AutoDummyStageDialog,
   AutoTermsStageDialog,
@@ -43,6 +41,8 @@ import { useRegisterEmail } from '$hooks/useRegisterEmail';
 import { ConfirmPasswordMatch } from '$components/ConfirmPasswordMatch';
 import { UIAFlowOverlay } from '$components/UIAFlowOverlay';
 import { RequestEmailTokenCallback, RequestEmailTokenResponse } from '$hooks/types';
+import { FieldError } from '../FiledError';
+import { RegisterError, RegisterResult, register, useRegisterComplete } from './registerUtil';
 
 export const SUPPORTED_REGISTER_STAGES = [
   AuthType.RegistrationToken,

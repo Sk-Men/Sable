@@ -58,10 +58,10 @@ import { useCallState } from '$pages/client/call/CallProvider';
 import { useCallMembers } from '$hooks/useCallMemberships';
 import { useRoomNavigate } from '$hooks/useRoomNavigate';
 import { ScreenSize, useScreenSizeContext } from '$hooks/useScreenSize';
-import { RoomNavUser } from './RoomNavUser';
 import { useRoomName } from '$hooks/useRoomMeta';
 import { useAtomValue } from 'jotai';
 import { nicknamesAtom } from '$state/nicknames';
+import { RoomNavUser } from './RoomNavUser';
 
 type RoomNavItemMenuProps = {
   room: Room;

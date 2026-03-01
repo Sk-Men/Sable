@@ -3,7 +3,6 @@ import React, { MouseEventHandler, useState } from 'react';
 import FocusTrap from 'focus-trap-react';
 import { isKeyHotkey } from 'is-hotkey';
 import { useRoomCreatorsTag } from '$hooks/useRoomCreatorsTag';
-import { PowerColorBadge, PowerIcon } from '../power';
 import { getPowerTagIconSrc } from '$hooks/useMemberPowerTag';
 import { useMatrixClient } from '$hooks/useMatrixClient';
 import { useMediaAuthentication } from '$hooks/useMediaAuthentication';
@@ -14,6 +13,7 @@ import { useOpenRoomSettings } from '$state/hooks/roomSettings';
 import { useOpenSpaceSettings } from '$state/hooks/spaceSettings';
 import { SpaceSettingsPage } from '$state/spaceSettings';
 import { RoomSettingsPage } from '$state/roomSettings';
+import { PowerColorBadge, PowerIcon } from '../power';
 
 export function CreatorChip() {
   const mx = useMatrixClient();

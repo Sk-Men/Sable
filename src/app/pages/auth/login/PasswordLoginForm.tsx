@@ -26,6 +26,10 @@ import { useAutoDiscoveryInfo } from '$hooks/useAutoDiscoveryInfo';
 import { AsyncStatus, useAsyncCallback } from '$hooks/useAsyncCallback';
 import { useAuthServer } from '$hooks/useAuthServer';
 import { useClientConfig } from '$hooks/useClientConfig';
+import { PasswordInput } from '$components/password-input';
+import { getResetPasswordPath } from '$pages/pathUtils';
+import { stopPropagation } from '$appUtils/keyboard';
+import { FieldError } from '../FiledError';
 import {
   CustomLoginResponse,
   LoginError,
@@ -33,10 +37,6 @@ import {
   login,
   useLoginComplete,
 } from './loginUtil';
-import { PasswordInput } from '$components/password-input';
-import { FieldError } from '../FiledError';
-import { getResetPasswordPath } from '$pages/pathUtils';
-import { stopPropagation } from '$appUtils/keyboard';
 
 function UsernameHint({ server }: { server: string }) {
   const [anchor, setAnchor] = useState<RectCords>();

@@ -1,8 +1,7 @@
-/* eslint-disable no-return-await */
 /* eslint-disable no-param-reassign */
 /* eslint-disable no-continue */
 /* eslint-disable class-methods-use-this */
-/* eslint-disable no-dupe-class-members */
+
 /*
  * Copyright 2024 New Vector Ltd.
  * Copyright 2020-2023 The Matrix.org Foundation C.I.C.
@@ -500,7 +499,7 @@ export class SmallWidgetDriver extends WidgetDriver {
   public async getMediaConfig(): Promise<IGetMediaConfigResult> {
     const client = this.mxClient;
 
-    return await client.getMediaConfig();
+    return client.getMediaConfig();
   }
 
   public async uploadFile(file: XMLHttpRequestBodyInit): Promise<{ contentUri: string }> {

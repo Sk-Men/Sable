@@ -16,17 +16,17 @@ import { CallRefContext } from '$pages/client/call/PersistentCallContainer';
 import { ScreenSize, useScreenSizeContext } from '$hooks/useScreenSize';
 import { useDebounce } from '$hooks/useDebounce';
 import { useMatrixClient } from '$hooks/useMatrixClient';
-import { CallViewUser } from './CallViewUser';
 import { useRoomNavigate } from '$hooks/useRoomNavigate';
 import { getMemberDisplayName } from '$appUtils/room';
 import { getMxIdLocalPart } from '$appUtils/matrix';
-import * as css from './CallView.css';
 import { useRoomPermissions } from '$hooks/useRoomPermissions';
 import { useRoomCreators } from '$hooks/useRoomCreators';
 import { usePowerLevelsContext } from '$hooks/usePowerLevels';
 import { useRoomName } from '$hooks/useRoomMeta';
 import { useAtomValue } from 'jotai';
 import { nicknamesAtom } from '$state/nicknames';
+import * as css from './CallView.css';
+import { CallViewUser } from './CallViewUser';
 
 type OriginalStyles = {
   position?: string;

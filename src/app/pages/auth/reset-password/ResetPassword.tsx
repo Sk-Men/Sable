@@ -3,8 +3,8 @@ import React, { useMemo } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { getLoginPath } from '$pages/pathUtils';
 import { useAuthServer } from '$hooks/useAuthServer';
-import { PasswordResetForm } from './PasswordResetForm';
 import { ResetPasswordPathSearchParams } from '$pages/paths';
+import { PasswordResetForm } from './PasswordResetForm';
 
 const useResetPasswordSearchParams = (
   searchParams: URLSearchParams

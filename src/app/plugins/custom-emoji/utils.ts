@@ -1,9 +1,9 @@
 import { MatrixClient, MatrixEvent, Room } from '$types/matrix-sdk';
-import { ImagePack } from './ImagePack';
-import { EmoteRoomsContent, ImageUsage } from './types';
 import { StateEvent } from '$types/matrix/room';
 import { getAccountData, getStateEvent, getStateEvents } from '$appUtils/room';
 import { AccountDataEvent } from '$types/matrix/accountData';
+import { EmoteRoomsContent, ImageUsage } from './types';
+import { ImagePack } from './ImagePack';
 import { PackMetaReader } from './PackMetaReader';
 import { PackAddress } from './PackAddress';
 

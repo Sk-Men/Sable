@@ -25,7 +25,6 @@ import FocusTrap from 'focus-trap-react';
 import { useAtomValue } from 'jotai';
 import { Room } from '$types/matrix-sdk';
 import { useGlobalImagePacks, useRoomsImagePacks } from '$hooks/useImagePacks';
-import { SequenceCardStyle } from '../styles.css';
 import { SequenceCard } from '$components/sequence-card';
 import { SettingTile } from '$components/setting-tile';
 import { mxcUrlToHttp } from '$appUtils/matrix';
@@ -43,6 +42,7 @@ import { allRoomsAtom } from '$state/room-list/roomList';
 import { AccountDataEvent } from '$types/matrix/accountData';
 import { AsyncStatus, useAsyncCallback } from '$hooks/useAsyncCallback';
 import { stopPropagation } from '$appUtils/keyboard';
+import { SequenceCardStyle } from '../styles.css';
 
 function GlobalPackSelector({
   packs,

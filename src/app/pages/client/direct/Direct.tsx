@@ -38,7 +38,6 @@ import { makeNavCategoryId } from '$state/closedNavCategories';
 import { roomToUnreadAtom } from '$state/room/roomToUnread';
 import { useCategoryHandler } from '$hooks/useCategoryHandler';
 import { useNavToActivePathMapper } from '$hooks/useNavToActivePathMapper';
-import { useDirectRooms } from './useDirectRooms';
 import { PageNav, PageNavContent, PageNavHeader } from '$components/page';
 import { useClosedNavCategoriesAtom } from '$state/hooks/closedNavCategories';
 import { useRoomsUnread } from '$state/hooks/unread';
@@ -52,6 +51,7 @@ import {
 } from '$hooks/useRoomsNotificationPreferences';
 import { useDirectCreateSelected } from '$hooks/router/useDirectSelected';
 import { CallNavStatus } from '$features/room-nav/RoomCallNavStatus';
+import { useDirectRooms } from './useDirectRooms';
 
 type DirectMenuProps = {
   requestClose: () => void;

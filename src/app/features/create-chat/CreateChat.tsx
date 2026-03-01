@@ -7,11 +7,11 @@ import { SequenceCard } from '$components/sequence-card';
 import { addRoomIdToMDirect, isUserId } from '$appUtils/matrix';
 import { useMatrixClient } from '$hooks/useMatrixClient';
 import { AsyncStatus, useAsyncCallback } from '$hooks/useAsyncCallback';
-import { ErrorCode } from '../../cs-errorcode';
 import { millisecondsToMinutes } from '$appUtils/common';
 import { createRoomEncryptionState } from '$components/create-room';
 import { useAlive } from '$hooks/useAlive';
 import { getDirectRoomPath } from '$pages/pathUtils';
+import { ErrorCode } from '../../cs-errorcode';
 
 type CreateChatProps = {
   defaultUserId?: string;

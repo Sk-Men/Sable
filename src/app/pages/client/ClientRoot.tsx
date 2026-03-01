@@ -31,17 +31,17 @@ import { ServerConfigsLoader } from '$components/ServerConfigsLoader';
 import { CapabilitiesProvider } from '$hooks/useCapabilities';
 import { MediaConfigProvider } from '$hooks/useMediaConfig';
 import { MatrixClientProvider } from '$hooks/useMatrixClient';
-import { SpecVersions } from './SpecVersions';
 import { AsyncStatus, useAsyncCallback } from '$hooks/useAsyncCallback';
 import { useSyncState } from '$hooks/useSyncState';
 import { stopPropagation } from '$appUtils/keyboard';
-import { SyncStatus } from './SyncStatus';
 import { AuthMetadataProvider } from '$hooks/useAuthMetadata';
 import { sessionsAtom, activeSessionIdAtom, Session, SessionsAction } from '$state/sessions';
-import { getHomePath } from '../pathUtils';
 import { createLogger } from '$appUtils/debug';
-import { pushSessionToSW } from '../../../sw-session';
 import { useSyncNicknames } from '$hooks/useNickname';
+import { getHomePath } from '../pathUtils';
+import { pushSessionToSW } from '../../../sw-session';
+import { SyncStatus } from './SyncStatus';
+import { SpecVersions } from './SpecVersions';
 
 const log = createLogger('ClientRoot');
 
@@ -226,14 +226,15 @@ export function ClientRoot({ children }: ClientRootProps) {
   useSyncNicknames(mx);
   useLogoutListener(mx);
 
-  useEffect(() => {
-    return () => {
+  useEffect(
+    () => () => {
       if (mx?.clientRunning) {
         log.log('ClientRoot unmounting — stopping client', mx.getUserId());
         mx.stopClient();
       }
-    };
-  }, [mx]);
+    },
+    [mx]
+  );
 
   useEffect(() => {
     if (loadState.status === AsyncStatus.Idle) {

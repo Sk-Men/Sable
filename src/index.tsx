@@ -9,8 +9,6 @@ import '@fontsource/space-mono/700-italic.css';
 import 'folds/dist/style.css';
 import { configClass, varsClass } from 'folds';
 
-enableMapSet();
-
 import './index.css';
 import './app/styles/themes.css';
 import './app/styles/overrides/General.css';
@@ -29,6 +27,8 @@ import {
   ACTIVE_SESSION_KEY,
 } from './app/state/sessions';
 import { getLocalStorageItem } from './app/state/utils/atomWithLocalStorage';
+
+enableMapSet();
 
 document.body.classList.add(configClass, varsClass);
 
@@ -52,7 +52,7 @@ if ('serviceWorker' in navigator) {
   void navigator.serviceWorker.ready.then(sendSessionToSW);
 
   navigator.serviceWorker.addEventListener('message', (ev) => {
-    const data: unknown = ev.data;
+    const { data } = ev;
     if (!data || typeof data !== 'object') return;
     const { type } = data as { type?: unknown };
 
