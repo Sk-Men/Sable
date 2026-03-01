@@ -5,6 +5,8 @@
 - Fixed/updated unknown extended profile keys rendering.
 - Added support for `---`, `-#`, and fixed `-` to be unordered.
 - Fix quotes around colors for tuwunel homeservers ([#46](https://github.com/7w1/sable/issues/46))
+- Added Rosé Pine theme ([#41](https://github.com/7w1/sable/pull/41)) - [wrigglebug](https://github.com/wrigglebug)
+- Add back default Cinny Dark theme
 
 ## 1.2.1
 
