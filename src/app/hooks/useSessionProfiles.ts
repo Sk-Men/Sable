@@ -102,7 +102,7 @@ export const useSessionProfiles = (sessions: Session[]): SessionProfiles => {
       blobUrlsRef.current.forEach((u) => URL.revokeObjectURL(u));
       blobUrlsRef.current = newBlobUrls;
     };
-  }, [sessionKey]);  
+  }, [sessionKey]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return profiles;
 };

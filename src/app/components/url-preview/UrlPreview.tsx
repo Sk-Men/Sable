@@ -1,3 +1,4 @@
+import React from 'react';
 import classNames from 'classnames';
 import { Box, as } from 'folds';
 import * as css from './UrlPreview.css';

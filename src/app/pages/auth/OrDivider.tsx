@@ -1,3 +1,4 @@
+import React from 'react';
 import { Box, Line, Text } from 'folds';
 
 export function OrDivider() {

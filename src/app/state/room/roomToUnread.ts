@@ -6,8 +6,9 @@ import {
   MatrixEvent,
   Room,
   RoomEvent,
-  SyncState, ReceiptContent, ReceiptType 
+  SyncState,
 } from '$types/matrix-sdk';
+import { ReceiptContent, ReceiptType } from '$types/matrix-sdk';
 import { useCallback, useEffect } from 'react';
 import {
   Membership,

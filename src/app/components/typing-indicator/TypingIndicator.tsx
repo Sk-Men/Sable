@@ -1,3 +1,4 @@
+import React from 'react';
 import { Box, as, toRem } from 'folds';
 import * as css from './TypingIndicator.css';
 

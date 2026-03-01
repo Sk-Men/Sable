@@ -1,5 +1,5 @@
 import { Box, Icon, IconSrc } from 'folds';
-import { ReactNode } from 'react';
+import React, { ReactNode } from 'react';
 import { BubbleLayout, CompactLayout, ModernLayout } from '..';
 import { MessageLayout } from '$state/settings';
 

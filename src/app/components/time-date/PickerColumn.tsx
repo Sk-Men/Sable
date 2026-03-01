@@ -1,4 +1,4 @@
-import { ReactNode } from 'react';
+import React, { ReactNode } from 'react';
 import { Box, Text, Scroll } from 'folds';
 import { CutoutCard } from '../cutout-card';
 import * as css from './styles.css';

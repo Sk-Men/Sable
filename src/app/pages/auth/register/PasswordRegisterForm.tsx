@@ -10,7 +10,7 @@ import {
   Text,
   color,
 } from 'folds';
-import { ChangeEventHandler, useCallback, useMemo, useState } from 'react';
+import React, { ChangeEventHandler, useCallback, useMemo, useState } from 'react';
 import {
   AuthDict,
   AuthType,

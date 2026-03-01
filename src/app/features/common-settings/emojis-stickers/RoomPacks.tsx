@@ -1,4 +1,4 @@
-import { FormEventHandler, useCallback, useMemo, useState } from 'react';
+import React, { FormEventHandler, useCallback, useMemo, useState } from 'react';
 import {
   Box,
   Text,
@@ -163,7 +163,7 @@ export function RoomPacks({ onViewPack }: RoomPacksProps) {
     useCallback(async () => {
       for (let i = 0; i < removedPacks.length; i += 1) {
         const addr = removedPacks[i];
-         
+        // eslint-disable-next-line no-await-in-loop
         await mx.sendStateEvent(room.roomId, StateEvent.PoniesRoomEmotes as any, {}, addr.stateKey);
       }
     }, [mx, room, removedPacks])

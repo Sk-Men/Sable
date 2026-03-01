@@ -1,3 +1,4 @@
+import React from 'react';
 import { Box } from 'folds';
 import { MatrixClient } from '$types/matrix-sdk';
 import { EmojiItemInfo, EmojiType } from '../types';

@@ -1,4 +1,4 @@
-import { FormEventHandler, RefObject } from 'react';
+import React, { FormEventHandler, RefObject } from 'react';
 import { Box, Text, Input, Icon, Icons, Spinner, Chip, config } from 'folds';
 
 type SearchProps = {

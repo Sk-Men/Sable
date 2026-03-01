@@ -1,3 +1,4 @@
+import React from 'react';
 import { Icon, Icons } from 'folds';
 import { useAtom } from 'jotai';
 import { SidebarAvatar, SidebarItem, SidebarItemTooltip } from '$components/sidebar';

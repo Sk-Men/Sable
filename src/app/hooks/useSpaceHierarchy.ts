@@ -1,6 +1,7 @@
 import { atom, useAtom, useAtomValue } from 'jotai';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { MatrixError, Room, IHierarchyRoom  } from '$types/matrix-sdk';
+import { MatrixError, Room } from '$types/matrix-sdk';
+import { IHierarchyRoom } from '$types/matrix-sdk';
 import { QueryFunction, useInfiniteQuery } from '@tanstack/react-query';
 import { useMatrixClient } from './useMatrixClient';
 import { roomToParentsAtom } from '../state/room/roomToParents';

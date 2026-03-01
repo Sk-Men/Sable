@@ -1,4 +1,5 @@
 import { Box, Button, Dialog, Spinner, Text, color, config } from 'folds';
+import React from 'react';
 import { SplashScreen } from '../components/splash-screen';
 
 export function ConfigConfigLoading() {

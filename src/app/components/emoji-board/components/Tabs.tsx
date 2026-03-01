@@ -1,4 +1,4 @@
-import { CSSProperties } from 'react';
+import React, { CSSProperties } from 'react';
 import { Badge, Box, Text } from 'folds';
 import { EmojiBoardTab } from '../types';
 

@@ -1,3 +1,4 @@
+import React from 'react';
 import { Box, Icon, Icons, color, Text } from 'folds';
 
 export function FieldError({ message }: { message: string }) {

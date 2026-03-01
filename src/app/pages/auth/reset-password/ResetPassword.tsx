@@ -1,5 +1,5 @@
 import { Box, Text } from 'folds';
-import { useMemo } from 'react';
+import React, { useMemo } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { getLoginPath } from '$pages/pathUtils';
 import { useAuthServer } from '$hooks/useAuthServer';

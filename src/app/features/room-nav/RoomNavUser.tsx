@@ -1,6 +1,7 @@
 import { Avatar, Box, Icon, Icons, Text } from 'folds';
 import React from 'react';
-import { Room, CallMembership  } from '$types/matrix-sdk';
+import { Room } from '$types/matrix-sdk';
+import { CallMembership } from '$types/matrix-sdk';
 import { NavButton, NavItem, NavItemContent } from '$components/nav';
 import { UserAvatar } from '$components/user-avatar';
 import { useMatrixClient } from '$hooks/useMatrixClient';

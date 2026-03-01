@@ -1,4 +1,4 @@
-import { ReactNode } from 'react';
+import React, { ReactNode } from 'react';
 import { as, Avatar, Box, Icon, Icons, Text } from 'folds';
 import { MatrixClient, Room, RoomMember } from '$types/matrix-sdk';
 import { getMemberDisplayName } from '$appUtils/room';

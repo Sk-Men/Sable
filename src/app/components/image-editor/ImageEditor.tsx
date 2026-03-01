@@ -1,3 +1,4 @@
+import React from 'react';
 import classNames from 'classnames';
 import { Box, Chip, Header, Icon, IconButton, Icons, Text, as } from 'folds';
 import * as css from './ImageEditor.css';

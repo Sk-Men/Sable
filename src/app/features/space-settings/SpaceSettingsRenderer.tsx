@@ -1,3 +1,4 @@
+import React from 'react';
 import { SpaceSettings } from './SpaceSettings';
 import { Modal500 } from '$components/Modal500';
 import { useCloseSpaceSettings, useSpaceSettingsState } from '$state/hooks/spaceSettings';

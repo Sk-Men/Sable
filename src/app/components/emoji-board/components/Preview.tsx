@@ -1,4 +1,5 @@
 import { Box, Text } from 'folds';
+import React from 'react';
 import { Atom, atom, useAtomValue } from 'jotai';
 import * as css from './styles.css';
 import { useMatrixClient } from '$hooks/useMatrixClient';

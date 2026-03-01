@@ -1,3 +1,4 @@
+import React from 'react';
 import { Box, Icon, IconButton, Icons, Scroll, Text } from 'folds';
 import { Page, PageContent, PageHeader } from '$components/page';
 import { usePowerLevels } from '$hooks/usePowerLevels';

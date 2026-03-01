@@ -24,9 +24,11 @@ import React, {
 } from 'react';
 import FocusTrap from 'focus-trap-react';
 import { useHover, useFocusWithin } from 'react-aria';
-import { MatrixEvent, Room, Relations , RoomPinnedEventsEventContent  } from '$types/matrix-sdk';
+import { MatrixEvent, Room } from '$types/matrix-sdk';
+import { Relations } from '$types/matrix-sdk';
 import classNames from 'classnames';
 import { useAtomValue, useSetAtom } from 'jotai';
+import { RoomPinnedEventsEventContent } from '$types/matrix-sdk';
 import {
   AvatarBase,
   BubbleLayout,
@@ -44,7 +46,11 @@ import { nicknamesAtom, setNicknameAtom } from '$state/nicknames';
 import { useMatrixClient } from '$hooks/useMatrixClient';
 import { useRecentEmoji } from '$hooks/useRecentEmoji';
 import * as css from './styles.css';
+import { EventReaders } from '$components/event-readers';
+import { TextViewer } from '$components/text-viewer';
+import { AsyncStatus, useAsyncCallback } from '$hooks/useAsyncCallback';
 import { EmojiBoard } from '$components/emoji-board';
+import { ReactionViewer } from '../reaction-viewer';
 import { MessageEditor } from './MessageEditor';
 import { UserAvatar } from '$components/user-avatar';
 import { copyToClipboard } from '$appUtils/dom';
@@ -754,7 +760,7 @@ function MessageInternal(
                             >
                               <Text size="L400">Nickname</Text>
                               <input
-                                 
+                                // eslint-disable-next-line jsx-a11y/no-autofocus
                                 autoFocus
                                 value={nickDraft}
                                 onChange={(e) => setNickDraft(e.target.value)}

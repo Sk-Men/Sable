@@ -1,4 +1,4 @@
-import { FormEventHandler, ReactNode, useMemo, useState } from 'react';
+import React, { FormEventHandler, ReactNode, useMemo, useState } from 'react';
 import { Badge, Box, Button, Chip, Icon, Icons, Input, Text } from 'folds';
 import { UsageSwitcher, useUsageStr } from './UsageSwitcher';
 import { mxcUrlToHttp } from '$appUtils/matrix';

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { IPreviewUrlResponse } from '$types/matrix-sdk';
 import { Box, Icon, IconButton, Icons, Scroll, Spinner, Text, as, color, config } from 'folds';
 import { AsyncStatus, useAsyncCallback } from '$hooks/useAsyncCallback';
@@ -11,6 +11,9 @@ import {
 import * as css from './UrlPreviewCard.css';
 import { mxcUrlToHttp } from '$appUtils/matrix';
 import { useMediaAuthentication } from '$hooks/useMediaAuthentication';
+import { ImageViewer } from '../image-viewer';
+import { Image, Video } from '../media';
+import { ImageContent, VideoContent } from '../message';
 
 const linkStyles = { color: color.Success.Main };
 const TARGET_HEIGHT = 300;

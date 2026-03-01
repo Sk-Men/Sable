@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { ConditionKind, IPushRules, PushRuleKind, RuleId } from '$types/matrix-sdk';
 import { Box, Text, Badge } from 'folds';
 import { useAccountData } from '$hooks/useAccountData';

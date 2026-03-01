@@ -1,4 +1,4 @@
-import { ReactNode, useEffect } from 'react';
+import React, { ReactNode, useEffect } from 'react';
 import { configClass, varsClass } from 'folds';
 import {
   DarkTheme,

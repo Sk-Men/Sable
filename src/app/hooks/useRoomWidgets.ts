@@ -131,6 +131,6 @@ export const useRoomWidgets = (room: Room): RoomWidget[] => {
 
       return widgets;
     }, []);
-     
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [room, updateCount]);
 };

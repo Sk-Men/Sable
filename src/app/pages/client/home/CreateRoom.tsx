@@ -1,3 +1,4 @@
+import React from 'react';
 import { Box, Icon, Icons, Scroll, IconButton } from 'folds';
 import {
   Page,

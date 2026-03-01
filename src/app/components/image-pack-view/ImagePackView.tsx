@@ -1,3 +1,4 @@
+import React from 'react';
 import { Box, IconButton, Text, Icon, Icons, Scroll, Chip } from 'folds';
 import { PackAddress } from '$plugins/custom-emoji';
 import { Page, PageHeader, PageContent } from '../page';

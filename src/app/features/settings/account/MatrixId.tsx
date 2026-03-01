@@ -1,3 +1,4 @@
+import React from 'react';
 import { Box, Text, Chip } from 'folds';
 import { useMatrixClient } from '$hooks/useMatrixClient';
 import { SequenceCard } from '$components/sequence-card';

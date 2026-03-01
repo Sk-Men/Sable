@@ -6,9 +6,11 @@ import {
   MatrixEvent,
   Room,
   RoomEvent,
-  SyncState, PushProcessor 
+  SyncState,
 } from '$types/matrix-sdk';
+import { PushProcessor } from '$types/matrix-sdk';
 import { useAtomValue, useSetAtom } from 'jotai';
+import { useNavigate } from 'react-router-dom';
 import {
   sessionsAtom,
   activeSessionIdAtom,

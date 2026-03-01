@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import { Box, Text, Icon, Icons, Button, MenuItem } from 'folds';
 import { SequenceCard } from '$components/sequence-card';
 import { SequenceCardStyle } from '../styles.css';
@@ -17,14 +17,14 @@ export function AccountData({ expand, onExpandToggle, onSelect }: AccountDataPro
   const [accountDataTypes, setAccountDataKeys] = useState<string[]>(
     () =>
       // TODO: tighten this once account data event typing is standardized.
-      Array.from(mx.store.accountData.keys())
+      Array.from(mx.store.accountData.keys()) as string[]
   );
 
   useAccountDataCallback(
     mx,
     useCallback(() => {
       // TODO: tighten this once account data event typing is standardized.
-      setAccountDataKeys(Array.from(mx.store.accountData.keys()));
+      setAccountDataKeys(Array.from(mx.store.accountData.keys()) as string[]);
     }, [mx])
   );
 

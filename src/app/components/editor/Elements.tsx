@@ -1,4 +1,5 @@
 import { Scroll, Text } from 'folds';
+import React from 'react';
 import {
   RenderElementProps,
   RenderLeafProps,

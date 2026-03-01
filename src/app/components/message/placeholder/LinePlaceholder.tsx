@@ -1,3 +1,4 @@
+import React from 'react';
 import { Box, as } from 'folds';
 import classNames from 'classnames';
 import * as css from './LinePlaceholder.css';

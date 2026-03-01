@@ -1,4 +1,4 @@
-import { useCallback, useEffect } from 'react';
+import React, { useCallback, useEffect } from 'react';
 import FocusTrap from 'focus-trap-react';
 import {
   Dialog,

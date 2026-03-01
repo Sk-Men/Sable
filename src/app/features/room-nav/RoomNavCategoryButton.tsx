@@ -1,3 +1,4 @@
+import React from 'react';
 import { as, Chip, Icon, Icons, Text } from 'folds';
 import classNames from 'classnames';
 import * as css from './styles.css';

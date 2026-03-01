@@ -1,5 +1,5 @@
 import { MatrixEvent, MatrixEventEvent, MatrixEventHandlerMap } from '$types/matrix-sdk';
-import { ReactNode, useEffect, useState } from 'react';
+import React, { ReactNode, useEffect, useState } from 'react';
 import { MessageEvent } from '$types/matrix/room';
 
 type EncryptedContentProps = {

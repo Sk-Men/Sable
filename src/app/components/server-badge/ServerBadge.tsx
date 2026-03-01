@@ -1,3 +1,4 @@
+import React from 'react';
 import { as, Badge, Text } from 'folds';
 
 export const ServerBadge = as<

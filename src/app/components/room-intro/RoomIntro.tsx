@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import { Avatar, Box, Button, Spinner, Text, as } from 'folds';
 import { Room } from '$types/matrix-sdk';
 import { useAtomValue } from 'jotai';

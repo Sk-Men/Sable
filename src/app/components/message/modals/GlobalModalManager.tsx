@@ -1,3 +1,4 @@
+import React from 'react';
 import { useAtom } from 'jotai';
 import { Overlay, OverlayBackdrop, OverlayCenter, Box, Modal } from 'folds';
 import FocusTrap from 'focus-trap-react';

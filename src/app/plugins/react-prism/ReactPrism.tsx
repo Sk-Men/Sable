@@ -1,4 +1,4 @@
-import { MutableRefObject, ReactNode, useEffect, useRef } from 'react';
+import React, { MutableRefObject, ReactNode, useEffect, useRef } from 'react';
 
 import Prism from 'prismjs';
 

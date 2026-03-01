@@ -1,4 +1,4 @@
-import { useRef } from 'react';
+import React, { useRef } from 'react';
 import { Scroll } from 'folds';
 
 import { Sidebar, SidebarContent, SidebarStackSeparator, SidebarStack } from '$components/sidebar';

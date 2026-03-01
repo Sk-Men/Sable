@@ -1,6 +1,7 @@
-import { useCallback, useMemo } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { color, Text } from 'folds';
-import { JoinRule, MatrixError, RestrictedAllowType, RoomJoinRulesEventContent  } from '$types/matrix-sdk';
+import { JoinRule, MatrixError, RestrictedAllowType } from '$types/matrix-sdk';
+import { RoomJoinRulesEventContent } from '$types/matrix-sdk';
 import { useAtomValue } from 'jotai';
 import {
   ExtendedJoinRules,

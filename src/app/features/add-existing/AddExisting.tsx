@@ -19,7 +19,7 @@ import {
   Spinner,
   Text,
 } from 'folds';
-import {
+import React, {
   ChangeEventHandler,
   MouseEventHandler,
   useCallback,

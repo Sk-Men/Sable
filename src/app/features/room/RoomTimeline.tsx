@@ -118,11 +118,15 @@ import { useRoomNavigate } from '$hooks/useRoomNavigate';
 import { useMediaAuthentication } from '$hooks/useMediaAuthentication';
 import { useIgnoredUsers } from '$hooks/useIgnoredUsers';
 import { useImagePackRooms } from '$hooks/useImagePackRooms';
+import { useIsDirectRoom } from '$hooks/useRoom';
 import { useOpenUserRoomProfile } from '$state/hooks/userRoomProfile';
 import { useSpaceOptionally } from '$hooks/useSpace';
 import { useRoomCreators } from '$hooks/useRoomCreators';
 import { useRoomPermissions } from '$hooks/useRoomPermissions';
-import { useGetMemberPowerTag } from '$hooks/useMemberPowerTag';
+import { useAccessiblePowerTagColors, useGetMemberPowerTag } from '$hooks/useMemberPowerTag';
+import { useTheme } from '$hooks/useTheme';
+import { useRoomCreatorsTag } from '$hooks/useRoomCreatorsTag';
+import { usePowerLevelTags } from '$hooks/usePowerLevelTags';
 import { profilesCacheAtom } from '$state/userRoomProfile';
 
 const TimelineFloat = as<'div', css.TimelineFloatVariants>(
@@ -1111,7 +1115,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
       const myReaction = reactions.find(factoryEventSentBy(mx.getUserId()!));
 
       if (myReaction && !!(myReaction as any)?.isRelation()) {
-        mx.redactEvent(room.roomId, (myReaction as any).getId());
+        mx.redactEvent(room.roomId, (myReaction as any).getId()!);
         return;
       }
       const rShortcode =

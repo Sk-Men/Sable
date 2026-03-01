@@ -3,12 +3,14 @@ import {
   EventTimeline,
   IContextResponse,
   MatrixClient,
+  MatrixEvent,
   Method,
   Preset,
   Room,
   RoomMember,
-  Visibility, RoomServerAclEventContent 
+  Visibility,
 } from '$types/matrix-sdk';
+import { RoomServerAclEventContent } from '$types/matrix-sdk';
 import { useMemo } from 'react';
 import {
   addRoomIdToMDirect,
@@ -26,6 +28,7 @@ import { Membership, StateEvent } from '$types/matrix/room';
 import { getStateEvent } from '../utils/room';
 import { splitWithSpace } from '../utils/common';
 import { createRoomEncryptionState } from '../components/create-room';
+import { AccountDataEvent } from '$types/matrix/accountData';
 import { enrichWidgetUrl } from './useRoomWidgets';
 
 export const SHRUG = '¯\\_(ツ)_/¯';
@@ -460,7 +463,7 @@ export const useCommands = (mx: MatrixClient, room: Room): CommandRecord => {
 
           let token: string | undefined = eventContext.start;
           while (token) {
-             
+            // eslint-disable-next-line no-await-in-loop
             const response = await mx.createMessagesRequest(
               room.roomId,
               token,
@@ -481,7 +484,7 @@ export const useCommands = (mx: MatrixClient, room: Room): CommandRecord => {
 
             const eventIds = eventsToDelete.map((roomEvent) => roomEvent.event_id);
 
-             
+            // eslint-disable-next-line no-await-in-loop
             await rateLimitedActions(eventIds, (eventId) =>
               mx.redactEvent(room.roomId, eventId, undefined, { reason })
             );

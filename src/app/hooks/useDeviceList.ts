@@ -1,6 +1,7 @@
 import { useEffect, useCallback, useMemo } from 'react';
-import { IMyDevice, CryptoEvent, CryptoEventHandlerMap  } from '$types/matrix-sdk';
+import { IMyDevice } from '$types/matrix-sdk';
 import { useQuery } from '@tanstack/react-query';
+import { CryptoEvent, CryptoEventHandlerMap } from '$types/matrix-sdk';
 import { useMatrixClient } from './useMatrixClient';
 
 export const useDeviceListChange = (

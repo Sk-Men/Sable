@@ -1,6 +1,6 @@
 import { Box, Icon, Icons, Text, as, color, toRem } from 'folds';
 import { EventTimelineSet, Room } from '$types/matrix-sdk';
-import { MouseEventHandler, ReactNode, useCallback, useMemo } from 'react';
+import React, { MouseEventHandler, ReactNode, useCallback, useMemo } from 'react';
 import classNames from 'classnames';
 import parse from 'html-react-parser';
 import { useAtomValue } from 'jotai';
@@ -81,7 +81,7 @@ export const Reply = as<'div', ReplyProps>(
 
     const mx = useMatrixClient();
 
-     
+    // eslint-disable-next-line camelcase
     const { body, formatted_body, format } = replyEvent?.getContent() ?? {};
     const sender = replyEvent?.getSender();
 
@@ -97,7 +97,7 @@ export const Reply = as<'div', ReplyProps>(
     const badEncryption = replyEvent?.getContent().msgtype === 'm.bad.encrypted';
     let bodyJSX: ReactNode = fallbackBody;
 
-     
+    // eslint-disable-next-line camelcase
     if (format === 'org.matrix.custom.html' && formatted_body) {
       const strippedHtml = trimReplyFromFormattedBody(formatted_body)
         .replace(/<br\s*\/?>/gi, ' ')

@@ -1,6 +1,6 @@
 import { Avatar, AvatarImage, Box, Button, Text } from 'folds';
 import { IIdentityProvider, SSOAction, createClient } from '$types/matrix-sdk';
-import { useMemo } from 'react';
+import React, { useMemo } from 'react';
 import { useAutoDiscoveryInfo } from '$hooks/useAutoDiscoveryInfo';
 
 type SSOLoginProps = {

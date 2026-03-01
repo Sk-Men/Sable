@@ -1,4 +1,4 @@
-import {
+import React, {
   MouseEventHandler,
   forwardRef,
   useCallback,
@@ -26,7 +26,8 @@ import {
   toRem,
 } from 'folds';
 import { useVirtualizer } from '@tanstack/react-virtual';
-import { JoinRule, Room, RoomJoinRulesEventContent  } from '$types/matrix-sdk';
+import { JoinRule, Room } from '$types/matrix-sdk';
+import { RoomJoinRulesEventContent } from '$types/matrix-sdk';
 import FocusTrap from 'focus-trap-react';
 import { useMatrixClient } from '$hooks/useMatrixClient';
 import { mDirectAtom } from '$state/mDirectList';
@@ -76,6 +77,7 @@ import { BreakWord } from '$styles/Text.css';
 import { InviteUserPrompt } from '$components/invite-user-prompt';
 import { CallNavStatus } from '$features/room-nav/RoomCallNavStatus';
 import { useCallState } from '../call/CallProvider';
+import { SwipeableChatWrapper } from '$components/SwipeableChatWrapper';
 import { mobileOrTablet } from '$appUtils/user-agent';
 import { useNavigate } from 'react-router-dom';
 import { lastVisitedRoomIdAtom } from '$state/room/lastRoom';

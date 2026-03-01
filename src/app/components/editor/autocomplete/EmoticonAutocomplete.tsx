@@ -1,4 +1,4 @@
-import { KeyboardEvent as ReactKeyboardEvent, useEffect, useMemo } from 'react';
+import React, { KeyboardEvent as ReactKeyboardEvent, useEffect, useMemo } from 'react';
 import { Editor } from 'slate';
 import { Box, MenuItem, Text, toRem } from 'folds';
 import { Room } from '$types/matrix-sdk';

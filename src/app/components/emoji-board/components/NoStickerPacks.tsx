@@ -1,3 +1,4 @@
+import React from 'react';
 import { Box, toRem, config, Icons, Icon, Text } from 'folds';
 
 export function NoStickerPacks() {

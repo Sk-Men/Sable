@@ -1,3 +1,4 @@
+import React from 'react';
 import { Avatar, AvatarFallback, AvatarImage, Box, Button, Icon, Icons, Text } from 'folds';
 import { useUserImagePack } from '$hooks/useImagePacks';
 import { SequenceCard } from '$components/sequence-card';

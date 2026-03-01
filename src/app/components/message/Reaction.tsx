@@ -1,3 +1,4 @@
+import React from 'react';
 import { Box, Text, as } from 'folds';
 import classNames from 'classnames';
 import { MatrixClient, MatrixEvent, Room } from '$types/matrix-sdk';

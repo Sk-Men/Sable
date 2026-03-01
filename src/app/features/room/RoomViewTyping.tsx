@@ -1,3 +1,4 @@
+import React from 'react';
 import { Box, Icon, IconButton, Icons, Text, as } from 'folds';
 import { Room } from '$types/matrix-sdk';
 import classNames from 'classnames';

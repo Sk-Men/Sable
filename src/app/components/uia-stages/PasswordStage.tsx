@@ -1,5 +1,5 @@
 import { Box, Button, color, config, Dialog, Header, Icon, IconButton, Icons, Text } from 'folds';
-import { FormEventHandler } from 'react';
+import React, { FormEventHandler } from 'react';
 import { AuthType } from '$types/matrix-sdk';
 import { StageComponentProps } from './types';
 import { ErrorCode } from '../../cs-errorcode';

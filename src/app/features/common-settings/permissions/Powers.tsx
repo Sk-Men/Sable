@@ -1,5 +1,5 @@
- 
-import { useState, MouseEventHandler, ReactNode } from 'react';
+/* eslint-disable react/no-array-index-key */
+import React, { useState, MouseEventHandler, ReactNode } from 'react';
 import FocusTrap from 'focus-trap-react';
 import {
   Box,

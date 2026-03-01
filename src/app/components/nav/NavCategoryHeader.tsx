@@ -1,4 +1,4 @@
-import { ReactNode } from 'react';
+import React, { ReactNode } from 'react';
 import classNames from 'classnames';
 import { Header, as } from 'folds';
 import * as css from './styles.css';

@@ -62,7 +62,7 @@ export const getWidgetUrl = (
     userId: mx.getUserId()!,
     deviceId: mx.getDeviceId()!,
     roomId,
-    baseUrl: mx.baseUrl,
+    baseUrl: mx.baseUrl!,
     parentUrl: window.location.origin,
   });
 
@@ -140,7 +140,7 @@ export class SmallWidget extends EventEmitter {
     // Populate the map of "read up to" events for this widget with the current event in every room.
     // This is a bit inefficient, but should be okay. We do this for all rooms in case the widget
     // requests timeline capabilities in other rooms down the road. It's just easier to manage here.
-     
+    // eslint-disable-next-line no-restricted-syntax
     for (const room of this.client.getRooms()) {
       // Timelines are most recent last
       const events = room.getLiveTimeline()?.getEvents() || [];
@@ -243,7 +243,7 @@ export class SmallWidget extends EventEmitter {
     return room === null || !room.findEventById(ev.relationEventId);
   }
 
-   
+  // eslint-disable-next-line class-methods-use-this
   private arrayFastClone<T>(a: T[]): T[] {
     return a.slice(0, a.length);
   }

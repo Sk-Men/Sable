@@ -1,4 +1,4 @@
-import { ReactNode } from 'react';
+import React, { ReactNode } from 'react';
 import { IconSrc, Icons } from 'folds';
 import { MatrixEvent } from '$types/matrix-sdk';
 import { IMemberContent, Membership } from '$types/matrix/room';

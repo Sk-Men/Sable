@@ -39,7 +39,7 @@ export function PersistentCallContainer({ children }: PersistentCallContainerPro
   const theme = useTheme();
   const isMobile = screenSize === ScreenSize.Mobile;
 
-   
+  /* eslint-disable no-param-reassign */
 
   const setupWidget = useCallback(
     (

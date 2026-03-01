@@ -10,7 +10,7 @@ import {
   color,
   config,
 } from 'folds';
-import { useCallback, useEffect } from 'react';
+import React, { useCallback, useEffect } from 'react';
 import { MatrixError } from '$types/matrix-sdk';
 import { useAutoDiscoveryInfo } from '$hooks/useAutoDiscoveryInfo';
 import { AsyncStatus, useAsyncCallback } from '$hooks/useAsyncCallback';

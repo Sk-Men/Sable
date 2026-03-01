@@ -1,6 +1,6 @@
 import { MatrixClient, MatrixEvent, Room } from '$types/matrix-sdk';
 import { ImagePack } from './ImagePack';
-import { ImageUsage } from './types';
+import { EmoteRoomsContent, ImageUsage } from './types';
 import { StateEvent } from '$types/matrix/room';
 import { getAccountData, getStateEvent, getStateEvents } from '$appUtils/room';
 import { AccountDataEvent } from '$types/matrix/accountData';
@@ -49,7 +49,9 @@ export function getRoomImagePacks(room: Room): ImagePack[] {
 }
 
 export function getGlobalImagePacks(mx: MatrixClient): ImagePack[] {
-  const emoteRoomsContent = getAccountData(mx, AccountDataEvent.PoniesEmoteRooms)?.getContent();
+  const emoteRoomsContent = getAccountData(mx, AccountDataEvent.PoniesEmoteRooms)?.getContent() as
+    | EmoteRoomsContent
+    | undefined;
   if (typeof emoteRoomsContent !== 'object') return [];
 
   const { rooms: roomIdToPackInfo } = emoteRoomsContent;
