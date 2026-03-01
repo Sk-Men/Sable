@@ -1,4 +1,4 @@
-import React from 'react';
+import { MouseEvent } from 'react';
 import { Room, MatrixEvent } from '$types/matrix-sdk';
 import { useSetAtom } from 'jotai';
 import { MenuItem, Icon, Icons, Text } from 'folds';
@@ -15,7 +15,7 @@ export function MessageSourceCodeItem({ room, mEvent }: { room: Room; mEvent: Ma
       size="300"
       after={<Icon size="100" src={Icons.BlockCode} />}
       radii="300"
-      onClick={(e: React.MouseEvent) => {
+      onClick={(e: MouseEvent) => {
         e.preventDefault();
         e.stopPropagation();
         setModal({

@@ -1,4 +1,4 @@
-import React, { KeyboardEvent as ReactKeyboardEvent, useCallback, useEffect } from 'react';
+import { KeyboardEvent as ReactKeyboardEvent, useCallback, useEffect } from 'react';
 import { Editor } from 'slate';
 import { Avatar, Icon, Icons, MenuItem, Text } from 'folds';
 import { JoinRule, MatrixClient } from '$types/matrix-sdk';

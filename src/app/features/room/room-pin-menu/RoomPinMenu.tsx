@@ -1,4 +1,4 @@
-import React, { forwardRef, MouseEventHandler, useCallback, useMemo, useRef } from 'react';
+import { forwardRef, MouseEventHandler, ReactNode, useCallback, useMemo, useRef } from 'react';
 import { MatrixEvent, Room, RoomPinnedEventsEventContent } from '$types/matrix-sdk';
 import {
   Avatar,
@@ -104,7 +104,7 @@ type PinnedMessageProps = {
 function PinnedMessageActiveContent(
   props: PinnedMessageProps & {
     pinnedEvent: MatrixEvent;
-    renderOptions: () => React.ReactNode;
+    renderOptions: () => ReactNode;
     handleOpenClick: MouseEventHandler;
   }
 ) {

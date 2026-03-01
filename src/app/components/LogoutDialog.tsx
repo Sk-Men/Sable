@@ -1,4 +1,4 @@
-import React, { forwardRef, useCallback } from 'react';
+import { forwardRef, useCallback } from 'react';
 import { Dialog, Header, config, Box, Text, Button, Spinner, color } from 'folds';
 import { logoutClient } from '$client/initMatrix';
 import { AsyncStatus, useAsyncCallback } from '../hooks/useAsyncCallback';

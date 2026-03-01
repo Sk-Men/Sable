@@ -15,7 +15,7 @@ import {
 } from 'folds';
 import { HttpApiEvent, HttpApiEventHandlerMap, MatrixClient } from '$types/matrix-sdk';
 import FocusTrap from 'focus-trap-react';
-import React, { MouseEventHandler, ReactNode, useCallback, useEffect, useState } from 'react';
+import { useRef, MouseEventHandler, ReactNode, useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAtom, useAtomValue, useSetAtom } from 'jotai';
 import {
@@ -167,7 +167,7 @@ export function ClientRoot({ children }: ClientRootProps) {
 
   const { baseUrl } = activeSession ?? {};
 
-  const loadedUserIdRef = React.useRef<string | undefined>(undefined);
+  const loadedUserIdRef = useRef<string | undefined>(undefined);
 
   const [loadState, loadMatrix, setLoadState] = useAsyncCallback<MatrixClient, Error, []>(
     useCallback(async () => {

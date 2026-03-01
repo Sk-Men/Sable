@@ -1,4 +1,4 @@
-import React, { FormEventHandler, MouseEventHandler, useState } from 'react';
+import { FormEventHandler, MouseEventHandler, useState } from 'react';
 import {
   Box,
   Header,

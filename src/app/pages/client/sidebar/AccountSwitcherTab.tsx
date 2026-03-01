@@ -1,4 +1,4 @@
-import React, { MouseEventHandler, useCallback, useState } from 'react';
+import { MouseEvent, MouseEventHandler, useCallback, useState } from 'react';
 import {
   Box,
   Icon,
@@ -88,7 +88,7 @@ function AccountRow({
               fill="None"
               size="400"
               radii="300"
-              onClick={(e: React.MouseEvent) => {
+              onClick={(e: MouseEvent) => {
                 e.stopPropagation();
                 onSignOut(session);
               }}

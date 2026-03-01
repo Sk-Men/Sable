@@ -1,4 +1,5 @@
-import React, {
+import {
+  Fragment,
   Dispatch,
   MouseEventHandler,
   RefObject,
@@ -1800,11 +1801,11 @@ export function RoomTimeline({
       if (dayDividerJSX) dayDivider = false;
 
       return (
-        <React.Fragment key={mEventId}>
+        <Fragment key={mEventId}>
           {newDividerJSX}
           {dayDividerJSX}
           {eventJSX}
-        </React.Fragment>
+        </Fragment>
       );
     }
 

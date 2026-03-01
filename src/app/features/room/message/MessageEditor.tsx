@@ -1,10 +1,4 @@
-import React, {
-  KeyboardEventHandler,
-  MouseEventHandler,
-  useCallback,
-  useEffect,
-  useState,
-} from 'react';
+import { KeyboardEventHandler, MouseEventHandler, useCallback, useEffect, useState } from 'react';
 import {
   Box,
   Chip,

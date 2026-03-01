@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 import { Chip, Icon, IconButton, Icons, Text, color } from 'folds';
 import { TUploadAtom, UploadStatus, UploadSuccess, useBindUploadAtom } from '$state/upload';
 import { useMatrixClient } from '$hooks/useMatrixClient';

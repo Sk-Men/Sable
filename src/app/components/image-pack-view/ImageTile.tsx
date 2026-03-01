@@ -1,4 +1,4 @@
-import React, { FormEventHandler, ReactNode, useMemo, useState } from 'react';
+import { FormEventHandler, ReactNode, useMemo, useState } from 'react';
 import { Badge, Box, Button, Chip, Icon, Icons, Input, Text } from 'folds';
 import { mxcUrlToHttp } from '$appUtils/matrix';
 import { ImageUsage, imageUsageEqual, PackImageReader } from '$plugins/custom-emoji';

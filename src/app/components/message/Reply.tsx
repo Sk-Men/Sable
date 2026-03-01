@@ -1,6 +1,6 @@
 import { Box, Icon, Icons, Text, as, color, toRem } from 'folds';
 import { EventTimelineSet, Room } from '$types/matrix-sdk';
-import React, { MouseEventHandler, ReactNode, useCallback, useMemo } from 'react';
+import { MouseEventHandler, ReactNode, useCallback, useMemo } from 'react';
 import classNames from 'classnames';
 import parse from 'html-react-parser';
 import { useAtomValue } from 'jotai';

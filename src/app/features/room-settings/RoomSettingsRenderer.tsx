@@ -1,4 +1,3 @@
-import React from 'react';
 import { Modal500 } from '$components/Modal500';
 import { useCloseRoomSettings, useRoomSettingsState } from '$state/hooks/roomSettings';
 import { useAllJoinedRoomsSet, useGetRoom } from '$hooks/useGetRoom';

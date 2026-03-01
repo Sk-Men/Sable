@@ -1,5 +1,5 @@
 import { Box, Button, config, Icon, Icons, Scroll, Text } from 'folds';
-import React, { useCallback, useMemo, useState } from 'react';
+import { SyntheticEvent, useCallback, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAtomValue } from 'jotai';
 import { Opts as LinkifyOpts } from 'linkifyjs';
@@ -268,7 +268,7 @@ export function UserRoomProfile({ userId, initialProfile }: UserRoomProfileProps
   };
 
   // Todo eventually maybe
-  const mentionClickHandler = useCallback((e: React.SyntheticEvent<HTMLElement>) => {
+  const mentionClickHandler = useCallback((e: SyntheticEvent<HTMLElement>) => {
     e.preventDefault();
   }, []);
 

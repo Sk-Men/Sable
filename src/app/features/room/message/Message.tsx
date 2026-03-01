@@ -13,9 +13,13 @@ import {
   as,
   config,
 } from 'folds';
-import React, {
+
+import {
   MouseEventHandler,
+  MouseEvent,
+  PointerEvent,
   ReactNode,
+  memo,
   useCallback,
   useRef,
   useState,
@@ -71,7 +75,7 @@ import * as css from './styles.css';
 
 export type ReactionHandler = (keyOrMxc: string, shortcode: string) => void;
 
-const MemoizedBody = React.memo(({ children }: { children: ReactNode }) => <>{children}</>);
+const MemoizedBody = memo(({ children }: { children: ReactNode }) => <>{children}</>);
 type MessageQuickReactionsProps = {
   onReaction: ReactionHandler;
 };
@@ -225,7 +229,7 @@ function useMobileDoubleTap(callback: () => void, delay = 300) {
   const lastTapRef = useRef<number>(0);
 
   return useCallback(
-    (e: React.PointerEvent<HTMLElement>) => {
+    (e: PointerEvent<HTMLElement>) => {
       if (!mobileOrTablet()) return;
 
       const now = Date.now();
@@ -509,7 +513,7 @@ function MessageInternal(
       currentTarget: {
         getAttribute: (attr: string) => (attr === 'data-event-id' ? targetId : null),
       },
-    } as unknown as React.MouseEvent<HTMLButtonElement>;
+    } as unknown as MouseEvent<HTMLButtonElement>;
 
     onReplyClick(mockEvent);
   };
@@ -872,7 +876,7 @@ function MessageInternal(
 }
 
 const MessageAs = as<'div', MessageProps>(MessageInternal);
-export const Message = React.memo(MessageAs);
+export const Message = memo(MessageAs);
 
 export type EventProps = {
   room: Room;

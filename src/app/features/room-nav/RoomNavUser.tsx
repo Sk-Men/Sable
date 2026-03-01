@@ -1,5 +1,5 @@
 import { Avatar, Box, Icon, Icons, Text } from 'folds';
-import React from 'react';
+import { MouseEventHandler } from 'react';
 import { Room, CallMembership } from '$types/matrix-sdk';
 import { NavButton, NavItem, NavItemContent } from '$components/nav';
 import { UserAvatar } from '$components/user-avatar';
@@ -33,7 +33,7 @@ export function RoomNavUser({ room, callMembership }: RoomNavUserProps) {
   const name = getMemberDisplayName(room, userId, nicknames) ?? getMxIdLocalPart(userId);
   const isCallParticipant = isActiveCall && userId !== mx.getUserId();
 
-  const handleNavUserClick: React.MouseEventHandler<HTMLButtonElement> = (evt) => {
+  const handleNavUserClick: MouseEventHandler<HTMLButtonElement> = (evt) => {
     openProfile(room.roomId, space?.roomId, userId, evt.currentTarget.getBoundingClientRect());
   };
 

@@ -1,4 +1,4 @@
-import React, { FormEventHandler, useCallback, useEffect, useState } from 'react';
+import { FormEventHandler, useCallback, useEffect, useState } from 'react';
 import { MatrixError, Room, JoinRule } from '$types/matrix-sdk';
 import {
   Box,

@@ -1,4 +1,3 @@
-import React from 'react';
 import { Box, color, Spinner, Switch, Text } from 'folds';
 import { JoinRule, MatrixError, RoomJoinRulesEventContent } from '$types/matrix-sdk';
 import { SequenceCard } from '$components/sequence-card';

@@ -1,4 +1,3 @@
-import React from 'react';
 import { JUMBO_EMOJI_REG } from '$appUtils/regex';
 import * as css from './style.css';
 

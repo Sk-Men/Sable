@@ -1,9 +1,4 @@
-import React, {
-  ChangeEventHandler,
-  KeyboardEventHandler,
-  MouseEventHandler,
-  useState,
-} from 'react';
+import { ChangeEventHandler, KeyboardEventHandler, MouseEventHandler, useState } from 'react';
 import {
   as,
   Box,

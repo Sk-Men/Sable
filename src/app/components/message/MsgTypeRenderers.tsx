@@ -1,4 +1,4 @@
-import React, { CSSProperties, ReactNode, useMemo } from 'react';
+import { CSSProperties, ReactNode, useMemo } from 'react';
 import { Box, Chip, Icon, Icons, Text, toRem } from 'folds';
 import { IContent } from '$types/matrix-sdk';
 import { JUMBO_EMOJI_REG, URL_REG } from '$appUtils/regex';

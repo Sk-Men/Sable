@@ -1,4 +1,4 @@
-import React, { ComponentProps, HTMLAttributes, Suspense, forwardRef, lazy } from 'react';
+import { ComponentProps, HTMLAttributes, Suspense, forwardRef, lazy } from 'react';
 import classNames from 'classnames';
 import { Box, Chip, Header, Icon, IconButton, Icons, Scroll, Text, as } from 'folds';
 import { ErrorBoundary } from 'react-error-boundary';

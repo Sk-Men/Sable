@@ -1,4 +1,4 @@
-import React, { useMemo, useCallback } from 'react';
+import { memo, useMemo, useCallback } from 'react';
 import { MsgType } from '$types/matrix-sdk';
 import { HTMLReactParserOptions } from 'html-react-parser';
 import { Opts } from 'linkifyjs';
@@ -267,4 +267,4 @@ function RenderMessageContentInternal({
   return <UnsupportedContent />;
 }
 
-export const RenderMessageContent = React.memo(RenderMessageContentInternal);
+export const RenderMessageContent = memo(RenderMessageContentInternal);

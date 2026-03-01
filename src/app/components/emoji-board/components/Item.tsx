@@ -1,4 +1,3 @@
-import React from 'react';
 import { Box } from 'folds';
 import { MatrixClient } from '$types/matrix-sdk';
 import { PackImageReader } from '$plugins/custom-emoji';

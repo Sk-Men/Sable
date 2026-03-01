@@ -17,7 +17,7 @@ import {
   TooltipProvider,
   toRem,
 } from 'folds';
-import React, { MouseEventHandler, ReactNode, useState } from 'react';
+import { MouseEventHandler, ReactNode, useState } from 'react';
 import { ReactEditor, useSlate } from 'slate-react';
 import { isMacOS } from '$appUtils/user-agent';
 import { KeySymbol } from '$appUtils/key-symbol';

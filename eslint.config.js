@@ -7,6 +7,7 @@ import { helpers } from 'eslint-config-airbnb-extended';
 import { configs } from 'eslint-config-airbnb-extended/legacy';
 import { rules as prettierConfigRules } from 'eslint-config-prettier';
 import prettierPlugin from 'eslint-plugin-prettier';
+import reactPlugin from 'eslint-plugin-react';
 import globals from 'globals';
 
 const gitignorePath = path.resolve('.', '.gitignore');
@@ -25,6 +26,8 @@ const reactConfig = defineConfig([
   ...configs.react.recommended,
   // Airbnb React hooks config
   ...configs.react.hooks,
+  // React 17+ automatic JSX runtime
+  reactPlugin.configs.flat['jsx-runtime'],
 ]);
 
 const typescriptConfig = defineConfig([

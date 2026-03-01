@@ -1,4 +1,4 @@
-import React, { KeyboardEventHandler, useCallback, useEffect, useState, useRef } from 'react';
+import { KeyboardEventHandler, useCallback, useEffect, useState, useRef } from 'react';
 import {
   Box,
   Chip,

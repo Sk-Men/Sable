@@ -1,5 +1,5 @@
 import { as, Avatar, Box, Icon, Icons, Text } from 'folds';
-import React from 'react';
+import { MouseEventHandler } from 'react';
 import classNames from 'classnames';
 import { Room, CallMembership } from '$types/matrix-sdk';
 import { UserAvatar } from '$components/user-avatar';
@@ -47,7 +47,7 @@ export function CallViewUser({ room, callMembership }: CallViewUserProps) {
   const nicknames = useAtomValue(nicknamesAtom);
   const getName = getMemberDisplayName(room, userId, nicknames) ?? getMxIdLocalPart(userId);
 
-  const handleUserClick: React.MouseEventHandler<HTMLButtonElement> = (evt) => {
+  const handleUserClick: MouseEventHandler<HTMLButtonElement> = (evt) => {
     openProfile(room.roomId, space?.roomId, userId, evt.currentTarget.getBoundingClientRect());
   };
 

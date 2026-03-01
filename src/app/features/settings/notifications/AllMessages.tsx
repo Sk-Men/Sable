@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 import { Badge, Box, Text } from 'folds';
 import {
   ConditionKind,

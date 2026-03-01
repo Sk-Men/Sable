@@ -1,4 +1,4 @@
-import React, { MouseEventHandler, forwardRef, useState, MouseEvent } from 'react';
+import { MouseEventHandler, forwardRef, useState, MouseEvent } from 'react';
 import { EventType, Room } from '$types/matrix-sdk';
 import {
   Avatar,

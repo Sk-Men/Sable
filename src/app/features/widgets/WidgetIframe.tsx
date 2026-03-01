@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ClientWidgetApi, IWidget, IRoomEvent, Widget, WidgetKind } from 'matrix-widget-api';
 import {
   ClientEvent,

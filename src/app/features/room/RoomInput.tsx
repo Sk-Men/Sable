@@ -1,7 +1,9 @@
-import React, {
+import {
   forwardRef,
   KeyboardEventHandler,
+  MouseEvent,
   RefObject,
+  ReactNode,
   useCallback,
   useEffect,
   useRef,
@@ -220,7 +222,7 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
       format: replyFormat,
     } = replyEvent?.getContent() ?? {};
 
-    let replyBodyJSX: React.ReactNode = replyDraft ? trimReplyFromBody(replyDraft.body) : null;
+    let replyBodyJSX: ReactNode = replyDraft ? trimReplyFromBody(replyDraft.body) : null;
 
     if (replyFormat === 'org.matrix.custom.html' && replyFormattedBody) {
       const strippedHtml = trimReplyFromFormattedBody(replyFormattedBody)
@@ -692,7 +694,7 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
               </UseStateProvider>
               <IconButton
                 onClick={submit}
-                onMouseDown={(e: React.MouseEvent) => e.preventDefault()}
+                onMouseDown={(e: MouseEvent) => e.preventDefault()}
                 variant="SurfaceVariant"
                 size="300"
                 radii="300"

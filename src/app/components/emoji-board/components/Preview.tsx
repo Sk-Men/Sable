@@ -1,5 +1,4 @@
 import { Box, Text } from 'folds';
-import React from 'react';
 import { Atom, atom, useAtomValue } from 'jotai';
 import { useMatrixClient } from '$hooks/useMatrixClient';
 import { useMediaAuthentication } from '$hooks/useMediaAuthentication';

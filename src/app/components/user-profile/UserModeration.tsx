@@ -1,5 +1,5 @@
 import { Box, Button, color, config, Icon, Icons, Spinner, Text, Input } from 'folds';
-import React, { useCallback, useRef } from 'react';
+import { useCallback, useRef } from 'react';
 import { useRoom } from '$hooks/useRoom';
 import { AsyncStatus, useAsyncCallback } from '$hooks/useAsyncCallback';
 import { useMatrixClient } from '$hooks/useMatrixClient';

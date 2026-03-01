@@ -1,6 +1,6 @@
 /* eslint-disable no-param-reassign */
 
-import React, { FormEventHandler, MouseEventHandler, useEffect, useRef, useState } from 'react';
+import { FormEventHandler, MouseEventHandler, useEffect, useRef, useState } from 'react';
 import classNames from 'classnames';
 import {
   Box,

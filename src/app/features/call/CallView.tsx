@@ -1,5 +1,6 @@
 import { EventType, Room } from '$types/matrix-sdk';
-import React, {
+import {
+  Children,
   useContext,
   useCallback,
   useEffect,
@@ -46,7 +47,7 @@ export function CallViewUserGrid({ children }: { children: ReactNode }) {
     <Box
       className={css.CallViewUserGrid}
       style={{
-        maxWidth: React.Children.count(children) === 4 ? '336px' : '503px',
+        maxWidth: Children.count(children) === 4 ? '336px' : '503px',
       }}
     >
       {children}

@@ -1,4 +1,4 @@
-import React, { FormEventHandler, useCallback } from 'react';
+import { FormEventHandler, useCallback } from 'react';
 import { Box, Text, Button, Spinner, color } from 'folds';
 import { decodeRecoveryKey, deriveRecoveryKeyFromPassphrase } from '$types/matrix-sdk';
 import { SecretStorageKeyContent, SecretStoragePassphraseContent } from '$types/matrix/accountData';

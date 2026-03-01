@@ -1,11 +1,4 @@
-import React, {
-  MouseEventHandler,
-  forwardRef,
-  useCallback,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
+import { MouseEventHandler, forwardRef, useCallback, useMemo, useRef, useState } from 'react';
 import { useAtom, useAtomValue } from 'jotai';
 import {
   Avatar,

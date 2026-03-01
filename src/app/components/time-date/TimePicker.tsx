@@ -1,4 +1,4 @@
-import React, { forwardRef } from 'react';
+import { forwardRef } from 'react';
 import { Menu, Box, Text, Chip } from 'folds';
 import dayjs from 'dayjs';
 import { hour12to24, hour24to12, hoursToMs, inSameDay, minutesToMs } from '$appUtils/time';

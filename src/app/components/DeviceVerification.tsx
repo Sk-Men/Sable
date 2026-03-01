@@ -5,7 +5,7 @@ import {
   Verifier,
   VerificationMethod,
 } from '$types/matrix-sdk';
-import React, { CSSProperties, useCallback, useEffect, useState } from 'react';
+import { CSSProperties, useCallback, useEffect, useState } from 'react';
 import {
   Box,
   Button,

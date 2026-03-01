@@ -1,4 +1,4 @@
-import React from 'react';
+import { WheelEvent } from 'react';
 import FileSaver from 'file-saver';
 import classNames from 'classnames';
 import { Box, Chip, Header, Icon, IconButton, Icons, Text, as } from 'folds';
@@ -24,7 +24,7 @@ export const ImageViewer = as<'div', ImageViewerProps>(
       FileSaver.saveAs(fileContent, alt);
     };
 
-    const handleWheel = (e: React.WheelEvent) => {
+    const handleWheel = (e: WheelEvent) => {
       if (e.deltaY < 0) zoomIn();
       else zoomOut();
     };
