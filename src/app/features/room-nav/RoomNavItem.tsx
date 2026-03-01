@@ -270,6 +270,7 @@ export function RoomNavItem({
               {showAvatar ? (
                 <RoomAvatar
                   roomId={room.roomId}
+                  uniformIcons
                   src={
                     direct
                       ? getDirectRoomAvatarUrl(mx, room, 96, useAuthentication)
