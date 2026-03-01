@@ -229,6 +229,7 @@ function useMobileDoubleTap(callback: () => void, delay = 300) {
   const lastTapRef = useRef<number>(0);
 
   return useCallback(
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     (e: PointerEvent<HTMLElement>) => {
       if (!mobileOrTablet()) return;
 
@@ -247,31 +248,27 @@ function useMobileDoubleTap(callback: () => void, delay = 300) {
 }
 
 const Pronouns = as<
-  'div',
+  'span',
   {
     pronouns?: any[];
     tagColor: string;
   }
->(({ pronouns, tagColor, ...props }, ref) => {
+>(({ as: AsPronouns = 'span', pronouns, tagColor, ...props }, ref) => {
   if (!pronouns || pronouns.length === 0) return null;
 
   const clamp = (str: string, len: number) => (str.length > len ? `${str.slice(0, len)}...` : str);
   const limit = mobileOrTablet() ? 1 : 3;
 
-  const display = pronouns.slice(0, limit).map((p) => (
-    <PronounPill style={{ color: tagColor }} {...props} ref={ref}>
-      {clamp(p.summary, 16)}
-    </PronounPill>
-  ));
-
-  if (pronouns.length > limit) {
-    display.push(
-      <PronounPill style={{ color: tagColor }} {...props} ref={ref}>
-        ...
-      </PronounPill>
-    );
-  }
-  return display;
+  return (
+    <AsPronouns {...props} ref={ref}>
+      {pronouns.slice(0, limit).map((p) => (
+        <PronounPill key={p.summary} style={{ color: tagColor }}>
+          {clamp(p.summary, 16)}
+        </PronounPill>
+      ))}
+      {pronouns.length > limit && <PronounPill style={{ color: tagColor }}>...</PronounPill>}
+    </AsPronouns>
+  );
 });
 
 function MessageInternal(
