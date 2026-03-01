@@ -83,6 +83,8 @@ const projectOverrides = defineConfig([
           extensions: ['.tsx', '.jsx'],
         },
       ],
+      // obsolete in a React 19
+      'react/prop-types': 'off',
       'react/require-default-props': 'off',
       'react/jsx-props-no-spreading': 'off',
       'react-hooks/rules-of-hooks': 'error',
