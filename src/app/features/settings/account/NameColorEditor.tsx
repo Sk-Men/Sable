@@ -10,18 +10,27 @@ type NameColorEditorProps = {
 };
 
 export function NameColorEditor({ current, onSave }: NameColorEditorProps) {
-  const [tempColor, setTempColor] = useState(current || '#FFFFFF');
+  const stripQuotes = (str?: string) => {
+    if (!str) return '';
+    // to solve the silly tuwunel
+    return str.replace(/^["']|["']$/g, '');
+  };
+
+  const [tempColor, setTempColor] = useState(stripQuotes(current) || '#FFFFFF');
   const [hasChanged, setHasChanged] = useState(false);
 
   useEffect(() => {
-    if (current) setTempColor(current);
+    const sanitized = stripQuotes(current);
+    if (sanitized) setTempColor(sanitized);
     else setTempColor('#FFFFFF');
   }, [current]);
 
   const handleUpdate = (newColor: string) => {
-    const sanitized = newColor.startsWith('#') ? newColor : `#${newColor}`;
+    let sanitized = stripQuotes(newColor);
+    sanitized = sanitized.startsWith('#') ? sanitized : `#${sanitized}`;
     setTempColor(sanitized);
-    setHasChanged(sanitized.toUpperCase() !== (current?.toUpperCase() || '#FFFFFF'));
+    const currentSanitized = stripQuotes(current) || '#FFFFFF';
+    setHasChanged(sanitized.toUpperCase() !== currentSanitized.toUpperCase());
   };
 
   const handleSave = () => {
