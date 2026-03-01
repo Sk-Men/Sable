@@ -44,7 +44,7 @@ import { usePowerLevels } from '$hooks/usePowerLevels';
 import { usePowerLevelTags } from '$hooks/usePowerLevelTags';
 import { useTheme } from '$hooks/useTheme';
 import { PowerIcon } from '$components/power';
-import colorMXID from '$util/colorMXID';
+import colorMXID from '$appUtils/colorMXID';
 import {
   getPowerTagIconSrc,
   useAccessiblePowerTagColors,

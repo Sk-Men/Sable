@@ -11,7 +11,7 @@ import {
   decryptMegolmKeyFile,
   encryptMegolmKeyFile,
   type FriendlyError,
-} from '$util/MegolmExportEncryption';
+} from '$appUtils/MegolmExportEncryption';
 import { useAlive } from '$hooks/useAlive';
 import { useFilePicker } from '$hooks/useFilePicker';
 import { SequenceCardStyle } from '../styles.css';

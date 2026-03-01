@@ -12,7 +12,7 @@ import {
 } from 'folds';
 import classNames from 'classnames';
 import FocusTrap from 'focus-trap-react';
-import colorMXID from '$util/colorMXID';
+import colorMXID from '$appUtils/colorMXID';
 import { getMxIdLocalPart } from '$appUtils/matrix';
 import { BreakWord, LineClamp3 } from '$styles/Text.css';
 import { UserPresence } from '$hooks/useUserPresence';

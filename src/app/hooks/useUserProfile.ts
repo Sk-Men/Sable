@@ -3,7 +3,7 @@ import { useAtomValue, useSetAtom } from 'jotai';
 import { selectAtom } from 'jotai/utils';
 import { EventTimeline, Room } from '$types/matrix-sdk';
 import { StateEvent } from '$types/matrix/room';
-import colorMXID from '$util/colorMXID';
+import colorMXID from '$appUtils/colorMXID';
 import { useMatrixClient } from './useMatrixClient';
 import { profilesCacheAtom } from '../state/userRoomProfile';
 import { useSetting } from '../state/hooks/settings';

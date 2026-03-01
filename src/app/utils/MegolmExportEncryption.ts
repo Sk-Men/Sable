@@ -2,7 +2,7 @@
 /* eslint-disable no-plusplus */
 // https://github.com/element-hq/element-web/blob/a5b63d582fde59ea4dd3c7fdcad7266ab70dd695/apps/web/src/utils/MegolmExportEncryption.ts
 
-import { createLogger } from '$appUtils/debug';
+import { createLogger } from './debug';
 
 const logger = createLogger('MegolmExportEncryption');
 const subtleCrypto = window.crypto.subtle;
