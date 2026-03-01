@@ -9,7 +9,7 @@ import { useMatrixClient } from '$hooks/useMatrixClient';
 import { StateEvent } from '$types/matrix/room';
 import { useRoomCreators } from '$hooks/useRoomCreators';
 import { useRoomPermissions } from '$hooks/useRoomPermissions';
-import { createLogger } from '$appUtils/debug';
+import { createLogger } from '$utils/debug';
 import { SequenceCardStyle } from '../styles.css';
 
 type CosmeticsProps = {

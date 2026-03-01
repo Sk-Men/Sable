@@ -48,11 +48,11 @@ import {
 import { isKeyHotkey } from 'is-hotkey';
 import { Opts as LinkifyOpts } from 'linkifyjs';
 import { useTranslation } from 'react-i18next';
-import { eventWithShortcode, factoryEventSentBy, getMxIdLocalPart } from '$appUtils/matrix';
+import { eventWithShortcode, factoryEventSentBy, getMxIdLocalPart } from '$utils/matrix';
 import { useMatrixClient } from '$hooks/useMatrixClient';
 import { ItemRange, useVirtualPaginator } from '$hooks/useVirtualPaginator';
 import { useAlive } from '$hooks/useAlive';
-import { editableActiveElement, scrollToBottom } from '$appUtils/dom';
+import { editableActiveElement, scrollToBottom } from '$utils/dom';
 import {
   CompactPlaceholder,
   DefaultPlaceholder,
@@ -83,7 +83,7 @@ import {
   getReactionContent,
   isMembershipChanged,
   reactionOrEditEvent,
-} from '$appUtils/room';
+} from '$utils/room';
 import { useSetting } from '$state/hooks/settings';
 import { MessageLayout, settingsAtom } from '$state/settings';
 import { nicknamesAtom } from '$state/nicknames';
@@ -95,10 +95,10 @@ import {
   getIntersectionObserverEntry,
   useIntersectionObserver,
 } from '$hooks/useIntersectionObserver';
-import { markAsRead } from '$appUtils/notifications';
+import { markAsRead } from '$utils/notifications';
 import { useDebounce } from '$hooks/useDebounce';
 import { getResizeObserverEntry, useResizeObserver } from '$hooks/useResizeObserver';
-import { inSameDay, minuteDifference, timeDayMonthYear, today, yesterday } from '$appUtils/time';
+import { inSameDay, minuteDifference, timeDayMonthYear, today, yesterday } from '$utils/time';
 import { createMentionElement, isEmptyEditor, moveCursor } from '$components/editor';
 import { roomIdToReplyDraftAtomFamily } from '$state/room/roomInputDrafts';
 import { usePowerLevelsContext } from '$hooks/usePowerLevels';

@@ -14,13 +14,13 @@ import {
 } from 'folds';
 import { Room } from '$types/matrix-sdk';
 import { useRoomEventReaders } from '$hooks/useRoomEventReaders';
-import { getMemberDisplayName } from '$appUtils/room';
-import { getMxIdLocalPart } from '$appUtils/matrix';
+import { getMemberDisplayName } from '$utils/room';
+import { getMxIdLocalPart } from '$utils/matrix';
 import { useMatrixClient } from '$hooks/useMatrixClient';
 import { useMediaAuthentication } from '$hooks/useMediaAuthentication';
 import { useOpenUserRoomProfile } from '$state/hooks/userRoomProfile';
 import { useSpaceOptionally } from '$hooks/useSpace';
-import { getMouseEventCords } from '$appUtils/dom';
+import { getMouseEventCords } from '$utils/dom';
 import { useAtomValue } from 'jotai';
 import { nicknamesAtom } from '$state/nicknames';
 import { UserAvatar } from '../user-avatar';

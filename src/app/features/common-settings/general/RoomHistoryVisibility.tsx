@@ -26,7 +26,7 @@ import { useRoom } from '$hooks/useRoom';
 import { StateEvent } from '$types/matrix/room';
 import { AsyncStatus, useAsyncCallback } from '$hooks/useAsyncCallback';
 import { useStateEvent } from '$hooks/useStateEvent';
-import { stopPropagation } from '$appUtils/keyboard';
+import { stopPropagation } from '$utils/keyboard';
 import { RoomPermissionsAPI } from '$hooks/useRoomPermissions';
 
 const useVisibilityStr = () =>

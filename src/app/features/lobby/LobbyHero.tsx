@@ -4,12 +4,12 @@ import { useRoomAvatar, useRoomName, useRoomTopic } from '$hooks/useRoomMeta';
 import { useSpace } from '$hooks/useSpace';
 import { useMatrixClient } from '$hooks/useMatrixClient';
 import { RoomAvatar } from '$components/room-avatar';
-import { nameInitials } from '$appUtils/common';
+import { nameInitials } from '$utils/common';
 import { UseStateProvider } from '$components/UseStateProvider';
 import { RoomTopicViewer } from '$components/room-topic-viewer';
 import { PageHero } from '$components/page';
-import { onEnterOrSpace, stopPropagation } from '$appUtils/keyboard';
-import { mxcUrlToHttp } from '$appUtils/matrix';
+import { onEnterOrSpace, stopPropagation } from '$utils/keyboard';
+import { mxcUrlToHttp } from '$utils/matrix';
 import { useMediaAuthentication } from '$hooks/useMediaAuthentication';
 import * as css from './LobbyHero.css';
 

@@ -4,7 +4,7 @@ import { SequenceCard } from '$components/sequence-card';
 import { SettingTile } from '$components/setting-tile';
 import { useMatrixClient } from '$hooks/useMatrixClient';
 import { AsyncStatus, useAsyncCallback } from '$hooks/useAsyncCallback';
-import { isUserId } from '$appUtils/matrix';
+import { isUserId } from '$utils/matrix';
 import { useIgnoredUsers } from '$hooks/useIgnoredUsers';
 import { useAlive } from '$hooks/useAlive';
 import { SequenceCardStyle } from '../styles.css';

@@ -16,13 +16,13 @@ import classNames from 'classnames';
 import FocusTrap from 'focus-trap-react';
 import { useAtomValue } from 'jotai';
 
-import { getMemberDisplayName } from '$appUtils/room';
-import { getMxIdLocalPart } from '$appUtils/matrix';
+import { getMemberDisplayName } from '$utils/room';
+import { getMxIdLocalPart } from '$utils/matrix';
 import { useMatrixClient } from '$hooks/useMatrixClient';
 import { useRoomLatestRenderedEvent } from '$hooks/useRoomLatestRenderedEvent';
 import { useRoomEventReaders } from '$hooks/useRoomEventReaders';
 import { EventReaders } from '$components/event-readers';
-import { stopPropagation } from '$appUtils/keyboard';
+import { stopPropagation } from '$utils/keyboard';
 import { nicknamesAtom } from '$state/nicknames';
 import * as css from './RoomViewFollowing.css';
 

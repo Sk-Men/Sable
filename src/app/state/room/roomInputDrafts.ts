@@ -3,7 +3,7 @@ import { atomFamily } from 'jotai/utils';
 import { Descendant } from 'slate';
 import { EncryptedAttachmentInfo } from 'browser-encrypt-attachment';
 import { IEventRelation } from '$types/matrix-sdk';
-import { TUploadContent } from '$appUtils/matrix';
+import { TUploadContent } from '$utils/matrix';
 import { createUploadAtomFamily } from '../upload';
 import { createListAtom } from '../list';
 

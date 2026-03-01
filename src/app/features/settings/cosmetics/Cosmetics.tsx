@@ -20,7 +20,7 @@ import { SequenceCard } from '$components/sequence-card';
 import { useSetting } from '$state/hooks/settings';
 import { JumboEmojiSize, settingsAtom } from '$state/settings';
 import { SettingTile } from '$components/setting-tile';
-import { stopPropagation } from '$appUtils/keyboard';
+import { stopPropagation } from '$utils/keyboard';
 import { SequenceCardStyle } from '../styles.css';
 import { Appearance } from './Themes';
 

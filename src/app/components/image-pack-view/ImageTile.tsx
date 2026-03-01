@@ -1,11 +1,11 @@
 import { FormEventHandler, ReactNode, useMemo, useState } from 'react';
 import { Badge, Box, Button, Chip, Icon, Icons, Input, Text } from 'folds';
-import { mxcUrlToHttp } from '$appUtils/matrix';
+import { mxcUrlToHttp } from '$utils/matrix';
 import { ImageUsage, imageUsageEqual, PackImageReader } from '$plugins/custom-emoji';
 import { useMatrixClient } from '$hooks/useMatrixClient';
 import { useObjectURL } from '$hooks/useObjectURL';
 import { createUploadAtom, TUploadAtom } from '$state/upload';
-import { replaceSpaceWithDash } from '$appUtils/common';
+import { replaceSpaceWithDash } from '$utils/common';
 import { SettingTile } from '../setting-tile';
 import * as css from './style.css';
 import { UsageSwitcher, useUsageStr } from './UsageSwitcher';

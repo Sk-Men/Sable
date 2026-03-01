@@ -22,10 +22,10 @@ import {
 } from '$types/matrix/common';
 import { useMatrixClient } from '$hooks/useMatrixClient';
 import { AsyncStatus, useAsyncCallback } from '$hooks/useAsyncCallback';
-import { bytesToSize, millisecondsToMinutesAndSeconds } from '$appUtils/common';
-import { decryptFile, downloadEncryptedMedia, downloadMedia, mxcUrlToHttp } from '$appUtils/matrix';
+import { bytesToSize, millisecondsToMinutesAndSeconds } from '$utils/common';
+import { decryptFile, downloadEncryptedMedia, downloadMedia, mxcUrlToHttp } from '$utils/matrix';
 import { useMediaAuthentication } from '$hooks/useMediaAuthentication';
-import { validBlurHash } from '$appUtils/blurHash';
+import { validBlurHash } from '$utils/blurHash';
 import * as css from './style.css';
 
 type RenderVideoProps = {

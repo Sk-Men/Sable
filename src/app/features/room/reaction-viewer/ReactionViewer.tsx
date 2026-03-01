@@ -15,8 +15,8 @@ import {
   config,
 } from 'folds';
 import { MatrixEvent, Room, RoomMember, Relations } from '$types/matrix-sdk';
-import { getMemberDisplayName } from '$appUtils/room';
-import { eventWithShortcode, getMxIdLocalPart } from '$appUtils/matrix';
+import { getMemberDisplayName } from '$utils/room';
+import { eventWithShortcode, getMxIdLocalPart } from '$utils/matrix';
 import { useMatrixClient } from '$hooks/useMatrixClient';
 import { useRelations } from '$hooks/useRelations';
 import { Reaction } from '$components/message';
@@ -27,7 +27,7 @@ import { UserAvatar } from '$components/user-avatar';
 import { useMediaAuthentication } from '$hooks/useMediaAuthentication';
 import { useOpenUserRoomProfile } from '$state/hooks/userRoomProfile';
 import { useSpaceOptionally } from '$hooks/useSpace';
-import { getMouseEventCords } from '$appUtils/dom';
+import { getMouseEventCords } from '$utils/dom';
 import * as css from './ReactionViewer.css';
 
 export type ReactionViewerProps = {

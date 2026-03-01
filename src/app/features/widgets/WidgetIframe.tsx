@@ -8,7 +8,7 @@ import {
   MatrixEvent,
   MatrixEventEvent,
 } from '$types/matrix-sdk';
-import { createLogger } from '$appUtils/debug';
+import { createLogger } from '$utils/debug';
 import { resolveWidgetUrl } from '$hooks/useRoomWidgets';
 import { GenericWidgetDriver, CapabilityApprovalCallback } from './GenericWidgetDriver';
 

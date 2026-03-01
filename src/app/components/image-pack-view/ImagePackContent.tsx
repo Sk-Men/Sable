@@ -12,10 +12,10 @@ import {
 import { useMediaAuthentication } from '$hooks/useMediaAuthentication';
 import { useFilePicker } from '$hooks/useFilePicker';
 import { UploadSuccess } from '$state/upload';
-import { getImageInfo, TUploadContent } from '$appUtils/matrix';
-import { getImageFileUrl, loadImageElement, renameFile } from '$appUtils/dom';
-import { replaceSpaceWithDash, suffixRename } from '$appUtils/common';
-import { getFileNameWithoutExt } from '$appUtils/mimeTypes';
+import { getImageInfo, TUploadContent } from '$utils/matrix';
+import { getImageFileUrl, loadImageElement, renameFile } from '$utils/dom';
+import { replaceSpaceWithDash, suffixRename } from '$utils/common';
+import { getFileNameWithoutExt } from '$utils/mimeTypes';
 import { AsyncStatus, useAsyncCallback } from '$hooks/useAsyncCallback';
 import { SequenceCard } from '../sequence-card';
 import { ImageTile, ImageTileEdit, ImageTileUpload } from './ImageTile';

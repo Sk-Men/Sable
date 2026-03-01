@@ -7,7 +7,7 @@ import { SequenceCard } from '$components/sequence-card';
 import { SettingTile } from '$components/setting-tile';
 import { useMatrixClient } from '$hooks/useMatrixClient';
 import { useUserProfile } from '$hooks/useUserProfile';
-import { getMxIdLocalPart } from '$appUtils/matrix';
+import { getMxIdLocalPart } from '$utils/matrix';
 import { makePushRuleData, PushRuleData, usePushRule } from '$hooks/usePushRule';
 import {
   getNotificationModeActions,

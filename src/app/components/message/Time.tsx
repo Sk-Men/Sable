@@ -6,7 +6,7 @@ import {
   timeHourMinuteSecond,
   today,
   yesterday,
-} from '$appUtils/time';
+} from '$utils/time';
 
 export type TimeProps = {
   compact?: boolean;

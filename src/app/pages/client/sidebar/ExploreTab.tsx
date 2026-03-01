@@ -11,7 +11,7 @@ import {
 } from '$pages/pathUtils';
 import { useClientConfig } from '$hooks/useClientConfig';
 import { useMatrixClient } from '$hooks/useMatrixClient';
-import { getMxIdServer } from '$appUtils/matrix';
+import { getMxIdServer } from '$utils/matrix';
 import { ScreenSize, useScreenSizeContext } from '$hooks/useScreenSize';
 import { useNavToActivePathAtom } from '$state/hooks/navToActivePath';
 

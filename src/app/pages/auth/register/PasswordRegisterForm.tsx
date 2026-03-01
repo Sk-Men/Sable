@@ -26,7 +26,7 @@ import {
   getUIAFlowForStages,
   hasStageInFlows,
   requiredStageInFlows,
-} from '$appUtils/matrix-uia';
+} from '$utils/matrix-uia';
 import { useUIACompleted, useUIAFlow, useUIAParams } from '$hooks/useUIAFlows';
 import { AsyncState, AsyncStatus, useAsyncCallback } from '$hooks/useAsyncCallback';
 import { useAutoDiscoveryInfo } from '$hooks/useAutoDiscoveryInfo';

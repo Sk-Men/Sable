@@ -24,10 +24,10 @@ import {
   useMemo,
   useState,
 } from 'react';
-import { getMxIdLocalPart, getMxIdServer, isUserId } from '$appUtils/matrix';
+import { getMxIdLocalPart, getMxIdServer, isUserId } from '$utils/matrix';
 import { useDirectUsers } from '$hooks/useDirectUsers';
 import { useMatrixClient } from '$hooks/useMatrixClient';
-import { stopPropagation } from '$appUtils/keyboard';
+import { stopPropagation } from '$utils/keyboard';
 import { useAsyncSearch, UseAsyncSearchOptions } from '$hooks/useAsyncSearch';
 import { highlightText, makeHighlightRegex } from '$plugins/react-custom-html-parser';
 import { SettingTile } from '../setting-tile';

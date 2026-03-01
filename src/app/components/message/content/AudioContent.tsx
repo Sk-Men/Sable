@@ -15,8 +15,8 @@ import {
   useMediaVolume,
 } from '$hooks/media';
 import { useThrottle } from '$hooks/useThrottle';
-import { secondsToMinutesAndSeconds } from '$appUtils/common';
-import { decryptFile, downloadEncryptedMedia, downloadMedia, mxcUrlToHttp } from '$appUtils/matrix';
+import { secondsToMinutesAndSeconds } from '$utils/common';
+import { decryptFile, downloadEncryptedMedia, downloadMedia, mxcUrlToHttp } from '$utils/matrix';
 import { useMediaAuthentication } from '$hooks/useMediaAuthentication';
 
 const PLAY_TIME_THROTTLE_OPS = {

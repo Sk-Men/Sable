@@ -25,7 +25,7 @@ import {
   getUnreadInfo,
   getUnreadInfos,
   isNotificationEvent,
-} from '$appUtils/room';
+} from '$utils/room';
 import { useStateEventCallback } from '$hooks/useStateEventCallback';
 import { useSyncState } from '$hooks/useSyncState';
 import { useRoomsNotificationPreferencesContext } from '$hooks/useRoomsNotificationPreferences';

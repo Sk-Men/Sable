@@ -18,10 +18,10 @@ import {
 } from '$state/sessions';
 import { useSetting } from '$state/hooks/settings';
 import { settingsAtom } from '$state/settings';
-import { getMxIdLocalPart, mxcUrlToHttp } from '$appUtils/matrix';
-import { getMemberDisplayName, getNotificationType, isNotificationEvent } from '$appUtils/room';
+import { getMxIdLocalPart, mxcUrlToHttp } from '$utils/matrix';
+import { getMemberDisplayName, getNotificationType, isNotificationEvent } from '$utils/room';
 import { NotificationType } from '$types/matrix/room';
-import { createLogger } from '$appUtils/debug';
+import { createLogger } from '$utils/debug';
 import LogoSVG from '$public/res/svg/cinny.svg';
 import { nicknamesAtom } from '$state/nicknames';
 import { useMatrixClient } from '$hooks/useMatrixClient';

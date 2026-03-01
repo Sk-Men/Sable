@@ -10,7 +10,7 @@ import { useMatrixClient } from '$hooks/useMatrixClient';
 import { useEditor } from '$components/editor';
 import { Page } from '$components/page';
 import { useKeyDown } from '$hooks/useKeyDown';
-import { editableActiveElement } from '$appUtils/dom';
+import { editableActiveElement } from '$utils/dom';
 import { settingsAtom } from '$state/settings';
 import { useSetting } from '$state/hooks/settings';
 import { useRoomPermissions } from '$hooks/useRoomPermissions';

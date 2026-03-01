@@ -18,7 +18,7 @@ import {
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { useAtom, useAtomValue } from 'jotai';
 import FocusTrap from 'focus-trap-react';
-import { factoryRoomIdByActivity, factoryRoomIdByAtoZ } from '$appUtils/sort';
+import { factoryRoomIdByActivity, factoryRoomIdByAtoZ } from '$utils/sort';
 import {
   NavButton,
   NavCategory,
@@ -37,7 +37,7 @@ import {
   getHomeSearchPath,
   withSearchParam,
 } from '$pages/pathUtils';
-import { getCanonicalAliasOrRoomId } from '$appUtils/matrix';
+import { getCanonicalAliasOrRoomId } from '$utils/matrix';
 import { useSelectedRoom } from '$hooks/router/useSelectedRoom';
 import { useHomeCreateSelected, useHomeSearchSelected } from '$hooks/router/useHomeSelected';
 import { useMatrixClient } from '$hooks/useMatrixClient';
@@ -49,9 +49,9 @@ import { useCategoryHandler } from '$hooks/useCategoryHandler';
 import { useNavToActivePathMapper } from '$hooks/useNavToActivePathMapper';
 import { PageNav, PageNavHeader, PageNavContent } from '$components/page';
 import { useRoomsUnread } from '$state/hooks/unread';
-import { markAsRead } from '$appUtils/notifications';
+import { markAsRead } from '$utils/notifications';
 import { useClosedNavCategoriesAtom } from '$state/hooks/closedNavCategories';
-import { stopPropagation } from '$appUtils/keyboard';
+import { stopPropagation } from '$utils/keyboard';
 import { useSetting } from '$state/hooks/settings';
 import { settingsAtom } from '$state/settings';
 import {

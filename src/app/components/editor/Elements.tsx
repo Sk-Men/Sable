@@ -10,7 +10,7 @@ import { useAtomValue } from 'jotai';
 
 import * as css from '$styles/CustomHtml.css';
 import { useMatrixClient } from '$hooks/useMatrixClient';
-import { mxcUrlToHttp } from '$appUtils/matrix';
+import { mxcUrlToHttp } from '$utils/matrix';
 import { useMediaAuthentication } from '$hooks/useMediaAuthentication';
 import { nicknamesAtom } from '$state/nicknames';
 import { BlockType } from './types';

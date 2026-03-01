@@ -6,7 +6,7 @@ import { IsDirectRoomProvider, RoomProvider } from '$hooks/useRoom';
 import { useMatrixClient } from '$hooks/useMatrixClient';
 import { JoinBeforeNavigate } from '$features/join-before-navigate';
 import { useSpace } from '$hooks/useSpace';
-import { getAllParents, getSpaceChildren } from '$appUtils/room';
+import { getAllParents, getSpaceChildren } from '$utils/room';
 import { roomToParentsAtom } from '$state/room/roomToParents';
 import { allRoomsAtom } from '$state/room-list/roomList';
 import { useSearchParamsViaServers } from '$hooks/router/useSearchParamsViaServers';

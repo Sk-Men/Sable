@@ -24,7 +24,7 @@ import { useMatrixClient } from '$hooks/useMatrixClient';
 import { useAlive } from '$hooks/useAlive';
 import { Cursor } from '$plugins/text-area';
 import { AsyncStatus, useAsyncCallback } from '$hooks/useAsyncCallback';
-import { syntaxErrorPosition } from '$appUtils/dom';
+import { syntaxErrorPosition } from '$utils/dom';
 import { SettingTile } from '$components/setting-tile';
 import { usePowerLevels } from '$hooks/usePowerLevels';
 import { useTextAreaCodeEditor } from '$hooks/useTextAreaCodeEditor';

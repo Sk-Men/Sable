@@ -21,7 +21,7 @@ import { Opts as LinkifyOpts } from 'linkifyjs';
 import { HTMLReactParserOptions } from 'html-react-parser';
 import { useAtomValue } from 'jotai';
 import { useVirtualizer } from '@tanstack/react-virtual';
-import { createLogger } from '$appUtils/debug';
+import { createLogger } from '$utils/debug';
 import { useRoomPinnedEvents } from '$hooks/useRoomPinnedEvents';
 import { SequenceCard } from '$components/sequence-card';
 import { useRoomEvent } from '$hooks/useRoomEvent';
@@ -41,14 +41,14 @@ import {
   UsernameBold,
 } from '$components/message';
 import { UserAvatar } from '$components/user-avatar';
-import { getMxIdLocalPart, mxcUrlToHttp } from '$appUtils/matrix';
+import { getMxIdLocalPart, mxcUrlToHttp } from '$utils/matrix';
 import { useMatrixClient } from '$hooks/useMatrixClient';
 import {
   getEditedEvent,
   getMemberAvatarMxc,
   getMemberDisplayName,
   getStateEvent,
-} from '$appUtils/room';
+} from '$utils/room';
 import { GetContentCallback, MessageEvent, StateEvent } from '$types/matrix/room';
 import { useMentionClickHandler } from '$hooks/useMentionClickHandler';
 import { useSpoilerClickHandler } from '$hooks/useSpoilerClickHandler';

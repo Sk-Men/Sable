@@ -6,7 +6,7 @@ import { useRoomCreatorsTag } from '$hooks/useRoomCreatorsTag';
 import { getPowerTagIconSrc } from '$hooks/useMemberPowerTag';
 import { useMatrixClient } from '$hooks/useMatrixClient';
 import { useMediaAuthentication } from '$hooks/useMediaAuthentication';
-import { stopPropagation } from '$appUtils/keyboard';
+import { stopPropagation } from '$utils/keyboard';
 import { useRoom } from '$hooks/useRoom';
 import { useSpaceOptionally } from '$hooks/useSpace';
 import { useOpenRoomSettings } from '$state/hooks/roomSettings';

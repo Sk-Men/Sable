@@ -13,9 +13,9 @@ import {
   Chip,
 } from 'folds';
 import Linkify from 'linkify-react';
-import { mxcUrlToHttp } from '$appUtils/matrix';
+import { mxcUrlToHttp } from '$utils/matrix';
 import { useMatrixClient } from '$hooks/useMatrixClient';
-import { nameInitials } from '$appUtils/common';
+import { nameInitials } from '$utils/common';
 import { BreakWord } from '$styles/Text.css';
 import { LINKIFY_OPTS } from '$plugins/react-custom-html-parser';
 import { ContainerColor } from '$styles/ContainerColor.css';

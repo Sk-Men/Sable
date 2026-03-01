@@ -19,7 +19,7 @@ import {
 import { MatrixError } from '$types/matrix-sdk';
 import { useMatrixClient } from '$hooks/useMatrixClient';
 import { AsyncStatus, useAsyncCallback } from '$hooks/useAsyncCallback';
-import { stopPropagation } from '$appUtils/keyboard';
+import { stopPropagation } from '$utils/keyboard';
 
 type LeaveSpacePromptProps = {
   roomId: string;

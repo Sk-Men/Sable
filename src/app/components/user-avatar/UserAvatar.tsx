@@ -1,7 +1,7 @@
 import { AvatarFallback, AvatarImage, color } from 'folds';
 import { ReactEventHandler, ReactNode, useState } from 'react';
 import classNames from 'classnames';
-import colorMXID from '$appUtils/colorMXID';
+import colorMXID from '$utils/colorMXID';
 import * as css from './UserAvatar.css';
 
 type UserAvatarProps = {

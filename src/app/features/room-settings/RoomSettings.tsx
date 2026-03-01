@@ -5,7 +5,7 @@ import { JoinRule } from '$types/matrix-sdk';
 import { PageNav, PageNavContent, PageNavHeader, PageRoot } from '$components/page';
 import { ScreenSize, useScreenSizeContext } from '$hooks/useScreenSize';
 import { useMatrixClient } from '$hooks/useMatrixClient';
-import { mxcUrlToHttp } from '$appUtils/matrix';
+import { mxcUrlToHttp } from '$utils/matrix';
 import { useMediaAuthentication } from '$hooks/useMediaAuthentication';
 import { useRoomAvatar, useRoomJoinRule, useRoomName } from '$hooks/useRoomMeta';
 import { mDirectAtom } from '$state/mDirectList';

@@ -2,7 +2,7 @@ import { Descendant, Text } from 'slate';
 import parse from 'html-dom-parser';
 import { ChildNode, Element, isText, isTag } from 'domhandler';
 
-import { sanitizeCustomHtml } from '$appUtils/sanitize';
+import { sanitizeCustomHtml } from '$utils/sanitize';
 import {
   parseMatrixToRoom,
   parseMatrixToRoomEvent,

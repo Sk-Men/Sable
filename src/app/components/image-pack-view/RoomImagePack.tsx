@@ -5,7 +5,7 @@ import { useMatrixClient } from '$hooks/useMatrixClient';
 import { ImagePack, PackContent } from '$plugins/custom-emoji';
 import { StateEvent } from '$types/matrix/room';
 import { useRoomImagePack } from '$hooks/useImagePacks';
-import { randomStr } from '$appUtils/common';
+import { randomStr } from '$utils/common';
 import { useRoomPermissions } from '$hooks/useRoomPermissions';
 import { useRoomCreators } from '$hooks/useRoomCreators';
 import { ImagePackContent } from './ImagePackContent';

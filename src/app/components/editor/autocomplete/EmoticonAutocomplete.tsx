@@ -5,12 +5,12 @@ import { Room } from '$types/matrix-sdk';
 
 import { useMatrixClient } from '$hooks/useMatrixClient';
 import { UseAsyncSearchOptions, useAsyncSearch } from '$hooks/useAsyncSearch';
-import { onTabPress } from '$appUtils/keyboard';
+import { onTabPress } from '$utils/keyboard';
 import { useRecentEmoji } from '$hooks/useRecentEmoji';
 import { useRelevantImagePacks } from '$hooks/useImagePacks';
 import { IEmoji, emojis } from '$plugins/emoji';
 import { useKeyDown } from '$hooks/useKeyDown';
-import { mxcUrlToHttp } from '$appUtils/matrix';
+import { mxcUrlToHttp } from '$utils/matrix';
 import { useMediaAuthentication } from '$hooks/useMediaAuthentication';
 import { ImageUsage, PackImageReader } from '$plugins/custom-emoji';
 import { getEmoticonSearchStr } from '$plugins/utils';

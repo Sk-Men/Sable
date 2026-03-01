@@ -14,7 +14,7 @@ import {
   getAfterLoginRedirectPath,
 } from '$pages/afterLoginRedirectPath';
 import { getHomePath, getLoginPath, withSearchParam } from '$pages/pathUtils';
-import { getMxIdLocalPart, getMxIdServer } from '$appUtils/matrix';
+import { getMxIdLocalPart, getMxIdServer } from '$utils/matrix';
 import { setFallbackSession } from '$state/sessions';
 import { ErrorCode } from '../../../cs-errorcode';
 

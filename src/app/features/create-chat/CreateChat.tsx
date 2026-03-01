@@ -4,10 +4,10 @@ import { ICreateRoomStateEvent, MatrixError, Preset, Visibility } from '$types/m
 import { useNavigate } from 'react-router-dom';
 import { SettingTile } from '$components/setting-tile';
 import { SequenceCard } from '$components/sequence-card';
-import { addRoomIdToMDirect, isUserId } from '$appUtils/matrix';
+import { addRoomIdToMDirect, isUserId } from '$utils/matrix';
 import { useMatrixClient } from '$hooks/useMatrixClient';
 import { AsyncStatus, useAsyncCallback } from '$hooks/useAsyncCallback';
-import { millisecondsToMinutes } from '$appUtils/common';
+import { millisecondsToMinutes } from '$utils/common';
 import { createRoomEncryptionState } from '$components/create-room';
 import { useAlive } from '$hooks/useAlive';
 import { getDirectRoomPath } from '$pages/pathUtils';

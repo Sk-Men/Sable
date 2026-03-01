@@ -19,12 +19,12 @@ import { PageNav, PageNavContent, PageNavHeader, PageRoot } from '$components/pa
 import { ScreenSize, useScreenSizeContext } from '$hooks/useScreenSize';
 import { useUserProfile } from '$hooks/useUserProfile';
 import { useMatrixClient } from '$hooks/useMatrixClient';
-import { getMxIdLocalPart, mxcUrlToHttp } from '$appUtils/matrix';
+import { getMxIdLocalPart, mxcUrlToHttp } from '$utils/matrix';
 import { useMediaAuthentication } from '$hooks/useMediaAuthentication';
 import { UserAvatar } from '$components/user-avatar';
-import { nameInitials } from '$appUtils/common';
+import { nameInitials } from '$utils/common';
 import { UseStateProvider } from '$components/UseStateProvider';
-import { stopPropagation } from '$appUtils/keyboard';
+import { stopPropagation } from '$utils/keyboard';
 import { LogoutDialog } from '$components/LogoutDialog';
 import { Notifications } from './notifications';
 import { Devices } from './devices';

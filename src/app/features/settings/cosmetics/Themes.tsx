@@ -31,7 +31,7 @@ import {
   useThemeNames,
   useThemes,
 } from '$hooks/useTheme';
-import { stopPropagation } from '$appUtils/keyboard';
+import { stopPropagation } from '$utils/keyboard';
 import { SequenceCardStyle } from '../styles.css';
 
 type ThemeSelectorProps = {

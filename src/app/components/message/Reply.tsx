@@ -4,13 +4,9 @@ import { MouseEventHandler, ReactNode, useCallback, useMemo } from 'react';
 import classNames from 'classnames';
 import parse from 'html-react-parser';
 import { useAtomValue } from 'jotai';
-import {
-  getMemberDisplayName,
-  trimReplyFromBody,
-  trimReplyFromFormattedBody,
-} from '$appUtils/room';
-import { getMxIdLocalPart } from '$appUtils/matrix';
-import { randomNumberBetween } from '$appUtils/common';
+import { getMemberDisplayName, trimReplyFromBody, trimReplyFromFormattedBody } from '$utils/room';
+import { getMxIdLocalPart } from '$utils/matrix';
+import { randomNumberBetween } from '$utils/common';
 import {
   getReactCustomHtmlParser,
   scaleSystemEmoji,

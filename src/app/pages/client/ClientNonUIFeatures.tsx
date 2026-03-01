@@ -8,7 +8,7 @@ import LogoUnreadSVG from '$public/res/svg/cinny-unread.svg';
 import LogoHighlightSVG from '$public/res/svg/cinny-highlight.svg';
 import NotificationSound from '$public/sound/notification.ogg';
 import InviteSound from '$public/sound/invite.ogg';
-import { notificationPermission, setFavicon } from '$appUtils/dom';
+import { notificationPermission, setFavicon } from '$utils/dom';
 import { useSetting } from '$state/hooks/settings';
 import { settingsAtom } from '$state/settings';
 import { nicknamesAtom } from '$state/nicknames';
@@ -20,9 +20,9 @@ import {
   getNotificationType,
   getUnreadInfo,
   isNotificationEvent,
-} from '$appUtils/room';
+} from '$utils/room';
 import { NotificationType, UnreadInfo } from '$types/matrix/room';
-import { getMxIdLocalPart, mxcUrlToHttp } from '$appUtils/matrix';
+import { getMxIdLocalPart, mxcUrlToHttp } from '$utils/matrix';
 import { useSelectedRoom } from '$hooks/router/useSelectedRoom';
 import { useInboxNotificationsSelected } from '$hooks/router/useInbox';
 import { useMediaAuthentication } from '$hooks/useMediaAuthentication';

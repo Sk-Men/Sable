@@ -42,18 +42,18 @@ import {
   getStateEvent,
   isDirectInvite,
   isSpace,
-} from '$appUtils/room';
-import { nameInitials } from '$appUtils/common';
+} from '$utils/room';
+import { nameInitials } from '$utils/common';
 import { RoomAvatar } from '$components/room-avatar';
 import {
   addRoomIdToMDirect,
   getMxIdLocalPart,
   guessDmRoomUserId,
   rateLimitedActions,
-} from '$appUtils/matrix';
+} from '$utils/matrix';
 import { Time } from '$components/message';
 import { useElementSizeObserver } from '$hooks/useElementSizeObserver';
-import { onEnterOrSpace, stopPropagation } from '$appUtils/keyboard';
+import { onEnterOrSpace, stopPropagation } from '$utils/keyboard';
 import { RoomTopicViewer } from '$components/room-topic-viewer';
 import { AsyncStatus, useAsyncCallback } from '$hooks/useAsyncCallback';
 import { useRoomNavigate } from '$hooks/useRoomNavigate';

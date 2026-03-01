@@ -10,7 +10,7 @@ import {
 } from '$pages/afterLoginRedirectPath';
 import { getHomePath } from '$pages/pathUtils';
 import { activeSessionIdAtom, sessionsAtom } from '$state/sessions';
-import { createLogger } from '$appUtils/debug';
+import { createLogger } from '$utils/debug';
 import { ErrorCode } from '../../../cs-errorcode';
 import { autoDiscovery, specVersions } from '../../../cs-api';
 

@@ -13,7 +13,7 @@ import {
   toRem,
 } from 'folds';
 import FocusTrap from 'focus-trap-react';
-import { stopPropagation } from '$appUtils/keyboard';
+import { stopPropagation } from '$utils/keyboard';
 import { SettingTile } from '../setting-tile';
 import { SequenceCard } from '../sequence-card';
 

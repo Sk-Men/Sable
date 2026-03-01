@@ -47,7 +47,7 @@ import { MemberPowerTag, MemberPowerTagIcon, StateEvent } from '$types/matrix/ro
 import { useAlive } from '$hooks/useAlive';
 import { BetaNoticeBadge } from '$components/BetaNoticeBadge';
 import { getPowerTagIconSrc } from '$hooks/useMemberPowerTag';
-import { creatorsSupported } from '$appUtils/matrix';
+import { creatorsSupported } from '$utils/matrix';
 import { SequenceCardStyle } from '../styles.css';
 
 type EditPowerProps = {

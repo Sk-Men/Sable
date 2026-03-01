@@ -1,7 +1,7 @@
 import { useAtom } from 'jotai';
 import { Overlay, OverlayBackdrop, OverlayCenter, Box, Modal } from 'folds';
 import FocusTrap from 'focus-trap-react';
-import { stopPropagation } from '$appUtils/keyboard';
+import { stopPropagation } from '$utils/keyboard';
 import { modalAtom, ModalType } from '$state/modal';
 import { MessageReportInternal } from './MessageReport';
 import { MessageDeleteInternal } from './MessageDelete';

@@ -27,7 +27,7 @@ import { Room } from '$types/matrix-sdk';
 import { useGlobalImagePacks, useRoomsImagePacks } from '$hooks/useImagePacks';
 import { SequenceCard } from '$components/sequence-card';
 import { SettingTile } from '$components/setting-tile';
-import { mxcUrlToHttp } from '$appUtils/matrix';
+import { mxcUrlToHttp } from '$utils/matrix';
 import { useMediaAuthentication } from '$hooks/useMediaAuthentication';
 import { useMatrixClient } from '$hooks/useMatrixClient';
 import {
@@ -41,7 +41,7 @@ import { LineClamp2 } from '$styles/Text.css';
 import { allRoomsAtom } from '$state/room-list/roomList';
 import { AccountDataEvent } from '$types/matrix/accountData';
 import { AsyncStatus, useAsyncCallback } from '$hooks/useAsyncCallback';
-import { stopPropagation } from '$appUtils/keyboard';
+import { stopPropagation } from '$utils/keyboard';
 import { SequenceCardStyle } from '../styles.css';
 
 function GlobalPackSelector({

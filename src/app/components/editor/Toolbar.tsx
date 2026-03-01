@@ -19,11 +19,11 @@ import {
 } from 'folds';
 import { MouseEventHandler, ReactNode, useState } from 'react';
 import { ReactEditor, useSlate } from 'slate-react';
-import { isMacOS } from '$appUtils/user-agent';
-import { KeySymbol } from '$appUtils/key-symbol';
+import { isMacOS } from '$utils/user-agent';
+import { KeySymbol } from '$utils/key-symbol';
 import { useSetting } from '$state/hooks/settings';
 import { settingsAtom } from '$state/settings';
-import { stopPropagation } from '$appUtils/keyboard';
+import { stopPropagation } from '$utils/keyboard';
 import { floatingToolbar } from '$styles/overrides/Composer.css';
 import { HeadingLevel } from './slate';
 import { BlockType, MarkType } from './types';

@@ -7,7 +7,7 @@ import { useSetting } from '$state/hooks/settings';
 import { settingsAtom } from '$state/settings';
 import { useMatrixClient } from '$hooks/useMatrixClient';
 import { AccountDataEditor, AccountDataSubmitCallback } from '$components/AccountDataEditor';
-import { copyToClipboard } from '$appUtils/dom';
+import { copyToClipboard } from '$utils/dom';
 import { SequenceCardStyle } from '../styles.css';
 import { AccountData } from './AccountData';
 

@@ -27,7 +27,7 @@ import { useMatrixClient } from '$hooks/useMatrixClient';
 import { useMediaAuthentication } from '$hooks/useMediaAuthentication';
 import { useGetMemberPowerLevel, usePowerLevels } from '$hooks/usePowerLevels';
 import { getPowers, usePowerLevelTags } from '$hooks/usePowerLevelTags';
-import { stopPropagation } from '$appUtils/keyboard';
+import { stopPropagation } from '$utils/keyboard';
 import { StateEvent } from '$types/matrix/room';
 import { useOpenRoomSettings } from '$state/hooks/roomSettings';
 import { RoomSettingsPage } from '$state/roomSettings';

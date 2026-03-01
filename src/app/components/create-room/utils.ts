@@ -9,7 +9,7 @@ import {
 } from '$types/matrix-sdk';
 import { RoomType, StateEvent } from '$types/matrix/room';
 import { getViaServers } from '$plugins/via-servers';
-import { getMxIdServer } from '$appUtils/matrix';
+import { getMxIdServer } from '$utils/matrix';
 import { CreateRoomAccess } from './types';
 
 export const createRoomCreationContent = (

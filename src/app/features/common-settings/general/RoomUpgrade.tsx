@@ -27,7 +27,7 @@ import { useMatrixClient } from '$hooks/useMatrixClient';
 import { useStateEvent } from '$hooks/useStateEvent';
 import { useRoomNavigate } from '$hooks/useRoomNavigate';
 import { useCapabilities } from '$hooks/useCapabilities';
-import { stopPropagation } from '$appUtils/keyboard';
+import { stopPropagation } from '$utils/keyboard';
 import { RoomPermissionsAPI } from '$hooks/useRoomPermissions';
 import {
   AdditionalCreatorInput,
@@ -35,7 +35,7 @@ import {
   useAdditionalCreators,
 } from '$components/create-room';
 import { useAlive } from '$hooks/useAlive';
-import { creatorsSupported } from '$appUtils/matrix';
+import { creatorsSupported } from '$utils/matrix';
 import { useRoomCreators } from '$hooks/useRoomCreators';
 import { BreakWord } from '$styles/Text.css';
 

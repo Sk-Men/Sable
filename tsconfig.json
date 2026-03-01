@@ -17,11 +17,10 @@
       "$features/*": ["src/app/features/*"],
       "$state/*": ["src/app/state/*"],
       "$styles/*": ["src/app/styles/*"],
-      "$appUtils/*": ["src/app/utils/*"],
+      "$utils/*": ["src/app/utils/*"],
       "$pages/*": ["src/app/pages/*"],
       "$types/*": ["src/types/*"],
       "$public/*": ["public/*"],
-      "$util/*": ["src/util/*"],
       "$client/*": ["src/client/*"]
     },
     "moduleResolution": "bundler",

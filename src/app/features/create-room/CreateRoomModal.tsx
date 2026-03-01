@@ -17,7 +17,7 @@ import { useAllJoinedRoomsSet, useGetRoom } from '$hooks/useGetRoom';
 import { SpaceProvider } from '$hooks/useSpace';
 import { useCloseCreateRoomModal, useCreateRoomModalState } from '$state/hooks/createRoomModal';
 import { CreateRoomModalState } from '$state/createRoomModal';
-import { stopPropagation } from '$appUtils/keyboard';
+import { stopPropagation } from '$utils/keyboard';
 import { CreateRoomType } from '$components/create-room/types';
 import { CreateRoomForm } from './CreateRoom';
 

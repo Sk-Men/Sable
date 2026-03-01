@@ -32,11 +32,11 @@ import { makeLobbyCategoryId } from '$state/closedLobbyCategories';
 import { useCategoryHandler } from '$hooks/useCategoryHandler';
 import { useMatrixClient } from '$hooks/useMatrixClient';
 import { allRoomsAtom } from '$state/room-list/roomList';
-import { getCanonicalAliasOrRoomId, rateLimitedActions } from '$appUtils/matrix';
+import { getCanonicalAliasOrRoomId, rateLimitedActions } from '$utils/matrix';
 import { getSpaceRoomPath } from '$pages/pathUtils';
 import { StateEvent } from '$types/matrix/room';
-import { ASCIILexicalTable, orderKeys } from '$appUtils/ASCIILexicalTable';
-import { getStateEvent } from '$appUtils/room';
+import { ASCIILexicalTable, orderKeys } from '$utils/ASCIILexicalTable';
+import { getStateEvent } from '$utils/room';
 import { useClosedLobbyCategoriesAtom } from '$state/hooks/closedLobbyCategories';
 import {
   makeCinnySpacesContent,

@@ -42,16 +42,16 @@ import {
   Username,
   UsernameBold,
 } from '$components/message';
-import { canEditEvent, getMemberAvatarMxc } from '$appUtils/room';
-import { getCanonicalAliasOrRoomId, isRoomAlias, mxcUrlToHttp } from '$appUtils/matrix';
+import { canEditEvent, getMemberAvatarMxc } from '$utils/room';
+import { getCanonicalAliasOrRoomId, isRoomAlias, mxcUrlToHttp } from '$utils/matrix';
 import { MessageLayout, MessageSpacing, settingsAtom } from '$state/settings';
 import { nicknamesAtom, setNicknameAtom } from '$state/nicknames';
 import { useMatrixClient } from '$hooks/useMatrixClient';
 import { useRecentEmoji } from '$hooks/useRecentEmoji';
 import { EmojiBoard } from '$components/emoji-board';
 import { UserAvatar } from '$components/user-avatar';
-import { copyToClipboard } from '$appUtils/dom';
-import { stopPropagation } from '$appUtils/keyboard';
+import { copyToClipboard } from '$utils/dom';
+import { stopPropagation } from '$utils/keyboard';
 import { getMatrixToRoomEvent } from '$plugins/matrix-to';
 import { getViaServers } from '$plugins/via-servers';
 import { useMediaAuthentication } from '$hooks/useMediaAuthentication';
@@ -61,7 +61,7 @@ import { PowerIcon } from '$components/power';
 import { getPowerTagIconSrc } from '$hooks/useMemberPowerTag';
 import { useSableCosmetics } from '$hooks/useSableCosmetics';
 import { SwipeableMessageWrapper } from '$components/SwipeableMessageWrapper';
-import { mobileOrTablet } from '$appUtils/user-agent';
+import { mobileOrTablet } from '$utils/user-agent';
 import { useUserProfile } from '$hooks/useUserProfile';
 import { useSetting } from '$state/hooks/settings';
 import { useBlobCache } from '$hooks/useBlobCache';

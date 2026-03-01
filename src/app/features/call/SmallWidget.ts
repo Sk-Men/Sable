@@ -27,7 +27,7 @@ import {
   WidgetApiFromWidgetAction,
   WidgetKind,
 } from 'matrix-widget-api';
-import { createLogger } from '$appUtils/debug';
+import { createLogger } from '$utils/debug';
 import { CinnyWidget } from './CinnyWidget';
 import { SmallWidgetDriver } from './SmallWidgetDriver';
 

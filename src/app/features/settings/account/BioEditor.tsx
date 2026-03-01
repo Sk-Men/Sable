@@ -37,7 +37,7 @@ import { useSetting } from '$state/hooks/settings';
 import { settingsAtom } from '$state/settings';
 import { UseStateProvider } from '$components/UseStateProvider';
 import { EmojiBoard } from '$components/emoji-board';
-import { mobileOrTablet } from '$appUtils/user-agent';
+import { mobileOrTablet } from '$utils/user-agent';
 import { SettingTile } from '$components/setting-tile';
 import * as css from './BioEditor.css';
 

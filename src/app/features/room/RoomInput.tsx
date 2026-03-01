@@ -71,7 +71,7 @@ import {
   getImageInfo,
   getMxIdLocalPart,
   mxcUrlToHttp,
-} from '$appUtils/matrix';
+} from '$utils/matrix';
 import { useTypingStatusUpdater } from '$hooks/useTypingStatusUpdater';
 import { useFilePicker } from '$hooks/useFilePicker';
 import { useFilePasteHandler } from '$hooks/useFilePasteHandler';
@@ -92,9 +92,9 @@ import {
   UploadBoardImperativeHandlers,
 } from '$components/upload-board';
 import { Upload, UploadStatus, UploadSuccess, createUploadFamilyObserverAtom } from '$state/upload';
-import { getImageUrlBlob, loadImageElement } from '$appUtils/dom';
-import { safeFile } from '$appUtils/mimeTypes';
-import { fulfilledPromiseSettledResult } from '$appUtils/common';
+import { getImageUrlBlob, loadImageElement } from '$utils/dom';
+import { safeFile } from '$utils/mimeTypes';
+import { fulfilledPromiseSettledResult } from '$utils/common';
 import { useSetting } from '$state/hooks/settings';
 import { settingsAtom } from '$state/settings';
 import {
@@ -102,9 +102,9 @@ import {
   getMentionContent,
   trimReplyFromBody,
   trimReplyFromFormattedBody,
-} from '$appUtils/room';
+} from '$utils/room';
 import { Command, SHRUG, TABLEFLIP, UNFLIP, useCommands } from '$hooks/useCommands';
-import { mobileOrTablet } from '$appUtils/user-agent';
+import { mobileOrTablet } from '$utils/user-agent';
 import { useElementSizeObserver } from '$hooks/useElementSizeObserver';
 import { ReplyLayout, ThreadIndicator } from '$components/message';
 import { roomToParentsAtom } from '$state/room/roomToParents';

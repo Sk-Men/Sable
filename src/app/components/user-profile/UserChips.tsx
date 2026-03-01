@@ -28,20 +28,20 @@ import {
   Avatar,
 } from 'folds';
 import { useMatrixClient } from '$hooks/useMatrixClient';
-import { getMxIdServer } from '$appUtils/matrix';
+import { getMxIdServer } from '$utils/matrix';
 import { useCloseUserRoomProfile } from '$state/hooks/userRoomProfile';
-import { stopPropagation } from '$appUtils/keyboard';
-import { copyToClipboard } from '$appUtils/dom';
+import { stopPropagation } from '$utils/keyboard';
+import { copyToClipboard } from '$utils/dom';
 import { getExploreServerPath } from '$pages/pathUtils';
 import { AsyncStatus, useAsyncCallback } from '$hooks/useAsyncCallback';
-import { factoryRoomIdByAtoZ } from '$appUtils/sort';
+import { factoryRoomIdByAtoZ } from '$utils/sort';
 import { useMutualRooms, useMutualRoomsSupport } from '$hooks/useMutualRooms';
 import { useRoomNavigate } from '$hooks/useRoomNavigate';
 import { useDirectRooms } from '$pages/client/direct/useDirectRooms';
 import { useMediaAuthentication } from '$hooks/useMediaAuthentication';
 import { useAllJoinedRoomsSet, useGetRoom } from '$hooks/useGetRoom';
-import { getDirectRoomAvatarUrl, getRoomAvatarUrl } from '$appUtils/room';
-import { nameInitials } from '$appUtils/common';
+import { getDirectRoomAvatarUrl, getRoomAvatarUrl } from '$utils/room';
+import { nameInitials } from '$utils/common';
 import { getMatrixToUser } from '$plugins/matrix-to';
 import { useTimeoutToggle } from '$hooks/useTimeoutToggle';
 import { useIgnoredUsers } from '$hooks/useIgnoredUsers';

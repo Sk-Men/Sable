@@ -3,7 +3,7 @@ import FocusTrap from 'focus-trap-react';
 import { isKeyHotkey } from 'is-hotkey';
 import { Header, Menu, Scroll, config } from 'folds';
 
-import { preventScrollWithArrowKey, stopPropagation } from '$appUtils/keyboard';
+import { preventScrollWithArrowKey, stopPropagation } from '$utils/keyboard';
 import { useAlive } from '$hooks/useAlive';
 import * as css from './AutocompleteMenu.css';
 

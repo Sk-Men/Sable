@@ -4,7 +4,7 @@ import { Box, Icon, IconButton, Icons, Scroll } from 'folds';
 import { useMatrixClient } from '$hooks/useMatrixClient';
 import { getDirectCreateSearchParams } from '$pages/pathSearchParam';
 import { getDirectRoomPath } from '$pages/pathUtils';
-import { getDMRoomFor } from '$appUtils/matrix';
+import { getDMRoomFor } from '$utils/matrix';
 import { ScreenSize, useScreenSizeContext } from '$hooks/useScreenSize';
 import {
   Page,

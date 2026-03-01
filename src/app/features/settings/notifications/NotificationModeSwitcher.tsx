@@ -15,7 +15,7 @@ import { IPushRule } from '$types/matrix-sdk';
 import { MouseEventHandler, useMemo, useState } from 'react';
 import FocusTrap from 'focus-trap-react';
 import { NotificationMode, useNotificationActionsMode } from '$hooks/useNotificationMode';
-import { stopPropagation } from '$appUtils/keyboard';
+import { stopPropagation } from '$utils/keyboard';
 import { AsyncStatus, useAsyncCallback } from '$hooks/useAsyncCallback';
 
 export const useNotificationModes = (): NotificationMode[] =>

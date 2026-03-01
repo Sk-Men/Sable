@@ -26,7 +26,7 @@ import { StateEvent } from '$types/matrix/room';
 import { AsyncStatus, useAsyncCallback } from '$hooks/useAsyncCallback';
 import { useRoom } from '$hooks/useRoom';
 import { useStateEvent } from '$hooks/useStateEvent';
-import { stopPropagation } from '$appUtils/keyboard';
+import { stopPropagation } from '$utils/keyboard';
 import { RoomPermissionsAPI } from '$hooks/useRoomPermissions';
 
 const ROOM_ENC_ALGO = 'm.megolm.v1.aes-sha2';

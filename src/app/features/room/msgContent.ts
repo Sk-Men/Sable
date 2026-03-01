@@ -12,12 +12,12 @@ import {
   getVideoFileUrl,
   loadImageElement,
   loadVideoElement,
-} from '$appUtils/dom';
-import { encryptFile, getImageInfo, getThumbnailContent, getVideoInfo } from '$appUtils/matrix';
+} from '$utils/dom';
+import { encryptFile, getImageInfo, getThumbnailContent, getVideoInfo } from '$utils/matrix';
 import { TUploadItem } from '$state/room/roomInputDrafts';
-import { encodeBlurHash } from '$appUtils/blurHash';
-import { scaleYDimension } from '$appUtils/common';
-import { createLogger } from '$appUtils/debug';
+import { encodeBlurHash } from '$utils/blurHash';
+import { scaleYDimension } from '$utils/common';
+import { createLogger } from '$utils/debug';
 
 const log = createLogger('msgContent');
 

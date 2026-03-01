@@ -3,7 +3,7 @@ import FileSaver from 'file-saver';
 import classNames from 'classnames';
 import { Box, Chip, Header, Icon, IconButton, Icons, Text, as } from 'folds';
 import { useImageGestures } from '$hooks/useImageGestures';
-import { downloadMedia } from '$appUtils/matrix';
+import { downloadMedia } from '$utils/matrix';
 import * as css from './ImageViewer.css';
 
 export type ImageViewerProps = {

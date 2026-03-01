@@ -22,7 +22,7 @@ import { useRoom } from '$hooks/useRoom';
 import { PowerColorBadge, PowerIcon } from '$components/power';
 import { useMatrixClient } from '$hooks/useMatrixClient';
 import { useMediaAuthentication } from '$hooks/useMediaAuthentication';
-import { stopPropagation } from '$appUtils/keyboard';
+import { stopPropagation } from '$utils/keyboard';
 import { getPowerTagIconSrc } from '$hooks/useMemberPowerTag';
 import { useRoomCreatorsTag } from '$hooks/useRoomCreatorsTag';
 import { useRoomCreators } from '$hooks/useRoomCreators';

@@ -19,7 +19,7 @@ import { useVirtualizer } from '@tanstack/react-virtual';
 import FocusTrap from 'focus-trap-react';
 import { useNavigate } from 'react-router-dom';
 import { useMatrixClient } from '$hooks/useMatrixClient';
-import { factoryRoomIdByActivity } from '$appUtils/sort';
+import { factoryRoomIdByActivity } from '$utils/sort';
 import {
   NavButton,
   NavCategory,
@@ -30,7 +30,7 @@ import {
   NavItemContent,
 } from '$components/nav';
 import { getDirectCreatePath, getDirectRoomPath } from '$pages/pathUtils';
-import { getCanonicalAliasOrRoomId } from '$appUtils/matrix';
+import { getCanonicalAliasOrRoomId } from '$utils/matrix';
 import { useSelectedRoom } from '$hooks/router/useSelectedRoom';
 import { VirtualTile } from '$components/virtualizer';
 import { RoomNavCategoryButton, RoomNavItem } from '$features/room-nav';
@@ -41,8 +41,8 @@ import { useNavToActivePathMapper } from '$hooks/useNavToActivePathMapper';
 import { PageNav, PageNavContent, PageNavHeader } from '$components/page';
 import { useClosedNavCategoriesAtom } from '$state/hooks/closedNavCategories';
 import { useRoomsUnread } from '$state/hooks/unread';
-import { markAsRead } from '$appUtils/notifications';
-import { stopPropagation } from '$appUtils/keyboard';
+import { markAsRead } from '$utils/notifications';
+import { stopPropagation } from '$utils/keyboard';
 import { useSetting } from '$state/hooks/settings';
 import { settingsAtom } from '$state/settings';
 import {

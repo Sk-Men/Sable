@@ -19,7 +19,7 @@ import {
   ReactEditor,
 } from 'slate-react';
 import { withHistory } from 'slate-history';
-import { mobileOrTablet } from '$appUtils/user-agent';
+import { mobileOrTablet } from '$utils/user-agent';
 import { BlockType } from './types';
 import { RenderElement, RenderLeaf } from './Elements';
 import { CustomElement } from './slate';

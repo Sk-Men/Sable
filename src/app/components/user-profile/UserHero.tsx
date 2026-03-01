@@ -12,11 +12,11 @@ import {
 } from 'folds';
 import classNames from 'classnames';
 import FocusTrap from 'focus-trap-react';
-import colorMXID from '$appUtils/colorMXID';
-import { getMxIdLocalPart } from '$appUtils/matrix';
+import colorMXID from '$utils/colorMXID';
+import { getMxIdLocalPart } from '$utils/matrix';
 import { BreakWord, LineClamp3 } from '$styles/Text.css';
 import { UserPresence } from '$hooks/useUserPresence';
-import { stopPropagation } from '$appUtils/keyboard';
+import { stopPropagation } from '$utils/keyboard';
 import { useRoom } from '$hooks/useRoom';
 import { useSableCosmetics } from '$hooks/useSableCosmetics';
 import { useNickname } from '$hooks/useNickname';

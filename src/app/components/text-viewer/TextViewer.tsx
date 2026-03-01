@@ -2,7 +2,7 @@ import { ComponentProps, HTMLAttributes, Suspense, forwardRef, lazy } from 'reac
 import classNames from 'classnames';
 import { Box, Chip, Header, Icon, IconButton, Icons, Scroll, Text, as } from 'folds';
 import { ErrorBoundary } from 'react-error-boundary';
-import { copyToClipboard } from '$appUtils/dom';
+import { copyToClipboard } from '$utils/dom';
 import * as css from './TextViewer.css';
 
 const ReactPrism = lazy(() => import('$plugins/react-prism/ReactPrism'));

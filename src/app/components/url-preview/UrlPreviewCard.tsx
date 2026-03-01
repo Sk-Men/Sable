@@ -7,7 +7,7 @@ import {
   getIntersectionObserverEntry,
   useIntersectionObserver,
 } from '$hooks/useIntersectionObserver';
-import { mxcUrlToHttp } from '$appUtils/matrix';
+import { mxcUrlToHttp } from '$utils/matrix';
 import { useMediaAuthentication } from '$hooks/useMediaAuthentication';
 import * as css from './UrlPreviewCard.css';
 import { UrlPreview, UrlPreviewContent, UrlPreviewDescription, UrlPreviewImg } from './UrlPreview';

@@ -25,7 +25,7 @@ import { usePowerLevelsContext } from '$hooks/usePowerLevels';
 import { useRoomCreators } from '$hooks/useRoomCreators';
 import { useRoomPermissions } from '$hooks/useRoomPermissions';
 import { StateEvent } from '$types/matrix/room';
-import { createLogger } from '$appUtils/debug';
+import { createLogger } from '$utils/debug';
 import { WidgetIframe } from './WidgetIframe';
 import * as css from './WidgetsDrawer.css';
 import { IntegrationManager } from './IntegrationManager';

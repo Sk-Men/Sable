@@ -25,7 +25,7 @@ import FileSaver from 'file-saver';
 import { AsyncStatus } from '$hooks/useAsyncCallback';
 import { useImageGestures } from '$hooks/useImageGestures';
 import { createPage, usePdfDocumentLoader, usePdfJSLoader } from '$plugins/pdfjs-dist';
-import { stopPropagation } from '$appUtils/keyboard';
+import { stopPropagation } from '$utils/keyboard';
 import * as css from './PdfViewer.css';
 
 export type PdfViewerProps = {

@@ -1,4 +1,4 @@
-import { JUMBO_EMOJI_REG } from '$appUtils/regex';
+import { JUMBO_EMOJI_REG } from '$utils/regex';
 import * as css from './style.css';
 
 type PowerIconProps = css.PowerIconVariants & {

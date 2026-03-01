@@ -2,7 +2,7 @@ import { Box, Text } from 'folds';
 import { Atom, atom, useAtomValue } from 'jotai';
 import { useMatrixClient } from '$hooks/useMatrixClient';
 import { useMediaAuthentication } from '$hooks/useMediaAuthentication';
-import { mxcUrlToHttp } from '$appUtils/matrix';
+import { mxcUrlToHttp } from '$utils/matrix';
 import * as css from './styles.css';
 
 export type PreviewData = {
