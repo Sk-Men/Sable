@@ -6,7 +6,9 @@
 - Added support for `---`, `-#`, and fixed `-` to be unordered.
 - Fix quotes around colors for tuwunel homeservers ([#46](https://github.com/7w1/sable/issues/46))
 - Added Rosé Pine theme ([#41](https://github.com/7w1/sable/pull/41)) - [wrigglebug](https://github.com/wrigglebug)
-- Add back default Cinny Dark theme
+- Add back default Cinny Dark theme.
+- Merge time formatting improvements from ([cinnyapp#2710](https://github.com/cinnyapp/cinny/pull/2710)) - [nushea](https://github.com/nushea)
+- Merge Uniform avatar appearance in space/room navigation from ([cinnyapp#2713](https://github.com/cinnyapp/cinny/pull/2713)) - [wolterkam](https://github.com/wolterkam)
 
 ## 1.2.1
 

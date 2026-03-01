@@ -1,9 +1,9 @@
 import { AvatarImage as FoldsAvatarImage } from 'folds';
 import React, { ReactEventHandler, useState } from 'react';
-import { useSetting } from '../../state/hooks/settings';
-import { settingsAtom } from '../../state/settings';
-import bgColorImg from '../../../util/bgColorImg';
 import * as css from './RoomAvatar.css';
+import bgColorImg from '$util/bgColorImg';
+import { settingsAtom } from '$state/settings';
+import { useSetting } from '$state/hooks/settings';
 
 type AvatarImageProps = {
   src: string;
