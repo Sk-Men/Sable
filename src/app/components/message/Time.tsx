@@ -1,20 +1,12 @@
 import React, { ComponentProps } from 'react';
-<<<<<<< HEAD
-import { Text, as } from 'folds';
-=======
-import { Text, as, Tooltip, TooltipProvider, toRem } from 'folds';
->>>>>>> pr-2710
+import { Text, as, Tooltip, TooltipProvider } from 'folds';
 import {
   timeDayMonYear,
   timeHourMinute,
   timeHourMinuteSecond,
   today,
   yesterday,
-<<<<<<< HEAD
 } from '$appUtils/time';
-=======
-} from '../../utils/time';
->>>>>>> pr-2710
 
 export type TimeProps = {
   compact?: boolean;
@@ -49,7 +41,6 @@ export const Time = as<'span', TimeProps & ComponentProps<typeof Text>>(
     } else {
       time = `${timeDayMonYear(ts, dateFormatString)} ${formattedTime}`;
     }
-    const title = `${timeDayMonYear(ts, dateFormatString)} ${timeHourMinuteSecond(ts, hour24Clock)}`;
 
     return (
       <TooltipProvider
