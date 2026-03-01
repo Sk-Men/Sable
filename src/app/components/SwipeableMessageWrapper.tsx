@@ -83,7 +83,7 @@ export function SwipeableMessageWrapper({
   );
 
   if (!isSwipeToReplyEnabled) {
-    return <>{children}</>;
+    return children;
   }
 
   return <ActiveSwipeWrapper onReply={onReply}>{children}</ActiveSwipeWrapper>;

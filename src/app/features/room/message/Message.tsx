@@ -75,7 +75,7 @@ import * as css from './styles.css';
 
 export type ReactionHandler = (keyOrMxc: string, shortcode: string) => void;
 
-const MemoizedBody = memo(({ children }: { children: ReactNode }) => <>{children}</>);
+const MemoizedBody = memo(({ children }: { children: ReactNode }) => children);
 type MessageQuickReactionsProps = {
   onReaction: ReactionHandler;
 };
@@ -271,7 +271,7 @@ const Pronouns = as<
       </PronounPill>
     );
   }
-  return <>{display}</>;
+  return display;
 });
 
 function MessageInternal(
