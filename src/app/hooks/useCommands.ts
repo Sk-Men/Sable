@@ -3,7 +3,6 @@ import {
   EventTimeline,
   IContextResponse,
   MatrixClient,
-  MatrixEvent,
   Method,
   Preset,
   Room,
@@ -13,7 +12,6 @@ import {
 } from '$types/matrix-sdk';
 import { useMemo } from 'react';
 import { Membership, StateEvent } from '$types/matrix/room';
-import { AccountDataEvent } from '$types/matrix/accountData';
 import {
   addRoomIdToMDirect,
   getDMRoomFor,

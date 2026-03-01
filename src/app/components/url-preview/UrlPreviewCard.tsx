@@ -11,9 +11,6 @@ import { mxcUrlToHttp } from '$appUtils/matrix';
 import { useMediaAuthentication } from '$hooks/useMediaAuthentication';
 import * as css from './UrlPreviewCard.css';
 import { UrlPreview, UrlPreviewContent, UrlPreviewDescription, UrlPreviewImg } from './UrlPreview';
-import { ImageViewer } from '../image-viewer';
-import { Image, Video } from '../media';
-import { ImageContent, VideoContent } from '../message';
 
 const linkStyles = { color: color.Success.Main };
 const TARGET_HEIGHT = 300;

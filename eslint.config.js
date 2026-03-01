@@ -90,7 +90,17 @@ const projectOverrides = defineConfig([
     name: 'project/typescript-legacy-rule-overrides',
     files: tsFiles,
     rules: {
-      '@typescript-eslint/no-unused-vars': 'error',
+      '@typescript-eslint/no-unused-vars': [
+        'error',
+        {
+          args: 'after-used',
+          enableAutofixRemoval: {
+            imports: true,
+          },
+          ignoreRestSiblings: true,
+          vars: 'all',
+        },
+      ],
       '@typescript-eslint/no-shadow': 'error',
       'no-undef': 'off',
     },

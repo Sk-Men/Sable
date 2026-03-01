@@ -44,9 +44,6 @@ import { MessageLayout, MessageSpacing, settingsAtom } from '$state/settings';
 import { nicknamesAtom, setNicknameAtom } from '$state/nicknames';
 import { useMatrixClient } from '$hooks/useMatrixClient';
 import { useRecentEmoji } from '$hooks/useRecentEmoji';
-import { EventReaders } from '$components/event-readers';
-import { TextViewer } from '$components/text-viewer';
-import { AsyncStatus, useAsyncCallback } from '$hooks/useAsyncCallback';
 import { EmojiBoard } from '$components/emoji-board';
 import { UserAvatar } from '$components/user-avatar';
 import { copyToClipboard } from '$appUtils/dom';
@@ -70,7 +67,6 @@ import { MessageSourceCodeItem } from '$components/message/modals/MessageSource'
 import { MessageDeleteItem } from '$components/message/modals/MessageDelete';
 import { MessageReportItem } from '$components/message/modals/MessageReport';
 import { MessageEditor } from './MessageEditor';
-import { ReactionViewer } from '../reaction-viewer';
 import * as css from './styles.css';
 
 export type ReactionHandler = (keyOrMxc: string, shortcode: string) => void;

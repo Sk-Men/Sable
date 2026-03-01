@@ -75,7 +75,6 @@ import { AsyncStatus, useAsyncCallback } from '$hooks/useAsyncCallback';
 import { BreakWord } from '$styles/Text.css';
 import { InviteUserPrompt } from '$components/invite-user-prompt';
 import { CallNavStatus } from '$features/room-nav/RoomCallNavStatus';
-import { SwipeableChatWrapper } from '$components/SwipeableChatWrapper';
 import { mobileOrTablet } from '$appUtils/user-agent';
 import { useNavigate } from 'react-router-dom';
 import { lastVisitedRoomIdAtom } from '$state/room/lastRoom';

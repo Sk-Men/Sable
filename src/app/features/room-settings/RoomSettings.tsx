@@ -12,7 +12,6 @@ import { mDirectAtom } from '$state/mDirectList';
 import { RoomAvatar, RoomIcon } from '$components/room-avatar';
 import { RoomSettingsPage } from '$state/roomSettings';
 import { useRoom } from '$hooks/useRoom';
-import { SwipeableChatWrapper } from '$components/SwipeableChatWrapper';
 import { SwipeableOverlayWrapper } from '$components/SwipeableOverlayWrapper';
 import { General } from './general';
 import { Members } from '../common-settings/members';
