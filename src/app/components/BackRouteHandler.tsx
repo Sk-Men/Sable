@@ -107,7 +107,7 @@ export function BackRouteHandler({ children }: BackRouteHandlerProps) {
     ) {
       navigate(getInboxPath());
     }
-  }, [navigate, location]);
+  }, [navigate, location, setLastRoomId]);
 
   return children(goBack);
 }
