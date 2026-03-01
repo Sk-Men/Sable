@@ -1,4 +1,5 @@
 import { defineConfig } from 'vite';
+import type { ViteDevServer } from 'vite';
 import react from '@vitejs/plugin-react';
 import svgr from 'vite-plugin-svgr';
 import { wasm } from '@rollup/plugin-wasm';
@@ -46,10 +47,10 @@ const copyFiles = {
   ],
 };
 
-function serverMatrixSdkCryptoWasm(wasmFilePath) {
+function serverMatrixSdkCryptoWasm(wasmFilePath: string) {
   return {
     name: 'vite-plugin-serve-matrix-sdk-crypto-wasm',
-    configureServer(server) {
+    configureServer(server: ViteDevServer) {
       server.middlewares.use((req, res, next) => {
         if (req.url === wasmFilePath) {
           const resolvedPath = path.join(
@@ -115,9 +116,7 @@ export default defineConfig({
     vanillaExtractPlugin(),
     wasm(),
     react(),
-    svgr({
-      exportAsDefault: true,
-    }),
+    svgr(),
     VitePWA({
       srcDir: 'src',
       filename: 'sw.ts',
