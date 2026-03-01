@@ -1,12 +1,20 @@
 import React, { ComponentProps } from 'react';
+<<<<<<< HEAD
 import { Text, as } from 'folds';
+=======
+import { Text, as, Tooltip, TooltipProvider, toRem } from 'folds';
+>>>>>>> pr-2710
 import {
   timeDayMonYear,
   timeHourMinute,
   timeHourMinuteSecond,
   today,
   yesterday,
+<<<<<<< HEAD
 } from '$appUtils/time';
+=======
+} from '../../utils/time';
+>>>>>>> pr-2710
 
 export type TimeProps = {
   compact?: boolean;
@@ -44,17 +52,33 @@ export const Time = as<'span', TimeProps & ComponentProps<typeof Text>>(
     const title = `${timeDayMonYear(ts, dateFormatString)} ${timeHourMinuteSecond(ts, hour24Clock)}`;
 
     return (
-      <Text
-        as="time"
-        style={{ flexShrink: 0 }}
-        size="T200"
-        priority="300"
-        title={title}
-        {...props}
-        ref={ref}
+      <TooltipProvider
+        delay={400}
+        position="Top"
+        style={{ textAlign: 'center' }}
+        tooltip={
+          <Tooltip>
+            <Text size="H5">
+              {timeDayMonYear(ts, dateFormatString)}
+              <br />
+              {timeHourMinuteSecond(ts, hour24Clock)}
+            </Text>
+          </Tooltip>
+        }
       >
-        {time}
-      </Text>
+        {(triggerRef) => (
+          <Text
+            as="time"
+            style={{ flexShrink: 0 }}
+            size="T200"
+            priority="300"
+            {...props}
+            ref={triggerRef}
+          >
+            {time}
+          </Text>
+        )}
+      </TooltipProvider>
     );
   }
 );
