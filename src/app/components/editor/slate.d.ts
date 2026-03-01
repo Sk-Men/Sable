@@ -87,6 +87,16 @@ export type UnorderedListElement = {
   children: ListItemElement[];
 };
 
+export type SmallElement = {
+  type: BlockType.Small;
+  children: InlineElement[];
+};
+
+export type HorizontalRuleElement = {
+  type: BlockType.HorizontalRule;
+  children: Text[];
+};
+
 export type CustomElement =
   | LinkElement
   | MentionElement
@@ -100,7 +110,9 @@ export type CustomElement =
   | BlockQuoteElement
   | ListItemElement
   | OrderedListElement
-  | UnorderedListElement;
+  | UnorderedListElement
+  | SmallElement
+  | HorizontalRuleElement;
 
 declare module 'slate' {
   interface CustomTypes {

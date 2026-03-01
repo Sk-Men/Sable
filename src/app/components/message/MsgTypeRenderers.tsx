@@ -1,4 +1,4 @@
-import React, { CSSProperties, ReactNode } from 'react';
+import React, { CSSProperties, ReactNode, useMemo } from 'react';
 import { Box, Chip, Icon, Icons, Text, toRem } from 'folds';
 import { IContent } from '$types/matrix-sdk';
 import { JUMBO_EMOJI_REG, URL_REG } from '$appUtils/regex';
@@ -79,24 +79,37 @@ type MTextProps = {
   style?: CSSProperties;
 };
 export function MText({ edited, content, renderBody, renderUrlsPreview, style }: MTextProps) {
-  const { body, formatted_body: customBody } = content;
   const [jumboEmojiSize] = useSetting(settingsAtom, 'jumboEmojiSize');
 
-  if (typeof body !== 'string') return <BrokenContent />;
+  const body = typeof content.body === 'string' ? content.body : '';
+  const customBody =
+    typeof content.formatted_body === 'string' ? content.formatted_body : undefined;
 
-  const trimmedBody = trimReplyFromBody(body);
+  const trimmedBody = useMemo(() => trimReplyFromBody(body), [body]);
 
-  let safeCustomBody: string | undefined = typeof customBody === 'string' ? customBody : undefined;
-  if (safeCustomBody && safeCustomBody.length > 8000) {
-    const imageTags = safeCustomBody.match(/<img[^>]*>/g);
-    if (imageTags) {
-      safeCustomBody = imageTags.join(' ');
-    } else {
-      safeCustomBody = undefined;
+  const safeCustomBody = useMemo(() => {
+    if (!customBody) return undefined;
+    if (customBody.length > 8000) {
+      const imageTags = customBody.match(/<img[^>]*>/g);
+      return imageTags ? imageTags.join(' ') : undefined;
     }
-  }
+    return customBody;
+  }, [customBody]);
 
-  const isJumbo = trimmedBody.length < 500 && JUMBO_EMOJI_REG.test(trimmedBody);
+  const isJumbo = useMemo(() => {
+    if (!trimmedBody || trimmedBody.length >= 500) return false;
+    if (!JUMBO_EMOJI_REG.test(trimmedBody)) return false;
+
+    if (trimmedBody.includes(':')) {
+      const hasImage = safeCustomBody && /<img[^>]*>/i.test(safeCustomBody);
+      if (!hasImage) return false;
+    }
+
+    return true;
+  }, [trimmedBody, safeCustomBody]);
+
+  if (!body) return <BrokenContent />;
+
   const urlsMatch = renderUrlsPreview && trimmedBody.match(URL_REG);
   const urls = urlsMatch ? [...new Set(urlsMatch)] : undefined;
 

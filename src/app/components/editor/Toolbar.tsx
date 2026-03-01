@@ -36,6 +36,7 @@ import { KeySymbol } from '$appUtils/key-symbol';
 import { useSetting } from '$state/hooks/settings';
 import { settingsAtom } from '$state/settings';
 import { stopPropagation } from '$appUtils/keyboard';
+import { floatingToolbar } from '$styles/overrides/Composer.css';
 
 function BtnTooltip({ text, shortCode }: { text: string; shortCode?: string }) {
   return (
@@ -263,7 +264,7 @@ export function Toolbar() {
   const [isMarkdown, setIsMarkdown] = useSetting(settingsAtom, 'isMarkdown');
 
   return (
-    <Box className={css.EditorToolbarBase}>
+    <Box className={`${css.EditorToolbarBase} ${floatingToolbar}`}>
       <Scroll direction="Horizontal" size="0">
         <Box className={css.EditorToolbar} alignItems="Center" gap="300">
           <>

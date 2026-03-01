@@ -57,6 +57,10 @@ const elementToCustomHtml = (node: CustomElement, children: string): string => {
       return `<ol>${children}</ol>`;
     case BlockType.UnorderedList:
       return `<ul>${children}</ul>`;
+    case BlockType.Small:
+      return `<small>${children}</small>`;
+    case BlockType.HorizontalRule:
+      return `<hr/>`;
 
     case BlockType.Mention: {
       let fragment = node.id;
@@ -159,6 +163,10 @@ const elementToPlainText = (node: CustomElement, children: string): string => {
       return `[${node.children}](${node.href})`;
     case BlockType.Command:
       return `/${node.command}`;
+    case BlockType.Small:
+      return `-# ${children}\n`;
+    case BlockType.HorizontalRule:
+      return `\n---\n`;
     default:
       return children;
   }

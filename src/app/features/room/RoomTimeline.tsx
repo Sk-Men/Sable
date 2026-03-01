@@ -257,6 +257,7 @@ type RoomTimelineProps = {
   eventId?: string;
   roomInputRef: RefObject<HTMLElement>;
   editor: Editor;
+  onEditorReset?: () => void;
 };
 
 const PAGINATION_LIMIT = 60;
@@ -459,7 +460,13 @@ const getRoomUnreadInfo = (room: Room, scrollTo = false) => {
   };
 };
 
-export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimelineProps) {
+export function RoomTimeline({
+  room,
+  eventId,
+  roomInputRef,
+  editor,
+  onEditorReset,
+}: RoomTimelineProps) {
   const mx = useMatrixClient();
   const useAuthentication = useMediaAuthentication();
   const [hideActivity] = useSetting(settingsAtom, 'hideActivity');
@@ -1136,9 +1143,15 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
         return;
       }
       setEditId(undefined);
-      ReactEditor.focus(editor);
+      onEditorReset?.();
+
+      requestAnimationFrame(() => {
+        if (!alive()) return;
+        ReactEditor.focus(editor);
+        moveCursor(editor);
+      });
     },
-    [editor]
+    [editor, alive, onEditorReset]
   );
   const { t } = useTranslation();
 

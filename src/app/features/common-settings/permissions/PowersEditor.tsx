@@ -69,10 +69,16 @@ function EditPower({ maxPower, power, tag, onSave, onClose }: EditPowerProps) {
   const [iconFile, setIconFile] = useState<File>();
   const pickFile = useFilePicker(setIconFile, false);
 
-  const [tagColor, setTagColor] = useState<string | undefined>(tag?.color);
+  const [tagColor, setTagColor] = useState<string>(tag?.color || '#FFFFFF');
   const [tagIcon, setTagIcon] = useState<MemberPowerTagIcon | undefined>(tag?.icon);
+
   const uploadingIcon = iconFile && !tagIcon;
   const tagIconSrc = tagIcon && getPowerTagIconSrc(mx, useAuthentication, tagIcon);
+
+  const handleUpdateColor = (newColor: string) => {
+    const sanitized = newColor.startsWith('#') ? newColor : `#${newColor}`;
+    setTagColor(sanitized);
+  };
 
   const iconUploadAtom = useMemo(() => {
     if (iconFile) return createUploadAtom(iconFile);
@@ -84,9 +90,7 @@ function EditPower({ maxPower, power, tag, onSave, onClose }: EditPowerProps) {
   }, []);
 
   const handleIconUploaded = useCallback((upload: UploadSuccess) => {
-    setTagIcon({
-      key: upload.mxc,
-    });
+    setTagIcon({ key: upload.mxc });
     setIconFile(undefined);
   }, []);
 
@@ -105,9 +109,11 @@ function EditPower({ maxPower, power, tag, onSave, onClose }: EditPowerProps) {
     const tagName = nameInput.value.trim();
     if (!tagName) return;
 
+    const finalColor = /^#[0-9A-F]{6}$/i.test(tagColor) ? tagColor : undefined;
+
     const editedTag: MemberPowerTag = {
       name: tagName,
-      color: tagColor,
+      color: finalColor,
       icon: tagIcon,
     };
 
@@ -121,10 +127,10 @@ function EditPower({ maxPower, power, tag, onSave, onClose }: EditPowerProps) {
         <Box gap="200">
           <Box shrink="No" direction="Column" gap="100">
             <Text size="L400">Color</Text>
-            <Box gap="200">
+            <Box gap="200" alignItems="Center">
               <HexColorPickerPopOut
-                picker={<HexColorPicker color={tagColor} onChange={setTagColor} />}
-                onRemove={() => setTagColor(undefined)}
+                picker={<HexColorPicker color={tagColor} onChange={handleUpdateColor} />}
+                onRemove={() => setTagColor('#FFFFFF')}
               >
                 {(openPicker, opened) => (
                   <Button
@@ -141,6 +147,19 @@ function EditPower({ maxPower, power, tag, onSave, onClose }: EditPowerProps) {
                   </Button>
                 )}
               </HexColorPickerPopOut>
+              <Input
+                value={tagColor}
+                onChange={(e) => handleUpdateColor(e.currentTarget.value)}
+                placeholder="#FFFFFF"
+                size="300"
+                variant="Secondary"
+                radii="300"
+                style={{
+                  width: toRem(100),
+                  fontFamily: 'monospace',
+                  textTransform: 'uppercase',
+                }}
+              />
             </Box>
           </Box>
           <Box grow="Yes" direction="Column" gap="100">

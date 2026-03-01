@@ -248,3 +248,23 @@ export const highlightText = style([
     color: 'black',
   },
 ]);
+
+export const Small = style([
+  DefaultReset,
+  {
+    fontSize: '0.85rem',
+    opacity: config.opacity.Placeholder,
+  },
+]);
+
+export const HorizontalRule = style([
+  DefaultReset,
+  MarginSpaced,
+  {
+    border: 'none',
+    borderBottom: `${config.borderWidth.B300} solid ${color.SurfaceVariant.ContainerLine}`,
+    height: 0,
+    margin: `${config.space.S400} 0`,
+    userSelect: 'none',
+  },
+]);

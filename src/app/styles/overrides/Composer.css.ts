@@ -4,6 +4,10 @@ export const floatingEditor = style({
   minWidth: '100%',
 });
 
+export const floatingToolbar = style({
+  minWidth: '100%',
+});
+
 globalStyle(
   `
     ${floatingEditor} > div, 
@@ -18,7 +22,7 @@ globalStyle(
   }
 );
 
-globalStyle(`${floatingEditor} button`, {
+globalStyle(`${floatingEditor} ${floatingToolbar} button`, {
   borderRadius: '20px',
   backgroundColor: 'transparent',
   border: 'none',
@@ -27,11 +31,11 @@ globalStyle(`${floatingEditor} button`, {
   cursor: 'pointer',
 });
 
-globalStyle(`${floatingEditor} button *`, {
+globalStyle(`${floatingEditor} ${floatingToolbar} button *`, {
   color: 'inherit',
 });
 
-globalStyle(`${floatingEditor} button:hover`, {
+globalStyle(`${floatingEditor} ${floatingToolbar} button:hover`, {
   backgroundColor: 'var(--sable-surface-container-hover)',
   color: 'var(--sable-primary-main)',
 });

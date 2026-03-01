@@ -6,6 +6,8 @@ import {
   HeadingRule,
   OrderedListRule,
   UnorderedListRule,
+  SmallRule,
+  HorizontalRuleRule,
 } from './rules';
 import { runBlockRule } from './runner';
 import { BlockMDParser } from './type';
@@ -22,9 +24,11 @@ export const parseBlockMD: BlockMDParser = (text, parseInline) => {
   let result: string | undefined;
 
   if (!result) result = runBlockRule(text, CodeBlockRule, parseBlockMD, parseInline);
+  if (!result) result = runBlockRule(text, HorizontalRuleRule, parseBlockMD, parseInline);
   if (!result) result = runBlockRule(text, BlockQuoteRule, parseBlockMD, parseInline);
   if (!result) result = runBlockRule(text, OrderedListRule, parseBlockMD, parseInline);
   if (!result) result = runBlockRule(text, UnorderedListRule, parseBlockMD, parseInline);
+  if (!result) result = runBlockRule(text, SmallRule, parseBlockMD, parseInline);
   if (!result) result = runBlockRule(text, HeadingRule, parseBlockMD, parseInline);
 
   // replace \n with <br/> because want to preserve empty lines

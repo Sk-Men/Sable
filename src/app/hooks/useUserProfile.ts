@@ -9,6 +9,8 @@ import { useSetting } from '../state/hooks/settings';
 import { settingsAtom } from '../state/settings';
 import colorMXID from '$util/colorMXID';
 
+const inFlightProfiles = new Map<string, Promise<any>>();
+
 export type UserProfile = {
   avatarUrl?: string;
   displayName?: string;
@@ -21,17 +23,38 @@ export type UserProfile = {
   _fetched?: boolean;
 };
 
-const normalizeInfo = (info: any): UserProfile => ({
-  avatarUrl: info.avatar_url,
-  displayName: info.displayname,
-  pronouns: info['io.fsky.nyx.pronouns'],
-  timezone: info['us.cloke.msc4175.tz'] || info['m.tz'],
-  bio: info['moe.sable.app.bio'] || info['chat.commet.profile_bio'],
-  bannerUrl: info['chat.commet.profile_banner'],
-  nameColor: info['moe.sable.app.name_color'],
-  extended: {},
-  _fetched: true,
-});
+const normalizeInfo = (info: any): UserProfile => {
+  const knownKeys = [
+    'avatar_url',
+    'displayname',
+    'io.fsky.nyx.pronouns',
+    'us.cloke.msc4175.tz',
+    'm.tz',
+    'moe.sable.app.bio',
+    'chat.commet.profile_bio',
+    'chat.commet.profile_banner',
+    'moe.sable.app.name_color',
+  ];
+
+  const extended: Record<string, any> = {};
+  Object.entries(info).forEach(([key, value]) => {
+    if (!knownKeys.includes(key)) {
+      extended[key] = value;
+    }
+  });
+
+  return {
+    avatarUrl: info.avatar_url,
+    displayName: info.displayname,
+    pronouns: info['io.fsky.nyx.pronouns'],
+    timezone: info['us.cloke.msc4175.tz'] || info['m.tz'],
+    bio: info['moe.sable.app.bio'] || info['chat.commet.profile_bio'],
+    bannerUrl: info['chat.commet.profile_banner'],
+    nameColor: info['moe.sable.app.name_color'],
+    extended,
+    _fetched: true,
+  };
+};
 
 const isValidHex = (c: string) => /^#[0-9A-F]{6}$/i.test(c);
 const sanitizeFont = (f: string) => f.replace(/[;{}<>]/g, '').slice(0, 32);
@@ -54,9 +77,19 @@ export const useUserProfile = (
 
   useEffect(() => {
     if (!needsFetch) return;
+
+    let fetchPromise = inFlightProfiles.get(userId);
+
+    if (!fetchPromise) {
+      fetchPromise = mx.getProfileInfo(userId).finally(() => {
+        inFlightProfiles.delete(userId);
+      });
+      inFlightProfiles.set(userId, fetchPromise);
+    }
+
     let isMounted = true;
 
-    mx.getProfileInfo(userId)
+    fetchPromise
       .then((info: any) => {
         if (!isMounted) return;
         const normalized = normalizeInfo(info);
@@ -66,11 +99,13 @@ export const useUserProfile = (
         }));
       })
       .catch(() => {
+        if (!isMounted) return;
         setGlobalProfiles((prev) => ({
           ...prev,
           [userId]: { ...prev[userId], _fetched: true },
         }));
       });
+
     return () => {
       isMounted = false;
     };

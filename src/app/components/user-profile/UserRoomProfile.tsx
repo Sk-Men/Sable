@@ -60,10 +60,20 @@ function UserExtendedSection({
   htmlReactParserOptions,
   linkifyOpts,
 }: UserExtendedSectionProps) {
-  const clamp = (str: string, len: number) => (str.length > len ? `${str.slice(0, len)}...` : str);
+  const clamp = (str: any, len: number) => {
+    const stringified = String(str ?? '');
+    return stringified.length > len ? `${stringified.slice(0, len)}...` : stringified;
+  };
   const [showMore, setShowMore] = useState(false);
 
-  const pronouns = profile.pronouns?.map((p: any) => clamp(p.summary, 20)).join('/');
+  const renderValue = (val: any) => {
+    if (val === null || val === undefined) return 'n/a';
+    if (typeof val === 'boolean') return val ? 'Yes' : 'No';
+    if (typeof val === 'object') return JSON.stringify(val);
+    return String(val);
+  };
+
+  const pronouns = profile.pronouns?.map((p: any) => clamp(p.summary, 16)).join(', ');
   const timezone = profile.timezone ? clamp(profile.timezone, 64) : null;
   const localTime = timezone
     ? new Intl.DateTimeFormat([], {
@@ -102,8 +112,7 @@ function UserExtendedSection({
   }, [profile]);
 
   const unknownFields = Object.entries(profile.extended || {}).filter(
-    ([key, value]) =>
-      !KNOWN_KEYS.includes(key) && (typeof value === 'string' || typeof value === 'number')
+    ([key]) => !KNOWN_KEYS.includes(key)
   );
 
   return (
@@ -182,10 +191,10 @@ function UserExtendedSection({
               {unknownFields.map(([key, value]) => (
                 <Box key={key} direction="Column" style={{ marginBottom: config.space.S100 }}>
                   <Text size="T200" priority="400" style={{ letterSpacing: '0.05em' }}>
-                    {clamp(key, 64).split('.').pop()?.replace(/_/g, ' ')}
+                    {key}
                   </Text>
                   <Text size="T200" priority="300">
-                    {String(clamp(value, 64))}
+                    {clamp(renderValue(value), 128)}
                   </Text>
                 </Box>
               ))}
