@@ -1,3 +1,4 @@
+/* eslint-disable react/no-unused-prop-types */
 import { forwardRef, MouseEventHandler, ReactNode, useCallback, useMemo, useRef } from 'react';
 import { MatrixEvent, Room, RoomPinnedEventsEventContent } from '$types/matrix-sdk';
 import {
@@ -20,6 +21,7 @@ import { Opts as LinkifyOpts } from 'linkifyjs';
 import { HTMLReactParserOptions } from 'html-react-parser';
 import { useAtomValue } from 'jotai';
 import { useVirtualizer } from '@tanstack/react-virtual';
+import { createLogger } from '$appUtils/debug';
 import { useRoomPinnedEvents } from '$hooks/useRoomPinnedEvents';
 import { SequenceCard } from '$components/sequence-card';
 import { useRoomEvent } from '$hooks/useRoomEvent';
@@ -87,6 +89,8 @@ import { useSableCosmetics } from '$hooks/useSableCosmetics';
 import { EncryptedContent } from '../message';
 import * as css from './RoomPinMenu.css';
 import { PinReadMarker } from '../RoomViewHeader';
+
+const log = createLogger('RoomPinMenu');
 
 type PinnedMessageProps = {
   room: Room;
@@ -215,7 +219,9 @@ function PinnedMessage(props: PinnedMessageProps) {
   const handleUnpinClick: MouseEventHandler = useCallback(
     (evt) => {
       evt.stopPropagation();
-      void unpin();
+      unpin().catch((err) => {
+        log.warn('Failed to unpin room event:', err);
+      });
     },
     [unpin]
   );

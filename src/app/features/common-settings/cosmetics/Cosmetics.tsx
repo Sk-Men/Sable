@@ -9,11 +9,14 @@ import { useMatrixClient } from '$hooks/useMatrixClient';
 import { StateEvent } from '$types/matrix/room';
 import { useRoomCreators } from '$hooks/useRoomCreators';
 import { useRoomPermissions } from '$hooks/useRoomPermissions';
+import { createLogger } from '$appUtils/debug';
 import { SequenceCardStyle } from '../styles.css';
 
 type CosmeticsProps = {
   requestClose: () => void;
 };
+
+const log = createLogger('Cosmetics');
 
 export function Cosmetics({ requestClose }: CosmeticsProps) {
   const mx = useMatrixClient();
@@ -41,7 +44,7 @@ export function Cosmetics({ requestClose }: CosmeticsProps) {
       try {
         await mx.sendStateEvent(room.roomId, StateEvent.RoomPowerLevels as any, newContent, '');
       } catch (e) {
-        console.error(`Failed to update permissions for ${eventType}:`, e);
+        log.error(`Failed to update permissions for ${eventType}:`, e);
       }
     },
     [mx, room.roomId, powerLevels]

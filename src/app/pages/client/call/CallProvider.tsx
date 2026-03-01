@@ -255,7 +255,7 @@ export function CallProvider({ children }: CallProviderProps) {
       setIsActiveCallReady(true);
     };
 
-    void sendWidgetAction(WIDGET_MEDIA_STATE_UPDATE_ACTION, {
+    sendWidgetAction(WIDGET_MEDIA_STATE_UPDATE_ACTION, {
       audio_enabled: isAudioEnabled,
       video_enabled: isVideoEnabled,
     }).catch(() => {

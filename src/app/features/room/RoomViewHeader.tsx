@@ -37,6 +37,7 @@ import { useSetting } from '$state/hooks/settings';
 import { settingsAtom } from '$state/settings';
 import { useSpaceOptionally } from '$hooks/useSpace';
 import { getHomeSearchPath, getSpaceSearchPath, withSearchParam } from '$pages/pathUtils';
+import { createLogger } from '$appUtils/debug';
 import { getCanonicalAliasOrRoomId, isRoomAlias, mxcUrlToHttp } from '$appUtils/matrix';
 import { _SearchPathSearchParams } from '$pages/paths';
 import { useRoomUnread } from '$state/hooks/unread';
@@ -71,6 +72,8 @@ import { AccountDataEvent } from '$types/matrix/accountData';
 import { JumpToTime } from './jump-to-time';
 import { RoomPinMenu } from './room-pin-menu';
 import * as css from './RoomViewHeader.css';
+
+const log = createLogger('RoomViewHeader');
 
 async function getPinsHash(pinnedIds: string[]): Promise<string> {
   const sorted = [...pinnedIds].sort().join(',');
@@ -306,7 +309,11 @@ export function RoomViewHeader() {
   const [currentHash, setCurrentHash] = useState<string>('');
 
   useEffect(() => {
-    void getPinsHash(pinnedIds).then(setCurrentHash);
+    getPinsHash(pinnedIds)
+      .then(setCurrentHash)
+      .catch((err) => {
+        log.warn('Failed to compute pins hash:', err);
+      });
   }, [pinnedIds]);
 
   useEffect(() => {
@@ -334,7 +341,9 @@ export function RoomViewHeader() {
         setUnreadPinsCount(Math.max(0, newCount));
       }
     };
-    void checkUnreads();
+    checkUnreads().catch((err) => {
+      log.warn('Failed to check unread pins:', err);
+    });
   }, [pinnedIds, pinMarker]);
 
   const handleSearchClick = () => {
@@ -365,7 +374,9 @@ export function RoomViewHeader() {
       });
     };
 
-    void updateMarker();
+    updateMarker().catch((err) => {
+      log.warn('Failed to update pin marker:', err);
+    });
   };
 
   return (

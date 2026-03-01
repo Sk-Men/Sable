@@ -8,8 +8,11 @@ import {
   MatrixEvent,
   MatrixEventEvent,
 } from '$types/matrix-sdk';
+import { createLogger } from '$appUtils/debug';
 import { resolveWidgetUrl } from '$hooks/useRoomWidgets';
 import { GenericWidgetDriver, CapabilityApprovalCallback } from './GenericWidgetDriver';
+
+const log = createLogger('WidgetIframe');
 
 interface WidgetIframeProps {
   widget: IWidget;
@@ -95,7 +98,9 @@ export function WidgetIframe({ widget, roomId, mx, onCapabilityRequest }: Widget
       if (!messagingRef.current) return;
       if (ev.isBeingDecrypted() || ev.isDecryptionFailure()) return;
       const raw = ev.getEffectiveEvent();
-      messagingRef.current.feedEvent(raw as IRoomEvent).catch(() => null);
+      messagingRef.current.feedEvent(raw as IRoomEvent).catch((err) => {
+        log.warn('Failed to feed widget iframe event:', err);
+      });
     };
 
     const onEvent = (ev: MatrixEvent): void => {

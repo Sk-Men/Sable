@@ -76,8 +76,8 @@ async function requestSessionWithTimeout(
   return Promise.race([sessionPromise, timeout]);
 }
 
-self.addEventListener('install', () => {
-  void self.skipWaiting();
+self.addEventListener('install', (event: ExtendableEvent) => {
+  event.waitUntil(self.skipWaiting());
 });
 
 self.addEventListener('activate', (event: ExtendableEvent) => {
@@ -102,7 +102,7 @@ self.addEventListener('message', (event: ExtendableMessageEvent) => {
 
   if (type === 'setSession') {
     setSession(client.id, accessToken, baseUrl);
-    void cleanupDeadClients();
+    event.waitUntil(cleanupDeadClients());
   }
 });
 

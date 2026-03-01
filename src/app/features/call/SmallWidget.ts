@@ -27,8 +27,11 @@ import {
   WidgetApiFromWidgetAction,
   WidgetKind,
 } from 'matrix-widget-api';
+import { createLogger } from '$appUtils/debug';
 import { CinnyWidget } from './CinnyWidget';
 import { SmallWidgetDriver } from './SmallWidgetDriver';
+
+const log = createLogger('SmallWidget');
 
 /**
  * Generates the URL for the Element Call widget.
@@ -215,7 +218,9 @@ export class SmallWidget extends EventEmitter {
   private onStateUpdate = (ev: MatrixEvent): void => {
     if (this.messaging === null || !ev.isState()) return;
     const raw = ev.getEffectiveEvent();
-    this.messaging.feedStateUpdate(raw as IRoomEvent).catch(() => null);
+    this.messaging.feedStateUpdate(raw as IRoomEvent).catch((err) => {
+      log.warn('Failed to feed widget state update:', err);
+    });
   };
 
   private onToDeviceEvent = async (ev: MatrixEvent): Promise<void> => {
@@ -326,7 +331,9 @@ export class SmallWidget extends EventEmitter {
         this.eventsToFeed.add(ev);
       } else {
         const raw = ev.getEffectiveEvent();
-        this.messaging.feedEvent(raw as IRoomEvent).catch(() => null);
+        this.messaging.feedEvent(raw as IRoomEvent).catch((err) => {
+          log.warn('Failed to feed widget event:', err);
+        });
       }
     }
   }

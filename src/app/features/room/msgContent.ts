@@ -17,6 +17,9 @@ import { encryptFile, getImageInfo, getThumbnailContent, getVideoInfo } from '$a
 import { TUploadItem } from '$state/room/roomInputDrafts';
 import { encodeBlurHash } from '$appUtils/blurHash';
 import { scaleYDimension } from '$appUtils/common';
+import { createLogger } from '$appUtils/debug';
+
+const log = createLogger('msgContent');
 
 const generateThumbnailContent = async (
   mx: MatrixClient,
@@ -50,7 +53,7 @@ export const getImageMsgContent = async (
 ): Promise<IContent> => {
   const { file, originalFile, encInfo, metadata } = item;
   const [imgError, imgEl] = await to(loadImageElement(getImageFileUrl(originalFile)));
-  if (imgError) console.warn(imgError);
+  if (imgError) log.warn('Failed to load image element:', imgError);
 
   const content: IContent = {
     msgtype: MsgType.Image,
@@ -85,7 +88,7 @@ export const getVideoMsgContent = async (
   const { file, originalFile, encInfo, metadata } = item;
 
   const [videoError, videoEl] = await to(loadVideoElement(getVideoFileUrl(originalFile)));
-  if (videoError) console.warn(videoError);
+  if (videoError) log.warn('Failed to load video element:', videoError);
 
   const content: IContent = {
     msgtype: MsgType.Video,
@@ -109,7 +112,7 @@ export const getVideoMsgContent = async (
         scaleYDimension(videoEl.videoWidth, 512, videoEl.videoHeight)
       );
     }
-    if (thumbError) console.warn(thumbError);
+    if (thumbError) log.warn('Failed to generate video thumbnail:', thumbError);
     content.info = {
       ...getVideoInfo(videoEl, file),
       ...thumbContent,

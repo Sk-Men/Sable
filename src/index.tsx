@@ -26,9 +26,11 @@ import {
   Sessions,
   ACTIVE_SESSION_KEY,
 } from './app/state/sessions';
+import { createLogger } from './app/utils/debug';
 import { getLocalStorageItem } from './app/state/utils/atomWithLocalStorage';
 
 enableMapSet();
+const log = createLogger('index');
 
 document.body.classList.add(configClass, varsClass);
 
@@ -48,8 +50,15 @@ if ('serviceWorker' in navigator) {
     pushSessionToSW(active?.baseUrl, active?.accessToken);
   };
 
-  void navigator.serviceWorker.register(swUrl).then(sendSessionToSW);
-  void navigator.serviceWorker.ready.then(sendSessionToSW);
+  navigator.serviceWorker
+    .register(swUrl)
+    .then(sendSessionToSW)
+    .catch((err) => {
+      log.warn('SW registration failed:', err);
+    });
+  navigator.serviceWorker.ready.then(sendSessionToSW).catch((err) => {
+    log.warn('SW ready failed:', err);
+  });
 
   navigator.serviceWorker.addEventListener('message', (ev) => {
     const { data } = ev;
