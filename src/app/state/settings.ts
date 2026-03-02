@@ -63,6 +63,7 @@ export interface Settings {
   mobileGestures: boolean;
   rightSwipeAction: RightSwipeAction;
   hideMembershipInReadOnly: boolean;
+  useRightBubbles: boolean;
 }
 
 const defaultSettings: Settings = {
@@ -112,6 +113,7 @@ const defaultSettings: Settings = {
   mobileGestures: true,
   rightSwipeAction: RightSwipeAction.Reply,
   hideMembershipInReadOnly: true,
+  useRightBubbles: false,
 };
 
 export const getSettings = () => {

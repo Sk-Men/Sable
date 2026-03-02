@@ -1,8 +1,11 @@
 # Sable Client Changelog
 
-## 1.2.3 - in dev
+## 1.2.3 - 3/2/2026
 
 - Actually fix quotes around colors for tuwunel homeservers ([#46](https://github.com/7w1/sable/issues/46))
+- Option to have your own message bubbles in bubble layout right aligned ([#38](https://github.com/7w1/sable/issues/38))
+- Allow responding to and rendering replies with files ([#54](https://github.com/7w1/sable/pull/54)) - [nushea](https://github.com/nushea)
+- Added Gruvbox theme ([#51](https://github.com/7w1/sable/pull/51)) - [dollth.ing](https://github.com/dollth-ing)
 
 ## 1.2.2 v2
 
