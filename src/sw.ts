@@ -1,10 +1,12 @@
 /// <reference lib="WebWorker" />
 import { precacheAndRoute, cleanupOutdatedCaches } from 'workbox-precaching';
-import { EventType } from "matrix-js-sdk/lib/@types/event";
+import { EventType } from 'matrix-js-sdk/lib/@types/event';
 import { usePushNotifications } from './sw/pushNotification';
 
-export type { };
+export type {};
 declare const self: ServiceWorkerGlobalScope;
+
+const { handlePushNotificationPushData } = usePushNotifications(self);
 
 type SessionInfo = {
   accessToken: string;
@@ -248,12 +250,11 @@ self.addEventListener('fetch', (event: FetchEvent) => {
   );
 
   event.waitUntil(
-    (async function() {
+    (async function () {
       console.log('Ensuring fetch processing completes before worker termination.');
     })()
   );
 });
-
 
 const onPushNotification = async (event: PushEvent) => {
   if (!event?.data) {
@@ -265,11 +266,11 @@ const onPushNotification = async (event: PushEvent) => {
   // try {
   //   if (typeof pushData?.unread === 'number') {
   //     self.navigator.setAppBadge(pushData.unread);
-  //
+
   //     if (pushData.unread == 0) {
-  //       self.registration.getNotifications()
-  //         .then((notifications) => notifications
-  //           .forEach((notification) => notification.close()));
+  //       self.registration
+  //         .getNotifications()
+  //         .then((notifications) => notifications.forEach((notification) => notification.close()));
   //       await navigator.clearAppBadge();
   //       return;
   //     }
@@ -292,24 +293,24 @@ self.addEventListener('notificationclick', (event: NotificationEvent) => {
   const { scope } = self.registration;
 
   console.log(messageData);
-  const eventType = messageData?.type as (EventType | undefined);
+  const eventType = messageData?.type as EventType | undefined;
   if (!eventType) return Promise.resolve();
 
   let targetUrl = `${scope}inbox/`;
   if (
     (eventType === EventType.RoomMessage || eventType === EventType.RoomMessageEncrypted) &&
-    messageData?.room_id && messageData?.event_id
-  ) targetUrl = `${scope}to/${messageData.room_id}/${messageData.event_id}`;
-  if (
-    eventType === EventType.RoomMember &&
-    messageData?.content?.membership === "invite"
-  ) targetUrl = `${scope}inbox/invites/`;
+    messageData?.room_id &&
+    messageData?.event_id
+  )
+    targetUrl = `${scope}to/${messageData.room_id}/${messageData.event_id}`;
+  if (eventType === EventType.RoomMember && messageData?.content?.membership === 'invite')
+    targetUrl = `${scope}inbox/invites/`;
   console.log(`target url = ${targetUrl}`);
 
   const postMessageToClient = (client: WindowClient) => {
     client.postMessage({
-      type: "notificationToRoomEvent",
-      message: messageData
+      type: 'notificationToRoomEvent',
+      message: messageData,
     });
   };
 
