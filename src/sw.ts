@@ -6,7 +6,10 @@ import { usePushNotifications } from './sw/pushNotification';
 export type {};
 declare const self: ServiceWorkerGlobalScope;
 
-const { handlePushNotificationPushData } = usePushNotifications(self);
+let notificationSoundEnabled = true;
+const { handlePushNotificationPushData } = usePushNotifications(self, () => ({
+  notificationSoundEnabled,
+}));
 
 type SessionInfo = {
   accessToken: string;
@@ -159,6 +162,11 @@ self.addEventListener('message', (event: ExtendableMessageEvent) => {
   if (type === 'setSession') {
     setSession(client.id, accessToken, baseUrl);
     void cleanupDeadClients();
+  }
+  if (type === 'setNotificationSettings') {
+    if (typeof (data as { notificationSoundEnabled?: unknown }).notificationSoundEnabled === 'boolean') {
+      notificationSoundEnabled = (data as { notificationSoundEnabled: boolean }).notificationSoundEnabled;
+    }
   }
 });
 

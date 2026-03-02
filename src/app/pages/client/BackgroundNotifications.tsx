@@ -27,6 +27,7 @@ import LogoSVG from '$public/res/svg/cinny.svg';
 import { nicknamesAtom } from '$state/nicknames';
 import { useMatrixClient } from '$hooks/useMatrixClient';
 import { useRoomNavigate } from '$hooks/useRoomNavigate';
+import { buildRoomMessageNotification } from '$appUtils/notificationStyle';
 
 const log = createLogger('BackgroundNotifications');
 
@@ -66,7 +67,8 @@ export function BackgroundNotifications() {
   const sessions = useAtomValue(sessionsAtom);
   const activeSessionId = useAtomValue(activeSessionIdAtom);
   const setActiveSessionId = useSetAtom(activeSessionIdAtom);
-  const [showNotifications] = useSetting(settingsAtom, 'showNotifications');
+  const [showNotifications] = useSetting(settingsAtom, 'useInAppNotifications');
+  const [notificationSound] = useSetting(settingsAtom, 'isNotificationSounds');
   const activeMx = useMatrixClient();
   const nicknames = useAtomValue(nicknamesAtom);
   const nicknamesRef = useRef(nicknames);
@@ -188,11 +190,20 @@ export function BackgroundNotifications() {
               if (first) notifiedEventsRef.current.delete(first);
             }
 
+            const notificationPayload = buildRoomMessageNotification({
+              roomName: `${room.name ?? 'Unknown'} (${accountLabel})`,
+              roomAvatar,
+              username: senderName,
+              previewText: 'new message',
+              silent: !notificationSound || !isHighlight,
+              eventId,
+            });
+
             sendNotification({
-              title: `${room.name ?? 'Unknown'} (${accountLabel})`,
+              title: notificationPayload.title,
               icon: roomAvatar,
-              body: `${senderName}: new message`,
-              silent: !isHighlight,
+              body: notificationPayload.options.body,
+              silent: notificationPayload.options.silent ?? undefined,
               onClick: () => {
                 window.focus();
                 setPending({ roomId: room.roomId, eventId });
@@ -220,6 +231,7 @@ export function BackgroundNotifications() {
   }, [
     inactiveSessions,
     showNotifications,
+    notificationSound,
     activeMx,
     activeSessionId,
     setActiveSessionId,

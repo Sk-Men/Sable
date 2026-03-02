@@ -32,6 +32,7 @@ import { getInboxNotificationsPath } from '../pathUtils';
 import { registrationAtom } from '$state/serviceWorkerRegistration';
 import { BackgroundNotifications } from './BackgroundNotifications';
 import { pendingNotificationAtom } from '$state/sessions';
+import { buildRoomMessageNotification } from '$appUtils/notificationStyle';
 
 function SystemEmojiFeature() {
   const [twitterEmoji] = useSetting(settingsAtom, 'twitterEmoji');
@@ -193,12 +194,15 @@ function MessageNotifications() {
       roomId: string;
       eventId: string;
     }) => {
-      const noti = new window.Notification(`${username} in ${roomName}`, {
-        icon: roomAvatar,
-        badge: roomAvatar,
-        body: `${username}: new message`,
+      const payload = buildRoomMessageNotification({
+        roomName,
+        roomAvatar,
+        username,
+        previewText: 'new message',
         silent: true,
+        eventId,
       });
+      const noti = new window.Notification(payload.title, payload.options);
 
       noti.onclick = () => {
         window.focus();
@@ -358,6 +362,25 @@ function HandleNotificationClick() {
   return null;
 }
 
+function SyncNotificationSettingsWithServiceWorker() {
+  const [notificationSound] = useSetting(settingsAtom, 'isNotificationSounds');
+
+  useEffect(() => {
+    if (!('serviceWorker' in navigator)) return;
+    const payload = {
+      type: 'setNotificationSettings' as const,
+      notificationSoundEnabled: notificationSound,
+    };
+
+    navigator.serviceWorker.controller?.postMessage(payload);
+    void navigator.serviceWorker.ready.then((registration) => {
+      registration.active?.postMessage(payload);
+    });
+  }, [notificationSound]);
+
+  return null;
+}
+
 // type ClientNonUIFeaturesProps = {
 //   children: ReactNode;
 // }
@@ -373,6 +396,7 @@ export function ClientNonUIFeatures({ children }: ClientNonUIFeaturesProps) {
       <MessageNotifications />
       <BackgroundNotifications />
       <HandleNotificationClick />
+      <SyncNotificationSettingsWithServiceWorker />
       {children}
     </>
   );

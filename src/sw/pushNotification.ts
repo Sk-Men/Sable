@@ -1,16 +1,26 @@
 /* eslint-disable camelcase */
 import { EventType } from "matrix-js-sdk/lib/@types/event";
+import { buildRoomMessageNotification, DEFAULT_NOTIFICATION_ICON, DEFAULT_NOTIFICATION_BADGE } from '../app/utils/notificationStyle';
 
-const DEFAULT_NOTIFICATION_ICON = '/public/res/apple/apple-touch-icon-180x180.png';
-const DEFAULT_NOTIFICATION_BADGE = '/public/res/apple-touch-icon-72x72.png';
+type NotificationSettings = {
+  notificationSoundEnabled: boolean;
+};
 
-export const usePushNotifications = (self: ServiceWorkerGlobalScope) => {
+export const usePushNotifications = (
+  self: ServiceWorkerGlobalScope,
+  getNotificationSettings: () => NotificationSettings
+) => {
+
+  const resolveSilent = (silent: unknown): boolean => {
+    if (typeof silent === 'boolean') return silent;
+    return !getNotificationSettings().notificationSoundEnabled;
+  };
 
   const showNotificationWithData = async (
     title: string,
     body: string | undefined,
     data: any,
-    silent: boolean | null = null
+    silent?: boolean
   ) => {
     await self.registration.showNotification(title, {
       body,
@@ -23,10 +33,6 @@ export const usePushNotifications = (self: ServiceWorkerGlobalScope) => {
   };
 
   const handleRoomMessageNotification = async (pushData: any) => {
-    const title = pushData?.sender_display_name && pushData?.room_name
-      ? `${pushData.sender_display_name} in ${pushData.room_name}`
-      : "New Notification";
-    const body = pushData?.content?.body ?? "You have a new message";
     const data = {
       type: pushData!.type,
       room_id: pushData!.room_id,
@@ -34,14 +40,24 @@ export const usePushNotifications = (self: ServiceWorkerGlobalScope) => {
       timestamp: Date.now(),
       ...pushData.data
     };
-    await showNotificationWithData(title, body, data, pushData.silent ?? false);
+    const notificationPayload = buildRoomMessageNotification({
+      roomName: pushData?.room_name,
+      username: pushData?.sender_display_name,
+      roomAvatar: pushData?.room_avatar_url,
+      previewText: pushData?.content?.body,
+      silent: resolveSilent(pushData?.silent),
+      eventId: pushData?.event_id,
+      data,
+    });
+    await showNotificationWithData(
+      notificationPayload.title,
+      notificationPayload.options.body,
+      data,
+      notificationPayload.options.silent ?? undefined
+    );
   }
 
   const handleEncryptedMessageNotification = async (pushData: any) => {
-    const title = pushData?.sender_display_name && pushData?.room_name
-      ? `${pushData.sender_display_name} in ${pushData.room_name}`
-      : "New Notification";
-    const body = "Encrypted message";
     const data = {
       type: pushData!.type,
       room_id: pushData!.room_id,
@@ -49,7 +65,21 @@ export const usePushNotifications = (self: ServiceWorkerGlobalScope) => {
       timestamp: Date.now(),
       ...pushData.data
     };
-    await showNotificationWithData(title, body, data, pushData.silent ?? false);
+    const notificationPayload = buildRoomMessageNotification({
+      roomName: pushData?.room_name,
+      username: pushData?.sender_display_name,
+      roomAvatar: pushData?.room_avatar_url,
+      previewText: 'Encrypted message',
+      silent: resolveSilent(pushData?.silent),
+      eventId: pushData?.event_id,
+      data,
+    });
+    await showNotificationWithData(
+      notificationPayload.title,
+      notificationPayload.options.body,
+      data,
+      notificationPayload.options.silent ?? undefined
+    );
   }
 
   const handleInvitationNotification = async (pushData: any) => {
@@ -76,7 +106,8 @@ export const usePushNotifications = (self: ServiceWorkerGlobalScope) => {
     await showNotificationWithData(
       "New Invitation",
       body,
-      data
+      data,
+      resolveSilent(pushData?.silent)
     )
   };
 
@@ -97,7 +128,7 @@ export const usePushNotifications = (self: ServiceWorkerGlobalScope) => {
       timestamp: Date.now(),
       ...pushData.data
     };
-    await showNotificationWithData(title, body, data, pushData.silent ?? false);
+    await showNotificationWithData(title, body, data, resolveSilent(pushData?.silent));
   };
 
   const handlePushNotificationPushData = async (pushData: any) => {
