@@ -4,7 +4,7 @@ import {
   getLocalStorageItem,
   setLocalStorageItem,
 } from './utils/atomWithLocalStorage';
-import { createLogger } from '../utils/debug';
+import { createLogger } from '$utils/debug';
 
 const log = createLogger('sessions');
 
