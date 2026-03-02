@@ -1,4 +1,3 @@
-import React from 'react';
 import { createRoot } from 'react-dom/client';
 import { enableMapSet } from 'immer';
 import '@fontsource-variable/nunito';
@@ -9,8 +8,6 @@ import '@fontsource/space-mono/400-italic.css';
 import '@fontsource/space-mono/700-italic.css';
 import 'folds/dist/style.css';
 import { configClass, varsClass } from 'folds';
-
-enableMapSet();
 
 import './index.css';
 import './app/styles/themes.css';
@@ -29,7 +26,11 @@ import {
   Sessions,
   ACTIVE_SESSION_KEY,
 } from './app/state/sessions';
+import { createLogger } from './app/utils/debug';
 import { getLocalStorageItem } from './app/state/utils/atomWithLocalStorage';
+
+enableMapSet();
+const log = createLogger('index');
 
 document.body.classList.add(configClass, varsClass);
 
@@ -49,11 +50,18 @@ if ('serviceWorker' in navigator) {
     pushSessionToSW(active?.baseUrl, active?.accessToken);
   };
 
-  void navigator.serviceWorker.register(swUrl).then(sendSessionToSW);
-  void navigator.serviceWorker.ready.then(sendSessionToSW);
+  navigator.serviceWorker
+    .register(swUrl)
+    .then(sendSessionToSW)
+    .catch((err) => {
+      log.warn('SW registration failed:', err);
+    });
+  navigator.serviceWorker.ready.then(sendSessionToSW).catch((err) => {
+    log.warn('SW ready failed:', err);
+  });
 
   navigator.serviceWorker.addEventListener('message', (ev) => {
-    const data: unknown = ev.data;
+    const { data } = ev;
     if (!data || typeof data !== 'object') return;
     const { type } = data as { type?: unknown };
 

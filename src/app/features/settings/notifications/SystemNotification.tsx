@@ -1,8 +1,7 @@
-import React, { useCallback } from 'react';
+import { useCallback } from 'react';
 import { Box, Text, Switch, Button, color, Spinner } from 'folds';
 import { IPusherRequest } from '$types/matrix-sdk';
 import { SequenceCard } from '$components/sequence-card';
-import { SequenceCardStyle } from '../styles.css';
 import { SettingTile } from '$components/setting-tile';
 import { useSetting } from '$state/hooks/settings';
 import { settingsAtom } from '$state/settings';
@@ -10,6 +9,7 @@ import { getNotificationState, usePermissionState } from '$hooks/usePermission';
 import { useEmailNotifications } from '$hooks/useEmailNotifications';
 import { AsyncStatus, useAsyncCallback } from '$hooks/useAsyncCallback';
 import { useMatrixClient } from '$hooks/useMatrixClient';
+import { SequenceCardStyle } from '$features/settings/styles.css';
 
 function EmailNotification() {
   const mx = useMatrixClient();

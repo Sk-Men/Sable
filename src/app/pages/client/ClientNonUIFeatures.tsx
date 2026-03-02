@@ -1,5 +1,5 @@
 import { useAtomValue, useSetAtom } from 'jotai';
-import React, { ReactNode, useCallback, useEffect, useRef } from 'react';
+import { ReactNode, useCallback, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { RoomEvent, RoomEventHandlerMap } from '$types/matrix-sdk';
 import { roomToUnreadAtom, unreadEqual, unreadInfoToUnread } from '$state/room/roomToUnread';
@@ -8,27 +8,27 @@ import LogoUnreadSVG from '$public/res/svg/cinny-unread.svg';
 import LogoHighlightSVG from '$public/res/svg/cinny-highlight.svg';
 import NotificationSound from '$public/sound/notification.ogg';
 import InviteSound from '$public/sound/invite.ogg';
-import { notificationPermission, setFavicon } from '$appUtils/dom';
+import { notificationPermission, setFavicon } from '$utils/dom';
 import { useSetting } from '$state/hooks/settings';
 import { settingsAtom } from '$state/settings';
 import { nicknamesAtom } from '$state/nicknames';
 import { allInvitesAtom } from '$state/room-list/inviteList';
 import { usePreviousValue } from '$hooks/usePreviousValue';
 import { useMatrixClient } from '$hooks/useMatrixClient';
-import { getInboxInvitesPath } from '../pathUtils';
 import {
   getMemberDisplayName,
   getNotificationType,
   getUnreadInfo,
   isNotificationEvent,
-} from '$appUtils/room';
+} from '$utils/room';
 import { NotificationType, UnreadInfo } from '$types/matrix/room';
-import { getMxIdLocalPart, mxcUrlToHttp } from '$appUtils/matrix';
+import { getMxIdLocalPart, mxcUrlToHttp } from '$utils/matrix';
 import { useSelectedRoom } from '$hooks/router/useSelectedRoom';
 import { useInboxNotificationsSelected } from '$hooks/router/useInbox';
 import { useMediaAuthentication } from '$hooks/useMediaAuthentication';
-import { BackgroundNotifications } from './BackgroundNotifications';
 import { pendingNotificationAtom } from '$state/sessions';
+import { BackgroundNotifications } from './BackgroundNotifications';
+import { getInboxInvitesPath } from '$pages/pathUtils';
 
 function SystemEmojiFeature() {
   const [twitterEmoji] = useSetting(settingsAtom, 'twitterEmoji');

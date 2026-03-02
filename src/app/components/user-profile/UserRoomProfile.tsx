@@ -1,33 +1,27 @@
 import { Box, Button, config, Icon, Icons, Scroll, Text } from 'folds';
-import React, { useCallback, useMemo, useState } from 'react';
+import { SyntheticEvent, useCallback, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAtomValue } from 'jotai';
 import { Opts as LinkifyOpts } from 'linkifyjs';
 import { HTMLReactParserOptions } from 'html-react-parser';
-import { UserHero, UserHeroName } from './UserHero';
-import { getMxIdServer, mxcUrlToHttp } from '$appUtils/matrix';
-import { getMemberAvatarMxc, getMemberDisplayName } from '$appUtils/room';
+import { getMxIdServer, mxcUrlToHttp } from '$utils/matrix';
+import { getMemberAvatarMxc, getMemberDisplayName } from '$utils/room';
 import { useMatrixClient } from '$hooks/useMatrixClient';
 import { useMediaAuthentication } from '$hooks/useMediaAuthentication';
 import { usePowerLevels } from '$hooks/usePowerLevels';
 import { useRoom } from '$hooks/useRoom';
 import { useUserPresence } from '$hooks/useUserPresence';
-import { IgnoredUserAlert, MutualRoomsChip, OptionsChip, ServerChip, ShareChip } from './UserChips';
 import { useCloseUserRoomProfile } from '$state/hooks/userRoomProfile';
-import { PowerChip } from './PowerChip';
-import { UserInviteAlert, UserBanAlert, UserModeration, UserKickAlert } from './UserModeration';
 import { useIgnoredUsers } from '$hooks/useIgnoredUsers';
 import { useMembership } from '$hooks/useMembership';
 import { Membership } from '$types/matrix/room';
 import { useRoomCreators } from '$hooks/useRoomCreators';
 import { useRoomPermissions } from '$hooks/useRoomPermissions';
 import { useMemberPowerCompare } from '$hooks/useMemberPowerCompare';
-import { CreatorChip } from './CreatorChip';
 import { getDirectCreatePath, withSearchParam } from '$pages/pathUtils';
 import { DirectCreateSearchParams } from '$pages/paths';
 import { nicknamesAtom } from '$state/nicknames';
 import { UserProfile, useUserProfile } from '$hooks/useUserProfile';
-import { RenderBody } from '../message';
 import {
   factoryRenderLinkifyWithMention,
   getReactCustomHtmlParser,
@@ -36,6 +30,12 @@ import {
   renderMatrixMention,
 } from '$plugins/react-custom-html-parser';
 import { useSpoilerClickHandler } from '$hooks/useSpoilerClickHandler';
+import { RenderBody } from '$components/message';
+import { CreatorChip } from './CreatorChip';
+import { UserInviteAlert, UserBanAlert, UserModeration, UserKickAlert } from './UserModeration';
+import { PowerChip } from './PowerChip';
+import { IgnoredUserAlert, MutualRoomsChip, OptionsChip, ServerChip, ShareChip } from './UserChips';
+import { UserHero, UserHeroName } from './UserHero';
 
 const KNOWN_KEYS = [
   'moe.sable.app.bio',
@@ -273,7 +273,7 @@ export function UserRoomProfile({ userId, initialProfile }: UserRoomProfileProps
   };
 
   // Todo eventually maybe
-  const mentionClickHandler = useCallback((e: React.SyntheticEvent<HTMLElement>) => {
+  const mentionClickHandler = useCallback((e: SyntheticEvent<HTMLElement>) => {
     e.preventDefault();
   }, []);
 

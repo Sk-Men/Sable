@@ -1,20 +1,20 @@
 import { useCallback } from 'react';
 import { NavigateOptions, useNavigate } from 'react-router-dom';
 import { useAtomValue } from 'jotai';
-import { getCanonicalAliasOrRoomId } from '../utils/matrix';
+import { getCanonicalAliasOrRoomId } from '$utils/matrix';
 import {
   getDirectRoomPath,
   getHomeRoomPath,
   getSpacePath,
   getSpaceRoomPath,
-} from '../pages/pathUtils';
+} from '$pages/pathUtils';
 import { useMatrixClient } from './useMatrixClient';
-import { getOrphanParents, guessPerfectParent } from '../utils/room';
-import { roomToParentsAtom } from '../state/room/roomToParents';
-import { mDirectAtom } from '../state/mDirectList';
+import { getOrphanParents, guessPerfectParent } from '$utils/room';
+import { roomToParentsAtom } from '$state/room/roomToParents';
+import { mDirectAtom } from '$state/mDirectList';
 import { useSelectedSpace } from './router/useSelectedSpace';
-import { settingsAtom } from '../state/settings';
-import { useSetting } from '../state/hooks/settings';
+import { settingsAtom } from '$state/settings';
+import { useSetting } from '$state/hooks/settings';
 
 export const useRoomNavigate = () => {
   const navigate = useNavigate();

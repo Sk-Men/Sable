@@ -3,7 +3,7 @@ import { ConditionKind, IPushRules, MatrixClient, PushRuleKind } from '$types/ma
 import { Icons, IconSrc } from 'folds';
 import { AccountDataEvent } from '$types/matrix/accountData';
 import { useAccountData } from './useAccountData';
-import { isRoomId } from '../utils/matrix';
+import { isRoomId } from '$utils/matrix';
 import {
   getNotificationMode,
   getNotificationModeActions,

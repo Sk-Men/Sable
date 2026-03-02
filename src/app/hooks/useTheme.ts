@@ -7,10 +7,10 @@ import {
   lightTheme,
   rosePineTheme,
   silverTheme,
-  gruvdarkTheme
+  gruvdarkTheme,
 } from '../../colors.css';
-import { settingsAtom } from '../state/settings';
-import { useSetting } from '../state/hooks/settings';
+import { settingsAtom } from '$state/settings';
+import { useSetting } from '$state/hooks/settings';
 
 export enum ThemeKind {
   Light = 'light',
@@ -64,7 +64,15 @@ export const CinnyDarkTheme: Theme = {
 
 export const useThemes = (): Theme[] => {
   const themes: Theme[] = useMemo(
-    () => [LightTheme, SilverTheme, DarkTheme, ButterTheme, RosePineTheme, CinnyDarkTheme, GruvdarkTheme],
+    () => [
+      LightTheme,
+      SilverTheme,
+      DarkTheme,
+      ButterTheme,
+      RosePineTheme,
+      CinnyDarkTheme,
+      GruvdarkTheme,
+    ],
     []
   );
 

@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { useClientConfig } from './useClientConfig';
-import { trimLeadingSlash, trimSlash, trimTrailingSlash } from '../utils/common';
+import { trimLeadingSlash, trimSlash, trimTrailingSlash } from '$utils/common';
 
 export const usePathWithOrigin = (path: string): string => {
   const { hashRouter } = useClientConfig();
