@@ -1,6 +1,6 @@
 # Sable Client Changelog
 
-## 1.2.2 - in dev
+## 1.2.2 - 3/1/2026
 
 - Fixed/updated unknown extended profile keys rendering.
 - Added support for `---`, `-#`, and fixed `-` to be unordered.
