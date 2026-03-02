@@ -313,7 +313,7 @@ export class SmallWidgetDriver extends WidgetDriver {
   public async sendToDevice(
     eventType: string,
     encrypted: boolean,
-    contentMap: { [userId: string]: { [deviceId: string]: object } }
+    contentMap: Record<string, Record<string, object>>
   ): Promise<void> {
     const client = this.mxClient;
 
@@ -322,7 +322,7 @@ export class SmallWidgetDriver extends WidgetDriver {
       if (!crypto) throw new Error('E2EE not enabled');
 
       // attempt to re-batch these up into a single request
-      const invertedContentMap: { [content: string]: { userId: string; deviceId: string }[] } = {};
+      const invertedContentMap: Record<string, { userId: string; deviceId: string }[]> = {};
 
       // eslint-disable-next-line no-restricted-syntax
       for (const userId of Object.keys(contentMap)) {

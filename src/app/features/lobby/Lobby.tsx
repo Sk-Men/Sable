@@ -219,7 +219,7 @@ export function Lobby() {
 
             return [getRoom(i.space.roomId), ...childRooms];
           })
-          .filter((r) => !!r) as Room[],
+          .filter((r) => !!r),
       [hierarchy, getRoom]
     )
   );

@@ -1118,7 +1118,7 @@ export function RoomTimeline({
       const myReaction = reactions.find(factoryEventSentBy(mx.getUserId()!));
 
       if (myReaction && !!(myReaction as any)?.isRelation()) {
-        mx.redactEvent(room.roomId, (myReaction as any).getId()!);
+        mx.redactEvent(room.roomId, (myReaction as any).getId());
         return;
       }
       const rShortcode =

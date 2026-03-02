@@ -65,7 +65,7 @@ export const getWidgetUrl = (
     userId: mx.getUserId()!,
     deviceId: mx.getDeviceId()!,
     roomId,
-    baseUrl: mx.baseUrl!,
+    baseUrl: mx.baseUrl,
     parentUrl: window.location.origin,
   });
 
@@ -99,7 +99,7 @@ export class SmallWidget extends EventEmitter {
 
   private type: string; // Type of the widget (e.g., 'm.call')
 
-  private readUpToMap: { [roomId: string]: string } = {}; // room ID to event ID
+  private readUpToMap: Record<string, string> = {}; // room ID to event ID
 
   private readonly eventsToFeed = new WeakSet<MatrixEvent>();
 

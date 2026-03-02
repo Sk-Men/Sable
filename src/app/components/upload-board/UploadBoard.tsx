@@ -65,9 +65,7 @@ export function UploadBoardHeader({
   const handleSend = async () => {
     if (sendingRef.current) return;
     sendingRef.current = true;
-    await onSend(
-      uploads.filter((upload) => upload.status === UploadStatus.Success) as UploadSuccess[]
-    );
+    await onSend(uploads.filter((upload) => upload.status === UploadStatus.Success));
     sendingRef.current = false;
   };
 

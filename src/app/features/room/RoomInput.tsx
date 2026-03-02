@@ -91,6 +91,7 @@ import {
   roomUploadAtomFamily,
   TUploadItem,
   TUploadMetadata,
+  IReplyDraft,
 } from '$state/room/roomInputDrafts';
 import { UploadCardRenderer } from '$components/upload-card';
 import {

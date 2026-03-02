@@ -7,12 +7,7 @@ import {
   ReactNode,
   useEffect,
 } from 'react';
-import {
-  WidgetApiToWidgetAction,
-  WidgetApiAction,
-  ClientWidgetApi,
-  IWidgetApiRequestData,
-} from 'matrix-widget-api';
+import { WidgetApiToWidgetAction, ClientWidgetApi, IWidgetApiRequestData } from 'matrix-widget-api';
 import { useParams } from 'react-router-dom';
 import { SmallWidget } from '$features/call/SmallWidget';
 
@@ -132,7 +127,7 @@ export function CallProvider({ children }: CallProviderProps) {
   const hangUp = useCallback(() => {
     setActiveClientWidgetApi(null, null, null, null);
     setActiveCallRoomIdState(null);
-    activeClientWidgetApi?.transport.send(`${WIDGET_HANGUP_ACTION}`, {});
+    activeClientWidgetApi?.transport.send(WIDGET_HANGUP_ACTION, {});
     setIsActiveCallReady(false);
   }, [activeClientWidgetApi?.transport, setActiveClientWidgetApi]);
 
@@ -148,7 +143,7 @@ export function CallProvider({ children }: CallProviderProps) {
         return Promise.reject(new Error('Mismatched active call clientWidgetApi'));
       }
 
-      await activeClientWidgetApi.transport.send(action as WidgetApiAction, data);
+      await activeClientWidgetApi.transport.send(action, data);
 
       return Promise.resolve();
     },

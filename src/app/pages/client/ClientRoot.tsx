@@ -258,7 +258,7 @@ export function ClientRoot({ children }: ClientRootProps) {
   );
 
   return (
-    <SpecVersions baseUrl={baseUrl!}>
+    <SpecVersions baseUrl={baseUrl}>
       {mx && <SyncStatus mx={mx} />}
       {loading && <ClientRootOptions mx={mx} session={activeSession} onLogout={handleLogout} />}
       {(loadState.status === AsyncStatus.Error || startState.status === AsyncStatus.Error) && (

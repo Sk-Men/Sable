@@ -84,7 +84,7 @@ export function WidgetIframe({ widget, roomId, mx, onCapabilityRequest }: Widget
       messaging.transport.reply(ev.detail, { events });
     });
 
-    const readUpToMap: { [rId: string]: string } = {};
+    const readUpToMap: Record<string, string> = {};
     mx.getRooms().forEach((room) => {
       const roomEvents = room.getLiveTimeline()?.getEvents() || [];
       const last = roomEvents[roomEvents.length - 1];

@@ -94,7 +94,7 @@ export class GenericWidgetDriver extends WidgetDriver {
         content as TimelineEvents[keyof TimelineEvents]
       );
     }
-    return { roomId, eventId: r!.event_id };
+    return { roomId, eventId: r.event_id };
   }
 
   public async sendDelayedEvent<K extends keyof StateEvents>(
@@ -167,13 +167,13 @@ export class GenericWidgetDriver extends WidgetDriver {
   public async sendToDevice(
     eventType: string,
     encrypted: boolean,
-    contentMap: { [userId: string]: { [deviceId: string]: object } }
+    contentMap: Record<string, Record<string, object>>
   ): Promise<void> {
     const client = this.mxClient;
     if (encrypted) {
       const crypto = client.getCrypto();
       if (!crypto) throw new Error('E2EE not enabled');
-      const invertedContentMap: { [content: string]: { userId: string; deviceId: string }[] } = {};
+      const invertedContentMap: Record<string, { userId: string; deviceId: string }[]> = {};
       for (const userId of Object.keys(contentMap)) {
         for (const deviceId of Object.keys(contentMap[userId])) {
           const key = JSON.stringify(contentMap[userId][deviceId]);
