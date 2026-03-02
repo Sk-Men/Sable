@@ -1,5 +1,5 @@
 /* eslint-disable no-nested-ternary */
-import React, { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Box, Text, Switch, Button, color, Spinner } from 'folds';
 import { IPusherRequest } from '$types/matrix-sdk';
 import { useAtom } from 'jotai';
@@ -11,15 +11,15 @@ import { getNotificationState, usePermissionState } from '$hooks/usePermission';
 import { useEmailNotifications } from '$hooks/useEmailNotifications';
 import { AsyncStatus, useAsyncCallback } from '$hooks/useAsyncCallback';
 import { useMatrixClient } from '$hooks/useMatrixClient';
+import { useClientConfig } from '$hooks/useClientConfig';
+import { SequenceCardStyle } from '$features/settings/styles.css';
+import { pushSubscriptionAtom } from '$state/pushSubscription';
 import {
   requestBrowserNotificationPermission,
   enablePushNotifications,
   disablePushNotifications,
 } from './PushNotifications';
-import { useClientConfig } from '$hooks/useClientConfig';
-import { pushSubscriptionAtom } from '$state/pushSubscription';
 import { DeregisterAllPushersSetting } from './DeregisterPushNotifications';
-import { SequenceCardStyle } from '$features/settings/styles.css';
 
 function EmailNotification() {
   const mx = useMatrixClient();

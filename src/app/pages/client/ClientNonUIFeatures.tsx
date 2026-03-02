@@ -26,12 +26,12 @@ import { getMxIdLocalPart, mxcUrlToHttp } from '$utils/matrix';
 import { useSelectedRoom } from '$hooks/router/useSelectedRoom';
 import { useInboxNotificationsSelected } from '$hooks/router/useInbox';
 import { useMediaAuthentication } from '$hooks/useMediaAuthentication';
-import { getInboxNotificationsPath } from '../pathUtils';
 import { registrationAtom } from '$state/serviceWorkerRegistration';
-import { BackgroundNotifications } from './BackgroundNotifications';
 import { activeSessionIdAtom, pendingNotificationAtom } from '$state/sessions';
-import { buildRoomMessageNotification } from '$appUtils/notificationStyle';
-import { mobileOrTablet } from '$appUtils/user-agent';
+import { buildRoomMessageNotification } from '$utils/notificationStyle';
+import { mobileOrTablet } from '$utils/user-agent';
+import { getInboxInvitesPath, getInboxNotificationsPath } from '../pathUtils';
+import { BackgroundNotifications } from './BackgroundNotifications';
 
 function SystemEmojiFeature() {
   const [twitterEmoji] = useSetting(settingsAtom, 'twitterEmoji');
@@ -86,12 +86,14 @@ function FaviconUpdater() {
     try {
       navigator.setAppBadge(total);
       if (usePushNotifications && total === 0) {
-        registration.getNotifications()
-          .then((pushNotifications) => pushNotifications
-            .forEach((pushNotification) => pushNotification.close()));
+        registration
+          .getNotifications()
+          .then((pushNotifications) =>
+            pushNotifications.forEach((pushNotification) => pushNotification.close())
+          );
         navigator.clearAppBadge();
       }
-    } catch (e) {
+    } catch {
       // Likely Firefox/Gecko-based and doesn't support badging API
     }
   }, [roomToUnread, usePushNotifications, registration]);
@@ -135,7 +137,7 @@ function InviteNotifications() {
 
   useEffect(() => {
     if (forcePushOnMobile) return;
-    if (usePushNotifications && document.visibilityState !== "visible") return;
+    if (usePushNotifications && document.visibilityState !== 'visible') return;
     if (invites.length > perviousInviteLen && mx.getSyncState() === 'SYNCING') {
       if (showNotifications && notificationPermission('granted')) {
         notify(invites.length - perviousInviteLen);
@@ -154,7 +156,7 @@ function InviteNotifications() {
     forcePushOnMobile,
     notificationSound,
     notify,
-    playSound
+    playSound,
   ]);
 
   return (
@@ -236,7 +238,7 @@ function MessageNotifications() {
     ) => {
       if (forcePushOnMobile) return;
       if (mx.getSyncState() !== 'SYNCING') return;
-      if (usePushNotifications && document.visibilityState !== "visible") return;
+      if (usePushNotifications && document.visibilityState !== 'visible') return;
       if (document.hasFocus() && (selectedRoomId === room?.roomId || notificationSelected)) return;
 
       if (
@@ -336,12 +338,9 @@ function HandleNotificationClick() {
 
   useEffect(() => {
     const handleNotificationClickEvent = (event: any) => {
-      if (
-        !event.data ||
-        !event.source
-      ) return;
+      if (!event.data || !event.source) return;
       const eventData = event.data;
-      if (!(eventData?.type === "notificationToRoomEvent")) return;
+      if (!(eventData?.type === 'notificationToRoomEvent')) return;
       const messageData = eventData?.message;
       if (!messageData) {
         navigate(getInboxNotificationsPath());
@@ -364,7 +363,7 @@ function HandleNotificationClick() {
           });
           return;
         case EventType.RoomMember:
-          if (!(messageData?.content?.membership === "invite")) return;
+          if (!(messageData?.content?.membership === 'invite')) return;
           if (targetSessionId && targetSessionId !== activeSessionId) {
             setActiveSessionId(targetSessionId);
           }
@@ -375,10 +374,10 @@ function HandleNotificationClick() {
       }
     };
 
-    navigator.serviceWorker.addEventListener("message", handleNotificationClickEvent);
+    navigator.serviceWorker.addEventListener('message', handleNotificationClickEvent);
     return () => {
-      navigator.serviceWorker.removeEventListener("message", handleNotificationClickEvent);
-    }
+      navigator.serviceWorker.removeEventListener('message', handleNotificationClickEvent);
+    };
   }, [activeSessionId, navigate, setActiveSessionId, setPending]);
 
   return null;
@@ -398,17 +397,13 @@ function SyncNotificationSettingsWithServiceWorker() {
     };
 
     navigator.serviceWorker.controller?.postMessage(payload);
-    void navigator.serviceWorker.ready.then((registration) => {
+    navigator.serviceWorker.ready.then((registration) => {
       registration.active?.postMessage(payload);
     });
   }, [notificationSound, usePushNotifications]);
 
   return null;
 }
-
-// type ClientNonUIFeaturesProps = {
-//   children: ReactNode;
-// }
 
 export function ClientNonUIFeatures({ children }: ClientNonUIFeaturesProps) {
   return (

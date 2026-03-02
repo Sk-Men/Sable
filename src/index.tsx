@@ -60,7 +60,7 @@ if ('serviceWorker' in navigator) {
   };
 
   navigator.serviceWorker.register(swUrl, swRegisterOptions).then((registration) => {
-    registration.onupdatefound = () => {
+    registration.addEventListener('updatefound', () => {
       const installingWorker = registration.installing;
       if (installingWorker) {
         installingWorker.onstatechange = () => {
@@ -71,7 +71,7 @@ if ('serviceWorker' in navigator) {
           }
         };
       }
-    };
+    });
   });
 
   const sendSessionToSW = () => {
@@ -102,13 +102,13 @@ if ('serviceWorker' in navigator) {
       sendSessionToSW();
     }
 
-    if (ev.data.type === 'token' && ev.data.id) {
+    if (data.type === 'token' && data.id) {
       const token = localStorage.getItem('cinny_access_token') ?? undefined;
-      event.source.postMessage({
-        replyTo: event.data.id,
+      ev.source?.postMessage({
+        replyTo: data.id,
         payload: token,
       });
-    } else if (ev.data.type === 'openRoom' && ev.data.id) {
+    } else if (data.type === 'openRoom' && data.id) {
       /* Example:
       event.source.postMessage({
         replyTo: event.data.id,

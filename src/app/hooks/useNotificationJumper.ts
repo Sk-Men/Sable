@@ -2,9 +2,9 @@ import { useCallback, useEffect } from 'react';
 import { useAtom, useAtomValue } from 'jotai';
 import { SyncState, ClientEvent } from '$types/matrix-sdk';
 import { activeSessionIdAtom, pendingNotificationAtom } from '../state/sessions';
-import { useSyncState } from '../hooks/useSyncState';
-import { useMatrixClient } from '../hooks/useMatrixClient';
-import { useRoomNavigate } from '../hooks/useRoomNavigate';
+import { useSyncState } from './useSyncState';
+import { useMatrixClient } from './useMatrixClient';
+import { useRoomNavigate } from './useRoomNavigate';
 import { createLogger } from '../utils/debug';
 
 export function NotificationJumper() {

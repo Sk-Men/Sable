@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import FocusTrap from 'focus-trap-react';
 import {
   Box,
@@ -81,12 +81,9 @@ export function DeregisterAllPushersSetting() {
   const mx = useMatrixClient();
   const [deregisterState] = useAsyncCallback(deRegisterAllPushers);
   const [isConfirming, setIsConfirming] = useState(false);
-  const [usePushNotifications, setPushNotifications] = useSetting(
-    settingsAtom,
-    'usePushNotifications'
-  );
+  const [, setPushNotifications] = useSetting(settingsAtom, 'usePushNotifications');
 
-  const [pushSubscription, setPushSubscription] = useAtom(pushSubscriptionAtom);
+  const [, setPushSubscription] = useAtom(pushSubscriptionAtom);
 
   const handleOpenConfirmDialog = () => {
     setIsConfirming(true);

@@ -72,7 +72,6 @@ import { HomeCreateRoom } from './client/home/CreateRoom';
 import { Create } from './client/create';
 import { CallProvider } from './client/call/CallProvider';
 import { PersistentCallContainer } from './client/call/PersistentCallContainer';
-import { NotificationJumper } from '../hooks/useNotificationJumper';
 import { ToRoomEvent } from './client/ToRoomEvent';
 
 /**

@@ -25,8 +25,8 @@ import { createLogger } from '$utils/debug';
 import LogoSVG from '$public/res/svg/cinny.svg';
 import { nicknamesAtom } from '$state/nicknames';
 import { useMatrixClient } from '$hooks/useMatrixClient';
-import { buildRoomMessageNotification } from '$appUtils/notificationStyle';
-import { mobileOrTablet } from '$appUtils/user-agent';
+import { buildRoomMessageNotification } from '$utils/notificationStyle';
+import { mobileOrTablet } from '$utils/user-agent';
 
 const log = createLogger('BackgroundNotifications');
 
@@ -209,8 +209,8 @@ export function BackgroundNotifications() {
 
             sendNotification({
               title: notificationPayload.title,
-              icon: notificationPayload.options.icon as string | undefined,
-              badge: notificationPayload.options.badge as string | undefined,
+              icon: notificationPayload.options.icon,
+              badge: notificationPayload.options.badge,
               body: notificationPayload.options.body,
               silent: notificationPayload.options.silent ?? undefined,
               onClick: () => {

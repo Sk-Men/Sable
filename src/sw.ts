@@ -1,14 +1,15 @@
 /// <reference lib="WebWorker" />
+// eslint-disable-next-line import-x/no-extraneous-dependencies
 import { precacheAndRoute, cleanupOutdatedCaches } from 'workbox-precaching';
 import { EventType } from 'matrix-js-sdk/lib/@types/event';
-import { usePushNotifications } from './sw/pushNotification';
+import { createPushNotifications } from './sw/pushNotification';
 
 export type {};
 declare const self: ServiceWorkerGlobalScope;
 
 let notificationSoundEnabled = true;
 let preferPushOnMobile = false;
-const { handlePushNotificationPushData } = usePushNotifications(self, () => ({
+const { handlePushNotificationPushData } = createPushNotifications(self, () => ({
   notificationSoundEnabled,
 }));
 
@@ -36,57 +37,6 @@ async function cleanupDeadClients() {
       clientToSessionPromise.delete(id);
     }
   });
-}
-
-const pendingReplies = new Map();
-let messageIdCounter = 0;
-function sendAndWaitForReply(client: WindowClient, type: string, payload: object) {
-  messageIdCounter += 1;
-  const id = messageIdCounter;
-  const promise = new Promise((resolve) => {
-    pendingReplies.set(id, resolve);
-  });
-  client.postMessage({ type, id, payload });
-  return promise;
-}
-
-async function fetchWithRetry(
-  url: string,
-  token: string,
-  retries = 3,
-  delay = 250
-): Promise<Response> {
-  let lastError: Error | undefined;
-
-  /*  eslint-disable no-await-in-loop */
-  for (let attempt = 1; attempt <= retries; attempt += 1) {
-    try {
-      const response = await fetch(url, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! Status: ${response.status}`);
-      }
-
-      return response;
-    } catch (error) {
-      lastError = error instanceof Error ? error : new Error(String(error));
-
-      if (attempt < retries) {
-        console.warn(
-          `Fetch attempt ${attempt} failed: ${lastError.message}. Retrying in ${delay}ms...`
-        );
-        await new Promise((res) => {
-          setTimeout(res, delay);
-        });
-      }
-    }
-  }
-  /*  eslint-enable no-await-in-loop */
-  throw new Error(`Fetch failed after ${retries} retries. Last error: ${lastError?.message}`);
 }
 
 function setSession(clientId: string, accessToken: unknown, baseUrl: unknown) {
@@ -165,8 +115,11 @@ self.addEventListener('message', (event: ExtendableMessageEvent) => {
     event.waitUntil(cleanupDeadClients());
   }
   if (type === 'setNotificationSettings') {
-    if (typeof (data as { notificationSoundEnabled?: unknown }).notificationSoundEnabled === 'boolean') {
-      notificationSoundEnabled = (data as { notificationSoundEnabled: boolean }).notificationSoundEnabled;
+    if (
+      typeof (data as { notificationSoundEnabled?: unknown }).notificationSoundEnabled === 'boolean'
+    ) {
+      notificationSoundEnabled = (data as { notificationSoundEnabled: boolean })
+        .notificationSoundEnabled;
     }
     if (typeof (data as { preferPushOnMobile?: unknown }).preferPushOnMobile === 'boolean') {
       preferPushOnMobile = (data as { preferPushOnMobile: boolean }).preferPushOnMobile;
@@ -212,28 +165,7 @@ self.addEventListener('message', (event: ExtendableMessageEvent) => {
         body: JSON.stringify(event.data.pusherData),
       })
     );
-    return;
   }
-  const { replyTo } = event.data;
-  if (replyTo) {
-    const resolve = pendingReplies.get(replyTo);
-    if (resolve) {
-      pendingReplies.delete(replyTo);
-      resolve(event.data.payload);
-    }
-  }
-});
-
-self.addEventListener('activate', (event: ExtendableEvent) => {
-  event.waitUntil(
-    (async () => {
-      await self.clients.claim();
-    })()
-  );
-});
-
-self.addEventListener('install', (event: ExtendableEvent) => {
-  event.waitUntil(self.skipWaiting());
 });
 
 self.addEventListener('fetch', (event: FetchEvent) => {
@@ -260,12 +192,6 @@ self.addEventListener('fetch', (event: FetchEvent) => {
       return fetch(event.request);
     })
   );
-
-  event.waitUntil(
-    (async function () {
-      console.log('Ensuring fetch processing completes before worker termination.');
-    })()
-  );
 });
 
 const onPushNotification = async (event: PushEvent) => {
@@ -280,7 +206,6 @@ const onPushNotification = async (event: PushEvent) => {
   }
 
   const pushData = event.data.json();
-  console.log(pushData);
 
   // try {
   //   if (typeof pushData?.unread === 'number') {
@@ -311,7 +236,6 @@ self.addEventListener('notificationclick', (event: NotificationEvent) => {
   const messageData = event.notification.data;
   const { scope } = self.registration;
 
-  console.log(messageData);
   const eventType = messageData?.type as EventType | undefined;
   if (!eventType) return Promise.resolve();
 
@@ -324,7 +248,6 @@ self.addEventListener('notificationclick', (event: NotificationEvent) => {
     targetUrl = `${scope}to/${messageData.room_id}/${messageData.event_id}`;
   if (eventType === EventType.RoomMember && messageData?.content?.membership === 'invite')
     targetUrl = `${scope}inbox/invites/`;
-  console.log(`target url = ${targetUrl}`);
 
   const postMessageToClient = (client: WindowClient) => {
     client.postMessage({
@@ -334,17 +257,16 @@ self.addEventListener('notificationclick', (event: NotificationEvent) => {
   };
 
   event.waitUntil(
-    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(async (clientList) => {
-      for (const client of clientList) {
-        if ('focus' in client) {
-          await (client as WindowClient).focus();
-          postMessageToClient(client as WindowClient);
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
+      const focusedClient = clientList.find((client): client is WindowClient => 'focus' in client);
+      if (focusedClient) {
+        return focusedClient.focus().then(() => {
+          postMessageToClient(focusedClient);
           return null;
-        }
+        });
       }
       if (self.clients.openWindow) {
-        await self.clients.openWindow(targetUrl);
-        return null;
+        return self.clients.openWindow(targetUrl).then(() => null);
       }
       return null;
     })

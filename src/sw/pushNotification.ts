@@ -1,16 +1,18 @@
-/* eslint-disable camelcase */
-import { EventType } from "matrix-js-sdk/lib/@types/event";
-import { buildRoomMessageNotification, DEFAULT_NOTIFICATION_ICON, DEFAULT_NOTIFICATION_BADGE } from '../app/utils/notificationStyle';
+import { EventType } from 'matrix-js-sdk/lib/@types/event';
+import {
+  buildRoomMessageNotification,
+  DEFAULT_NOTIFICATION_ICON,
+  DEFAULT_NOTIFICATION_BADGE,
+} from '../app/utils/notificationStyle';
 
 type NotificationSettings = {
   notificationSoundEnabled: boolean;
 };
 
-export const usePushNotifications = (
+export const createPushNotifications = (
   self: ServiceWorkerGlobalScope,
   getNotificationSettings: () => NotificationSettings
 ) => {
-
   const resolveSilent = (silent: unknown): boolean => {
     if (typeof silent === 'boolean') return silent;
     return !getNotificationSettings().notificationSoundEnabled;
@@ -28,20 +30,20 @@ export const usePushNotifications = (
       body,
       icon: icon ?? DEFAULT_NOTIFICATION_ICON,
       badge: badge ?? DEFAULT_NOTIFICATION_BADGE,
-      tag: data?.event_id ?? "Cinny",
+      tag: data?.event_id ?? 'Cinny',
       silent,
-      data
+      data,
     });
   };
 
   const handleRoomMessageNotification = async (pushData: any) => {
     const data = {
-      type: pushData!.type,
-      room_id: pushData!.room_id,
-      event_id: pushData!.event_id,
+      type: pushData?.type,
+      room_id: pushData?.room_id,
+      event_id: pushData?.event_id,
       user_id: pushData?.user_id,
       timestamp: Date.now(),
-      ...pushData.data
+      ...pushData.data,
     };
     const notificationPayload = buildRoomMessageNotification({
       roomName: pushData?.room_name,
@@ -57,19 +59,19 @@ export const usePushNotifications = (
       notificationPayload.options.body,
       data,
       notificationPayload.options.silent ?? undefined,
-      notificationPayload.options.icon as string | undefined,
-      notificationPayload.options.badge as string | undefined
+      notificationPayload.options.icon,
+      notificationPayload.options.badge
     );
-  }
+  };
 
   const handleEncryptedMessageNotification = async (pushData: any) => {
     const data = {
-      type: pushData!.type,
-      room_id: pushData!.room_id,
-      event_id: pushData!.event_id,
+      type: pushData?.type,
+      room_id: pushData?.room_id,
+      event_id: pushData?.event_id,
       user_id: pushData?.user_id,
       timestamp: Date.now(),
-      ...pushData.data
+      ...pushData.data,
     };
     const notificationPayload = buildRoomMessageNotification({
       roomName: pushData?.room_name,
@@ -85,39 +87,30 @@ export const usePushNotifications = (
       notificationPayload.options.body,
       data,
       notificationPayload.options.silent ?? undefined,
-      notificationPayload.options.icon as string | undefined,
-      notificationPayload.options.badge as string | undefined
+      notificationPayload.options.icon,
+      notificationPayload.options.badge
     );
-  }
+  };
 
   const handleInvitationNotification = async (pushData: any) => {
-    const sender_display_name = pushData?.sender_display_name;
-    const room_name = pushData?.room_name;
+    const senderDisplayName = pushData?.sender_display_name;
+    const roomName = pushData?.room_name;
 
-    let body = "";
-    if (sender_display_name && room_name)
-      body = `${sender_display_name} invites you to ${room_name}`;
-    if (sender_display_name && !room_name)
-      body = `from ${sender_display_name}`;
-    if (!sender_display_name && room_name)
-      body = `to ${room_name}`;
-    if (!sender_display_name && !room_name)
-      body = "";
+    let body = '';
+    if (senderDisplayName && roomName) body = `${senderDisplayName} invites you to ${roomName}`;
+    if (senderDisplayName && !roomName) body = `from ${senderDisplayName}`;
+    if (!senderDisplayName && roomName) body = `to ${roomName}`;
+    if (!senderDisplayName && !roomName) body = '';
 
     const data = {
-      type: pushData!.type,
-      content: pushData!.content,
+      type: pushData?.type,
+      content: pushData?.content,
       user_id: pushData?.user_id,
       timestamp: Date.now(),
-      ...pushData.data
-    }
+      ...pushData.data,
+    };
 
-    await showNotificationWithData(
-      "New Invitation",
-      body,
-      data,
-      resolveSilent(pushData?.silent)
-    )
+    await showNotificationWithData('New Invitation', body, data, resolveSilent(pushData?.silent));
   };
 
   const fallbackNotification = async (pushData: any) => {
@@ -126,9 +119,9 @@ export const usePushNotifications = (
     if (body) {
       title = pushData?.sender_display_name
         ? `${pushData.sender_display_name}${pushData?.room_name ? ` in ${pushData.room_name}` : ''}`
-        : "New Notification";
+        : 'New Notification';
     } else {
-      title = "You have a new Notification";
+      title = 'You have a new Notification';
     }
     const data = {
       type: pushData?.type,
@@ -136,15 +129,15 @@ export const usePushNotifications = (
       event_id: pushData?.event_id,
       user_id: pushData?.user_id,
       timestamp: Date.now(),
-      ...pushData.data
+      ...pushData.data,
     };
     await showNotificationWithData(title, body, data, resolveSilent(pushData?.silent));
   };
 
   const handlePushNotificationPushData = async (pushData: any) => {
-    const eventType = pushData?.type as (EventType | undefined);
+    const eventType = pushData?.type as EventType | undefined;
     if (!eventType) {
-      console.warn("no event type");
+      console.warn('no event type');
     }
 
     switch (eventType) {
@@ -154,7 +147,7 @@ export const usePushNotifications = (
       case EventType.RoomMessageEncrypted:
         return handleEncryptedMessageNotification(pushData);
       case EventType.RoomMember:
-        if (!(pushData?.content?.membership === "invite")) break;
+        if (!(pushData?.content?.membership === 'invite')) break;
         return handleInvitationNotification(pushData);
 
       default:
@@ -166,4 +159,4 @@ export const usePushNotifications = (
   };
 
   return { handlePushNotificationPushData };
-}
+};

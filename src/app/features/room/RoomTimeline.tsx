@@ -847,12 +847,11 @@ export function RoomTimeline({
     )
   );
 
-  useEffect(
-    () => {
-      if (eventId) {
-        handleOpenEvent(eventId);
-      }
-    }, [eventId]);
+  useEffect(() => {
+    if (eventId) {
+      handleOpenEvent(eventId);
+    }
+  }, [eventId, handleOpenEvent]);
 
   // Scroll to bottom on initial timeline load
   useLayoutEffect(() => {

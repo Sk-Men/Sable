@@ -1,6 +1,11 @@
 import { MatrixClient } from 'matrix-js-sdk';
 import { ClientConfig } from '../../../hooks/useClientConfig';
 
+type PushSubscriptionState = [
+  PushSubscriptionJSON | null,
+  (subscription: PushSubscription | null) => void,
+];
+
 export async function requestBrowserNotificationPermission(): Promise<NotificationPermission> {
   if (!('Notification' in window)) {
     return 'denied';
@@ -8,8 +13,7 @@ export async function requestBrowserNotificationPermission(): Promise<Notificati
   try {
     const permission: NotificationPermission = await Notification.requestPermission();
     return permission;
-  } catch (error) {
-    console.error('Error requesting notification permission:', error);
+  } catch {
     return 'denied';
   }
 }
@@ -17,7 +21,7 @@ export async function requestBrowserNotificationPermission(): Promise<Notificati
 export async function enablePushNotifications(
   mx: MatrixClient,
   clientConfig: ClientConfig,
-  pushSubscriptionAtom: Atom<PushSubscriptionJSON | null, [PushSubscription | null], void>
+  pushSubscriptionAtom: PushSubscriptionState
 ): Promise<void> {
   if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
     throw new Error('Push messaging is not supported in this browser.');
@@ -30,11 +34,12 @@ export async function enablePushNotifications(
      only when necessary. This prevents us from needing an external call to get back the web push info.
   */
   if (currentBrowserSub && pushSubAtom && currentBrowserSub.endpoint === pushSubAtom.endpoint) {
-    console.error('Valid saved subscription found. Ensuring pusher is enabled on homeserver...');
+    const { keys } = pushSubAtom;
+    if (!keys?.p256dh || !keys.auth) return;
     const pusherData = {
       kind: 'http' as const,
       app_id: clientConfig.pushNotificationDetails?.webPushAppID,
-      pushkey: pushSubAtom.keys!.p256dh!,
+      pushkey: keys.p256dh,
       app_display_name: 'Cinny',
       device_display_name: 'This Browser',
       lang: navigator.language || 'en',
@@ -43,8 +48,8 @@ export async function enablePushNotifications(
         // format: 'event_id_only' as const,
         events_only: true,
         endpoint: pushSubAtom.endpoint,
-        p256dh: pushSubAtom.keys!.p256dh!,
-        auth: pushSubAtom.keys!.auth!,
+        p256dh: keys.p256dh,
+        auth: keys.auth,
       },
       append: false,
     };
@@ -56,8 +61,6 @@ export async function enablePushNotifications(
     });
     return;
   }
-
-  console.error('No valid saved subscription. Performing full, new subscription...');
 
   if (currentBrowserSub) {
     await currentBrowserSub.unsubscribe();
@@ -71,10 +74,14 @@ export async function enablePushNotifications(
   setPushSubscription(newSubscription);
 
   const subJson = newSubscription.toJSON();
+  const { keys } = subJson;
+  if (!keys?.p256dh || !keys.auth) {
+    throw new Error('Push subscription keys missing.');
+  }
   const pusherData = {
     kind: 'http' as const,
     app_id: clientConfig.pushNotificationDetails?.webPushAppID,
-    pushkey: subJson.keys!.p256dh!,
+    pushkey: keys.p256dh,
     app_display_name: 'Cinny',
     device_display_name:
       (await mx.getDevice(mx.getDeviceId() ?? '')).display_name ?? 'Unknown Device',
@@ -83,8 +90,8 @@ export async function enablePushNotifications(
       url: clientConfig.pushNotificationDetails?.pushNotifyUrl,
       // format: 'event_id_only' as const,
       endpoint: newSubscription.endpoint,
-      p256dh: subJson.keys!.p256dh!,
-      auth: subJson.keys!.auth!,
+      p256dh: keys.p256dh,
+      auth: keys.auth,
     },
     append: false,
   };
@@ -104,7 +111,7 @@ export async function enablePushNotifications(
 export async function disablePushNotifications(
   mx: MatrixClient,
   clientConfig: ClientConfig,
-  pushSubscriptionAtom: Atom<PushSubscriptionJSON | null, [PushSubscription | null], void>
+  pushSubscriptionAtom: PushSubscriptionState
 ): Promise<void> {
   const [pushSubAtom] = pushSubscriptionAtom;
 
@@ -144,7 +151,7 @@ export async function togglePusher(
   clientConfig: ClientConfig,
   visible: boolean,
   usePushNotifications: boolean,
-  pushSubscriptionAtom: Atom<PushSubscriptionJSON | null, [PushSubscription | null], void>,
+  pushSubscriptionAtom: PushSubscriptionState,
   keepEnabledWhenVisible = false
 ): Promise<void> {
   if (usePushNotifications) {
