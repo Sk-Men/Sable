@@ -443,7 +443,7 @@ export function RoomNavItem({
                   offset={4}
                   tooltip={
                     <Tooltip>
-                      <Text>Open Chat</Text>
+                      <Text>{isChatOpen ? 'Hide Chat' : 'Show Chat'}</Text>
                     </Tooltip>
                   }
                 >
