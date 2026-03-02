@@ -13,7 +13,6 @@ import * as css from './UrlPreviewCard.css';
 import { UrlPreview, UrlPreviewContent, UrlPreviewDescription, UrlPreviewImg } from './UrlPreview';
 
 const linkStyles = { color: color.Success.Main };
-const TARGET_HEIGHT = 300;
 
 export const UrlPreviewCard = as<'div', { url: string; ts: number; mediaType?: string | null }>(
   ({ url, ts, mediaType, ...props }, ref) => {
@@ -21,11 +20,6 @@ export const UrlPreviewCard = as<'div', { url: string; ts: number; mediaType?: s
     const useAuthentication = useMediaAuthentication();
 
     const isDirect = !!mediaType;
-
-    const [mediaDim, setMediaDim] = useState<{ w: number; h: number } | null>(null);
-    const calculatedWidth = mediaDim
-      ? Math.ceil((TARGET_HEIGHT * mediaDim.w) / mediaDim.h)
-      : undefined;
 
     const [previewStatus, loadPreview] = useAsyncCallback(
       useCallback(() => {
@@ -100,6 +94,34 @@ export const UrlPreviewCard = as<'div', { url: string; ts: number; mediaType?: s
       );
     };
 
+    let previewContent;
+    if (previewStatus.status === AsyncStatus.Success) {
+      previewContent = previewStatus.data ? (
+        renderContent(previewStatus.data)
+      ) : (
+        <UrlPreviewContent>
+          <Text
+            style={linkStyles}
+            truncate
+            as="a"
+            href={url}
+            target="_blank"
+            rel="noreferrer"
+            size="T200"
+            priority="300"
+          >
+            {decodeURIComponent(url)}
+          </Text>
+        </UrlPreviewContent>
+      );
+    } else {
+      previewContent = (
+        <Box grow="Yes" alignItems="Center" justifyContent="Center">
+          <Spinner variant="Secondary" size="400" />
+        </Box>
+      );
+    }
+
     return (
       <UrlPreview
         {...props}
@@ -113,7 +135,7 @@ export const UrlPreviewCard = as<'div', { url: string; ts: number; mediaType?: s
                 boxShadow: 'none',
                 display: 'inline-block',
                 verticalAlign: 'middle',
-                width: calculatedWidth ? `${calculatedWidth}px` : 'max-content',
+                width: 'max-content',
                 minWidth: 0,
                 maxWidth: '100%',
                 margin: 0,
@@ -123,30 +145,7 @@ export const UrlPreviewCard = as<'div', { url: string; ts: number; mediaType?: s
               }
         }
       >
-        {previewStatus.status === AsyncStatus.Success ? (
-          previewStatus.data ? (
-            renderContent(previewStatus.data)
-          ) : (
-            <UrlPreviewContent>
-              <Text
-                style={linkStyles}
-                truncate
-                as="a"
-                href={url}
-                target="_blank"
-                rel="noreferrer"
-                size="T200"
-                priority="300"
-              >
-                {decodeURIComponent(url)}
-              </Text>
-            </UrlPreviewContent>
-          )
-        ) : (
-          <Box grow="Yes" alignItems="Center" justifyContent="Center">
-            <Spinner variant="Secondary" size="400" />
-          </Box>
-        )}
+        {previewContent}
       </UrlPreview>
     );
   }
