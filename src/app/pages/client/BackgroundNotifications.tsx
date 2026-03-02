@@ -27,6 +27,7 @@ import LogoSVG from '$public/res/svg/cinny.svg';
 import { nicknamesAtom } from '$state/nicknames';
 import { useMatrixClient } from '$hooks/useMatrixClient';
 import { buildRoomMessageNotification } from '$appUtils/notificationStyle';
+import { mobileOrTablet } from '$appUtils/user-agent';
 
 const log = createLogger('BackgroundNotifications');
 
@@ -67,7 +68,9 @@ export function BackgroundNotifications() {
   const activeSessionId = useAtomValue(activeSessionIdAtom);
   const setActiveSessionId = useSetAtom(activeSessionIdAtom);
   const [showNotifications] = useSetting(settingsAtom, 'useInAppNotifications');
+  const [usePushNotifications] = useSetting(settingsAtom, 'usePushNotifications');
   const [notificationSound] = useSetting(settingsAtom, 'isNotificationSounds');
+  const forcePushOnMobile = usePushNotifications && mobileOrTablet();
   const activeMx = useMatrixClient();
   const nicknames = useAtomValue(nicknamesAtom);
   const nicknamesRef = useRef(nicknames);
@@ -96,6 +99,7 @@ export function BackgroundNotifications() {
   }
 
   useEffect(() => {
+    if (forcePushOnMobile) return undefined;
     if (!showNotifications) return undefined;
 
     const { current } = clientsRef;
@@ -231,6 +235,7 @@ export function BackgroundNotifications() {
     };
   }, [
     inactiveSessions,
+    forcePushOnMobile,
     showNotifications,
     notificationSound,
     activeMx,

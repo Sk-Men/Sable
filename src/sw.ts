@@ -7,6 +7,7 @@ export type {};
 declare const self: ServiceWorkerGlobalScope;
 
 let notificationSoundEnabled = true;
+let preferPushOnMobile = false;
 const { handlePushNotificationPushData } = usePushNotifications(self, () => ({
   notificationSoundEnabled,
 }));
@@ -167,6 +168,9 @@ self.addEventListener('message', (event: ExtendableMessageEvent) => {
     if (typeof (data as { notificationSoundEnabled?: unknown }).notificationSoundEnabled === 'boolean') {
       notificationSoundEnabled = (data as { notificationSoundEnabled: boolean }).notificationSoundEnabled;
     }
+    if (typeof (data as { preferPushOnMobile?: unknown }).preferPushOnMobile === 'boolean') {
+      preferPushOnMobile = (data as { preferPushOnMobile: boolean }).preferPushOnMobile;
+    }
   }
 });
 
@@ -271,7 +275,7 @@ const onPushNotification = async (event: PushEvent) => {
 
   const clients = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
   const hasVisibleClient = clients.some((client) => client.visibilityState === 'visible');
-  if (hasVisibleClient) {
+  if (hasVisibleClient && !preferPushOnMobile) {
     return;
   }
 

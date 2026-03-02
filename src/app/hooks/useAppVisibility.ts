@@ -7,11 +7,13 @@ import { useClientConfig } from './useClientConfig';
 import { useSetting } from '../state/hooks/settings';
 import { settingsAtom } from '../state/settings';
 import { pushSubscriptionAtom } from '../state/pushSubscription';
+import { mobileOrTablet } from '../utils/user-agent';
 
 export function useAppVisibility(mx: MatrixClient | undefined) {
   const clientConfig = useClientConfig();
   const [usePushNotifications] = useSetting(settingsAtom, 'usePushNotifications');
   const pushSubAtom = useAtom(pushSubscriptionAtom);
+  const isMobile = mobileOrTablet();
 
   useEffect(() => {
     const handleVisibilityChange = () => {
@@ -33,7 +35,7 @@ export function useAppVisibility(mx: MatrixClient | undefined) {
     if (!mx) return;
 
     const handleVisibilityForNotifications = (isVisible: boolean) => {
-      togglePusher(mx, clientConfig, isVisible, usePushNotifications, pushSubAtom);
+      togglePusher(mx, clientConfig, isVisible, usePushNotifications, pushSubAtom, isMobile);
     };
 
     appEvents.onVisibilityChange = handleVisibilityForNotifications;
@@ -41,5 +43,5 @@ export function useAppVisibility(mx: MatrixClient | undefined) {
     return () => {
       appEvents.onVisibilityChange = null;
     };
-  }, [mx, clientConfig, usePushNotifications, pushSubAtom]);
+  }, [mx, clientConfig, usePushNotifications, pushSubAtom, isMobile]);
 }

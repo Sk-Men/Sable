@@ -32,6 +32,7 @@ import { registrationAtom } from '$state/serviceWorkerRegistration';
 import { BackgroundNotifications } from './BackgroundNotifications';
 import { activeSessionIdAtom, pendingNotificationAtom } from '$state/sessions';
 import { buildRoomMessageNotification } from '$appUtils/notificationStyle';
+import { mobileOrTablet } from '$appUtils/user-agent';
 
 function SystemEmojiFeature() {
   const [twitterEmoji] = useSetting(settingsAtom, 'twitterEmoji');
@@ -109,6 +110,7 @@ function InviteNotifications() {
   const [showNotifications] = useSetting(settingsAtom, 'useInAppNotifications');
   const [usePushNotifications] = useSetting(settingsAtom, 'usePushNotifications');
   const [notificationSound] = useSetting(settingsAtom, 'isNotificationSounds');
+  const forcePushOnMobile = usePushNotifications && mobileOrTablet();
 
   const notify = useCallback(
     (count: number) => {
@@ -133,6 +135,7 @@ function InviteNotifications() {
   }, []);
 
   useEffect(() => {
+    if (forcePushOnMobile) return;
     if (usePushNotifications && document.visibilityState !== "visible") return;
     if (invites.length > perviousInviteLen && mx.getSyncState() === 'SYNCING') {
       if (showNotifications && notificationPermission('granted')) {
@@ -149,6 +152,7 @@ function InviteNotifications() {
     perviousInviteLen,
     showNotifications,
     usePushNotifications,
+    forcePushOnMobile,
     notificationSound,
     notify,
     playSound
@@ -171,6 +175,7 @@ function MessageNotifications() {
   const [showNotifications] = useSetting(settingsAtom, 'useInAppNotifications');
   const [usePushNotifications] = useSetting(settingsAtom, 'usePushNotifications');
   const [notificationSound] = useSetting(settingsAtom, 'isNotificationSounds');
+  const forcePushOnMobile = usePushNotifications && mobileOrTablet();
   const nicknames = useAtomValue(nicknamesAtom);
   const nicknamesRef = useRef(nicknames);
   nicknamesRef.current = nicknames;
@@ -230,6 +235,7 @@ function MessageNotifications() {
       removed,
       data
     ) => {
+      if (forcePushOnMobile) return;
       if (mx.getSyncState() !== 'SYNCING') return;
       if (usePushNotifications && document.visibilityState !== "visible") return;
       if (document.hasFocus() && (selectedRoomId === room?.roomId || notificationSelected)) return;
@@ -290,6 +296,7 @@ function MessageNotifications() {
     notificationSelected,
     showNotifications,
     usePushNotifications,
+    forcePushOnMobile,
     playSound,
     notify,
     selectedRoomId,
@@ -380,19 +387,22 @@ function HandleNotificationClick() {
 
 function SyncNotificationSettingsWithServiceWorker() {
   const [notificationSound] = useSetting(settingsAtom, 'isNotificationSounds');
+  const [usePushNotifications] = useSetting(settingsAtom, 'usePushNotifications');
 
   useEffect(() => {
     if (!('serviceWorker' in navigator)) return;
+    const preferPushOnMobile = usePushNotifications && mobileOrTablet();
     const payload = {
       type: 'setNotificationSettings' as const,
       notificationSoundEnabled: notificationSound,
+      preferPushOnMobile,
     };
 
     navigator.serviceWorker.controller?.postMessage(payload);
     void navigator.serviceWorker.ready.then((registration) => {
       registration.active?.postMessage(payload);
     });
-  }, [notificationSound]);
+  }, [notificationSound, usePushNotifications]);
 
   return null;
 }

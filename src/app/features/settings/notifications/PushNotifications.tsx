@@ -144,10 +144,11 @@ export async function togglePusher(
   clientConfig: ClientConfig,
   visible: boolean,
   usePushNotifications: boolean,
-  pushSubscriptionAtom: Atom<PushSubscriptionJSON | null, [PushSubscription | null], void>
+  pushSubscriptionAtom: Atom<PushSubscriptionJSON | null, [PushSubscription | null], void>,
+  keepEnabledWhenVisible = false
 ): Promise<void> {
   if (usePushNotifications) {
-    if (visible) {
+    if (visible && !keepEnabledWhenVisible) {
       await disablePushNotifications(mx, clientConfig, pushSubscriptionAtom);
     } else {
       await enablePushNotifications(mx, clientConfig, pushSubscriptionAtom);
