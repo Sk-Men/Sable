@@ -5,6 +5,7 @@
   "elementCallUrl": null,
 
   "disableAccountSwitcher": false,
+  "matrixToBaseUrl": "https://matrix.to",
 
   "featuredCommunities": {
     "openAsDefault": false,
