@@ -28,6 +28,7 @@ export function AvatarImage({ src, alt, uniformIcons, onError }: AvatarImageProp
       className={css.RoomAvatar}
       style={{ backgroundColor: useUniformIcons ? normalizedBg : undefined }}
       src={src}
+      crossOrigin="anonymous"
       alt={alt}
       onError={() => {
         setImage(undefined);
