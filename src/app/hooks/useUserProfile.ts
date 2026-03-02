@@ -56,7 +56,12 @@ const normalizeInfo = (info: any): UserProfile => {
   };
 };
 
-const isValidHex = (c: string) => /^#[0-9A-F]{6}$/i.test(c);
+const isValidHex = (c: any): string | undefined => {
+  if (typeof c !== 'string') return undefined;
+  // silly tuwunel smh
+  const cleaned = c.replace(/["']/g, '').trim();
+  return /^#([0-9A-F]{3,6})$/i.test(cleaned) ? cleaned : undefined;
+};
 const sanitizeFont = (f: string) => f.replace(/[;{}<>]/g, '').slice(0, 32);
 
 export const useUserProfile = (
@@ -149,11 +154,12 @@ export const useUserProfile = (
         )?.getContent()?.font;
       }
     }
+    const validGlobalVal = isValidHex(data?.nameColor);
 
-    const hasGlobalColor = data?.nameColor && isValidHex(data.nameColor);
+    const hasGlobalColor = !!validGlobalVal;
     const validGlobal =
       (renderGlobalColors || userId === mx.getUserId()) && hasGlobalColor
-        ? data.nameColor
+        ? validGlobalVal
         : undefined;
     const validLocal = localColor && isValidHex(localColor) ? localColor : undefined;
     const validSpace = spaceColor && isValidHex(spaceColor) ? spaceColor : undefined;

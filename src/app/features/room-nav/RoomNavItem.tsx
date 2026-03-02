@@ -357,6 +357,7 @@ export function RoomNavItem({
                         ? getDirectRoomAvatarUrl(mx, room, 96, useAuthentication)
                         : getRoomAvatarUrl(mx, room, 96, useAuthentication)
                     }
+                    uniformIcons
                     alt={roomName}
                     renderFallback={() => (
                       <Text as="span" size="H6">

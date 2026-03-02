@@ -1,4 +1,4 @@
-import { MouseEventHandler, forwardRef, useEffect, useState } from 'react';
+import { MouseEventHandler, forwardRef, useCallback, useEffect, useState } from 'react';
 import FocusTrap from 'focus-trap-react';
 import {
   Box,
@@ -38,7 +38,12 @@ import { settingsAtom } from '$state/settings';
 import { useSpaceOptionally } from '$hooks/useSpace';
 import { getHomeSearchPath, getSpaceSearchPath, withSearchParam } from '$pages/pathUtils';
 import { createLogger } from '$utils/debug';
-import { getCanonicalAliasOrRoomId, isRoomAlias, mxcUrlToHttp } from '$utils/matrix';
+import {
+  getCanonicalAliasOrRoomId,
+  isRoomAlias,
+  mxcUrlToHttp,
+  removeRoomIdFromMDirect,
+} from '$utils/matrix';
 import { _SearchPathSearchParams } from '$pages/paths';
 import { useRoomUnread } from '$state/hooks/unread';
 import { usePowerLevelsContext } from '$hooks/usePowerLevels';
@@ -69,6 +74,10 @@ import { useCallState } from '$pages/client/call/CallProvider';
 import { ContainerColor } from '$styles/ContainerColor.css';
 import { useRoomWidgets } from '$hooks/useRoomWidgets';
 import { AccountDataEvent } from '$types/matrix/accountData';
+import { DirectInvitePrompt } from '$components/direct-invite-prompt';
+import { AsyncStatus, useAsyncCallback } from '$hooks/useAsyncCallback';
+import { useAtomValue } from 'jotai';
+import { mDirectAtom } from '$state/mDirectList';
 import { JumpToTime } from './jump-to-time';
 import { RoomPinMenu } from './room-pin-menu';
 import * as css from './RoomViewHeader.css';
@@ -104,20 +113,50 @@ const RoomMenu = forwardRef<HTMLDivElement, RoomMenuProps>(({ room, requestClose
 
   const permissions = useRoomPermissions(creators, powerLevels);
   const canInvite = permissions.action('invite', mx.getSafeUserId());
+  const mDirects = useAtomValue(mDirectAtom);
+  const isDirectConversation = mDirects.has(room.roomId);
   const notificationPreferences = useRoomsNotificationPreferencesContext();
   const notificationMode = getRoomNotificationMode(notificationPreferences, room.roomId);
   const { navigateRoom } = useRoomNavigate();
 
   const [invitePrompt, setInvitePrompt] = useState(false);
+  const [directInvitePrompt, setDirectInvitePrompt] = useState(false);
 
   const handleMarkAsRead = () => {
-    markAsRead(mx, room.roomId, hideActivity);
+    void markAsRead(mx, room.roomId, hideActivity);
     requestClose();
   };
 
   const handleInvite = () => {
+    if (isDirectConversation) {
+      setDirectInvitePrompt(true);
+      return;
+    }
     setInvitePrompt(true);
   };
+
+  const handleInviteDirect = () => {
+    setDirectInvitePrompt(false);
+    setInvitePrompt(true);
+  };
+
+  const [convertState, convertToRoom] = useAsyncCallback<void, Error, []>(
+    useCallback(async () => {
+      await removeRoomIdFromMDirect(mx, room.roomId);
+    }, [mx, room.roomId])
+  );
+
+  const handleConvertAndInvite = () => {
+    if (convertState.status === AsyncStatus.Loading) return;
+    convertToRoom().catch(() => {});
+  };
+
+  useEffect(() => {
+    if (convertState.status === AsyncStatus.Success) {
+      setDirectInvitePrompt(false);
+      setInvitePrompt(true);
+    }
+  }, [convertState.status]);
 
   const handleCopyLink = () => {
     const roomIdOrAlias = getCanonicalAliasOrRoomId(mx, room.roomId);
@@ -142,6 +181,20 @@ const RoomMenu = forwardRef<HTMLDivElement, RoomMenuProps>(({ room, requestClose
             setInvitePrompt(false);
             requestClose();
           }}
+        />
+      )}
+      {directInvitePrompt && (
+        <DirectInvitePrompt
+          onCancel={() => {
+            setDirectInvitePrompt(false);
+            requestClose();
+          }}
+          onInviteDirect={handleInviteDirect}
+          onConvertAndInvite={handleConvertAndInvite}
+          converting={convertState.status === AsyncStatus.Loading}
+          convertError={
+            convertState.status === AsyncStatus.Error ? convertState.error.message : undefined
+          }
         />
       )}
       <Box direction="Column" gap="100" style={{ padding: config.space.S100 }}>
@@ -274,6 +327,7 @@ const RoomMenu = forwardRef<HTMLDivElement, RoomMenuProps>(({ room, requestClose
     </Menu>
   );
 });
+RoomMenu.displayName = 'RoomMenu';
 
 export function RoomViewHeader() {
   const navigate = useNavigate();
@@ -610,7 +664,7 @@ export function RoomViewHeader() {
               }
             >
               {(triggerRef) => (
-                <IconButton fill="None" ref={triggerRef} onClick={toggleChat}>
+                <IconButton fill="None" ref={triggerRef} onClick={void toggleChat}>
                   <Icon size="400" src={Icons.Message} filled={isChatOpen} />
                 </IconButton>
               )}

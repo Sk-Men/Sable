@@ -22,6 +22,7 @@ export interface Settings {
   lightThemeId?: string;
   darkThemeId?: string;
   monochromeMode?: boolean;
+  uniformIcons: boolean;
   isMarkdown: boolean;
   editorToolbar: boolean;
   twitterEmoji: boolean;
@@ -62,6 +63,7 @@ export interface Settings {
   mobileGestures: boolean;
   rightSwipeAction: RightSwipeAction;
   hideMembershipInReadOnly: boolean;
+  useRightBubbles: boolean;
 }
 
 const defaultSettings: Settings = {
@@ -70,6 +72,7 @@ const defaultSettings: Settings = {
   lightThemeId: undefined,
   darkThemeId: undefined,
   monochromeMode: false,
+  uniformIcons: false,
   isMarkdown: true,
   editorToolbar: false,
   twitterEmoji: true,
@@ -110,6 +113,7 @@ const defaultSettings: Settings = {
   mobileGestures: true,
   rightSwipeAction: RightSwipeAction.Reply,
   hideMembershipInReadOnly: true,
+  useRightBubbles: false,
 };
 
 export const getSettings = () => {

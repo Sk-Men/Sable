@@ -349,6 +349,7 @@ function MessageInternal(
   const [mobileOptionsOpen, setMobileOptionsOpen] = useState(false);
   const optionsRef = useRef<HTMLDivElement>(null);
   const [showPronouns] = useSetting(settingsAtom, 'showPronouns');
+  const [useRightBubbles] = useSetting(settingsAtom, 'useRightBubbles');
 
   useEffect(() => {
     if (!mobileOptionsOpen) return undefined;
@@ -853,7 +854,12 @@ function MessageInternal(
       )}
       {messageLayout === MessageLayout.Bubble && (
         <SwipeableMessageWrapper onReply={handleSwipeReply}>
-          <BubbleLayout before={avatarJSX} header={headerJSX} onContextMenu={handleContextMenu}>
+          <BubbleLayout
+            before={avatarJSX}
+            header={headerJSX}
+            onContextMenu={handleContextMenu}
+            align={useRightBubbles && senderId === mx.getUserId() ? 'right' : 'left'}
+          >
             <div onPointerDown={onDoubleTap}>{msgContentJSX}</div>
           </BubbleLayout>
         </SwipeableMessageWrapper>

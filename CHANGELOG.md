@@ -1,9 +1,26 @@
 # Sable Client Changelog
 
-## 1.2.2 - in dev
+## 1.2.3 - 3/2/2026
+
+- Actually fix quotes around colors for tuwunel homeservers ([#46](https://github.com/7w1/sable/issues/46))
+- Option to have your own message bubbles in bubble layout right aligned ([#38](https://github.com/7w1/sable/issues/38))
+- Allow responding to and rendering replies with files ([#54](https://github.com/7w1/sable/pull/54)) - [nushea](https://github.com/nushea)
+- Added Gruvbox theme ([#51](https://github.com/7w1/sable/pull/51)) - [dollth.ing](https://github.com/dollth-ing)
+
+## 1.2.2 v2
+
+- hotfix for stupid firefox cors crash
+
+## 1.2.2 - 3/1/2026
 
 - Fixed/updated unknown extended profile keys rendering.
 - Added support for `---`, `-#`, and fixed `-` to be unordered.
+- Fix quotes around colors for tuwunel homeservers ([#46](https://github.com/7w1/sable/issues/46))
+- Added Rosé Pine theme ([#41](https://github.com/7w1/sable/pull/41)) - [wrigglebug](https://github.com/wrigglebug)
+- Add back default Cinny Dark theme.
+- Merge time formatting improvements from ([cinnyapp#2710](https://github.com/cinnyapp/cinny/pull/2710)) - [nushea](https://github.com/nushea)
+- Merge Uniform avatar appearance in space/room navigation from ([cinnyapp#2713](https://github.com/cinnyapp/cinny/pull/2713)) - [wolterkam](https://github.com/wolterkam)
+- Merge Streamline the confusing DM invite user experience from ([cinnyapp#2709](https://github.com/cinnyapp/cinny/pull/2709)) - [wolterkam](https://github.com/wolterkam)
 
 ## 1.2.1
 

@@ -169,6 +169,8 @@ function IdentityCosmetics() {
     settingsAtom,
     'renderGlobalNameColors'
   );
+  const [uniformIcons, setUniformIcons] = useSetting(settingsAtom, 'uniformIcons');
+  const [rightBubbles, setRightBubbles] = useSetting(settingsAtom, 'useRightBubbles');
 
   return (
     <Box direction="Column" gap="100">
@@ -200,6 +202,20 @@ function IdentityCosmetics() {
           after={
             <Switch variant="Primary" value={renderGlobalColors} onChange={setRenderGlobalColors} />
           }
+        />
+      </SequenceCard>
+      <SequenceCard className={SequenceCardStyle} variant="SurfaceVariant" direction="Column">
+        <SettingTile
+          title="Consistent Icon Style"
+          description="Harmonize icon appearance with background fill"
+          after={<Switch variant="Primary" value={uniformIcons} onChange={setUniformIcons} />}
+        />
+      </SequenceCard>
+      <SequenceCard className={SequenceCardStyle} variant="SurfaceVariant" direction="Column">
+        <SettingTile
+          title="Right Aligned Bubbles"
+          description="When using bubble layout, have your bubbles right aligned."
+          after={<Switch variant="Primary" value={rightBubbles} onChange={setRightBubbles} />}
         />
       </SequenceCard>
     </Box>
