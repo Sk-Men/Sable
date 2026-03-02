@@ -174,13 +174,14 @@ export class GenericWidgetDriver extends WidgetDriver {
       const crypto = client.getCrypto();
       if (!crypto) throw new Error('E2EE not enabled');
       const invertedContentMap: Record<string, { userId: string; deviceId: string }[]> = {};
-      for (const userId of Object.keys(contentMap)) {
-        for (const deviceId of Object.keys(contentMap[userId])) {
-          const key = JSON.stringify(contentMap[userId][deviceId]);
-          invertedContentMap[key] = invertedContentMap[key] || [];
-          invertedContentMap[key].push({ userId, deviceId });
-        }
-      }
+      Object.entries(contentMap).forEach(([userId, userContentMap]) => {
+        Object.entries(userContentMap).forEach(([deviceId, content]) => {
+          const key = JSON.stringify(content);
+          const recipients = invertedContentMap[key] ?? [];
+          recipients.push({ userId, deviceId });
+          invertedContentMap[key] = recipients;
+        });
+      });
       await Promise.all(
         Object.entries(invertedContentMap).map(async ([str, recipients]) => {
           const batch = await crypto.encryptToDeviceMessages(
@@ -213,23 +214,32 @@ export class GenericWidgetDriver extends WidgetDriver {
     limit: number,
     since: string | undefined
   ): Promise<IRoomEvent[]> {
-    limit = limit > 0 ? Math.min(limit, Number.MAX_SAFE_INTEGER) : Number.MAX_SAFE_INTEGER;
+    const eventLimit =
+      limit > 0 ? Math.min(limit, Number.MAX_SAFE_INTEGER) : Number.MAX_SAFE_INTEGER;
     const room = this.mxClient.getRoom(roomId);
     if (!room) return [];
     const results: MatrixEvent[] = [];
     const events = room.getLiveTimeline().getEvents();
-    for (let i = events.length - 1; i >= 0; i--) {
+
+    for (let i = events.length - 1; i >= 0; i -= 1) {
       const ev = events[i];
-      if (results.length >= limit) break;
-      if (since !== undefined && ev.getId() === since) break;
-      if (ev.getType() !== eventType || ev.isState()) continue;
-      if (eventType === EventType.RoomMessage && msgtype && msgtype !== ev.getContent().msgtype)
-        continue;
-      if (ev.getStateKey() !== undefined && stateKey !== undefined && ev.getStateKey() !== stateKey)
-        continue;
-      results.push(ev);
+      const reachedLimit = results.length >= eventLimit;
+      const reachedSince = since !== undefined && ev.getId() === since;
+      if (reachedLimit || reachedSince) break;
+
+      const matchesEventType = ev.getType() === eventType && !ev.isState();
+      const matchesMsgType =
+        eventType !== EventType.RoomMessage || !msgtype || msgtype === ev.getContent().msgtype;
+      const eventStateKey = ev.getStateKey();
+      const matchesStateKey =
+        eventStateKey === undefined || stateKey === undefined || eventStateKey === stateKey;
+
+      if (matchesEventType && matchesMsgType && matchesStateKey) {
+        results.push(ev);
+      }
     }
-    return results.map((e) => e.getEffectiveEvent() as IRoomEvent);
+
+    return results.map((ev) => ev.getEffectiveEvent() as IRoomEvent);
   }
 
   public async askOpenID(observer: SimpleObservable<IOpenIDUpdate>): Promise<void> {
@@ -266,10 +276,10 @@ export class GenericWidgetDriver extends WidgetDriver {
     limit?: number,
     direction?: 'f' | 'b'
   ): Promise<IReadEventRelationsResult> {
-    roomId = roomId ?? this.inRoomId ?? undefined;
-    if (typeof roomId !== 'string') throw new Error('Error while reading the current room');
+    const resolvedRoomId = roomId ?? this.inRoomId;
+    if (typeof resolvedRoomId !== 'string') throw new Error('Error while reading the current room');
     const { events, nextBatch, prevBatch } = await this.mxClient.relations(
-      roomId,
+      resolvedRoomId,
       eventId,
       relationType ?? null,
       eventType ?? null,
@@ -313,9 +323,10 @@ export class GenericWidgetDriver extends WidgetDriver {
     return this.mxClient.getVisibleRooms().map((r: Room) => r.roomId);
   }
 
+  // eslint-disable-next-line class-methods-use-this -- WidgetDriver requires an instance override
   public processError(error: unknown): IWidgetApiErrorResponseDataDetails | undefined {
     return error instanceof MatrixError
-      ? { matrix_api_error: (error as any).asWidgetApiErrorData() }
+      ? { matrix_api_error: error.asWidgetApiErrorData() }
       : undefined;
   }
 }
