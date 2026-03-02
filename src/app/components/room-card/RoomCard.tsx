@@ -70,11 +70,13 @@ export const RoomCardBase = as<'div'>(({ className, ...props }, ref) => (
   />
 ));
 
-export const RoomCardName = as<'h6'>(({ ...props }, ref) => (
-  <Text as="h6" size="H6" truncate {...props} ref={ref} />
+export const RoomCardName = as<'h6'>(({ children, ...props }, ref) => (
+  <Text as="h6" size="H6" truncate {...props} ref={ref}>
+    {children}
+  </Text>
 ));
 
-export const RoomCardTopic = as<'p'>(({ className, ...props }, ref) => (
+export const RoomCardTopic = as<'p'>(({ children, className, ...props }, ref) => (
   <Text
     as="p"
     size="T200"
@@ -82,7 +84,9 @@ export const RoomCardTopic = as<'p'>(({ className, ...props }, ref) => (
     {...props}
     priority="400"
     ref={ref}
-  />
+  >
+    {children}
+  </Text>
 ));
 
 function ErrorDialog({
