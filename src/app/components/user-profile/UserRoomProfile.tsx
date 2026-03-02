@@ -74,14 +74,19 @@ function UserExtendedSection({
   };
 
   const pronouns = profile.pronouns?.map((p: any) => clamp(p.summary, 16)).join(', ');
-  const timezone = profile.timezone ? clamp(profile.timezone, 64) : null;
-  const localTime = timezone
-    ? new Intl.DateTimeFormat([], {
+  const localTime = useMemo(() => {
+    if (!profile.timezone) return null;
+
+    try {
+      return new Intl.DateTimeFormat([], {
         hour: 'numeric',
         minute: '2-digit',
-        timeZone: timezone,
-      }).format(new Date())
-    : null;
+        timeZone: profile.timezone,
+      }).format(new Date());
+    } catch {
+      return null;
+    }
+  }, [profile.timezone]);
 
   const bioContent = useMemo(() => {
     let rawBio =
