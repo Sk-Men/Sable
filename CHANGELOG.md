@@ -1,5 +1,24 @@
 # Sable Client Changelog
 
+## 1.2.4 - in dev
+
+- Add validation to timezones before rendering.
+- Fix invalid matrix.to event link generation ([cinnyapp#2717](https://github.com/cinnyapp/cinny/pull/2717)) - [tulir](https://github.com/tulir)
+- Fix Call Rooms' chat button ([#58](https://github.com/7w1/sable/pull/58)) - [Rosy-iso](https://github.com/Rosy-iso)
+- Strip quotes for mxc urls converted to http for tuwunel ([#56](https://github.com/7w1/sable/pull/56)) - [Rosy-iso](https://github.com/Rosy-iso)
+- Add sable space and announcements room to featured communities.
+
+## 1.2.3 - 3/2/2026
+
+- Actually fix quotes around colors for tuwunel homeservers ([#46](https://github.com/7w1/sable/issues/46))
+- Option to have your own message bubbles in bubble layout right aligned ([#38](https://github.com/7w1/sable/issues/38))
+- Allow responding to and rendering replies with files ([#54](https://github.com/7w1/sable/pull/54)) - [nushea](https://github.com/nushea)
+- Added Gruvbox theme ([#51](https://github.com/7w1/sable/pull/51)) - [dollth.ing](https://github.com/dollth-ing)
+
+## 1.2.2 v2
+
+- hotfix for stupid firefox cors crash
+
 ## 1.2.2 - 3/1/2026
 
 - Fixed/updated unknown extended profile keys rendering.

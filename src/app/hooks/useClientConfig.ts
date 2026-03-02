@@ -12,6 +12,7 @@ export type ClientConfig = {
   elementCallUrl?: string;
 
   disableAccountSwitcher?: boolean;
+  matrixToBaseUrl?: string;
 
   pushNotificationDetails?: {
     pushNotifyUrl?: string;

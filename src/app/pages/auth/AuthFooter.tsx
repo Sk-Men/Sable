@@ -1,4 +1,3 @@
-import React from 'react';
 import { Box, Text } from 'folds';
 import * as css from './styles.css';
 
@@ -15,7 +14,7 @@ export function AuthFooter() {
         target="_blank"
         rel="noreferrer"
       >
-        v1.2.2
+        v1.2.3
       </Text>
       <Text as="a" size="T300" href="https://twitter.com/cinnyapp" target="_blank" rel="noreferrer">
         Twitter

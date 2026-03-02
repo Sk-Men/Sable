@@ -16,8 +16,8 @@ import {
 import to from 'await-to-js';
 import { IImageInfo, IThumbnailContent, IVideoInfo } from '$types/matrix/common';
 import { AccountDataEvent } from '$types/matrix/accountData';
-import { getStateEvent } from './room';
 import { Membership, StateEvent } from '$types/matrix/room';
+import { getStateEvent } from './room';
 
 const DOMAIN_REGEX = /\b(?:[a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}\b/;
 
@@ -297,7 +297,7 @@ export const mxcUrlToHttp = (
   allowRedirects?: boolean
 ): string | null =>
   mx.mxcUrlToHttp(
-    mxcUrl,
+    mxcUrl.replace(/^["']|["']$/g, ''),
     width,
     height,
     resizeMethod,

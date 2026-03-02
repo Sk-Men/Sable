@@ -1,4 +1,3 @@
-import React from 'react';
 import { Box, Button, Icon, Icons, Text, config, toRem } from 'folds';
 import { Page, PageHero, PageHeroSection } from '$components/page';
 import CinnySVG from '$public/res/svg/cinny.svg';
@@ -20,7 +19,7 @@ export function WelcomePage() {
               <span>
                 Yet another matrix client fork.{' '}
                 <a href="https://github.com/7w1/sable" target="_blank" rel="noreferrer noopener">
-                  v1.2.2
+                  v1.2.3
                 </a>
               </span>
             }

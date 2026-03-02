@@ -1,4 +1,4 @@
-import React, { MouseEventHandler, useState } from 'react';
+import { MouseEventHandler, useState } from 'react';
 import {
   Box,
   Button,
@@ -20,8 +20,8 @@ import { SequenceCard } from '$components/sequence-card';
 import { useSetting } from '$state/hooks/settings';
 import { JumboEmojiSize, settingsAtom } from '$state/settings';
 import { SettingTile } from '$components/setting-tile';
-import { stopPropagation } from '$appUtils/keyboard';
-import { SequenceCardStyle } from '../styles.css';
+import { stopPropagation } from '$utils/keyboard';
+import { SequenceCardStyle } from '$features/settings/styles.css';
 import { Appearance } from './Themes';
 
 const emojiSizeItems = [
@@ -170,6 +170,7 @@ function IdentityCosmetics() {
     'renderGlobalNameColors'
   );
   const [uniformIcons, setUniformIcons] = useSetting(settingsAtom, 'uniformIcons');
+  const [rightBubbles, setRightBubbles] = useSetting(settingsAtom, 'useRightBubbles');
 
   return (
     <Box direction="Column" gap="100">
@@ -208,6 +209,13 @@ function IdentityCosmetics() {
           title="Consistent Icon Style"
           description="Harmonize icon appearance with background fill"
           after={<Switch variant="Primary" value={uniformIcons} onChange={setUniformIcons} />}
+        />
+      </SequenceCard>
+      <SequenceCard className={SequenceCardStyle} variant="SurfaceVariant" direction="Column">
+        <SettingTile
+          title="Right Aligned Bubbles"
+          description="When using bubble layout, have your bubbles right aligned."
+          after={<Switch variant="Primary" value={rightBubbles} onChange={setRightBubbles} />}
         />
       </SequenceCard>
     </Box>

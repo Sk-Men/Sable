@@ -4,7 +4,6 @@ import { Box, Text, Switch, Button, color, Spinner } from 'folds';
 import { IPusherRequest } from '$types/matrix-sdk';
 import { useAtom } from 'jotai';
 import { SequenceCard } from '$components/sequence-card';
-import { SequenceCardStyle } from '../styles.css';
 import { SettingTile } from '$components/setting-tile';
 import { useSetting } from '$state/hooks/settings';
 import { settingsAtom } from '$state/settings';
@@ -20,6 +19,7 @@ import {
 import { useClientConfig } from '$hooks/useClientConfig';
 import { pushSubscriptionAtom } from '$state/pushSubscription';
 import { DeregisterAllPushersSetting } from './DeregisterPushNotifications';
+import { SequenceCardStyle } from '$features/settings/styles.css';
 
 function EmailNotification() {
   const mx = useMatrixClient();
