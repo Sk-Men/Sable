@@ -7,6 +7,7 @@ import {
   lightTheme,
   rosePineTheme,
   silverTheme,
+  gruvdarkTheme
 } from '../../colors.css';
 import { settingsAtom } from '../state/settings';
 import { useSetting } from '../state/hooks/settings';
@@ -48,6 +49,13 @@ export const RosePineTheme: Theme = {
   kind: ThemeKind.Dark,
   classNames: ['rose-pine-theme', rosePineTheme, onDarkFontWeight, 'prism-dark'],
 };
+
+export const GruvdarkTheme: Theme = {
+  id: 'gruvdark-theme',
+  kind: ThemeKind.Dark,
+  classNames: ['gruvdark-theme', gruvdarkTheme, onDarkFontWeight, 'prism-dark'],
+};
+
 export const CinnyDarkTheme: Theme = {
   id: 'cinny-dark-theme',
   kind: ThemeKind.Dark,
@@ -56,7 +64,7 @@ export const CinnyDarkTheme: Theme = {
 
 export const useThemes = (): Theme[] => {
   const themes: Theme[] = useMemo(
-    () => [LightTheme, SilverTheme, DarkTheme, ButterTheme, RosePineTheme, CinnyDarkTheme],
+    () => [LightTheme, SilverTheme, DarkTheme, ButterTheme, RosePineTheme, CinnyDarkTheme, GruvdarkTheme],
     []
   );
 
@@ -72,6 +80,7 @@ export const useThemeNames = (): Record<string, string> =>
       [ButterTheme.id]: 'Butter',
       [CinnyDarkTheme.id]: 'Cinny Dark',
       [RosePineTheme.id]: 'Rose Pine',
+      [GruvdarkTheme.id]: 'GruvDark',
     }),
     []
   );
