@@ -1378,6 +1378,7 @@ export function RoomTimeline({
         const reactionRelations = getEventReactions(timelineSet, mEventId);
         const reactions = reactionRelations && reactionRelations.getSortedAnnotationsByKey();
         const hasReactions = reactions && reactions.length > 0;
+        const { replyEventId, threadRootId } = mEvent;
         const highlighted = focusItem?.index === item && focusItem.highlight;
         const senderId = mEvent.getSender() ?? '';
         const senderDisplayName =
@@ -1406,6 +1407,17 @@ export function RoomTimeline({
             senderId={senderId}
             activeReplyId={activeReplyId}
             senderDisplayName={senderDisplayName}
+            reply={
+              replyEventId && (
+                <Reply
+                  room={room}
+                  timelineSet={timelineSet}
+                  replyEventId={replyEventId}
+                  threadRootId={threadRootId}
+                  onClick={handleOpenReply}
+                />
+              )
+            }
             reactions={
               reactionRelations && (
                 <Reactions
