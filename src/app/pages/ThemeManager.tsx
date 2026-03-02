@@ -1,5 +1,5 @@
 import React, { ReactNode, useEffect } from 'react';
-import { color, configClass, varsClass } from 'folds';
+import { configClass, varsClass } from 'folds';
 import {
   DarkTheme,
   LightTheme,
@@ -10,13 +10,6 @@ import {
 } from '../hooks/useTheme';
 import { useSetting } from '../state/hooks/settings';
 import { settingsAtom } from '../state/settings';
-
-const BG_VAR_NAME = color.Background.Container.replace(/^var\((.+)\)$/, '$1');
-
-function syncHtmlBackground(): void {
-  const bg = getComputedStyle(document.body).getPropertyValue(BG_VAR_NAME).trim();
-  document.documentElement.style.setProperty('--pwa-canvas-bg', bg || '#ffffff');
-}
 
 export function UnAuthRouteThemeManager() {
   const systemThemeKind = useSystemThemeKind();
@@ -30,7 +23,6 @@ export function UnAuthRouteThemeManager() {
     if (systemThemeKind === ThemeKind.Light) {
       document.body.classList.add(...LightTheme.classNames);
     }
-    syncHtmlBackground();
   }, [systemThemeKind]);
 
   return null;
@@ -45,7 +37,6 @@ export function AuthRouteThemeManager({ children }: { children: ReactNode }) {
     document.body.classList.add(configClass, varsClass);
 
     document.body.classList.add(...activeTheme.classNames);
-    syncHtmlBackground();
 
     if (monochromeMode) {
       document.body.style.filter = 'grayscale(1)';
