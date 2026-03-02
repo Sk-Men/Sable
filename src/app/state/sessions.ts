@@ -162,4 +162,10 @@ export const activeSessionIdAtom = atom<string | undefined, [string | undefined]
   }
 );
 
-export const pendingNotificationAtom = atom<{ roomId: string; eventId: string } | null>(null);
+export type PendingNotification = {
+  roomId: string;
+  eventId: string;
+  targetSessionId?: string;
+};
+
+export const pendingNotificationAtom = atom<PendingNotification | null>(null);

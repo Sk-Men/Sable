@@ -27,11 +27,10 @@ import { getMxIdLocalPart, mxcUrlToHttp } from '$appUtils/matrix';
 import { useSelectedRoom } from '$hooks/router/useSelectedRoom';
 import { useInboxNotificationsSelected } from '$hooks/router/useInbox';
 import { useMediaAuthentication } from '$hooks/useMediaAuthentication';
-import { useRoomNavigate } from '$hooks/useRoomNavigate';
 import { getInboxNotificationsPath } from '../pathUtils';
 import { registrationAtom } from '$state/serviceWorkerRegistration';
 import { BackgroundNotifications } from './BackgroundNotifications';
-import { pendingNotificationAtom } from '$state/sessions';
+import { activeSessionIdAtom, pendingNotificationAtom } from '$state/sessions';
 import { buildRoomMessageNotification } from '$appUtils/notificationStyle';
 
 function SystemEmojiFeature() {
@@ -206,7 +205,7 @@ function MessageNotifications() {
 
       noti.onclick = () => {
         window.focus();
-        setPending({ roomId, eventId });
+        setPending({ roomId, eventId, targetSessionId: mx.getUserId() ?? undefined });
 
         noti.close();
         notifRef.current = undefined;
@@ -215,7 +214,7 @@ function MessageNotifications() {
       notifRef.current?.close();
       notifRef.current = noti;
     },
-    [setPending]
+    [mx, setPending]
   );
 
   const playSound = useCallback(() => {
@@ -324,8 +323,10 @@ type ClientNonUIFeaturesProps = {
 };
 
 function HandleNotificationClick() {
-  const { navigateRoom } = useRoomNavigate();
   const navigate = useNavigate();
+  const activeSessionId = useAtomValue(activeSessionIdAtom);
+  const setActiveSessionId = useSetAtom(activeSessionIdAtom);
+  const setPending = useSetAtom(pendingNotificationAtom);
 
   useEffect(() => {
     const handleNotificationClickEvent = (event: any) => {
@@ -336,16 +337,31 @@ function HandleNotificationClick() {
       const eventData = event.data;
       if (!(eventData?.type === "notificationToRoomEvent")) return;
       const messageData = eventData?.message;
-      if (!messageData) navigate(getInboxNotificationsPath());
+      if (!messageData) {
+        navigate(getInboxNotificationsPath());
+        return;
+      }
+      const targetSessionId =
+        typeof messageData?.user_id === 'string' ? messageData.user_id : undefined;
 
       const eventType = messageData!.type as EventType;
       switch (eventType) {
         case EventType.RoomMessage:
         case EventType.RoomMessageEncrypted:
-          navigateRoom(messageData!.room_id, messageData!.event_id);
+          if (targetSessionId && targetSessionId !== activeSessionId) {
+            setActiveSessionId(targetSessionId);
+          }
+          setPending({
+            roomId: messageData!.room_id,
+            eventId: messageData!.event_id,
+            targetSessionId,
+          });
           return;
         case EventType.RoomMember:
           if (!(messageData?.content?.membership === "invite")) return;
+          if (targetSessionId && targetSessionId !== activeSessionId) {
+            setActiveSessionId(targetSessionId);
+          }
           navigate(getInboxInvitesPath());
           break;
         default:
@@ -357,7 +373,7 @@ function HandleNotificationClick() {
     return () => {
       navigator.serviceWorker.removeEventListener("message", handleNotificationClickEvent);
     }
-  }, [navigate, navigateRoom]);
+  }, [activeSessionId, navigate, setActiveSessionId, setPending]);
 
   return null;
 }

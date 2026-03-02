@@ -20,12 +20,14 @@ export const usePushNotifications = (
     title: string,
     body: string | undefined,
     data: any,
-    silent?: boolean
+    silent?: boolean,
+    icon?: string,
+    badge?: string
   ) => {
     await self.registration.showNotification(title, {
       body,
-      icon: DEFAULT_NOTIFICATION_ICON,
-      badge: DEFAULT_NOTIFICATION_BADGE,
+      icon: icon ?? DEFAULT_NOTIFICATION_ICON,
+      badge: badge ?? DEFAULT_NOTIFICATION_BADGE,
       tag: data?.event_id ?? "Cinny",
       silent,
       data
@@ -37,6 +39,7 @@ export const usePushNotifications = (
       type: pushData!.type,
       room_id: pushData!.room_id,
       event_id: pushData!.event_id,
+      user_id: pushData?.user_id,
       timestamp: Date.now(),
       ...pushData.data
     };
@@ -44,7 +47,7 @@ export const usePushNotifications = (
       roomName: pushData?.room_name,
       username: pushData?.sender_display_name,
       roomAvatar: pushData?.room_avatar_url,
-      previewText: pushData?.content?.body,
+      previewText: 'new message',
       silent: resolveSilent(pushData?.silent),
       eventId: pushData?.event_id,
       data,
@@ -53,7 +56,9 @@ export const usePushNotifications = (
       notificationPayload.title,
       notificationPayload.options.body,
       data,
-      notificationPayload.options.silent ?? undefined
+      notificationPayload.options.silent ?? undefined,
+      notificationPayload.options.icon as string | undefined,
+      notificationPayload.options.badge as string | undefined
     );
   }
 
@@ -62,6 +67,7 @@ export const usePushNotifications = (
       type: pushData!.type,
       room_id: pushData!.room_id,
       event_id: pushData!.event_id,
+      user_id: pushData?.user_id,
       timestamp: Date.now(),
       ...pushData.data
     };
@@ -78,7 +84,9 @@ export const usePushNotifications = (
       notificationPayload.title,
       notificationPayload.options.body,
       data,
-      notificationPayload.options.silent ?? undefined
+      notificationPayload.options.silent ?? undefined,
+      notificationPayload.options.icon as string | undefined,
+      notificationPayload.options.badge as string | undefined
     );
   }
 
@@ -99,6 +107,7 @@ export const usePushNotifications = (
     const data = {
       type: pushData!.type,
       content: pushData!.content,
+      user_id: pushData?.user_id,
       timestamp: Date.now(),
       ...pushData.data
     }
@@ -125,6 +134,7 @@ export const usePushNotifications = (
       type: pushData?.type,
       room_id: pushData?.room_id,
       event_id: pushData?.event_id,
+      user_id: pushData?.user_id,
       timestamp: Date.now(),
       ...pushData.data
     };

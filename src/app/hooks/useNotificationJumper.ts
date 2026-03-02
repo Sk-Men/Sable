@@ -1,7 +1,7 @@
 import { useCallback, useEffect } from 'react';
-import { useAtom } from 'jotai';
+import { useAtom, useAtomValue } from 'jotai';
 import { SyncState, ClientEvent } from '$types/matrix-sdk';
-import { pendingNotificationAtom } from '../state/sessions';
+import { activeSessionIdAtom, pendingNotificationAtom } from '../state/sessions';
 import { useSyncState } from '../hooks/useSyncState';
 import { useMatrixClient } from '../hooks/useMatrixClient';
 import { useRoomNavigate } from '../hooks/useRoomNavigate';
@@ -9,12 +9,20 @@ import { createLogger } from '../utils/debug';
 
 export function NotificationJumper() {
   const [pending, setPending] = useAtom(pendingNotificationAtom);
+  const activeSessionId = useAtomValue(activeSessionIdAtom);
   const mx = useMatrixClient();
   const { navigateRoom } = useRoomNavigate();
   const log = createLogger('NotificationJumper');
 
   const performJump = useCallback(() => {
     if (!pending) return;
+    if (pending.targetSessionId && pending.targetSessionId !== activeSessionId) {
+      log.log('waiting for target session...', {
+        targetSessionId: pending.targetSessionId,
+        activeSessionId,
+      });
+      return;
+    }
 
     const isSyncing = mx.getSyncState() === SyncState.Syncing;
 
@@ -37,7 +45,7 @@ export function NotificationJumper() {
         membership: room?.getMyMembership(),
       });
     }
-  }, [pending, mx, navigateRoom, setPending, log]);
+  }, [pending, activeSessionId, mx, navigateRoom, setPending, log]);
 
   useSyncState(
     mx,

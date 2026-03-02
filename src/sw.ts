@@ -268,6 +268,13 @@ const onPushNotification = async (event: PushEvent) => {
   if (!event?.data) {
     return;
   }
+
+  const clients = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+  const hasVisibleClient = clients.some((client) => client.visibilityState === 'visible');
+  if (hasVisibleClient) {
+    return;
+  }
+
   const pushData = event.data.json();
   console.log(pushData);
 
@@ -323,16 +330,19 @@ self.addEventListener('notificationclick', (event: NotificationEvent) => {
   };
 
   event.waitUntil(
-    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(async (clientList) => {
       for (const client of clientList) {
         if ('focus' in client) {
-          return (client as WindowClient).focus().then(postMessageToClient);
+          await (client as WindowClient).focus();
+          postMessageToClient(client as WindowClient);
+          return null;
         }
       }
       if (self.clients.openWindow) {
-        return self.clients.openWindow(targetUrl);
+        await self.clients.openWindow(targetUrl);
+        return null;
       }
-      return Promise.resolve();
+      return null;
     })
   );
 
