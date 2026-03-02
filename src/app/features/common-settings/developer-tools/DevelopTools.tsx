@@ -24,9 +24,9 @@ import { useRoomAccountData } from '$hooks/useRoomAccountData';
 import { CutoutCard } from '$components/cutout-card';
 import { AccountDataEditor, AccountDataSubmitCallback } from '$components/AccountDataEditor';
 import { useMatrixClient } from '$hooks/useMatrixClient';
+import { SequenceCardStyle } from '$features/common-settings/styles.css';
 import { SendRoomEvent } from './SendRoomEvent';
 import { StateEventEditor, StateEventInfo } from './StateEventEditor';
-import { SequenceCardStyle } from '$features/common-settings/styles.css';
 
 type DeveloperToolsProps = {
   requestClose: () => void;

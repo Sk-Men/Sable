@@ -26,8 +26,8 @@ import { EmailStageDialog } from '$components/uia-stages';
 import { getLoginPath, withSearchParam } from '$pages/pathUtils';
 import { LoginPathSearchParams } from '$pages/paths';
 import { getUIAError, getUIAErrorCode } from '$utils/matrix-uia';
-import { ResetPasswordResult, resetPassword } from './resetPasswordUtil';
 import { FieldError } from '$pages/auth/FiledError';
+import { ResetPasswordResult, resetPassword } from './resetPasswordUtil';
 
 type FormData = {
   email: string;

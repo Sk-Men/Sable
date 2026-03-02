@@ -1,10 +1,10 @@
 import { atom } from 'jotai';
+import { createLogger } from '$utils/debug';
 import {
   atomWithLocalStorage,
   getLocalStorageItem,
   setLocalStorageItem,
 } from './utils/atomWithLocalStorage';
-import { createLogger } from '$utils/debug';
 
 const log = createLogger('sessions');
 

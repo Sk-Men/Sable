@@ -15,9 +15,9 @@ import { allRoomsAtom } from '$state/room-list/roomList';
 import { factoryRoomIdByActivity } from '$utils/sort';
 import { RoomAvatar, RoomIcon } from '$components/room-avatar';
 import { getViaServers } from '$plugins/via-servers';
+import { createMentionElement, moveCursor, replaceWithElement } from '$components/editor/utils';
 import { AutocompleteMenu } from './AutocompleteMenu';
 import { AutocompleteQuery } from './autocompleteQuery';
-import { createMentionElement, moveCursor, replaceWithElement } from '$components/editor/utils';
 
 type MentionAutoCompleteHandler = (roomAliasOrId: string, name: string) => void;
 

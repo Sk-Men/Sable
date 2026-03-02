@@ -31,17 +31,17 @@ import {
 import { getMemberDisplayName } from '$utils/room';
 import { Nicknames } from '$state/nicknames';
 import { EMOJI_PATTERN, sanitizeForRegex, URL_NEG_LB } from '$utils/regex';
-import { getHexcodeForEmoji, getShortcodeFor } from './emoji';
 import { findAndReplace } from '$utils/findAndReplace';
+import { onEnterOrSpace } from '$utils/keyboard';
+import { copyToClipboard } from '$utils/dom';
+import { useTimeoutToggle } from '$hooks/useTimeoutToggle';
 import {
   parseMatrixToRoom,
   parseMatrixToRoomEvent,
   parseMatrixToUser,
   testMatrixTo,
 } from './matrix-to';
-import { onEnterOrSpace } from '$utils/keyboard';
-import { copyToClipboard } from '$utils/dom';
-import { useTimeoutToggle } from '$hooks/useTimeoutToggle';
+import { getHexcodeForEmoji, getShortcodeFor } from './emoji';
 
 const ReactPrism = lazy(() => import('./react-prism/ReactPrism'));
 

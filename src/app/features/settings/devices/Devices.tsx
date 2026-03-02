@@ -12,6 +12,7 @@ import {
 import { useSecretStorageDefaultKeyId, useSecretStorageKeyContent } from '$hooks/useSecretStorage';
 import { useCrossSigningActive } from '$hooks/useCrossSigning';
 import { BackupRestoreTile } from '$components/BackupRestore';
+import { SequenceCardStyle } from '$features/settings/styles.css';
 import { LocalBackup } from './LocalBackup';
 import { DeviceLogoutBtn, DeviceKeyDetails, DeviceTile, DeviceTilePlaceholder } from './DeviceTile';
 import { OtherDevices } from './OtherDevices';
@@ -21,7 +22,6 @@ import {
   VerificationStatusBadge,
   VerifyCurrentDeviceTile,
 } from './Verification';
-import { SequenceCardStyle } from '$features/settings/styles.css';
 
 function DevicesPlaceholder() {
   return (

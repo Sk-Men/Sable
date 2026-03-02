@@ -18,12 +18,12 @@ import { replaceSpaceWithDash, suffixRename } from '$utils/common';
 import { getFileNameWithoutExt } from '$utils/mimeTypes';
 import { AsyncStatus, useAsyncCallback } from '$hooks/useAsyncCallback';
 import { SequenceCard } from '$components/sequence-card';
-import { ImageTile, ImageTileEdit, ImageTileUpload } from './ImageTile';
 import { SettingTile } from '$components/setting-tile';
+import { CompactUploadCardRenderer } from '$components/upload-card';
+import { ImageTile, ImageTileEdit, ImageTileUpload } from './ImageTile';
 import { UsageSwitcher } from './UsageSwitcher';
 import { ImagePackProfile, ImagePackProfileEdit } from './PackMeta';
 import * as css from './style.css';
-import { CompactUploadCardRenderer } from '$components/upload-card';
 
 export type ImagePackContentProps = {
   imagePack: ImagePack;

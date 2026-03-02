@@ -8,13 +8,13 @@ import {
   getSpacePath,
   getSpaceRoomPath,
 } from '$pages/pathUtils';
-import { useMatrixClient } from './useMatrixClient';
 import { getOrphanParents, guessPerfectParent } from '$utils/room';
 import { roomToParentsAtom } from '$state/room/roomToParents';
 import { mDirectAtom } from '$state/mDirectList';
-import { useSelectedSpace } from './router/useSelectedSpace';
 import { settingsAtom } from '$state/settings';
 import { useSetting } from '$state/hooks/settings';
+import { useSelectedSpace } from './router/useSelectedSpace';
+import { useMatrixClient } from './useMatrixClient';
 
 export const useRoomNavigate = () => {
   const navigate = useNavigate();

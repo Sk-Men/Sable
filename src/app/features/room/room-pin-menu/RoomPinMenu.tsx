@@ -87,8 +87,8 @@ import { nicknamesAtom } from '$state/nicknames';
 import { AccountDataEvent } from '$types/matrix/accountData';
 import { useSableCosmetics } from '$hooks/useSableCosmetics';
 import { EncryptedContent } from '$features/room/message';
-import * as css from './RoomPinMenu.css';
 import type { PinReadMarker } from '$features/room/RoomViewHeader';
+import * as css from './RoomPinMenu.css';
 
 const log = createLogger('RoomPinMenu');
 

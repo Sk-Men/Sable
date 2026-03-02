@@ -26,8 +26,8 @@ import { stopPropagation } from '$utils/keyboard';
 import { getPowerTagIconSrc } from '$hooks/useMemberPowerTag';
 import { useRoomCreatorsTag } from '$hooks/useRoomCreatorsTag';
 import { useRoomCreators } from '$hooks/useRoomCreators';
-import { PermissionGroup } from './types';
 import { SequenceCardStyle } from '$features/common-settings/styles.css';
+import { PermissionGroup } from './types';
 
 type PeekPermissionsProps = {
   powerLevels: IPowerLevels;

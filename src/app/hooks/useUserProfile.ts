@@ -4,10 +4,10 @@ import { selectAtom } from 'jotai/utils';
 import { EventTimeline, Room } from '$types/matrix-sdk';
 import { StateEvent } from '$types/matrix/room';
 import colorMXID from '$utils/colorMXID';
-import { useMatrixClient } from './useMatrixClient';
 import { profilesCacheAtom } from '$state/userRoomProfile';
 import { useSetting } from '$state/hooks/settings';
 import { settingsAtom } from '$state/settings';
+import { useMatrixClient } from './useMatrixClient';
 
 const inFlightProfiles = new Map<string, Promise<any>>();
 

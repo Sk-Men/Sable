@@ -6,8 +6,8 @@ import { getMxIdLocalPart } from '$utils/matrix';
 import { useSableCosmetics } from '$hooks/useSableCosmetics';
 import { useAtomValue } from 'jotai';
 import { nicknamesAtom } from '$state/nicknames';
-import * as css from './style.css';
 import { UserAvatar } from '$components/user-avatar';
+import * as css from './style.css';
 
 const getName = (room: Room, member: RoomMember, nicknames: Record<string, string>) =>
   getMemberDisplayName(room, member.userId, nicknames) ??

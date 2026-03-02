@@ -2,8 +2,8 @@ import { Dispatch, SetStateAction, useCallback, useEffect, useState } from 'reac
 import { MatrixClient } from '$types/matrix-sdk';
 import { AccountDataEvent } from '$types/matrix/accountData';
 import { Membership } from '$types/matrix/room';
-import { useMatrixClient } from './useMatrixClient';
 import { getAccountData, isSpace } from '$utils/room';
+import { useMatrixClient } from './useMatrixClient';
 import { useAccountDataCallback } from './useAccountDataCallback';
 
 export type ISidebarFolder = {

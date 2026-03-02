@@ -9,10 +9,10 @@ import { getLoginPath, getRegisterPath, withSearchParam } from '$pages/pathUtils
 import { usePathWithOrigin } from '$hooks/usePathWithOrigin';
 import { LoginPathSearchParams } from '$pages/paths';
 import { useClientConfig } from '$hooks/useClientConfig';
-import { PasswordLoginForm } from './PasswordLoginForm';
 import { SSOLogin } from '$pages/auth/SSOLogin';
-import { TokenLogin } from './TokenLogin';
 import { OrDivider } from '$pages/auth/OrDivider';
+import { PasswordLoginForm } from './PasswordLoginForm';
+import { TokenLogin } from './TokenLogin';
 
 const getLoginTokenSearchParam = () => {
   // when using hasRouter query params in existing route

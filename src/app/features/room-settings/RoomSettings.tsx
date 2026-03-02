@@ -13,12 +13,12 @@ import { RoomAvatar, RoomIcon } from '$components/room-avatar';
 import { RoomSettingsPage } from '$state/roomSettings';
 import { useRoom } from '$hooks/useRoom';
 import { SwipeableOverlayWrapper } from '$components/SwipeableOverlayWrapper';
-import { General } from './general';
 import { Members } from '$features/common-settings/members';
 import { EmojisStickers } from '$features/common-settings/emojis-stickers';
-import { Permissions } from './permissions';
 import { DeveloperTools } from '$features/common-settings/developer-tools';
 import { Cosmetics } from '$features/common-settings/cosmetics/Cosmetics';
+import { Permissions } from './permissions';
+import { General } from './general';
 
 type RoomSettingsMenuItem = {
   page: RoomSettingsPage;

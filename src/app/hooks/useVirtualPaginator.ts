@@ -1,11 +1,11 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef } from 'react';
-import { OnIntersectionCallback, useIntersectionObserver } from './useIntersectionObserver';
 import {
   canFitInScrollView,
   getScrollInfo,
   isInScrollView,
   isIntersectingScrollView,
 } from '$utils/dom';
+import { OnIntersectionCallback, useIntersectionObserver } from './useIntersectionObserver';
 
 const PAGINATOR_ANCHOR_ATTR = 'data-paginator-anchor';
 

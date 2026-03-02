@@ -2,11 +2,11 @@ import { Box, Text, IconButton, Icon, Icons, Scroll } from 'folds';
 import { Page, PageContent, PageHeader } from '$components/page';
 import { SequenceCard } from '$components/sequence-card';
 import { SettingTile } from '$components/setting-tile';
+import { SequenceCardStyle } from '$features/settings/styles.css';
 import { SystemNotification } from './SystemNotification';
 import { AllMessagesNotifications } from './AllMessages';
 import { SpecialMessagesNotifications } from './SpecialMessages';
 import { KeywordMessagesNotifications } from './KeywordMessages';
-import { SequenceCardStyle } from '$features/settings/styles.css';
 
 type NotificationsProps = {
   requestClose: () => void;

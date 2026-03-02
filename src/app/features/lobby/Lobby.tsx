@@ -51,11 +51,11 @@ import { useGetRoom } from '$hooks/useGetRoom';
 import { AsyncStatus, useAsyncCallback } from '$hooks/useAsyncCallback';
 import { getRoomPermissionsAPI } from '$hooks/useRoomPermissions';
 import { getRoomCreatorsForRoomId } from '$hooks/useRoomCreators';
+import { MembersDrawer } from '$features/room/MembersDrawer';
 import { SpaceHierarchy } from './SpaceHierarchy';
 import { CanDropCallback, useDnDMonitor } from './DnD';
 import { LobbyHero } from './LobbyHero';
 import { LobbyHeader } from './LobbyHeader';
-import { MembersDrawer } from '$features/room/MembersDrawer';
 
 const useCanDropLobbyItem = (
   space: Room,

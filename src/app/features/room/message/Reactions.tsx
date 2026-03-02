@@ -21,8 +21,8 @@ import { Reaction, ReactionTooltipMsg } from '$components/message';
 import { useRelations } from '$hooks/useRelations';
 import { stopPropagation } from '$utils/keyboard';
 import { useMediaAuthentication } from '$hooks/useMediaAuthentication';
-import * as css from './styles.css';
 import { ReactionViewer } from '$features/room/reaction-viewer';
+import * as css from './styles.css';
 
 export type ReactionsProps = {
   room: Room;

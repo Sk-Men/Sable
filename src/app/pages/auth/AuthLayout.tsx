@@ -21,9 +21,9 @@ import { AutoDiscoveryInfoProvider } from '$hooks/useAutoDiscoveryInfo';
 import { AuthFlowsLoader } from '$components/AuthFlowsLoader';
 import { AuthFlowsProvider } from '$hooks/useAuthFlows';
 import { AuthServerProvider } from '$hooks/useAuthServer';
+import { LOGIN_PATH, REGISTER_PATH, RESET_PASSWORD_PATH } from '$pages/paths';
 import { AutoDiscoveryAction, autoDiscovery } from '../../cs-api';
 import { ServerPicker } from './ServerPicker';
-import { LOGIN_PATH, REGISTER_PATH, RESET_PASSWORD_PATH } from '$pages/paths';
 import * as css from './styles.css';
 import { AuthFooter } from './AuthFooter';
 

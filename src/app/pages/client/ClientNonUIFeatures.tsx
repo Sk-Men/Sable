@@ -27,8 +27,8 @@ import { useSelectedRoom } from '$hooks/router/useSelectedRoom';
 import { useInboxNotificationsSelected } from '$hooks/router/useInbox';
 import { useMediaAuthentication } from '$hooks/useMediaAuthentication';
 import { pendingNotificationAtom } from '$state/sessions';
-import { BackgroundNotifications } from './BackgroundNotifications';
 import { getInboxInvitesPath } from '$pages/pathUtils';
+import { BackgroundNotifications } from './BackgroundNotifications';
 
 function SystemEmojiFeature() {
   const [twitterEmoji] = useSetting(settingsAtom, 'twitterEmoji');

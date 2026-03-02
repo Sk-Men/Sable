@@ -29,6 +29,7 @@ import { addRecentEmoji } from '$plugins/recent-emoji';
 import { useMediaAuthentication } from '$hooks/useMediaAuthentication';
 import { ImagePack, ImageUsage, PackImageReader } from '$plugins/custom-emoji';
 import { getEmoticonSearchStr } from '$plugins/utils';
+import { VirtualTile } from '$components/virtualizer';
 import { useEmojiGroupIcons } from './useEmojiGroupIcons';
 import { useEmojiGroupLabels } from './useEmojiGroupLabels';
 import {
@@ -51,7 +52,6 @@ import {
   EmojiBoardLayout,
 } from './components';
 import { EmojiBoardTab, EmojiType } from './types';
-import { VirtualTile } from '$components/virtualizer';
 
 const RECENT_GROUP_ID = 'recent_group';
 const SEARCH_GROUP_ID = 'search_group';

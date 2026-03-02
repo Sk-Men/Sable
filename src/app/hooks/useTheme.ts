@@ -1,4 +1,6 @@
 import { createContext, useContext, useEffect, useMemo, useState } from 'react';
+import { settingsAtom } from '$state/settings';
+import { useSetting } from '$state/hooks/settings';
 import { onDarkFontWeight, onLightFontWeight } from '../../config.css';
 import {
   butterTheme,
@@ -9,8 +11,6 @@ import {
   silverTheme,
   gruvdarkTheme,
 } from '../../colors.css';
-import { settingsAtom } from '$state/settings';
-import { useSetting } from '$state/hooks/settings';
 
 export enum ThemeKind {
   Light = 'light',

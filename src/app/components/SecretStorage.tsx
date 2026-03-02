@@ -2,10 +2,10 @@ import { FormEventHandler, useCallback } from 'react';
 import { Box, Text, Button, Spinner, color } from 'folds';
 import { decodeRecoveryKey, deriveRecoveryKeyFromPassphrase } from '$types/matrix-sdk';
 import { SecretStorageKeyContent, SecretStoragePassphraseContent } from '$types/matrix/accountData';
-import { PasswordInput } from './password-input';
 import { AsyncStatus, useAsyncCallback } from '$hooks/useAsyncCallback';
 import { useMatrixClient } from '$hooks/useMatrixClient';
 import { useAlive } from '$hooks/useAlive';
+import { PasswordInput } from './password-input';
 
 type SecretStorageRecoveryPassphraseProps = {
   processing?: boolean;

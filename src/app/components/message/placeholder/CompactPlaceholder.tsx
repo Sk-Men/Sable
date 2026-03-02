@@ -1,8 +1,8 @@
 import { useMemo } from 'react';
 import { as, ContainerColor, toRem } from 'folds';
 import { randomNumberBetween } from '$utils/common';
-import { LinePlaceholder } from './LinePlaceholder';
 import { CompactLayout } from '$components/message/layout';
+import { LinePlaceholder } from './LinePlaceholder';
 
 export const CompactPlaceholder = as<'div', { variant?: ContainerColor }>(
   ({ variant, ...props }, ref) => {

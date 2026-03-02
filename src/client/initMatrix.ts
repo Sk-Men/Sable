@@ -5,9 +5,7 @@ import {
   IndexedDBCryptoStore,
 } from '$types/matrix-sdk';
 
-import { cryptoCallbacks } from './secretStorageKeys';
 import { clearNavToActivePathStore } from '$state/navToActivePath';
-import { pushSessionToSW } from '../sw-session';
 import {
   Session,
   Sessions,
@@ -17,6 +15,8 @@ import {
 } from '$state/sessions';
 import { getLocalStorageItem } from '$state/utils/atomWithLocalStorage';
 import { createLogger } from '$utils/debug';
+import { pushSessionToSW } from '../sw-session';
+import { cryptoCallbacks } from './secretStorageKeys';
 
 const log = createLogger('initMatrix');
 

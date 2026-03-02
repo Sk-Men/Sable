@@ -12,9 +12,9 @@ import { useAuthMetadata } from '$hooks/useAuthMetadata';
 import { withSearchParam } from '$pages/pathUtils';
 import { useAccountManagementActions } from '$hooks/useAccountManagement';
 import { SettingTile } from '$components/setting-tile';
+import { SequenceCardStyle } from '$features/settings/styles.css';
 import { VerifyOtherDeviceTile } from './Verification';
 import { DeviceDeleteBtn, DeviceTile } from './DeviceTile';
-import { SequenceCardStyle } from '$features/settings/styles.css';
 
 type OtherDevicesProps = {
   devices: IMyDevice[];

@@ -15,9 +15,9 @@ import { useRoom } from '$hooks/useRoom';
 import { EmojisStickers } from '$features/common-settings/emojis-stickers';
 import { Members } from '$features/common-settings/members';
 import { DeveloperTools } from '$features/common-settings/developer-tools';
+import { Cosmetics } from '$features/common-settings/cosmetics/Cosmetics';
 import { General } from './general';
 import { Permissions } from './permissions';
-import { Cosmetics } from '$features/common-settings/cosmetics/Cosmetics';
 
 type SpaceSettingsMenuItem = {
   page: SpaceSettingsPage;
