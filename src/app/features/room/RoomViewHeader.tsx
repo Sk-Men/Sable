@@ -659,7 +659,7 @@ export function RoomViewHeader() {
               offset={4}
               tooltip={
                 <Tooltip>
-                  <Text>Chat</Text>
+                  <Text>{isChatOpen ? 'Hide Chat' : 'Show Chat'}</Text>
                 </Tooltip>
               }
             >

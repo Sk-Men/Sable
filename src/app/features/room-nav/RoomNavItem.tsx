@@ -312,7 +312,7 @@ export function RoomNavItem({
 
   const handleChatButtonClick = (evt: MouseEvent<HTMLButtonElement>) => {
     evt.stopPropagation();
-    if (!isChatOpen) toggleChat();
+    toggleChat();
     setViewedCallRoomId(room.roomId);
     navigate(linkPath);
   };
@@ -443,7 +443,7 @@ export function RoomNavItem({
                   offset={4}
                   tooltip={
                     <Tooltip>
-                      <Text>Open Chat</Text>
+                      <Text>{isChatOpen ? 'Hide Chat' : 'Show Chat'}</Text>
                     </Tooltip>
                   }
                 >
