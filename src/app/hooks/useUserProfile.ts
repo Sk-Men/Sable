@@ -154,11 +154,12 @@ export const useUserProfile = (
         )?.getContent()?.font;
       }
     }
+    const validGlobalVal = isValidHex(data?.nameColor);
 
-    const hasGlobalColor = data?.nameColor && isValidHex(data.nameColor);
+    const hasGlobalColor = !!validGlobalVal;
     const validGlobal =
       (renderGlobalColors || userId === mx.getUserId()) && hasGlobalColor
-        ? data.nameColor
+        ? validGlobalVal
         : undefined;
     const validLocal = localColor && isValidHex(localColor) ? localColor : undefined;
     const validSpace = spaceColor && isValidHex(spaceColor) ? spaceColor : undefined;

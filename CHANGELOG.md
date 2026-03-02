@@ -1,5 +1,13 @@
 # Sable Client Changelog
 
+## 1.2.3 - in dev
+
+- Actually fix quotes around colors for tuwunel homeservers ([#46](https://github.com/7w1/sable/issues/46))
+
+## 1.2.2 v2
+
+- hotfix for stupid firefox cors crash
+
 ## 1.2.2 - 3/1/2026
 
 - Fixed/updated unknown extended profile keys rendering.
