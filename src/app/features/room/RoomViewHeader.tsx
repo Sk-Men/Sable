@@ -648,12 +648,12 @@ export function RoomViewHeader() {
               offset={4}
               tooltip={
                 <Tooltip>
-                  <Text>Chat</Text>
+                  <Text>{isChatOpen ? 'Hide Chat' : 'Show Chat'}</Text>
                 </Tooltip>
               }
             >
               {(triggerRef) => (
-                <IconButton fill="None" ref={triggerRef} onClick={void toggleChat}>
+                <IconButton fill="None" ref={triggerRef} onClick={() => void toggleChat()}>
                   <Icon size="400" src={Icons.Message} filled={isChatOpen} />
                 </IconButton>
               )}
