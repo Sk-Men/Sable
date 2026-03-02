@@ -58,7 +58,6 @@ function ClientRootLoading() {
 
 type ClientRootOptionsProps = {
   mx?: MatrixClient;
-  session?: Session;
   onLogout: () => void;
 };
 function ClientRootOptions({ mx, onLogout }: ClientRootOptionsProps) {
@@ -260,7 +259,7 @@ export function ClientRoot({ children }: ClientRootProps) {
   return (
     <SpecVersions baseUrl={baseUrl}>
       {mx && <SyncStatus mx={mx} />}
-      {loading && <ClientRootOptions mx={mx} session={activeSession} onLogout={handleLogout} />}
+      {loading && <ClientRootOptions mx={mx} onLogout={handleLogout} />}
       {(loadState.status === AsyncStatus.Error || startState.status === AsyncStatus.Error) && (
         <SplashScreen>
           <Box direction="Column" grow="Yes" alignItems="Center" justifyContent="Center" gap="400">

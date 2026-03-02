@@ -44,7 +44,7 @@ import {
   mxcUrlToHttp,
   removeRoomIdFromMDirect,
 } from '$utils/matrix';
-import { _SearchPathSearchParams } from '$pages/paths';
+import { SearchPathSearchParams } from '$pages/paths';
 import { useRoomUnread } from '$state/hooks/unread';
 import { usePowerLevelsContext } from '$hooks/usePowerLevels';
 import { markAsRead } from '$utils/notifications';
@@ -123,7 +123,7 @@ const RoomMenu = forwardRef<HTMLDivElement, RoomMenuProps>(({ room, requestClose
   const [directInvitePrompt, setDirectInvitePrompt] = useState(false);
 
   const handleMarkAsRead = () => {
-    void markAsRead(mx, room.roomId, hideActivity);
+    markAsRead(mx, room.roomId, hideActivity);
     requestClose();
   };
 
@@ -401,7 +401,7 @@ export function RoomViewHeader() {
   }, [pinnedIds, pinMarker]);
 
   const handleSearchClick = () => {
-    const searchParams: _SearchPathSearchParams = {
+    const searchParams: SearchPathSearchParams = {
       rooms: room.roomId,
     };
     const path = space
@@ -664,7 +664,13 @@ export function RoomViewHeader() {
               }
             >
               {(triggerRef) => (
-                <IconButton fill="None" ref={triggerRef} onClick={void toggleChat}>
+                <IconButton
+                  fill="None"
+                  ref={triggerRef}
+                  onClick={() => {
+                    toggleChat();
+                  }}
+                >
                   <Icon size="400" src={Icons.Message} filled={isChatOpen} />
                 </IconButton>
               )}

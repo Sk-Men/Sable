@@ -778,8 +778,9 @@ export const useCommands = (mx: MatrixClient, room: Room): CommandRecord => {
             return;
           }
 
+          let parsedUrl: URL;
           try {
-            new URL(url);
+            parsedUrl = new URL(url);
           } catch {
             sendFeedback('Invalid URL. Please provide a valid widget URL.');
             return;
@@ -792,7 +793,7 @@ export const useCommands = (mx: MatrixClient, room: Room): CommandRecord => {
               StateEvent.RoomWidget as any,
               {
                 type: 'm.custom',
-                url: enrichWidgetUrl(url),
+                url: enrichWidgetUrl(parsedUrl.toString()),
                 name,
                 id: widgetId,
                 creatorUserId: userId,

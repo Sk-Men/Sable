@@ -116,6 +116,14 @@ export function UserMentionAutocomplete({
     requestClose();
   };
 
+  function getName(member: RoomMember) {
+    return (
+      getMemberDisplayName(room, member.userId, nicknames) ??
+      getMxIdLocalPart(member.userId) ??
+      member.userId
+    );
+  }
+
   useKeyDown(window, (evt: KeyboardEvent) => {
     onTabPress(evt, () => {
       if (query.text === 'room') {
@@ -131,11 +139,6 @@ export function UserMentionAutocomplete({
       handleAutocomplete(roomMember.userId, getName(roomMember));
     });
   });
-
-  const getName = (member: RoomMember) =>
-    getMemberDisplayName(room, member.userId, nicknames) ??
-    getMxIdLocalPart(member.userId) ??
-    member.userId;
 
   return (
     <AutocompleteMenu headerContent={<Text size="L400">Mentions</Text>} requestClose={requestClose}>

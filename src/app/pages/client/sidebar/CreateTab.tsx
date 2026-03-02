@@ -15,7 +15,7 @@ import {
 } from '$pages/pathUtils';
 import { useCreateSelected } from '$hooks/router/useCreateSelected';
 import { JoinAddressPrompt } from '$components/join-address-prompt';
-import { _RoomSearchParams } from '$pages/paths';
+import { RoomSearchParams } from '$pages/paths';
 
 export function CreateTab() {
   const createSelected = useCreateSelected();
@@ -118,7 +118,7 @@ export function CreateTab() {
                   const path = getSpacePath(roomIdOrAlias);
                   navigate(
                     viaServers
-                      ? withSearchParam<_RoomSearchParams>(path, {
+                      ? withSearchParam<RoomSearchParams>(path, {
                           viaServers: encodeSearchParamValueArray(viaServers),
                         })
                       : path

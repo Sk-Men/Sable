@@ -81,7 +81,7 @@ export const useUserProfile = (
   const needsFetch = !!userId && userId !== 'undefined' && !cached?._fetched;
 
   useEffect(() => {
-    if (!needsFetch) return;
+    if (!needsFetch) return undefined;
 
     let fetchPromise = inFlightProfiles.get(userId);
 

@@ -133,7 +133,7 @@ function SelectRoomButton({ roomList, selectedRooms, onChange }: SelectRoomButto
     [mx]
   );
 
-  const [searchResult, _searchRoom, resetSearch] = useAsyncSearch(
+  const [searchResult, searchRoomRaw, resetSearch] = useAsyncSearch(
     roomList,
     getRoomNameStr,
     SEARCH_OPTS
@@ -148,7 +148,7 @@ function SelectRoomButton({ roomList, selectedRooms, onChange }: SelectRoomButto
   });
   const vItems = virtualizer.getVirtualItems();
 
-  const searchRoom = useDebounce(_searchRoom, SEARCH_DEBOUNCE_OPTS);
+  const searchRoom = useDebounce(searchRoomRaw, SEARCH_DEBOUNCE_OPTS);
   const handleSearchChange: ChangeEventHandler<HTMLInputElement> = (evt) => {
     const value = evt.currentTarget.value.trim();
     if (!value) {

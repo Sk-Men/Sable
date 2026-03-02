@@ -77,7 +77,7 @@ export const Reply = as<'div', ReplyProps>(
 
     const mx = useMatrixClient();
 
-    const { body, formatted_body, format } = replyEvent?.getContent() ?? {};
+    const { body, formatted_body: formattedBody, format } = replyEvent?.getContent() ?? {};
     const sender = replyEvent?.getSender();
 
     const { color: usernameColor, font: usernameFont } = useSableCosmetics(sender ?? '', room);
@@ -92,8 +92,8 @@ export const Reply = as<'div', ReplyProps>(
     const badEncryption = replyEvent?.getContent().msgtype === 'm.bad.encrypted';
     let bodyJSX: ReactNode = fallbackBody;
 
-    if (format === 'org.matrix.custom.html' && formatted_body) {
-      const strippedHtml = trimReplyFromFormattedBody(formatted_body)
+    if (format === 'org.matrix.custom.html' && formattedBody) {
+      const strippedHtml = trimReplyFromFormattedBody(formattedBody)
         .replace(/<br\s*\/?>/gi, ' ')
         .replace(/<\/p>\s*<p[^>]*>/gi, ' ')
         .replace(/<\/?p[^>]*>/gi, '')

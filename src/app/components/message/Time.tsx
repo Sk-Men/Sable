@@ -28,7 +28,7 @@ export type TimeProps = {
  * @returns {React.ReactElement} A <Text as="time"> element with the formatted date/time.
  */
 export const Time = as<'span', TimeProps & ComponentProps<typeof Text>>(
-  ({ compact, hour24Clock, dateFormatString, ts, ...props }, ref) => {
+  ({ compact, hour24Clock, dateFormatString, ts, ...props }) => {
     const formattedTime = timeHourMinute(ts, hour24Clock);
 
     let time = '';

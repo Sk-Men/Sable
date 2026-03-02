@@ -204,13 +204,13 @@ export function CallProvider({ children }: CallProviderProps) {
       if (!isActiveCallReady) return;
       ev.preventDefault();
 
-      const { audio_enabled, video_enabled } = ev.detail.data ?? {};
+      const { audio_enabled: audioEnabled, video_enabled: videoEnabled } = ev.detail.data ?? {};
 
-      if (typeof audio_enabled === 'boolean' && audio_enabled !== isAudioEnabled) {
-        setIsAudioEnabledState(audio_enabled);
+      if (typeof audioEnabled === 'boolean' && audioEnabled !== isAudioEnabled) {
+        setIsAudioEnabledState(audioEnabled);
       }
-      if (typeof video_enabled === 'boolean' && video_enabled !== isVideoEnabled) {
-        setIsVideoEnabledState(video_enabled);
+      if (typeof videoEnabled === 'boolean' && videoEnabled !== isVideoEnabled) {
+        setIsVideoEnabledState(videoEnabled);
       }
     };
 

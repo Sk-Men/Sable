@@ -4,7 +4,7 @@ import { useRoomNavigate } from './useRoomNavigate';
 import { useMatrixClient } from './useMatrixClient';
 import { isRoomId, isUserId } from '../utils/matrix';
 import { getHomeRoomPath, withSearchParam } from '../pages/pathUtils';
-import { _RoomSearchParams } from '../pages/paths';
+import { RoomSearchParams } from '../pages/paths';
 import { useOpenUserRoomProfile } from '../state/hooks/userRoomProfile';
 import { useSpaceOptionally } from './useSpace';
 
@@ -38,7 +38,7 @@ export const useMentionClickHandler = (roomId: string): ReactEventHandler<HTMLEl
       const viaServers = target.getAttribute('data-mention-via') || undefined;
       const path = getHomeRoomPath(mentionId, eventId);
 
-      navigate(viaServers ? withSearchParam<_RoomSearchParams>(path, { viaServers }) : path);
+      navigate(viaServers ? withSearchParam<RoomSearchParams>(path, { viaServers }) : path);
     },
     [mx, navigate, navigateRoom, navigateSpace, roomId, space, openProfile]
   );

@@ -18,15 +18,15 @@ import {
   REGISTER_PATH,
   RESET_PASSWORD_PATH,
   SPACE_PATH,
-  _CREATE_PATH,
-  _FEATURED_PATH,
-  _INVITES_PATH,
-  _JOIN_PATH,
-  _LOBBY_PATH,
-  _NOTIFICATIONS_PATH,
-  _ROOM_PATH,
-  _SEARCH_PATH,
-  _SERVER_PATH,
+  CREATE_PATH_SEGMENT,
+  FEATURED_PATH_SEGMENT,
+  INVITES_PATH_SEGMENT,
+  JOIN_PATH_SEGMENT,
+  LOBBY_PATH_SEGMENT,
+  NOTIFICATIONS_PATH_SEGMENT,
+  ROOM_PATH_SEGMENT,
+  SEARCH_PATH_SEGMENT,
+  SERVER_PATH_SEGMENT,
   CREATE_PATH,
 } from './paths';
 import {
@@ -189,11 +189,11 @@ export const createRouter = (clientConfig: ClientConfig, screenSize: ScreenSize)
           }
         >
           {mobile ? null : <Route index element={<WelcomePage />} />}
-          <Route path={_CREATE_PATH} element={<HomeCreateRoom />} />
-          <Route path={_JOIN_PATH} element={<p>join</p>} />
-          <Route path={_SEARCH_PATH} element={<HomeSearch />} />
+          <Route path={CREATE_PATH_SEGMENT} element={<HomeCreateRoom />} />
+          <Route path={JOIN_PATH_SEGMENT} element={<p>join</p>} />
+          <Route path={SEARCH_PATH_SEGMENT} element={<HomeSearch />} />
           <Route
-            path={_ROOM_PATH}
+            path={ROOM_PATH_SEGMENT}
             element={
               <HomeRouteRoomProvider>
                 <Room />
@@ -216,9 +216,9 @@ export const createRouter = (clientConfig: ClientConfig, screenSize: ScreenSize)
           }
         >
           {mobile ? null : <Route index element={<WelcomePage />} />}
-          <Route path={_CREATE_PATH} element={<DirectCreate />} />
+          <Route path={CREATE_PATH_SEGMENT} element={<DirectCreate />} />
           <Route
-            path={_ROOM_PATH}
+            path={ROOM_PATH_SEGMENT}
             element={
               <DirectRouteRoomProvider>
                 <Room />
@@ -258,10 +258,10 @@ export const createRouter = (clientConfig: ClientConfig, screenSize: ScreenSize)
               element={<WelcomePage />}
             />
           )}
-          <Route path={_LOBBY_PATH} element={<Lobby />} />
-          <Route path={_SEARCH_PATH} element={<SpaceSearch />} />
+          <Route path={LOBBY_PATH_SEGMENT} element={<Lobby />} />
+          <Route path={SEARCH_PATH_SEGMENT} element={<SpaceSearch />} />
           <Route
-            path={_ROOM_PATH}
+            path={ROOM_PATH_SEGMENT}
             element={
               <SpaceRouteRoomProvider>
                 <Room />
@@ -290,8 +290,8 @@ export const createRouter = (clientConfig: ClientConfig, screenSize: ScreenSize)
               element={<WelcomePage />}
             />
           )}
-          <Route path={_FEATURED_PATH} element={<FeaturedRooms />} />
-          <Route path={_SERVER_PATH} element={<PublicRooms />} />
+          <Route path={FEATURED_PATH_SEGMENT} element={<FeaturedRooms />} />
+          <Route path={SERVER_PATH_SEGMENT} element={<PublicRooms />} />
         </Route>
         <Route path={CREATE_PATH} element={<Create />} />
         <Route
@@ -315,8 +315,8 @@ export const createRouter = (clientConfig: ClientConfig, screenSize: ScreenSize)
               element={<WelcomePage />}
             />
           )}
-          <Route path={_NOTIFICATIONS_PATH} element={<Notifications />} />
-          <Route path={_INVITES_PATH} element={<Invites />} />
+          <Route path={NOTIFICATIONS_PATH_SEGMENT} element={<Notifications />} />
+          <Route path={INVITES_PATH_SEGMENT} element={<Invites />} />
         </Route>
       </Route>
       <Route path="/*" element={<p>Page not found</p>} />

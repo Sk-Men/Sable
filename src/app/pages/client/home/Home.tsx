@@ -60,7 +60,7 @@ import {
 } from '$hooks/useRoomsNotificationPreferences';
 import { UseStateProvider } from '$components/UseStateProvider';
 import { JoinAddressPrompt } from '$components/join-address-prompt';
-import { _RoomSearchParams } from '$pages/paths';
+import { RoomSearchParams } from '$pages/paths';
 import { CallNavStatus } from '$features/room-nav/RoomCallNavStatus';
 import { useHomeRooms } from './useHomeRooms';
 
@@ -282,7 +282,7 @@ export function Home() {
                           const path = getHomeRoomPath(roomIdOrAlias, eventId);
                           navigate(
                             viaServers
-                              ? withSearchParam<_RoomSearchParams>(path, {
+                              ? withSearchParam<RoomSearchParams>(path, {
                                   viaServers: encodeSearchParamValueArray(viaServers),
                                 })
                               : path

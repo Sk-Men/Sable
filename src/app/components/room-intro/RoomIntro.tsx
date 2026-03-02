@@ -145,7 +145,9 @@ export const RoomIntro = as<'div', RoomIntroProps>(({ room, ...props }, ref) => 
               </Button>
             ) : (
               <Button
-                onClick={() => void joinPrevRoom(prevRoomId)}
+                onClick={() => {
+                  joinPrevRoom(prevRoomId);
+                }}
                 variant="Secondary"
                 size="300"
                 fill="Soft"

@@ -7,7 +7,7 @@ import { useSearchParams } from 'react-router-dom';
 import { SearchOrderBy } from '$types/matrix-sdk';
 import { PageHero, PageHeroEmpty, PageHeroSection } from '$components/page';
 import { useMatrixClient } from '$hooks/useMatrixClient';
-import { _SearchPathSearchParams } from '$pages/paths';
+import { SearchPathSearchParams } from '$pages/paths';
 import { useSetting } from '$state/hooks/settings';
 import { settingsAtom } from '$state/settings';
 import { SequenceCard } from '$components/sequence-card';
@@ -24,7 +24,7 @@ import { SearchResultGroup } from './SearchResultGroup';
 import { SearchInput } from './SearchInput';
 import { SearchFilters } from './SearchFilters';
 
-const useSearchPathSearchParams = (searchParams: URLSearchParams): _SearchPathSearchParams =>
+const useSearchPathSearchParams = (searchParams: URLSearchParams): SearchPathSearchParams =>
   useMemo(
     () => ({
       global: searchParams.get('global') ?? undefined,

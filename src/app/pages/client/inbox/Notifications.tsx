@@ -593,11 +593,11 @@ export function Notifications() {
     setSearchParams();
   };
 
-  const [notificationTimeline, _loadTimeline, silentReloadTimeline] = useNotificationTimeline(
+  const [notificationTimeline, loadTimelineRaw, silentReloadTimeline] = useNotificationTimeline(
     24,
     onlyHighlight
   );
-  const [timelineState, loadTimeline] = useAsyncCallback(_loadTimeline);
+  const [timelineState, loadTimeline] = useAsyncCallback(loadTimelineRaw);
 
   const virtualizer = useVirtualizer({
     count: notificationTimeline.groups.length,
