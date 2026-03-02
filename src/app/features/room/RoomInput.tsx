@@ -320,6 +320,7 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
     };
 
     const handleSendUpload = async (uploads: UploadSuccess[]) => {
+      const plaintext = toPlainText(editor.children, isMarkdown).trim();
       const contentsPromises = uploads.map(async (upload) => {
         const fileItem = selectedFiles.find((f) => f.file === upload.file);
         if (!fileItem) throw new Error('Broken upload');
@@ -340,7 +341,6 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
 
       if (contents.length > 0) {
         console.log(editor.children);
-        const plaintext = toPlainText(editor.children, isMarkdown).trim();
         const replyContent = plaintext.length === 0 ? getReplyContent(replyDraft) : undefined;
         if (replyContent) contents[0]['m.relates_to'] = replyContent;
         setReplyDraft(undefined);
