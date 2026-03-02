@@ -2,6 +2,7 @@ import {
   KeyboardEventHandler,
   MouseEventHandler,
   useCallback,
+  useEffect,
   useMemo,
   useRef,
   useState,
@@ -447,6 +448,8 @@ export function IgnoredUserAlert() {
 export function OptionsChip({ userId }: { userId: string }) {
   const mx = useMatrixClient();
   const [cords, setCords] = useState<RectCords>();
+  const [editingNick, setEditingNick] = useState(false);
+  const nickInputRef = useRef<HTMLInputElement>(null);
 
   const open: MouseEventHandler<HTMLButtonElement> = (evt) => {
     setCords(evt.currentTarget.getBoundingClientRect());
@@ -471,8 +474,12 @@ export function OptionsChip({ userId }: { userId: string }) {
 
   const currentNick = useNickname(userId);
   const setNickname = useSetNickname();
-  const [editingNick, setEditingNick] = useState(false);
-  const nickInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (editingNick) {
+      nickInputRef.current?.focus();
+    }
+  }, [editingNick]);
 
   const handleSaveNick = () => {
     const value = nickInputRef.current?.value ?? '';
@@ -513,7 +520,6 @@ export function OptionsChip({ userId }: { userId: string }) {
                   <Text size="L400">Nickname</Text>
                   <input
                     ref={nickInputRef}
-                    autoFocus
                     defaultValue={currentNick ?? ''}
                     placeholder="Enter a nickname…"
                     onKeyDown={handleNickKeyDown}
