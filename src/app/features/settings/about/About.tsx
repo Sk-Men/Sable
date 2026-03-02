@@ -46,7 +46,7 @@ export function About({ requestClose }: AboutProps) {
                   <Box direction="Column" gap="100">
                     <Box gap="100" alignItems="End">
                       <Text size="H3">Sable</Text>
-                      <Text size="T200">v1.2.2</Text>
+                      <Text size="T200">v1.2.3</Text>
                     </Box>
                     <Text>Yet another matrix client fork(ed from cinny).</Text>
                   </Box>
