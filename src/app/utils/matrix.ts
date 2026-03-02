@@ -297,7 +297,7 @@ export const mxcUrlToHttp = (
   allowRedirects?: boolean
 ): string | null =>
   mx.mxcUrlToHttp(
-    mxcUrl,
+    mxcUrl.replace(/^["']|["']$/g, ''),
     width,
     height,
     resizeMethod,
