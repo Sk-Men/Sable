@@ -1,5 +1,10 @@
 # Sable Client Changelog
 
+## 1.2.4 - in dev
+
+- Add validation to timezones before rendering.
+- Fix invalid matrix.to event link generation ([cinnyapp#2717](https://github.com/cinnyapp/cinny/pull/2717)) - [tulir](https://github.com/tulir)
+
 ## 1.2.3 - 3/2/2026
 
 - Actually fix quotes around colors for tuwunel homeservers ([#46](https://github.com/7w1/sable/issues/46))
