@@ -43,7 +43,7 @@ import {
   UsernameBold,
 } from '$components/message';
 import { canEditEvent, getMemberAvatarMxc } from '$utils/room';
-import { getCanonicalAliasOrRoomId, isRoomAlias, mxcUrlToHttp } from '$utils/matrix';
+import { mxcUrlToHttp } from '$utils/matrix';
 import { MessageLayout, MessageSpacing, settingsAtom } from '$state/settings';
 import { nicknamesAtom, setNicknameAtom } from '$state/nicknames';
 import { useMatrixClient } from '$hooks/useMatrixClient';
@@ -124,8 +124,6 @@ export const MessageCopyLinkItem = as<
     onClose?: () => void;
   }
 >(({ room, mEvent, onClose, ...props }, ref) => {
-  const mx = useMatrixClient();
-
   const handleCopy = () => {
     const eventId = mEvent.getId();
     if (!eventId) return;
