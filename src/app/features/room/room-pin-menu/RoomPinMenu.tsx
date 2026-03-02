@@ -1,4 +1,4 @@
-/* eslint-disable react/no-unused-prop-types */
+/* eslint-disable react/no-unused-prop-types, react/destructuring-assignment */
 import { forwardRef, MouseEventHandler, ReactNode, useCallback, useMemo, useRef } from 'react';
 import { MatrixEvent, Room, RoomPinnedEventsEventContent } from '$types/matrix-sdk';
 import {

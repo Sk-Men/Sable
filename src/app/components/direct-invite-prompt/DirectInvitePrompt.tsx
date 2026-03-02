@@ -15,7 +15,7 @@ import {
   color,
   config,
 } from 'folds';
-import { stopPropagation } from '../../utils/keyboard';
+import { stopPropagation } from '$utils/keyboard';
 
 type DirectInvitePromptProps = {
   onCancel: () => void;

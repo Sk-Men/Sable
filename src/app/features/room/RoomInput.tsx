@@ -18,6 +18,7 @@ import {
   RelationType,
   Room,
   IEventRelation,
+  StickerEventContent,
 } from '$types/matrix-sdk';
 import { ReactEditor } from 'slate-react';
 import { Editor, Transforms } from 'slate';
@@ -45,7 +46,6 @@ import {
   scaleSystemEmoji,
 } from '$plugins/react-custom-html-parser';
 
-import { StickerEventContent } from 'matrix-js-sdk/lib/types';
 import { useMatrixClient } from '$hooks/useMatrixClient';
 import {
   AUTOCOMPLETE_PREFIXES,
@@ -343,7 +343,6 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
       const contents = fulfilledPromiseSettledResult(await Promise.allSettled(contentsPromises));
 
       if (contents.length > 0) {
-        console.log(editor.children);
         const replyContent = plaintext.length === 0 ? getReplyContent(replyDraft) : undefined;
         if (replyContent) contents[0]['m.relates_to'] = replyContent;
         setReplyDraft(undefined);
