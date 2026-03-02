@@ -15,14 +15,14 @@ import {
   config,
 } from 'folds';
 import { MatrixError } from '$types/matrix-sdk';
-import { Cursor } from '../plugins/text-area';
-import { syntaxErrorPosition } from '../utils/dom';
-import { AsyncStatus, useAsyncCallback } from '../hooks/useAsyncCallback';
+import { Cursor } from '$plugins/text-area';
+import { syntaxErrorPosition } from '$utils/dom';
+import { AsyncStatus, useAsyncCallback } from '$hooks/useAsyncCallback';
 import { Page, PageHeader } from './page';
-import { useAlive } from '../hooks/useAlive';
+import { useAlive } from '$hooks/useAlive';
 import { SequenceCard } from './sequence-card';
 import { TextViewerContent } from './text-viewer';
-import { useTextAreaCodeEditor } from '../hooks/useTextAreaCodeEditor';
+import { useTextAreaCodeEditor } from '$hooks/useTextAreaCodeEditor';
 
 const EDITOR_INTENT_SPACE_COUNT = 2;
 

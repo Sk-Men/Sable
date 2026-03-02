@@ -41,8 +41,8 @@ import { getPowerTagIconSrc, useGetMemberPowerTag } from '$hooks/useMemberPowerT
 import { useRoomCreators } from '$hooks/useRoomCreators';
 import { useRoomPermissions } from '$hooks/useRoomPermissions';
 import { useMemberPowerCompare } from '$hooks/useMemberPowerCompare';
-import { CutoutCard } from '../cutout-card';
-import { PowerColorBadge, PowerIcon } from '../power';
+import { CutoutCard } from '$components/cutout-card';
+import { PowerColorBadge, PowerIcon } from '$components/power';
 
 type SelfDemoteAlertProps = {
   power: number;

@@ -24,7 +24,7 @@ import { useObjectURL } from '$hooks/useObjectURL';
 import { createUploadAtom, UploadSuccess } from '$state/upload';
 import { useMediaAuthentication } from '$hooks/useMediaAuthentication';
 import { PackMetaReader } from '$plugins/custom-emoji';
-import { CompactUploadCardRenderer } from '../upload-card';
+import { CompactUploadCardRenderer } from '$components/upload-card';
 
 type ImagePackAvatarProps = {
   url?: string;

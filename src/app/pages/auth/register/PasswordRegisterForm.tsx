@@ -41,7 +41,7 @@ import { useRegisterEmail } from '$hooks/useRegisterEmail';
 import { ConfirmPasswordMatch } from '$components/ConfirmPasswordMatch';
 import { UIAFlowOverlay } from '$components/UIAFlowOverlay';
 import { RequestEmailTokenCallback, RequestEmailTokenResponse } from '$hooks/types';
-import { FieldError } from '../FiledError';
+import { FieldError } from '$pages/auth/FiledError';
 import { RegisterError, RegisterResult, register, useRegisterComplete } from './registerUtil';
 
 export const SUPPORTED_REGISTER_STAGES = [

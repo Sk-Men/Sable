@@ -24,7 +24,7 @@ import { markAsRead } from '$utils/notifications';
 import { stopPropagation } from '$utils/keyboard';
 import { settingsAtom } from '$state/settings';
 import { useSetting } from '$state/hooks/settings';
-import { useDirectRooms } from '../direct/useDirectRooms';
+import { useDirectRooms } from '$pages/client/direct/useDirectRooms';
 
 type DirectMenuProps = {
   requestClose: () => void;

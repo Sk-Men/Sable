@@ -1,7 +1,7 @@
 import { ReactElement } from 'react';
 import { Unread } from '$types/matrix/room';
-import { useRoomUnread, useRoomsUnread } from '../state/hooks/unread';
-import { roomToUnreadAtom } from '../state/room/roomToUnread';
+import { useRoomUnread, useRoomsUnread } from '$state/hooks/unread';
+import { roomToUnreadAtom } from '$state/room/roomToUnread';
 
 type RoomUnreadProviderProps = {
   roomId: string;

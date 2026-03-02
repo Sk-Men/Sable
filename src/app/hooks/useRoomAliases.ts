@@ -5,7 +5,7 @@ import { AsyncState, useAsyncCallback } from './useAsyncCallback';
 import { useMatrixClient } from './useMatrixClient';
 import { useAlive } from './useAlive';
 import { useStateEvent } from './useStateEvent';
-import { getStateEvent } from '../utils/room';
+import { getStateEvent } from '$utils/room';
 
 export const usePublishedAliases = (room: Room): [string | undefined, string[]] => {
   const aliasContent = useStateEvent(

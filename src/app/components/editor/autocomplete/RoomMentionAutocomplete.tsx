@@ -17,7 +17,7 @@ import { RoomAvatar, RoomIcon } from '$components/room-avatar';
 import { getViaServers } from '$plugins/via-servers';
 import { AutocompleteMenu } from './AutocompleteMenu';
 import { AutocompleteQuery } from './autocompleteQuery';
-import { createMentionElement, moveCursor, replaceWithElement } from '../utils';
+import { createMentionElement, moveCursor, replaceWithElement } from '$components/editor/utils';
 
 type MentionAutoCompleteHandler = (roomAliasOrId: string, name: string) => void;
 

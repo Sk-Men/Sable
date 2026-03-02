@@ -6,7 +6,7 @@ import { ImagePack, ImageUsage } from '$plugins/custom-emoji';
 import { useMatrixClient } from '$hooks/useMatrixClient';
 import { mxcUrlToHttp } from '$utils/matrix';
 import { useMediaAuthentication } from '$hooks/useMediaAuthentication';
-import { SequenceCardStyle } from '../styles.css';
+import { SequenceCardStyle } from '$features/settings/styles.css';
 
 type UserPackProps = {
   onViewPack: (imagePack: ImagePack) => void;

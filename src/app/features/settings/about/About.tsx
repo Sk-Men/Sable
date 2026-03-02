@@ -5,7 +5,7 @@ import { SettingTile } from '$components/setting-tile';
 import CinnySVG from '$public/res/svg/cinny.svg';
 import { clearCacheAndReload } from '$client/initMatrix';
 import { useMatrixClient } from '$hooks/useMatrixClient';
-import { SequenceCardStyle } from '../styles.css';
+import { SequenceCardStyle } from '$features/settings/styles.css';
 
 type AboutProps = {
   requestClose: () => void;

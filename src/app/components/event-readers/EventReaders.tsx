@@ -23,7 +23,7 @@ import { useSpaceOptionally } from '$hooks/useSpace';
 import { getMouseEventCords } from '$utils/dom';
 import { useAtomValue } from 'jotai';
 import { nicknamesAtom } from '$state/nicknames';
-import { UserAvatar } from '../user-avatar';
+import { UserAvatar } from '$components/user-avatar';
 import * as css from './EventReaders.css';
 
 export type EventReadersProps = {

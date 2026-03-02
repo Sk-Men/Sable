@@ -4,8 +4,8 @@ import { Descendant } from 'slate';
 import { EncryptedAttachmentInfo } from 'browser-encrypt-attachment';
 import { IEventRelation } from '$types/matrix-sdk';
 import { TUploadContent } from '$utils/matrix';
-import { createUploadAtomFamily } from '../upload';
-import { createListAtom } from '../list';
+import { createUploadAtomFamily } from '$state/upload';
+import { createListAtom } from '$state/list';
 
 export type TUploadMetadata = {
   markedAsSpoiler: boolean;

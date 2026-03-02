@@ -24,8 +24,8 @@ import {
   SPACE_SEARCH_PATH,
   CREATE_PATH,
 } from './paths';
-import { trimLeadingSlash, trimTrailingSlash } from '../utils/common';
-import { HashRouterConfig } from '../hooks/useClientConfig';
+import { trimLeadingSlash, trimTrailingSlash } from '$utils/common';
+import { HashRouterConfig } from '$hooks/useClientConfig';
 
 export const joinPathComponent = (path: Path): string => path.pathname + path.search + path.hash;
 

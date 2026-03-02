@@ -5,7 +5,7 @@ import { StateEvent } from '$types/matrix/room';
 import { useStateEvent } from './useStateEvent';
 import { useStateEventCallback } from './useStateEventCallback';
 import { useMatrixClient } from './useMatrixClient';
-import { getStateEvent } from '../utils/room';
+import { getStateEvent } from '$utils/room';
 
 export type PowerLevelActions = 'invite' | 'redact' | 'kick' | 'ban' | 'historical';
 export type PowerLevelNotificationsAction = 'room';

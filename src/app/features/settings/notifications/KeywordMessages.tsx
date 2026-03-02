@@ -14,7 +14,7 @@ import {
 } from '$hooks/useNotificationMode';
 import { AsyncStatus, useAsyncCallback } from '$hooks/useAsyncCallback';
 import { NotificationModeSwitcher } from './NotificationModeSwitcher';
-import { SequenceCardStyle } from '../styles.css';
+import { SequenceCardStyle } from '$features/settings/styles.css';
 
 const NOTIFY_MODE_OPS: NotificationModeOptions = {
   highlight: true,

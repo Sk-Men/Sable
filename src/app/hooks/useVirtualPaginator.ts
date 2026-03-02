@@ -5,7 +5,7 @@ import {
   getScrollInfo,
   isInScrollView,
   isIntersectingScrollView,
-} from '../utils/dom';
+} from '$utils/dom';
 
 const PAGINATOR_ANCHOR_ATTR = 'data-paginator-anchor';
 

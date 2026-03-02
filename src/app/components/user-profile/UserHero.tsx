@@ -21,9 +21,9 @@ import { useRoom } from '$hooks/useRoom';
 import { useSableCosmetics } from '$hooks/useSableCosmetics';
 import { useNickname } from '$hooks/useNickname';
 import { useBlobCache } from '$hooks/useBlobCache';
-import { ImageViewer } from '../image-viewer';
-import { AvatarPresence, PresenceBadge } from '../presence';
-import { UserAvatar } from '../user-avatar';
+import { ImageViewer } from '$components/image-viewer';
+import { AvatarPresence, PresenceBadge } from '$components/presence';
+import { UserAvatar } from '$components/user-avatar';
 import * as css from './styles.css';
 
 type UserHeroProps = {

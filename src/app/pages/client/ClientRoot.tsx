@@ -38,7 +38,7 @@ import { AuthMetadataProvider } from '$hooks/useAuthMetadata';
 import { sessionsAtom, activeSessionIdAtom, Session, SessionsAction } from '$state/sessions';
 import { createLogger } from '$utils/debug';
 import { useSyncNicknames } from '$hooks/useNickname';
-import { getHomePath } from '../pathUtils';
+import { getHomePath } from '$pages/pathUtils';
 import { pushSessionToSW } from '../../../sw-session';
 import { SyncStatus } from './SyncStatus';
 import { SpecVersions } from './SpecVersions';

@@ -19,17 +19,17 @@ import {
   Text,
 } from 'folds';
 import FocusTrap from 'focus-trap-react';
-import { BackupProgressStatus, backupRestoreProgressAtom } from '../state/backupRestore';
+import { BackupProgressStatus, backupRestoreProgressAtom } from '$state/backupRestore';
 import { InfoCard } from './info-card';
-import { AsyncStatus, useAsyncCallback } from '../hooks/useAsyncCallback';
+import { AsyncStatus, useAsyncCallback } from '$hooks/useAsyncCallback';
 import {
   useKeyBackupInfo,
   useKeyBackupStatus,
   useKeyBackupSync,
   useKeyBackupTrust,
-} from '../hooks/useKeyBackup';
-import { stopPropagation } from '../utils/keyboard';
-import { useRestoreBackupOnVerification } from '../hooks/useRestoreBackupOnVerification';
+} from '$hooks/useKeyBackup';
+import { stopPropagation } from '$utils/keyboard';
+import { useRestoreBackupOnVerification } from '$hooks/useRestoreBackupOnVerification';
 
 type BackupStatusProps = {
   enabled: boolean;

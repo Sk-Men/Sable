@@ -6,7 +6,7 @@ import {
 } from '$types/matrix-sdk';
 
 import { cryptoCallbacks } from './secretStorageKeys';
-import { clearNavToActivePathStore } from '../app/state/navToActivePath';
+import { clearNavToActivePathStore } from '$state/navToActivePath';
 import { pushSessionToSW } from '../sw-session';
 import {
   Session,
@@ -14,9 +14,9 @@ import {
   SessionStoreName,
   getSessionStoreName,
   MATRIX_SESSIONS_KEY,
-} from '../app/state/sessions';
-import { getLocalStorageItem } from '../app/state/utils/atomWithLocalStorage';
-import { createLogger } from '../app/utils/debug';
+} from '$state/sessions';
+import { getLocalStorageItem } from '$state/utils/atomWithLocalStorage';
+import { createLogger } from '$utils/debug';
 
 const log = createLogger('initMatrix');
 

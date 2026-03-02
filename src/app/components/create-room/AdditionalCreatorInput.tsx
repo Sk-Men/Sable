@@ -30,7 +30,7 @@ import { useMatrixClient } from '$hooks/useMatrixClient';
 import { stopPropagation } from '$utils/keyboard';
 import { useAsyncSearch, UseAsyncSearchOptions } from '$hooks/useAsyncSearch';
 import { highlightText, makeHighlightRegex } from '$plugins/react-custom-html-parser';
-import { SettingTile } from '../setting-tile';
+import { SettingTile } from '$components/setting-tile';
 
 export const useAdditionalCreators = (defaultCreators?: string[]) => {
   const mx = useMatrixClient();

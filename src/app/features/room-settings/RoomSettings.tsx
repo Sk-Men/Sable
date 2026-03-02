@@ -14,11 +14,11 @@ import { RoomSettingsPage } from '$state/roomSettings';
 import { useRoom } from '$hooks/useRoom';
 import { SwipeableOverlayWrapper } from '$components/SwipeableOverlayWrapper';
 import { General } from './general';
-import { Members } from '../common-settings/members';
-import { EmojisStickers } from '../common-settings/emojis-stickers';
+import { Members } from '$features/common-settings/members';
+import { EmojisStickers } from '$features/common-settings/emojis-stickers';
 import { Permissions } from './permissions';
-import { DeveloperTools } from '../common-settings/developer-tools';
-import { Cosmetics } from '../common-settings/cosmetics/Cosmetics';
+import { DeveloperTools } from '$features/common-settings/developer-tools';
+import { Cosmetics } from '$features/common-settings/cosmetics/Cosmetics';
 
 type RoomSettingsMenuItem = {
   page: RoomSettingsPage;

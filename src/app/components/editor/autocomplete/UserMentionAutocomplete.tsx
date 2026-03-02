@@ -15,7 +15,7 @@ import { useMediaAuthentication } from '$hooks/useMediaAuthentication';
 import { Membership } from '$types/matrix/room';
 import { useAtomValue } from 'jotai';
 import { nicknamesAtom } from '$state/nicknames';
-import { createMentionElement, moveCursor, replaceWithElement } from '../utils';
+import { createMentionElement, moveCursor, replaceWithElement } from '$components/editor/utils';
 import { AutocompleteMenu } from './AutocompleteMenu';
 import { AutocompleteQuery } from './autocompleteQuery';
 

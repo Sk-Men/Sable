@@ -2,8 +2,8 @@ import { MatrixClient, MatrixEvent, Room } from '$types/matrix-sdk';
 import { useMemo } from 'react';
 import { IRoomCreateContent, StateEvent } from '$types/matrix/room';
 import { useStateEvent } from './useStateEvent';
-import { creatorsSupported } from '../utils/matrix';
-import { getStateEvent } from '../utils/room';
+import { creatorsSupported } from '$utils/matrix';
+import { getStateEvent } from '$utils/room';
 
 export const getRoomCreators = (createEvent: MatrixEvent): Set<string> => {
   const createContent = createEvent.getContent<IRoomCreateContent>();

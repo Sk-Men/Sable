@@ -2,7 +2,7 @@ import { CSSProperties, useMemo } from 'react';
 import { Avatar, Box, ContainerColor, as, color, toRem } from 'folds';
 import { randomNumberBetween } from '$utils/common';
 import { LinePlaceholder } from './LinePlaceholder';
-import { ModernLayout } from '../layout';
+import { ModernLayout } from '$components/message/layout';
 
 const contentMargin: CSSProperties = { marginTop: toRem(3) };
 

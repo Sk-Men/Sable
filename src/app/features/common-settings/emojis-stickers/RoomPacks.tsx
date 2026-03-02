@@ -39,7 +39,7 @@ import { AsyncStatus, useAsyncCallback } from '$hooks/useAsyncCallback';
 import { useAlive } from '$hooks/useAlive';
 import { useRoomCreators } from '$hooks/useRoomCreators';
 import { useRoomPermissions } from '$hooks/useRoomPermissions';
-import { SequenceCardStyle } from '../styles.css';
+import { SequenceCardStyle } from '$features/common-settings/styles.css';
 
 type CreatePackTileProps = {
   packs: ImagePack[];

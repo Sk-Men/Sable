@@ -8,7 +8,7 @@ import { settingsAtom } from '$state/settings';
 import { useMatrixClient } from '$hooks/useMatrixClient';
 import { AccountDataEditor, AccountDataSubmitCallback } from '$components/AccountDataEditor';
 import { copyToClipboard } from '$utils/dom';
-import { SequenceCardStyle } from '../styles.css';
+import { SequenceCardStyle } from '$features/settings/styles.css';
 import { AccountData } from './AccountData';
 
 type DeveloperToolsProps = {

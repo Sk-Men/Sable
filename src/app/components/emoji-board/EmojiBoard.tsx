@@ -51,7 +51,7 @@ import {
   EmojiBoardLayout,
 } from './components';
 import { EmojiBoardTab, EmojiType } from './types';
-import { VirtualTile } from '../virtualizer';
+import { VirtualTile } from '$components/virtualizer';
 
 const RECENT_GROUP_ID = 'recent_group';
 const SEARCH_GROUP_ID = 'search_group';

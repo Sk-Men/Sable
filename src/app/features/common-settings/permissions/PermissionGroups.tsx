@@ -18,7 +18,7 @@ import { PowerSwitcher } from '$components/power';
 import { AsyncStatus, useAsyncCallback } from '$hooks/useAsyncCallback';
 import { useAlive } from '$hooks/useAlive';
 import { PermissionGroup } from './types';
-import { SequenceCardStyle } from '../styles.css';
+import { SequenceCardStyle } from '$features/common-settings/styles.css';
 
 const USER_DEFAULT_LOCATION: PermissionLocation = {
   user: true,

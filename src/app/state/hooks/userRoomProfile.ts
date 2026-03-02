@@ -2,7 +2,7 @@ import { useCallback } from 'react';
 import { useAtomValue, useSetAtom } from 'jotai';
 import { Position, RectCords } from 'folds';
 import { UserProfile } from '$hooks/useUserProfile';
-import { userRoomProfileAtom, UserRoomProfileState } from '../userRoomProfile';
+import { userRoomProfileAtom, UserRoomProfileState } from '$state/userRoomProfile';
 
 export const useUserRoomProfileState = (): UserRoomProfileState | undefined => {
   const data = useAtomValue(userRoomProfileAtom);

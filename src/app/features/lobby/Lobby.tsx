@@ -55,7 +55,7 @@ import { SpaceHierarchy } from './SpaceHierarchy';
 import { CanDropCallback, useDnDMonitor } from './DnD';
 import { LobbyHero } from './LobbyHero';
 import { LobbyHeader } from './LobbyHeader';
-import { MembersDrawer } from '../room/MembersDrawer';
+import { MembersDrawer } from '$features/room/MembersDrawer';
 
 const useCanDropLobbyItem = (
   space: Room,

@@ -9,7 +9,7 @@ import { getNotificationState, usePermissionState } from '$hooks/usePermission';
 import { useEmailNotifications } from '$hooks/useEmailNotifications';
 import { AsyncStatus, useAsyncCallback } from '$hooks/useAsyncCallback';
 import { useMatrixClient } from '$hooks/useMatrixClient';
-import { SequenceCardStyle } from '../styles.css';
+import { SequenceCardStyle } from '$features/settings/styles.css';
 
 function EmailNotification() {
   const mx = useMatrixClient();

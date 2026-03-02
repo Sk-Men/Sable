@@ -13,7 +13,7 @@ import { useOpenRoomSettings } from '$state/hooks/roomSettings';
 import { useOpenSpaceSettings } from '$state/hooks/spaceSettings';
 import { SpaceSettingsPage } from '$state/spaceSettings';
 import { RoomSettingsPage } from '$state/roomSettings';
-import { PowerColorBadge, PowerIcon } from '../power';
+import { PowerColorBadge, PowerIcon } from '$components/power';
 
 export function CreatorChip() {
   const mx = useMatrixClient();

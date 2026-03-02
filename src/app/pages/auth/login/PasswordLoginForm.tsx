@@ -29,7 +29,7 @@ import { useClientConfig } from '$hooks/useClientConfig';
 import { PasswordInput } from '$components/password-input';
 import { getResetPasswordPath } from '$pages/pathUtils';
 import { stopPropagation } from '$utils/keyboard';
-import { FieldError } from '../FiledError';
+import { FieldError } from '$pages/auth/FiledError';
 import {
   CustomLoginResponse,
   LoginError,

@@ -22,7 +22,7 @@ import { useRelations } from '$hooks/useRelations';
 import { stopPropagation } from '$utils/keyboard';
 import { useMediaAuthentication } from '$hooks/useMediaAuthentication';
 import * as css from './styles.css';
-import { ReactionViewer } from '../reaction-viewer';
+import { ReactionViewer } from '$features/room/reaction-viewer';
 
 export type ReactionsProps = {
   room: Room;

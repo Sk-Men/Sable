@@ -5,7 +5,7 @@ import { getPowerLevelTag, PowerLevelTags, usePowerLevelTags } from './usePowerL
 import { IPowerLevels, readPowerLevel } from './usePowerLevels';
 import { useRoomCreatorsTag } from './useRoomCreatorsTag';
 import { ThemeKind } from './useTheme';
-import { accessibleColor } from '../plugins/color';
+import { accessibleColor } from '$plugins/color';
 
 export type GetMemberPowerTag = (userId: string) => MemberPowerTag;
 

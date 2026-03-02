@@ -3,7 +3,7 @@ import { FormEventHandler } from 'react';
 import { AuthType } from '$types/matrix-sdk';
 import { StageComponentProps } from './types';
 import { ErrorCode } from '../../cs-errorcode';
-import { PasswordInput } from '../password-input';
+import { PasswordInput } from '$components/password-input';
 
 export function PasswordStage({
   stageData,

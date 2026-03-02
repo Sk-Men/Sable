@@ -7,7 +7,7 @@ import {
   redirect,
 } from 'react-router-dom';
 
-import { ClientConfig } from '../hooks/useClientConfig';
+import { ClientConfig } from '$hooks/useClientConfig';
 import { AuthLayout, Login, Register, ResetPassword } from './auth';
 import {
   DIRECT_PATH,
@@ -45,32 +45,32 @@ import { RouteSpaceProvider, Space, SpaceRouteRoomProvider, SpaceSearch } from '
 import { Explore, FeaturedRooms, PublicRooms } from './client/explore';
 import { Notifications, Inbox, Invites } from './client/inbox';
 import { setAfterLoginRedirectPath } from './afterLoginRedirectPath';
-import { Room } from '../features/room';
-import { Lobby } from '../features/lobby';
+import { Room } from '$features/room';
+import { Lobby } from '$features/lobby';
 import { WelcomePage } from './client/WelcomePage';
 import { SidebarNav } from './client/SidebarNav';
-import { PageRoot } from '../components/page';
-import { ScreenSize } from '../hooks/useScreenSize';
+import { PageRoot } from '$components/page';
+import { ScreenSize } from '$hooks/useScreenSize';
 import { MobileFriendlyPageNav, MobileFriendlyClientNav } from './MobileFriendly';
 import { ClientInitStorageAtom } from './client/ClientInitStorageAtom';
 import { ClientNonUIFeatures } from './client/ClientNonUIFeatures';
 import { AuthRouteThemeManager, UnAuthRouteThemeManager } from './ThemeManager';
-import { ReceiveSelfDeviceVerification } from '../components/DeviceVerification';
-import { AutoRestoreBackupOnVerification } from '../components/BackupRestore';
-import { RoomSettingsRenderer } from '../features/room-settings';
+import { ReceiveSelfDeviceVerification } from '$components/DeviceVerification';
+import { AutoRestoreBackupOnVerification } from '$components/BackupRestore';
+import { RoomSettingsRenderer } from '$features/room-settings';
 import { ClientRoomsNotificationPreferences } from './client/ClientRoomsNotificationPreferences';
-import { SpaceSettingsRenderer } from '../features/space-settings';
-import { UserRoomProfileRenderer } from '../components/UserRoomProfileRenderer';
-import { CreateRoomModalRenderer } from '../features/create-room';
+import { SpaceSettingsRenderer } from '$features/space-settings';
+import { UserRoomProfileRenderer } from '$components/UserRoomProfileRenderer';
+import { CreateRoomModalRenderer } from '$features/create-room';
 import { HomeCreateRoom } from './client/home/CreateRoom';
 import { Create } from './client/create';
-import { CreateSpaceModalRenderer } from '../features/create-space';
-import { SearchModalRenderer } from '../features/search';
-import { getFallbackSession, MATRIX_SESSIONS_KEY, Sessions } from '../state/sessions';
-import { getLocalStorageItem } from '../state/utils/atomWithLocalStorage';
+import { CreateSpaceModalRenderer } from '$features/create-space';
+import { SearchModalRenderer } from '$features/search';
+import { getFallbackSession, MATRIX_SESSIONS_KEY, Sessions } from '$state/sessions';
+import { getLocalStorageItem } from '$state/utils/atomWithLocalStorage';
 import { CallProvider } from './client/call/CallProvider';
 import { PersistentCallContainer } from './client/call/PersistentCallContainer';
-import { NotificationJumper } from '../hooks/useNotificationJumper';
+import { NotificationJumper } from '$hooks/useNotificationJumper';
 
 /**
  * Returns true if there is at least one stored session.

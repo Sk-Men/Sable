@@ -1,10 +1,10 @@
 import { ReactNode, useCallback, useMemo } from 'react';
 import { Capabilities, validateAuthMetadata, ValidatedAuthMetadata } from '$types/matrix-sdk';
-import { AsyncStatus, useAsyncCallbackValue } from '../hooks/useAsyncCallback';
-import { useMatrixClient } from '../hooks/useMatrixClient';
-import { MediaConfig } from '../hooks/useMediaConfig';
-import { promiseFulfilledResult } from '../utils/common';
-import { createLogger } from '../utils/debug';
+import { AsyncStatus, useAsyncCallbackValue } from '$hooks/useAsyncCallback';
+import { useMatrixClient } from '$hooks/useMatrixClient';
+import { MediaConfig } from '$hooks/useMediaConfig';
+import { promiseFulfilledResult } from '$utils/common';
+import { createLogger } from '$utils/debug';
 
 export type ServerConfigs = {
   capabilities?: Capabilities;

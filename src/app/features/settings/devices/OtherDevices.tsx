@@ -14,7 +14,7 @@ import { useAccountManagementActions } from '$hooks/useAccountManagement';
 import { SettingTile } from '$components/setting-tile';
 import { VerifyOtherDeviceTile } from './Verification';
 import { DeviceDeleteBtn, DeviceTile } from './DeviceTile';
-import { SequenceCardStyle } from '../styles.css';
+import { SequenceCardStyle } from '$features/settings/styles.css';
 
 type OtherDevicesProps = {
   devices: IMyDevice[];

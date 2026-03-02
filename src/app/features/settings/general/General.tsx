@@ -41,7 +41,7 @@ import { stopPropagation } from '$utils/keyboard';
 import { useMessageLayoutItems } from '$hooks/useMessageLayout';
 import { useMessageSpacingItems } from '$hooks/useMessageSpacing';
 import { useDateFormatItems } from '$hooks/useDateFormat';
-import { SequenceCardStyle } from '../styles.css';
+import { SequenceCardStyle } from '$features/settings/styles.css';
 
 type DateHintProps = {
   hasChanges: boolean;

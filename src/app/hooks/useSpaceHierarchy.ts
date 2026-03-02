@@ -4,10 +4,10 @@ import { MatrixError, Room, IHierarchyRoom } from '$types/matrix-sdk';
 import { QueryFunction, useInfiniteQuery } from '@tanstack/react-query';
 import { MSpaceChildContent, StateEvent } from '$types/matrix/room';
 import { useMatrixClient } from './useMatrixClient';
-import { roomToParentsAtom } from '../state/room/roomToParents';
-import { getAllParents, getStateEvents, isValidChild } from '../utils/room';
-import { isRoomId } from '../utils/matrix';
-import { SortFunc, byOrderKey, byTsOldToNew, factoryRoomIdByActivity } from '../utils/sort';
+import { roomToParentsAtom } from '$state/room/roomToParents';
+import { getAllParents, getStateEvents, isValidChild } from '$utils/room';
+import { isRoomId } from '$utils/matrix';
+import { SortFunc, byOrderKey, byTsOldToNew, factoryRoomIdByActivity } from '$utils/sort';
 import { useStateEventCallback } from './useStateEventCallback';
 import { ErrorCode } from '../cs-errorcode';
 

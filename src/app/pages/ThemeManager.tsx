@@ -7,9 +7,9 @@ import {
   ThemeKind,
   useActiveTheme,
   useSystemThemeKind,
-} from '../hooks/useTheme';
-import { useSetting } from '../state/hooks/settings';
-import { settingsAtom } from '../state/settings';
+} from '$hooks/useTheme';
+import { useSetting } from '$state/hooks/settings';
+import { settingsAtom } from '$state/settings';
 
 export function UnAuthRouteThemeManager() {
   const systemThemeKind = useSystemThemeKind();

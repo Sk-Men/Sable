@@ -14,7 +14,7 @@ import {
 } from '$utils/MegolmExportEncryption';
 import { useAlive } from '$hooks/useAlive';
 import { useFilePicker } from '$hooks/useFilePicker';
-import { SequenceCardStyle } from '../styles.css';
+import { SequenceCardStyle } from '$features/settings/styles.css';
 
 type LocalBackupError = Error | FriendlyError;
 

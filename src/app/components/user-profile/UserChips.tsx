@@ -47,9 +47,9 @@ import { getMatrixToUser } from '$plugins/matrix-to';
 import { useTimeoutToggle } from '$hooks/useTimeoutToggle';
 import { useIgnoredUsers } from '$hooks/useIgnoredUsers';
 import { useNickname, useSetNickname } from '$hooks/useNickname';
-import { CutoutCard } from '../cutout-card';
-import { SettingTile } from '../setting-tile';
-import { RoomAvatar, RoomIcon } from '../room-avatar';
+import { CutoutCard } from '$components/cutout-card';
+import { SettingTile } from '$components/setting-tile';
+import { RoomAvatar, RoomIcon } from '$components/room-avatar';
 
 export function ServerChip({ server }: { server: string }) {
   const mx = useMatrixClient();

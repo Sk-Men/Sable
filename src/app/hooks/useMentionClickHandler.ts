@@ -2,10 +2,10 @@ import { ReactEventHandler, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useRoomNavigate } from './useRoomNavigate';
 import { useMatrixClient } from './useMatrixClient';
-import { isRoomId, isUserId } from '../utils/matrix';
-import { getHomeRoomPath, withSearchParam } from '../pages/pathUtils';
-import { RoomSearchParams } from '../pages/paths';
-import { useOpenUserRoomProfile } from '../state/hooks/userRoomProfile';
+import { isRoomId, isUserId } from '$utils/matrix';
+import { getHomeRoomPath, withSearchParam } from '$pages/pathUtils';
+import { RoomSearchParams } from '$pages/paths';
+import { useOpenUserRoomProfile } from '$state/hooks/userRoomProfile';
 import { useSpaceOptionally } from './useSpace';
 
 export const useMentionClickHandler = (roomId: string): ReactEventHandler<HTMLElement> => {

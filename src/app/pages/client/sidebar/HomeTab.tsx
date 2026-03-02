@@ -25,7 +25,7 @@ import { markAsRead } from '$utils/notifications';
 import { stopPropagation } from '$utils/keyboard';
 import { useSetting } from '$state/hooks/settings';
 import { settingsAtom } from '$state/settings';
-import { useHomeRooms } from '../home/useHomeRooms';
+import { useHomeRooms } from '$pages/client/home/useHomeRooms';
 
 type HomeMenuProps = {
   requestClose: () => void;

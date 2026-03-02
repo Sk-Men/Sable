@@ -6,7 +6,7 @@ import { useMatrixClient } from '$hooks/useMatrixClient';
 import { useObjectURL } from '$hooks/useObjectURL';
 import { createUploadAtom, TUploadAtom } from '$state/upload';
 import { replaceSpaceWithDash } from '$utils/common';
-import { SettingTile } from '../setting-tile';
+import { SettingTile } from '$components/setting-tile';
 import * as css from './style.css';
 import { UsageSwitcher, useUsageStr } from './UsageSwitcher';
 

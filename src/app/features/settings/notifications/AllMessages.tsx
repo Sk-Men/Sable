@@ -18,7 +18,7 @@ import {
   useNotificationModeActions,
 } from '$hooks/useNotificationMode';
 import { useMatrixClient } from '$hooks/useMatrixClient';
-import { SequenceCardStyle } from '../styles.css';
+import { SequenceCardStyle } from '$features/settings/styles.css';
 import { NotificationModeSwitcher } from './NotificationModeSwitcher';
 
 const getAllMessageDefaultRule = (

@@ -9,8 +9,8 @@ import {
   silverTheme,
   gruvdarkTheme,
 } from '../../colors.css';
-import { settingsAtom } from '../state/settings';
-import { useSetting } from '../state/hooks/settings';
+import { settingsAtom } from '$state/settings';
+import { useSetting } from '$state/hooks/settings';
 
 export enum ThemeKind {
   Light = 'light',

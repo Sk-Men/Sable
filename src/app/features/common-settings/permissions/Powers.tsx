@@ -27,7 +27,7 @@ import { getPowerTagIconSrc } from '$hooks/useMemberPowerTag';
 import { useRoomCreatorsTag } from '$hooks/useRoomCreatorsTag';
 import { useRoomCreators } from '$hooks/useRoomCreators';
 import { PermissionGroup } from './types';
-import { SequenceCardStyle } from '../styles.css';
+import { SequenceCardStyle } from '$features/common-settings/styles.css';
 
 type PeekPermissionsProps = {
   powerLevels: IPowerLevels;

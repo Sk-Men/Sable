@@ -12,12 +12,12 @@ import { mDirectAtom } from '$state/mDirectList';
 import { RoomAvatar, RoomIcon } from '$components/room-avatar';
 import { SpaceSettingsPage } from '$state/spaceSettings';
 import { useRoom } from '$hooks/useRoom';
-import { EmojisStickers } from '../common-settings/emojis-stickers';
-import { Members } from '../common-settings/members';
-import { DeveloperTools } from '../common-settings/developer-tools';
+import { EmojisStickers } from '$features/common-settings/emojis-stickers';
+import { Members } from '$features/common-settings/members';
+import { DeveloperTools } from '$features/common-settings/developer-tools';
 import { General } from './general';
 import { Permissions } from './permissions';
-import { Cosmetics } from '../common-settings/cosmetics/Cosmetics';
+import { Cosmetics } from '$features/common-settings/cosmetics/Cosmetics';
 
 type SpaceSettingsMenuItem = {
   page: SpaceSettingsPage;

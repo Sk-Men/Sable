@@ -30,7 +30,7 @@ import { usePowerLevels } from '$hooks/usePowerLevels';
 import { useTextAreaCodeEditor } from '$hooks/useTextAreaCodeEditor';
 import { useRoomCreators } from '$hooks/useRoomCreators';
 import { useRoomPermissions } from '$hooks/useRoomPermissions';
-import { SequenceCardStyle } from '../styles.css';
+import { SequenceCardStyle } from '$features/common-settings/styles.css';
 
 const EDITOR_INTENT_SPACE_COUNT = 2;
 

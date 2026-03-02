@@ -32,7 +32,7 @@ import { useMediaAuthentication } from '$hooks/useMediaAuthentication';
 import { useOpenCreateRoomModal } from '$state/hooks/createRoomModal';
 import { useOpenCreateSpaceModal } from '$state/hooks/createSpaceModal';
 import { CreateRoomType } from '$components/create-room/types';
-import { AddExistingModal } from '../add-existing';
+import { AddExistingModal } from '$features/add-existing';
 import { useDraggableItem } from './DnD';
 import * as styleCss from './style.css';
 import * as css from './SpaceItem.css';

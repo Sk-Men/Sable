@@ -22,11 +22,11 @@ import {
   isUserId,
   rateLimitedActions,
   removeRoomIdFromMDirect,
-} from '../utils/matrix';
+} from '$utils/matrix';
 import { useRoomNavigate } from './useRoomNavigate';
-import { getStateEvent } from '../utils/room';
-import { splitWithSpace } from '../utils/common';
-import { createRoomEncryptionState } from '../components/create-room';
+import { getStateEvent } from '$utils/room';
+import { splitWithSpace } from '$utils/common';
+import { createRoomEncryptionState } from '$components/create-room';
 import { enrichWidgetUrl } from './useRoomWidgets';
 
 export const SHRUG = '¯\\_(ツ)_/¯';

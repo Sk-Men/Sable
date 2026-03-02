@@ -23,7 +23,7 @@ import { AuthFlowsProvider } from '$hooks/useAuthFlows';
 import { AuthServerProvider } from '$hooks/useAuthServer';
 import { AutoDiscoveryAction, autoDiscovery } from '../../cs-api';
 import { ServerPicker } from './ServerPicker';
-import { LOGIN_PATH, REGISTER_PATH, RESET_PASSWORD_PATH } from '../paths';
+import { LOGIN_PATH, REGISTER_PATH, RESET_PASSWORD_PATH } from '$pages/paths';
 import * as css from './styles.css';
 import { AuthFooter } from './AuthFooter';
 

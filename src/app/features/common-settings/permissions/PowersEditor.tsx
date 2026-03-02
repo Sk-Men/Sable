@@ -48,7 +48,7 @@ import { useAlive } from '$hooks/useAlive';
 import { BetaNoticeBadge } from '$components/BetaNoticeBadge';
 import { getPowerTagIconSrc } from '$hooks/useMemberPowerTag';
 import { creatorsSupported } from '$utils/matrix';
-import { SequenceCardStyle } from '../styles.css';
+import { SequenceCardStyle } from '$features/common-settings/styles.css';
 
 type EditPowerProps = {
   maxPower: number;

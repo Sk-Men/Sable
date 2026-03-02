@@ -18,12 +18,12 @@ import to from 'await-to-js';
 import { AuthDict, IAuthData, MatrixError, UIAuthCallback } from '$types/matrix-sdk';
 import { clearSecretStorageKeys } from '$client/secretStorageKeys';
 import { PasswordInput } from './password-input';
-import { ContainerColor } from '../styles/ContainerColor.css';
-import { copyToClipboard } from '../utils/dom';
-import { AsyncStatus, useAsyncCallback } from '../hooks/useAsyncCallback';
+import { ContainerColor } from '$styles/ContainerColor.css';
+import { copyToClipboard } from '$utils/dom';
+import { AsyncStatus, useAsyncCallback } from '$hooks/useAsyncCallback';
 import { ActionUIA, ActionUIAFlowsLoader } from './ActionUIA';
-import { useMatrixClient } from '../hooks/useMatrixClient';
-import { useAlive } from '../hooks/useAlive';
+import { useMatrixClient } from '$hooks/useMatrixClient';
+import { useAlive } from '$hooks/useAlive';
 import { UseStateProvider } from './UseStateProvider';
 
 type UIACallback<T> = (

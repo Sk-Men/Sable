@@ -7,8 +7,8 @@ import { BreakWord } from '$styles/Text.css';
 import { useSetting } from '$state/hooks/settings';
 import { settingsAtom } from '$state/settings';
 import { timeDayMonYear, timeHourMinute } from '$utils/time';
-import { SettingTile } from '../setting-tile';
-import { CutoutCard } from '../cutout-card';
+import { SettingTile } from '$components/setting-tile';
+import { CutoutCard } from '$components/cutout-card';
 
 type UserKickAlertProps = {
   reason?: string;

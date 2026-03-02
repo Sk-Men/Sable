@@ -10,7 +10,7 @@ import { StateEvent } from '$types/matrix/room';
 import { useRoomCreators } from '$hooks/useRoomCreators';
 import { useRoomPermissions } from '$hooks/useRoomPermissions';
 import { createLogger } from '$utils/debug';
-import { SequenceCardStyle } from '../styles.css';
+import { SequenceCardStyle } from '$features/common-settings/styles.css';
 
 type CosmeticsProps = {
   requestClose: () => void;

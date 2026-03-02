@@ -26,7 +26,7 @@ import { AccountDataEditor, AccountDataSubmitCallback } from '$components/Accoun
 import { useMatrixClient } from '$hooks/useMatrixClient';
 import { SendRoomEvent } from './SendRoomEvent';
 import { StateEventEditor, StateEventInfo } from './StateEventEditor';
-import { SequenceCardStyle } from '../styles.css';
+import { SequenceCardStyle } from '$features/common-settings/styles.css';
 
 type DeveloperToolsProps = {
   requestClose: () => void;

@@ -29,7 +29,7 @@ import { Image, MediaControl, Video } from './media';
 import { ImageViewer } from './image-viewer';
 import { PdfViewer } from './Pdf-viewer';
 import { TextViewer } from './text-viewer';
-import { testMatrixTo } from '../plugins/matrix-to';
+import { testMatrixTo } from '$plugins/matrix-to';
 
 type RenderMessageContentProps = {
   displayName: string;

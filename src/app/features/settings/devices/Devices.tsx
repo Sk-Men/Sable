@@ -21,7 +21,7 @@ import {
   VerificationStatusBadge,
   VerifyCurrentDeviceTile,
 } from './Verification';
-import { SequenceCardStyle } from '../styles.css';
+import { SequenceCardStyle } from '$features/settings/styles.css';
 
 function DevicesPlaceholder() {
   return (

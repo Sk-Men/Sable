@@ -15,7 +15,7 @@ import {
   NotificationModeOptions,
   useNotificationModeActions,
 } from '$hooks/useNotificationMode';
-import { SequenceCardStyle } from '../styles.css';
+import { SequenceCardStyle } from '$features/settings/styles.css';
 import { NotificationModeSwitcher } from './NotificationModeSwitcher';
 
 const NOTIFY_MODE_OPS: NotificationModeOptions = {

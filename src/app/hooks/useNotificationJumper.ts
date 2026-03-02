@@ -1,11 +1,11 @@
 import { useCallback, useEffect } from 'react';
 import { useAtom } from 'jotai';
 import { SyncState, ClientEvent } from '$types/matrix-sdk';
-import { pendingNotificationAtom } from '../state/sessions';
+import { pendingNotificationAtom } from '$state/sessions';
 import { useSyncState } from './useSyncState';
 import { useMatrixClient } from './useMatrixClient';
 import { useRoomNavigate } from './useRoomNavigate';
-import { createLogger } from '../utils/debug';
+import { createLogger } from '$utils/debug';
 
 export function NotificationJumper() {
   const [pending, setPending] = useAtom(pendingNotificationAtom);

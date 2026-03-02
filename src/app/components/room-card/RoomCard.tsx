@@ -31,7 +31,7 @@ import { useElementSizeObserver } from '$hooks/useElementSizeObserver';
 import { getRoomAvatarUrl, getStateEvent } from '$utils/room';
 import { useStateEventCallback } from '$hooks/useStateEventCallback';
 import { useMediaAuthentication } from '$hooks/useMediaAuthentication';
-import { RoomAvatar } from '../room-avatar';
+import { RoomAvatar } from '$components/room-avatar';
 import * as css from './style.css';
 
 type GridColumnCount = '1' | '2' | '3';

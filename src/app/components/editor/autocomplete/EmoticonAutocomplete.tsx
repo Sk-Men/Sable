@@ -14,7 +14,7 @@ import { mxcUrlToHttp } from '$utils/matrix';
 import { useMediaAuthentication } from '$hooks/useMediaAuthentication';
 import { ImageUsage, PackImageReader } from '$plugins/custom-emoji';
 import { getEmoticonSearchStr } from '$plugins/utils';
-import { createEmoticonElement, moveCursor, replaceWithElement } from '../utils';
+import { createEmoticonElement, moveCursor, replaceWithElement } from '$components/editor/utils';
 import { AutocompleteMenu } from './AutocompleteMenu';
 import { AutocompleteQuery } from './autocompleteQuery';
 

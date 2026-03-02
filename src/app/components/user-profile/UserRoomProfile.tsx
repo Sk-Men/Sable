@@ -30,7 +30,7 @@ import {
   renderMatrixMention,
 } from '$plugins/react-custom-html-parser';
 import { useSpoilerClickHandler } from '$hooks/useSpoilerClickHandler';
-import { RenderBody } from '../message';
+import { RenderBody } from '$components/message';
 import { CreatorChip } from './CreatorChip';
 import { UserInviteAlert, UserBanAlert, UserModeration, UserKickAlert } from './UserModeration';
 import { PowerChip } from './PowerChip';

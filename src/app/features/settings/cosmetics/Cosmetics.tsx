@@ -21,7 +21,7 @@ import { useSetting } from '$state/hooks/settings';
 import { JumboEmojiSize, settingsAtom } from '$state/settings';
 import { SettingTile } from '$components/setting-tile';
 import { stopPropagation } from '$utils/keyboard';
-import { SequenceCardStyle } from '../styles.css';
+import { SequenceCardStyle } from '$features/settings/styles.css';
 import { Appearance } from './Themes';
 
 const emojiSizeItems = [

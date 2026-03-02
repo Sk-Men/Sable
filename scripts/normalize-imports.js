@@ -147,7 +147,7 @@ function getRewrittenSpecifier(filePath, specifier, aliases, projectRoot) {
     return `$types/matrix-sdk${suffix}`;
   }
 
-  if (!bare.startsWith('.') || !/^(\.\.\/){2,}/.test(bare)) {
+  if (!/^\.\.(?:\/|$)/.test(bare)) {
     return null;
   }
 

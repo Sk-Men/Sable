@@ -42,7 +42,7 @@ import { allRoomsAtom } from '$state/room-list/roomList';
 import { AccountDataEvent } from '$types/matrix/accountData';
 import { AsyncStatus, useAsyncCallback } from '$hooks/useAsyncCallback';
 import { stopPropagation } from '$utils/keyboard';
-import { SequenceCardStyle } from '../styles.css';
+import { SequenceCardStyle } from '$features/settings/styles.css';
 
 function GlobalPackSelector({
   packs,

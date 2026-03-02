@@ -16,10 +16,10 @@ import { mDirectAtom } from '$state/mDirectList';
 import { useMediaAuthentication } from '$hooks/useMediaAuthentication';
 import { useSetting } from '$state/hooks/settings';
 import { settingsAtom } from '$state/settings';
-import { RoomAvatar } from '../room-avatar';
-import { InviteUserPrompt } from '../invite-user-prompt';
-import { InfoCard } from '../info-card';
-import { DirectInvitePrompt } from '../direct-invite-prompt';
+import { RoomAvatar } from '$components/room-avatar';
+import { InviteUserPrompt } from '$components/invite-user-prompt';
+import { InfoCard } from '$components/info-card';
+import { DirectInvitePrompt } from '$components/direct-invite-prompt';
 
 export type RoomIntroProps = {
   room: Room;

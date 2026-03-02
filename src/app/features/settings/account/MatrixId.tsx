@@ -3,7 +3,7 @@ import { useMatrixClient } from '$hooks/useMatrixClient';
 import { SequenceCard } from '$components/sequence-card';
 import { SettingTile } from '$components/setting-tile';
 import { copyToClipboard } from '$utils/dom';
-import { SequenceCardStyle } from '../styles.css';
+import { SequenceCardStyle } from '$features/settings/styles.css';
 
 export function MatrixId() {
   const mx = useMatrixClient();

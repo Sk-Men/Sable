@@ -7,7 +7,7 @@ import { AsyncStatus, useAsyncCallback } from '$hooks/useAsyncCallback';
 import { isUserId } from '$utils/matrix';
 import { useIgnoredUsers } from '$hooks/useIgnoredUsers';
 import { useAlive } from '$hooks/useAlive';
-import { SequenceCardStyle } from '../styles.css';
+import { SequenceCardStyle } from '$features/settings/styles.css';
 
 function IgnoreUserInput({ userList }: { userList: string[] }) {
   const mx = useMatrixClient();

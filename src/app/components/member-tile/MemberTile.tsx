@@ -7,7 +7,7 @@ import { useSableCosmetics } from '$hooks/useSableCosmetics';
 import { useAtomValue } from 'jotai';
 import { nicknamesAtom } from '$state/nicknames';
 import * as css from './style.css';
-import { UserAvatar } from '../user-avatar';
+import { UserAvatar } from '$components/user-avatar';
 
 const getName = (room: Room, member: RoomMember, nicknames: Record<string, string>) =>
   getMemberDisplayName(room, member.userId, nicknames) ??

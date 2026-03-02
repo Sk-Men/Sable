@@ -72,7 +72,7 @@ import { mobileOrTablet } from '$utils/user-agent';
 import { useNavigate } from 'react-router-dom';
 import { lastVisitedRoomIdAtom } from '$state/room/lastRoom';
 import { SwipeableOverlayWrapper } from '$components/SwipeableOverlayWrapper';
-import { useCallState } from '../call/CallProvider';
+import { useCallState } from '$pages/client/call/CallProvider';
 
 type SpaceMenuProps = {
   room: Room;

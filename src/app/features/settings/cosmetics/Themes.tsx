@@ -32,7 +32,7 @@ import {
   useThemes,
 } from '$hooks/useTheme';
 import { stopPropagation } from '$utils/keyboard';
-import { SequenceCardStyle } from '../styles.css';
+import { SequenceCardStyle } from '$features/settings/styles.css';
 
 type ThemeSelectorProps = {
   themeNames: Record<string, string>;

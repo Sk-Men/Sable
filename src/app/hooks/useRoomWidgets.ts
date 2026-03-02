@@ -4,7 +4,7 @@ import { IWidget } from 'matrix-widget-api';
 import { StateEvent } from '$types/matrix/room';
 import { useStateEventCallback } from './useStateEventCallback';
 import { useForceUpdate } from './useForceUpdate';
-import { getStateEvents } from '../utils/room';
+import { getStateEvents } from '$utils/room';
 
 export interface RoomWidget extends IWidget {
   eventId?: string;
