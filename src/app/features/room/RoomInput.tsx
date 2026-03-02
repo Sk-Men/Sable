@@ -36,6 +36,7 @@ import {
   scaleSystemEmoji,
 } from '$plugins/react-custom-html-parser';
 
+import { StickerEventContent } from 'matrix-js-sdk/lib/types';
 import { useMatrixClient } from '$hooks/useMatrixClient';
 import {
   AUTOCOMPLETE_PREFIXES,
@@ -125,6 +126,26 @@ import { useRoomCreatorsTag } from '$hooks/useRoomCreatorsTag';
 import { usePowerLevelTags } from '$hooks/usePowerLevelTags';
 import { useComposingCheck } from '$hooks/useComposingCheck';
 import { useSableCosmetics } from '$hooks/useSableCosmetics';
+
+const getReplyContent = (replyDraft: IReplyDraft | undefined): IEventRelation => {
+  if (!replyDraft) return {};
+
+  const relatesTo: IEventRelation = {};
+
+  relatesTo['m.in_reply_to'] = {
+    event_id: replyDraft.eventId,
+  };
+
+  if (replyDraft.relation?.rel_type === RelationType.Thread) {
+    relatesTo.event_id = replyDraft.relation.event_id;
+    relatesTo.rel_type = RelationType.Thread;
+    relatesTo.is_falling_back = false;
+  }
+  return relatesTo;
+};
+interface ReplyEventContent {
+  'm.relates_to'?: IEventRelation;
+}
 
 interface RoomInputProps {
   editor: Editor;
@@ -299,6 +320,7 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
     };
 
     const handleSendUpload = async (uploads: UploadSuccess[]) => {
+      const plaintext = toPlainText(editor.children, isMarkdown).trim();
       const contentsPromises = uploads.map(async (upload) => {
         const fileItem = selectedFiles.find((f) => f.file === upload.file);
         if (!fileItem) throw new Error('Broken upload');
@@ -316,6 +338,14 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
       });
       handleCancelUpload(uploads);
       const contents = fulfilledPromiseSettledResult(await Promise.allSettled(contentsPromises));
+
+      if (contents.length > 0) {
+        console.log(editor.children);
+        const replyContent = plaintext.length === 0 ? getReplyContent(replyDraft) : undefined;
+        if (replyContent) contents[0]['m.relates_to'] = replyContent;
+        setReplyDraft(undefined);
+      }
+
       contents.forEach((content) => mx.sendMessage(roomId, content as any));
     };
 
@@ -384,16 +414,8 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
         content.formatted_body = formattedBody;
       }
       if (replyDraft) {
-        content['m.relates_to'] = {
-          'm.in_reply_to': {
-            event_id: replyDraft.eventId,
-          },
-        };
-        if (replyDraft.relation?.rel_type === RelationType.Thread) {
-          content['m.relates_to'].event_id = replyDraft.relation.event_id;
-          content['m.relates_to'].rel_type = RelationType.Thread;
-          content['m.relates_to'].is_falling_back = false;
-        }
+        content['m.relates_to'] = getReplyContent(replyDraft);
+        setReplyDraft(undefined);
       }
       mx.sendMessage(roomId, content as any);
 
@@ -402,7 +424,6 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
 
       setInputKey((prev) => prev + 1);
 
-      setReplyDraft(undefined);
       sendTypingStatus(false);
     }, [mx, roomId, editor, replyDraft, sendTypingStatus, setReplyDraft, isMarkdown, commands]);
 
@@ -466,11 +487,16 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
         await getImageUrlBlob(stickerUrl)
       );
 
-      mx.sendEvent(roomId, EventType.Sticker, {
+      const content: StickerEventContent & ReplyEventContent = {
         body: label,
         url: mxc,
         info,
-      });
+      };
+      if (replyDraft) {
+        content['m.relates_to'] = getReplyContent(replyDraft);
+        setReplyDraft(undefined);
+      }
+      mx.sendEvent(roomId, EventType.Sticker, content);
     };
 
     return (
