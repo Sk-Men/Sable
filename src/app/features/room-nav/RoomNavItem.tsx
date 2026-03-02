@@ -312,7 +312,7 @@ export function RoomNavItem({
 
   const handleChatButtonClick = (evt: MouseEvent<HTMLButtonElement>) => {
     evt.stopPropagation();
-    if (!isChatOpen) toggleChat();
+    toggleChat();
     setViewedCallRoomId(room.roomId);
     navigate(linkPath);
   };
