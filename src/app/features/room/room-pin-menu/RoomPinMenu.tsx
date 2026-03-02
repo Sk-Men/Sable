@@ -88,7 +88,7 @@ import { AccountDataEvent } from '$types/matrix/accountData';
 import { useSableCosmetics } from '$hooks/useSableCosmetics';
 import { EncryptedContent } from '../message';
 import * as css from './RoomPinMenu.css';
-import { PinReadMarker } from '../RoomViewHeader';
+import type { PinReadMarker } from '../RoomViewHeader';
 
 const log = createLogger('RoomPinMenu');
 
