@@ -1,6 +1,13 @@
 import { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import { onDarkFontWeight, onLightFontWeight } from '../../config.css';
-import { butterTheme, darkTheme, lightTheme, rosePineTheme, silverTheme } from '../../colors.css';
+import {
+  butterTheme,
+  cinnyDarkTheme,
+  darkTheme,
+  lightTheme,
+  rosePineTheme,
+  silverTheme,
+} from '../../colors.css';
 import { settingsAtom } from '../state/settings';
 import { useSetting } from '../state/hooks/settings';
 
@@ -41,9 +48,17 @@ export const RosePineTheme: Theme = {
   kind: ThemeKind.Dark,
   classNames: ['rose-pine-theme', rosePineTheme, onDarkFontWeight, 'prism-dark'],
 };
+export const CinnyDarkTheme: Theme = {
+  id: 'cinny-dark-theme',
+  kind: ThemeKind.Dark,
+  classNames: ['cinny-dark-theme', cinnyDarkTheme, onDarkFontWeight, 'prism-dark'],
+};
 
 export const useThemes = (): Theme[] => {
-  const themes: Theme[] = useMemo(() => [LightTheme, SilverTheme, DarkTheme, ButterTheme, RosePineTheme], []);
+  const themes: Theme[] = useMemo(
+    () => [LightTheme, SilverTheme, DarkTheme, ButterTheme, RosePineTheme, CinnyDarkTheme],
+    []
+  );
 
   return themes;
 };
@@ -55,6 +70,7 @@ export const useThemeNames = (): Record<string, string> =>
       [SilverTheme.id]: 'Silver',
       [DarkTheme.id]: 'Dark',
       [ButterTheme.id]: 'Butter',
+      [CinnyDarkTheme.id]: 'Cinny Dark',
       [RosePineTheme.id]: 'Rose Pine',
     }),
     []

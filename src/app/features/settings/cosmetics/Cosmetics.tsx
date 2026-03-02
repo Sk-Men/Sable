@@ -169,6 +169,7 @@ function IdentityCosmetics() {
     settingsAtom,
     'renderGlobalNameColors'
   );
+  const [uniformIcons, setUniformIcons] = useSetting(settingsAtom, 'uniformIcons');
 
   return (
     <Box direction="Column" gap="100">
@@ -200,6 +201,13 @@ function IdentityCosmetics() {
           after={
             <Switch variant="Primary" value={renderGlobalColors} onChange={setRenderGlobalColors} />
           }
+        />
+      </SequenceCard>
+      <SequenceCard className={SequenceCardStyle} variant="SurfaceVariant" direction="Column">
+        <SettingTile
+          title="Consistent Icon Style"
+          description="Harmonize icon appearance with background fill"
+          after={<Switch variant="Primary" value={uniformIcons} onChange={setUniformIcons} />}
         />
       </SequenceCard>
     </Box>
