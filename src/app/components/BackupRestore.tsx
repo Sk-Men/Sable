@@ -20,7 +20,6 @@ import {
 } from 'folds';
 import FocusTrap from 'focus-trap-react';
 import { BackupProgressStatus, backupRestoreProgressAtom } from '$state/backupRestore';
-import { InfoCard } from './info-card';
 import { AsyncStatus, useAsyncCallback } from '$hooks/useAsyncCallback';
 import {
   useKeyBackupInfo,
@@ -30,6 +29,7 @@ import {
 } from '$hooks/useKeyBackup';
 import { stopPropagation } from '$utils/keyboard';
 import { useRestoreBackupOnVerification } from '$hooks/useRestoreBackupOnVerification';
+import { InfoCard } from './info-card';
 
 type BackupStatusProps = {
   enabled: boolean;

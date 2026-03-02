@@ -4,11 +4,11 @@ import { logoutClient } from '$client/initMatrix';
 import { AsyncStatus, useAsyncCallback } from '$hooks/useAsyncCallback';
 import { useMatrixClient } from '$hooks/useMatrixClient';
 import { useCrossSigningActive } from '$hooks/useCrossSigning';
-import { InfoCard } from './info-card';
 import {
   useDeviceVerificationStatus,
   VerificationStatus,
 } from '$hooks/useDeviceVerificationStatus';
+import { InfoCard } from './info-card';
 
 type LogoutDialogProps = {
   handleClose: () => void;
