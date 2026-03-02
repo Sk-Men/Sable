@@ -42,6 +42,7 @@ import { getHomePath } from '../pathUtils';
 import { createLogger } from '$appUtils/debug';
 import { pushSessionToSW } from '../../../sw-session';
 import { useSyncNicknames } from '$hooks/useNickname';
+import { useAppVisibility } from '$hooks/useAppVisibility';
 
 const log = createLogger('ClientRoot');
 
@@ -225,6 +226,7 @@ export function ClientRoot({ children }: ClientRootProps) {
 
   useSyncNicknames(mx);
   useLogoutListener(mx);
+  useAppVisibility(mx);
 
   useEffect(() => {
     return () => {
@@ -255,7 +257,6 @@ export function ClientRoot({ children }: ClientRootProps) {
       }
     }, [])
   );
-
   return (
     <SpecVersions baseUrl={baseUrl!}>
       {mx && <SyncStatus mx={mx} />}

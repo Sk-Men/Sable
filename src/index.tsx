@@ -9,6 +9,9 @@ import '@fontsource/space-mono/400-italic.css';
 import '@fontsource/space-mono/700-italic.css';
 import 'folds/dist/style.css';
 import { configClass, varsClass } from 'folds';
+import { trimTrailingSlash } from './app/utils/common';
+import App from './app/pages/App';
+import './app/i18n';
 
 enableMapSet();
 
@@ -16,12 +19,6 @@ import './index.css';
 import './app/styles/themes.css';
 import './app/styles/overrides/General.css';
 import './app/styles/overrides/Privacy.css';
-
-import { trimTrailingSlash } from './app/utils/common';
-import App from './app/pages/App';
-
-// import i18n (needs to be bundled ;))
-import './app/i18n';
 import { pushSessionToSW } from './sw-session';
 import {
   getFallbackSession,
@@ -33,12 +30,48 @@ import { getLocalStorageItem } from './app/state/utils/atomWithLocalStorage';
 
 document.body.classList.add(configClass, varsClass);
 
-// Register Service Worker
 if ('serviceWorker' in navigator) {
-  const swUrl =
-    import.meta.env.MODE === 'production'
-      ? `${trimTrailingSlash(import.meta.env.BASE_URL)}/sw.js`
-      : `/dev-sw.js?dev-sw`;
+  const isProduction = import.meta.env.MODE === 'production';
+  const swUrl = isProduction
+    ? `${trimTrailingSlash(import.meta.env.BASE_URL)}/sw.js`
+    : `/dev-sw.js?dev-sw`;
+
+  const swRegisterOptions: RegistrationOptions = {};
+  if (!isProduction) {
+    swRegisterOptions.type = 'module';
+  }
+
+  const showUpdateAvailablePrompt = (registration: ServiceWorkerRegistration) => {
+    const DONT_SHOW_PROMPT_KEY = 'cinny_dont_show_sw_update_prompt';
+    const userPreference = localStorage.getItem(DONT_SHOW_PROMPT_KEY);
+
+    if (userPreference === 'true') {
+      return;
+    }
+
+    if (window.confirm('A new version of the app is available. Refresh to update?')) {
+      if (registration.waiting) {
+        registration.waiting.postMessage({ type: 'SKIP_WAITING_AND_CLAIM' });
+      } else {
+        window.location.reload();
+      }
+    }
+  };
+
+  navigator.serviceWorker.register(swUrl, swRegisterOptions).then((registration) => {
+    registration.onupdatefound = () => {
+      const installingWorker = registration.installing;
+      if (installingWorker) {
+        installingWorker.onstatechange = () => {
+          if (installingWorker.state === 'installed') {
+            if (navigator.serviceWorker.controller) {
+              showUpdateAvailablePrompt(registration);
+            }
+          }
+        };
+      }
+    };
+  });
 
   const sendSessionToSW = () => {
     // Use the active session from the new multi-session store, fall back to legacy
@@ -59,6 +92,21 @@ if ('serviceWorker' in navigator) {
 
     if (type === 'requestSession') {
       sendSessionToSW();
+    }
+
+    if (ev.data.type === 'token' && ev.data.id) {
+      const token = localStorage.getItem('cinny_access_token') ?? undefined;
+      event.source.postMessage({
+        replyTo: event.data.id,
+        payload: token,
+      });
+    } else if (ev.data.type === 'openRoom' && ev.data.id) {
+      /* Example:
+      event.source.postMessage({
+        replyTo: event.data.id,
+        payload: success?,
+      });
+      */
     }
   });
 }
