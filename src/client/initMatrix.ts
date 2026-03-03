@@ -1,4 +1,5 @@
 import {
+  ClientEvent,
   createClient,
   MatrixClient,
   IndexedDBStore,
@@ -23,12 +24,25 @@ const log = createLogger('initMatrix');
 const slidingSyncByClient = new WeakMap<MatrixClient, SlidingSyncManager>();
 const FAST_SYNC_POLL_TIMEOUT_MS = 10000;
 type SyncTransport = 'classic' | 'sliding';
+type SyncTransportReason =
+  | 'sliding_active'
+  | 'sliding_disabled_server'
+  | 'session_opt_out'
+  | 'missing_proxy'
+  | 'cold_cache_bootstrap'
+  | 'probe_failed_fallback'
+  | 'unknown';
 type SyncTransportMeta = {
   transport: SyncTransport;
   slidingConfigured: boolean;
+  slidingEnabledOnServer: boolean;
+  sessionOptIn: boolean;
+  slidingRequested: boolean;
   fallbackFromSliding: boolean;
+  reason: SyncTransportReason;
 };
 const syncTransportByClient = new WeakMap<MatrixClient, SyncTransportMeta>();
+const COLD_CACHE_BOOTSTRAP_TIMEOUT_MS = 20000;
 
 export const resolveSlidingEnabled = (enabled: SlidingSyncConfig['enabled']): boolean => {
   if (enabled === undefined) return false;
@@ -111,6 +125,44 @@ const readStoredAccount = (dbName: string): Promise<string | undefined> =>
         resolve(undefined);
       }
     };
+  });
+
+const databaseExists = async (dbName: string): Promise<boolean> => {
+  try {
+    const dbs = await window.indexedDB.databases();
+    return dbs.some((db) => db.name === dbName);
+  } catch {
+    return false;
+  }
+};
+
+const isClientReadyForUi = (syncState: string | null): boolean =>
+  syncState === 'PREPARED' || syncState === 'SYNCING' || syncState === 'CATCHUP';
+
+const waitForClientReady = (mx: MatrixClient, timeoutMs: number): Promise<void> =>
+  new Promise((resolve) => {
+    if (isClientReadyForUi(mx.getSyncState())) {
+      resolve();
+      return;
+    }
+
+    let timer = 0;
+    let finish = () => {};
+    const onSync = (state: string) => {
+      if (isClientReadyForUi(state)) finish();
+    };
+
+    let settled = false;
+    finish = () => {
+      if (settled) return;
+      settled = true;
+      mx.removeListener(ClientEvent.Sync, onSync);
+      clearTimeout(timer);
+      resolve();
+    };
+
+    timer = window.setTimeout(finish, timeoutMs);
+    mx.on(ClientEvent.Sync, onSync);
   });
 
 /**
@@ -306,11 +358,15 @@ export const startClient = async (mx: MatrixClient, config?: StartClientConfig) 
     hasSlidingProxy,
   });
 
-  const startClassicSync = async (fallbackFromSliding: boolean) => {
+  const startClassicSync = async (fallbackFromSliding: boolean, reason: SyncTransportReason) => {
     syncTransportByClient.set(mx, {
       transport: 'classic',
       slidingConfigured: slidingEnabledOnServer,
+      slidingEnabledOnServer,
+      sessionOptIn: config?.sessionSlidingSyncOptIn === true,
+      slidingRequested,
       fallbackFromSliding,
+      reason,
     });
     await mx.startClient({
       lazyLoadMembers: true,
@@ -318,13 +374,47 @@ export const startClient = async (mx: MatrixClient, config?: StartClientConfig) 
     });
   };
 
+  const shouldBootstrapClassicOnColdCache = async (): Promise<boolean> => {
+    if (slidingConfig?.bootstrapClassicOnColdCache === false) return false;
+    const userId = mx.getUserId();
+    if (!userId) return false;
+
+    const [storeHasAccount, fallbackStoreHasAccount, hasStoreDb, hasFallbackStoreDb] =
+      await Promise.all([
+        readStoredAccount(`sync${userId}`),
+        readStoredAccount('web-sync-store'),
+        databaseExists(`sync${userId}`),
+        databaseExists('web-sync-store'),
+      ]);
+
+    const hasWarmCache =
+      storeHasAccount === userId ||
+      fallbackStoreHasAccount === userId ||
+      hasStoreDb ||
+      hasFallbackStoreDb;
+
+    return !hasWarmCache;
+  };
+
   if (!slidingEnabledOnServer || !slidingRequested) {
-    await startClassicSync(false);
+    await startClassicSync(
+      false,
+      slidingEnabledOnServer ? 'session_opt_out' : 'sliding_disabled_server'
+    );
     return;
   }
 
   if (!hasSlidingProxy) {
-    await startClassicSync(false);
+    await startClassicSync(false, 'missing_proxy');
+    return;
+  }
+
+  if (await shouldBootstrapClassicOnColdCache()) {
+    log.log('startClient cold-cache bootstrap: using classic sync for this run', mx.getUserId());
+    await startClassicSync(false, 'cold_cache_bootstrap');
+    waitForClientReady(mx, COLD_CACHE_BOOTSTRAP_TIMEOUT_MS).catch(() => {
+      /* ignore */
+    });
     return;
   }
 
@@ -348,7 +438,7 @@ export const startClient = async (mx: MatrixClient, config?: StartClientConfig) 
   });
   if (!supported) {
     log.warn('Sliding Sync unavailable, falling back to classic sync for', mx.getUserId());
-    await startClassicSync(true);
+    await startClassicSync(true, 'probe_failed_fallback');
     return;
   }
 
@@ -357,7 +447,11 @@ export const startClient = async (mx: MatrixClient, config?: StartClientConfig) 
   syncTransportByClient.set(mx, {
     transport: 'sliding',
     slidingConfigured: true,
+    slidingEnabledOnServer,
+    sessionOptIn: config?.sessionSlidingSyncOptIn === true,
+    slidingRequested,
     fallbackFromSliding: false,
+    reason: 'sliding_active',
   });
 
   try {
@@ -383,7 +477,11 @@ export const getClientSyncDiagnostics = (mx: MatrixClient): ClientSyncDiagnostic
   const meta = syncTransportByClient.get(mx) ?? {
     transport: 'classic',
     slidingConfigured: false,
+    slidingEnabledOnServer: false,
+    sessionOptIn: false,
+    slidingRequested: false,
     fallbackFromSliding: false,
+    reason: 'unknown',
   };
   return {
     ...meta,

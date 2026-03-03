@@ -14,6 +14,38 @@ import { useMatrixClient } from './useMatrixClient';
 import { useAccountDataCallback } from './useAccountDataCallback';
 import { useStateEventCallback } from './useStateEventCallback';
 
+const imagePackEqual = (a: ImagePack | undefined, b: ImagePack | undefined): boolean => {
+  if (!a && !b) return true;
+  if (!a || !b) return false;
+  const aImages = Array.from(a.images.collection.entries());
+  const bImages = Array.from(b.images.collection.entries());
+  if (aImages.length !== bImages.length) return false;
+  const sameImages = aImages.every(([shortcode, image], index) => {
+    const [otherShortcode, otherImage] = bImages[index];
+    if (shortcode !== otherShortcode) return false;
+    return (
+      image.url === otherImage.url &&
+      image.body === otherImage.body &&
+      JSON.stringify(image.usage) === JSON.stringify(otherImage.usage) &&
+      JSON.stringify(image.info) === JSON.stringify(otherImage.info)
+    );
+  });
+  if (!sameImages) return false;
+  return (
+    a.id === b.id &&
+    a.deleted === b.deleted &&
+    a.meta.name === b.meta.name &&
+    a.meta.avatar === b.meta.avatar &&
+    a.meta.attribution === b.meta.attribution &&
+    JSON.stringify(a.meta.usage) === JSON.stringify(b.meta.usage)
+  );
+};
+
+const imagePackListEqual = (a: ImagePack[], b: ImagePack[]): boolean => {
+  if (a.length !== b.length) return false;
+  return a.every((pack, index) => imagePackEqual(pack, b[index]));
+};
+
 export const useUserImagePack = (): ImagePack | undefined => {
   const mx = useMatrixClient();
   const [userPack, setUserPack] = useState(() => getUserImagePack(mx));
@@ -23,7 +55,10 @@ export const useUserImagePack = (): ImagePack | undefined => {
     useCallback(
       (mEvent) => {
         if (mEvent.getType() === AccountDataEvent.PoniesUserEmotes) {
-          setUserPack(getUserImagePack(mx));
+          setUserPack((prev) => {
+            const next = getUserImagePack(mx);
+            return imagePackEqual(prev, next) ? prev : next;
+          });
         }
       },
       [mx]
@@ -42,7 +77,10 @@ export const useGlobalImagePacks = (): ImagePack[] => {
     useCallback(
       (mEvent) => {
         if (mEvent.getType() === AccountDataEvent.PoniesEmoteRooms) {
-          setGlobalPacks(getGlobalImagePacks(mx));
+          setGlobalPacks((prev) => {
+            const next = getGlobalImagePacks(mx);
+            return imagePackListEqual(prev, next) ? prev : next;
+          });
         }
       },
       [mx]
@@ -57,16 +95,18 @@ export const useGlobalImagePacks = (): ImagePack[] => {
         const roomId = mEvent.getRoomId();
         const stateKey = mEvent.getStateKey();
         if (eventType === StateEvent.PoniesRoomEmotes && roomId && typeof stateKey === 'string') {
-          const global = !!globalPacks.find(
-            (pack) =>
-              pack.address && pack.address.roomId === roomId && pack.address.stateKey === stateKey
-          );
-          if (global) {
-            setGlobalPacks(getGlobalImagePacks(mx));
-          }
+          setGlobalPacks((prev) => {
+            const global = !!prev.find(
+              (pack) =>
+                pack.address && pack.address.roomId === roomId && pack.address.stateKey === stateKey
+            );
+            if (!global) return prev;
+            const next = getGlobalImagePacks(mx);
+            return imagePackListEqual(prev, next) ? prev : next;
+          });
         }
       },
-      [mx, globalPacks]
+      [mx]
     )
   );
 
@@ -86,7 +126,10 @@ export const useRoomImagePack = (room: Room, stateKey: string): ImagePack | unde
           mEvent.getType() === StateEvent.PoniesRoomEmotes &&
           mEvent.getStateKey() === stateKey
         ) {
-          setRoomPack(getRoomImagePack(room, stateKey));
+          setRoomPack((prev) => {
+            const next = getRoomImagePack(room, stateKey);
+            return imagePackEqual(prev, next) ? prev : next;
+          });
         }
       },
       [room, stateKey]
@@ -108,7 +151,10 @@ export const useRoomImagePacks = (room: Room): ImagePack[] => {
           mEvent.getRoomId() === room.roomId &&
           mEvent.getType() === StateEvent.PoniesRoomEmotes
         ) {
-          setRoomPacks(getRoomImagePacks(room));
+          setRoomPacks((prev) => {
+            const next = getRoomImagePacks(room);
+            return imagePackListEqual(prev, next) ? prev : next;
+          });
         }
       },
       [room]
@@ -130,7 +176,10 @@ export const useRoomsImagePacks = (rooms: Room[]) => {
           rooms.find((room) => room.roomId === mEvent.getRoomId()) &&
           mEvent.getType() === StateEvent.PoniesRoomEmotes
         ) {
-          setRoomPacks(rooms.flatMap(getRoomImagePacks));
+          setRoomPacks((prev) => {
+            const next = rooms.flatMap(getRoomImagePacks);
+            return imagePackListEqual(prev, next) ? prev : next;
+          });
         }
       },
       [rooms]
