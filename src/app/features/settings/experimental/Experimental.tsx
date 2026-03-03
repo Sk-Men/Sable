@@ -1,4 +1,4 @@
-import { Box, Text, IconButton, Icon, Icons, Scroll, } from 'folds';
+import { Box, Text, IconButton, Icon, Icons, Scroll } from 'folds';
 import { Page, PageContent, PageHeader } from '$components/page';
 import { InfoCard } from '$components/info-card';
 import { Sync } from '../general';
