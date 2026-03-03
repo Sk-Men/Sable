@@ -126,6 +126,7 @@ export function DeregisterAllPushersSetting() {
           </Button>
         }
       >
+        {/* FIXME: these two things below, even before my changes, don't really seem to ever appear? */}
         {deregisterState.status === AsyncStatus.Error && (
           <Text as="span" style={{ color: color.Critical.Main }} size="T200">
             <br />
