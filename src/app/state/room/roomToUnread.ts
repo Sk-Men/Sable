@@ -251,7 +251,12 @@ export const useBindRoomToUnreadAtom = (mx: MatrixClient, unreadAtom: typeof roo
         )
       );
       if (isMyReceipt) {
-        setUnreadAtom({ type: 'DELETE', roomId: room.roomId });
+        const unreadInfo = getUnreadInfo(room);
+        if (unreadInfo.total === 0 && unreadInfo.highlight === 0) {
+          setUnreadAtom({ type: 'DELETE', roomId: room.roomId });
+          return;
+        }
+        setUnreadAtom({ type: 'PUT', unreadInfo });
       }
     };
     mx.on(RoomEvent.Receipt, handleReceipt);
