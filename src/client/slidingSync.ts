@@ -27,6 +27,7 @@ const DEFAULT_MAX_ROOMS = 5000;
 export type SlidingSyncConfig = {
   enabled?: boolean;
   proxyBaseUrl?: string;
+  bootstrapClassicOnColdCache?: boolean;
   listPageSize?: number;
   timelineLimit?: number;
   pollTimeoutMs?: number;

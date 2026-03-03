@@ -318,12 +318,29 @@ export const startClient = async (mx: MatrixClient, config?: StartClientConfig) 
     });
   };
 
+  const shouldBootstrapClassicOnColdCache = async (): Promise<boolean> => {
+    if (slidingConfig?.bootstrapClassicOnColdCache === false) return false;
+    const userId = mx.getUserId();
+    if (!userId) return false;
+    const storedUserIds = await Promise.all([
+      readStoredAccount(`sync${userId}`),
+      readStoredAccount('web-sync-store'),
+    ]);
+    return !storedUserIds.includes(userId);
+  };
+
   if (!slidingEnabledOnServer || !slidingRequested) {
     await startClassicSync(false);
     return;
   }
 
   if (!hasSlidingProxy) {
+    await startClassicSync(false);
+    return;
+  }
+
+  if (await shouldBootstrapClassicOnColdCache()) {
+    log.log('startClient cold-cache bootstrap: using classic sync for this run', mx.getUserId());
     await startClassicSync(false);
     return;
   }
