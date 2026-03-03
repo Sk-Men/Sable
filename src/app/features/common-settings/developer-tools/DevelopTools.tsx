@@ -124,7 +124,7 @@ export function DeveloperTools({ requestClose }: DeveloperToolsProps) {
     };
   }, [mx, room, roomToUnread, allRooms, allInvites]);
 
-  const syncDiagnostics = useMemo(() => getClientSyncDiagnostics(mx), [mx]);
+  const syncDiagnostics = getClientSyncDiagnostics(mx);
 
   const handleClose = useCallback(() => {
     setOpenStateEvent(undefined);
