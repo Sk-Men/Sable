@@ -121,7 +121,13 @@ export function DeregisterAllPushersSetting() {
           </>
         }
         after={
-          <Button size="300" radii="300" variant="Critical" onClick={handleOpenConfirmDialog}>
+          <Button
+            size="300"
+            radii="300"
+            variant="Critical"
+            fill="Soft"
+            onClick={handleOpenConfirmDialog}
+          >
             <Text size="B300">Reset All</Text>
           </Button>
         }
