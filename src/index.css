@@ -58,8 +58,8 @@
 }
 
 .accord-theme {
-  --tc-link: #76AFF6;
-  
+  --tc-link: #76aff6;
+
   --mx-uc-1: hsl(260, 100%, 75%);
   --mx-uc-2: hsl(320, 100%, 75%);
   --mx-uc-3: hsl(180, 100%, 65%);
