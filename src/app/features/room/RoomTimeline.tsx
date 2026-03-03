@@ -359,31 +359,34 @@ const useTimelinePagination = (
       }
 
       fetching = true;
-      const [err] = await to(
-        mx.paginateEventTimeline(timelineToPaginate, {
-          backwards,
-          limit,
-        })
-      );
-      if (err) {
-        // TODO: handle pagination error.
-        return;
-      }
-      const fetchedTimeline =
-        timelineToPaginate.getNeighbouringTimeline(
-          backwards ? Direction.Backward : Direction.Forward
-        ) ?? timelineToPaginate;
-      // Decrypt all event ahead of render cycle
-      const roomId = fetchedTimeline.getRoomId();
-      const room = roomId ? mx.getRoom(roomId) : null;
+      try {
+        const [err] = await to(
+          mx.paginateEventTimeline(timelineToPaginate, {
+            backwards,
+            limit,
+          })
+        );
+        if (err) {
+          // TODO: handle pagination error.
+          return;
+        }
+        const fetchedTimeline =
+          timelineToPaginate.getNeighbouringTimeline(
+            backwards ? Direction.Backward : Direction.Forward
+          ) ?? timelineToPaginate;
+        // Decrypt all event ahead of render cycle
+        const roomId = fetchedTimeline.getRoomId();
+        const room = roomId ? mx.getRoom(roomId) : null;
 
-      if (room?.hasEncryptionStateEvent()) {
-        await to(decryptAllTimelineEvent(mx, fetchedTimeline));
-      }
+        if (room?.hasEncryptionStateEvent()) {
+          await to(decryptAllTimelineEvent(mx, fetchedTimeline));
+        }
 
-      fetching = false;
-      if (alive()) {
-        recalibratePagination(lTimelines, timelinesEventsCount, backwards);
+        if (alive()) {
+          recalibratePagination(lTimelines, timelinesEventsCount, backwards);
+        }
+      } finally {
+        fetching = false;
       }
     };
   }, [mx, alive, setTimeline, limit]);
