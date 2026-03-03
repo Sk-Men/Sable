@@ -1,5 +1,9 @@
 # Sable Client Changelog
 
+## 1.3.2 - in dev
+
+- Replace `-#` small html tag with sub html tag to comply with spec.
+
 ## 1.3.1 - 3/3/2026
 
 - Important sliding sync config patches, notifications fixes, and client side toggle ([#85](https://github.com/7w1/sable/pull/85))
