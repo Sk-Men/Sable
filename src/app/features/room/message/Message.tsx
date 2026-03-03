@@ -442,8 +442,7 @@ function MessageInternal(
   const isPendingSend =
     sendStatus === EventStatus.ENCRYPTING ||
     sendStatus === EventStatus.QUEUED ||
-    sendStatus === EventStatus.SENDING ||
-    sendStatus === EventStatus.SENT;
+    sendStatus === EventStatus.SENDING;
   const isFailedSend = sendStatus === EventStatus.NOT_SENT;
   const canResend = isFailedSend && senderId === mx.getUserId() && !!onResend;
 
