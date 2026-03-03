@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react';
 import { Box, Text } from 'folds';
 import { SequenceCard } from '$components/sequence-card';
 import { useMatrixClient } from '$hooks/useMatrixClient';
-import { useClientConfig } from '$hooks/useClientConfig';
 import { getClientSyncDiagnostics } from '$client/initMatrix';
 import { Direction, Room } from '$types/matrix-sdk';
 import { Membership } from '$types/matrix/room';
@@ -61,7 +60,6 @@ const formatListCoverage = (knownCount: number, rangeEnd: number): string => {
 
 export function SyncDiagnostics() {
   const mx = useMatrixClient();
-  const clientConfig = useClientConfig();
   const [, setTick] = useState(0);
 
   useEffect(() => {
@@ -88,7 +86,7 @@ export function SyncDiagnostics() {
           </Text>
           <Text size="T300">State: {diagnostics.syncState ?? 'null'}</Text>
           <Text size="T300">
-            Sliding configured: {clientConfig.slidingSync?.enabled ? 'yes' : 'no'}
+            Sliding configured: {diagnostics.slidingConfigured ? 'yes' : 'no'}
           </Text>
           <Text size="T300">
             Room counts: {roomDiagnostics.totalRooms} total, {roomDiagnostics.joinedRooms} joined,{' '}

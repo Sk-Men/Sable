@@ -74,6 +74,7 @@ const buildLists = (
   lists.set(LIST_JOINED, {
     ranges: [[0, Math.max(0, pageSize - 1)]],
     timeline_limit: timelineLimit,
+    required_state: [],
     slow_get_all_rooms: true,
     filters: {
       is_invite: false,
@@ -84,6 +85,7 @@ const buildLists = (
     lists.set(LIST_INVITES, {
       ranges: [[0, Math.max(0, pageSize - 1)]],
       timeline_limit: timelineLimit,
+      required_state: [],
       slow_get_all_rooms: true,
       filters: {
         is_invite: true,
@@ -192,6 +194,7 @@ export class SlidingSyncManager {
             probe: {
               ranges: [[0, 0]],
               timeline_limit: 1,
+              required_state: [],
             },
           },
           timeout: 0,
