@@ -16,7 +16,7 @@ const log = createLogger('slidingSync');
 
 const LIST_JOINED = 'joined';
 const LIST_INVITES = 'invites';
-const DEFAULT_LIST_PAGE_SIZE = 50;
+const DEFAULT_LIST_PAGE_SIZE = 250;
 const DEFAULT_TIMELINE_LIMIT = 30;
 const TIMELINE_LIMIT_LOW = 10;
 const TIMELINE_LIMIT_MEDIUM = 15;

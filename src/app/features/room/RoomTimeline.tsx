@@ -17,6 +17,7 @@ import {
   EventTimeline,
   EventTimelineSet,
   EventTimelineSetHandlerMap,
+  EventStatus,
   IContent,
   IRoomTimelineData,
   MatrixClient,
@@ -725,6 +726,24 @@ export function RoomTimeline({
     )
   );
 
+  useEffect(() => {
+    const handleLocalEchoUpdated: RoomEventHandlerMap[RoomEvent.LocalEchoUpdated] = (
+      _mEvent: MatrixEvent,
+      eventRoom: Room | undefined
+    ) => {
+      if (eventRoom?.roomId !== room.roomId) return;
+      setTimeline((ct) => ({ ...ct }));
+      if (!unreadInfo) {
+        setUnreadInfo(getRoomUnreadInfo(room));
+      }
+    };
+
+    room.on(RoomEvent.LocalEchoUpdated, handleLocalEchoUpdated);
+    return () => {
+      room.removeListener(RoomEvent.LocalEchoUpdated, handleLocalEchoUpdated);
+    };
+  }, [room, unreadInfo, setTimeline, setUnreadInfo]);
+
   const handleOpenEvent = useCallback(
     async (
       evtId: string,
@@ -1173,6 +1192,15 @@ export function RoomTimeline({
     },
     [mx, room]
   );
+
+  const handleResend = useCallback(
+    (mEvent: MatrixEvent) => {
+      if (mEvent.getAssociatedStatus() !== EventStatus.NOT_SENT) return;
+      mx.resendEvent(mEvent, room).catch(() => undefined);
+    },
+    [mx, room]
+  );
+
   const handleEdit = useCallback(
     (editEvtId?: string) => {
       if (editEvtId) {
@@ -1243,6 +1271,8 @@ export function RoomTimeline({
             onReactionToggle={handleReactionToggle}
             senderId={senderId}
             senderDisplayName={senderDisplayName}
+            sendStatus={mEvent.getAssociatedStatus()}
+            onResend={handleResend}
             onEditId={handleEdit}
             activeReplyId={activeReplyId}
             reply={
@@ -1328,6 +1358,8 @@ export function RoomTimeline({
             senderId={senderId}
             activeReplyId={activeReplyId}
             senderDisplayName={senderDisplayName}
+            sendStatus={mEvent.getAssociatedStatus()}
+            onResend={handleResend}
             reply={
               replyEventId && (
                 <Reply
@@ -1444,6 +1476,8 @@ export function RoomTimeline({
             senderId={senderId}
             activeReplyId={activeReplyId}
             senderDisplayName={senderDisplayName}
+            sendStatus={mEvent.getAssociatedStatus()}
+            onResend={handleResend}
             reply={
               replyEventId && (
                 <Reply

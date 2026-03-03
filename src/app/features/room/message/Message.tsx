@@ -28,7 +28,13 @@ import {
 } from 'react';
 import FocusTrap from 'focus-trap-react';
 import { useHover, useFocusWithin } from 'react-aria';
-import { MatrixEvent, Room, Relations, RoomPinnedEventsEventContent } from '$types/matrix-sdk';
+import {
+  EventStatus,
+  MatrixEvent,
+  Room,
+  Relations,
+  RoomPinnedEventsEventContent,
+} from '$types/matrix-sdk';
 import classNames from 'classnames';
 import { useAtomValue, useSetAtom } from 'jotai';
 import {
@@ -219,6 +225,8 @@ export type MessageProps = {
   senderDisplayName: string;
   content?: string;
   activeReplyId?: string | null;
+  sendStatus?: EventStatus | null;
+  onResend?: (event: MatrixEvent) => void;
 };
 
 function useMobileDoubleTap(callback: () => void, delay = 300) {
@@ -298,6 +306,8 @@ function MessageInternal(
     senderId,
     senderDisplayName,
     activeReplyId,
+    sendStatus,
+    onResend,
     ...props
   }: MessageProps & { className?: string; children?: ReactNode },
   ref: any
@@ -429,11 +439,35 @@ function MessageInternal(
   );
 
   const stableContent = useMemo(() => mEvent.getContent().body || '', [mEvent]);
+  const isPendingSend =
+    sendStatus === EventStatus.ENCRYPTING ||
+    sendStatus === EventStatus.QUEUED ||
+    sendStatus === EventStatus.SENDING ||
+    sendStatus === EventStatus.SENT;
+  const isFailedSend = sendStatus === EventStatus.NOT_SENT;
+  const canResend = isFailedSend && senderId === mx.getUserId() && !!onResend;
+
+  const handleResendClick: MouseEventHandler<HTMLButtonElement> = useCallback(
+    (evt) => {
+      evt.preventDefault();
+      evt.stopPropagation();
+      onResend?.(mEvent);
+    },
+    [mEvent, onResend]
+  );
 
   const MSG_CONTENT_STYLE = { maxWidth: '100%' };
 
   const msgContentJSX = (
-    <Box direction="Column" alignSelf="Start" style={MSG_CONTENT_STYLE}>
+    <Box
+      direction="Column"
+      alignSelf="Start"
+      style={MSG_CONTENT_STYLE}
+      className={classNames({
+        [css.MessagePending]: isPendingSend,
+        [css.MessageFailed]: isFailedSend,
+      })}
+    >
       {reply}
       {edit && onEditId ? (
         <MessageEditor
@@ -451,6 +485,25 @@ function MessageInternal(
         <MemoizedBody key={stableContent}>{children}</MemoizedBody>
       )}
       {reactions}
+      {isPendingSend && (
+        <Box className={css.SendStatusRow}>
+          <Text size="T200" priority="300">
+            Sending...
+          </Text>
+        </Box>
+      )}
+      {isFailedSend && (
+        <Box className={css.SendStatusRow}>
+          <Text size="T200" priority="300">
+            Failed to send.
+          </Text>
+          {canResend && (
+            <button type="button" className={css.SendStatusButton} onClick={handleResendClick}>
+              Retry
+            </button>
+          )}
+        </Box>
+      )}
     </Box>
   );
 
