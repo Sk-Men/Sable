@@ -1,4 +1,4 @@
-import { MatrixClient } from 'matrix-js-sdk';
+import { MatrixClient } from '$types/matrix-sdk';
 import { ClientConfig } from '../../../hooks/useClientConfig';
 
 type PushSubscriptionState = [
