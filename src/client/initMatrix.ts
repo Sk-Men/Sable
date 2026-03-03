@@ -280,10 +280,11 @@ export const startClient = async (mx: MatrixClient, config?: StartClientConfig) 
   disposeSlidingSync(mx);
   const slidingConfig = config?.slidingSync;
   const proxyBaseUrl = slidingConfig?.proxyBaseUrl ?? config?.baseUrl;
-  const canUseSliding = slidingConfig?.enabled === true && typeof proxyBaseUrl === 'string';
+  const slidingEnabled = slidingConfig?.enabled !== false;
+  const canUseSliding = slidingEnabled && typeof proxyBaseUrl === 'string';
   syncTransportByClient.set(mx, {
     transport: 'classic',
-    slidingConfigured: slidingConfig?.enabled === true,
+    slidingConfigured: canUseSliding,
     fallbackFromSliding: false,
   });
 
@@ -295,7 +296,7 @@ export const startClient = async (mx: MatrixClient, config?: StartClientConfig) 
   }
 
   const resolvedProxyBaseUrl = proxyBaseUrl;
-  const manager = new SlidingSyncManager(mx, resolvedProxyBaseUrl, slidingConfig);
+  const manager = new SlidingSyncManager(mx, resolvedProxyBaseUrl, slidingConfig ?? {});
   const supported = await SlidingSyncManager.probe(
     mx,
     resolvedProxyBaseUrl,
@@ -304,7 +305,7 @@ export const startClient = async (mx: MatrixClient, config?: StartClientConfig) 
   if (!supported) {
     syncTransportByClient.set(mx, {
       transport: 'classic',
-      slidingConfigured: true,
+      slidingConfigured: canUseSliding,
       fallbackFromSliding: true,
     });
     log.warn('Sliding Sync unavailable, falling back to classic sync for', mx.getUserId());

@@ -1,20 +1,17 @@
-import { MatrixClient, ICreateClientOpts } from 'matrix-js-sdk/lib/client';
-import { MatrixScheduler } from 'matrix-js-sdk/lib/scheduler';
-import { MemoryStore } from 'matrix-js-sdk/lib/store/memory';
-import { MemoryCryptoStore } from 'matrix-js-sdk/lib/crypto/store/memory-crypto-store';
-
 // App-facing Matrix SDK import boundary.
 // Import Matrix symbols from this module instead of matrix-js-sdk directly.
 export * from 'matrix-js-sdk/lib/client';
 export * from 'matrix-js-sdk/lib/serverCapabilities';
-export * from 'matrix-js-sdk/lib/embedded';
 export * from 'matrix-js-sdk/lib/http-api/index';
 export * from 'matrix-js-sdk/lib/autodiscovery';
 export * from 'matrix-js-sdk/lib/errors';
 export * from 'matrix-js-sdk/lib/interactive-auth';
 export * from 'matrix-js-sdk/lib/content-repo';
 export * from 'matrix-js-sdk/lib/sync';
+export * from 'matrix-js-sdk/lib/sliding-sync';
 export * from 'matrix-js-sdk/lib/sync-accumulator';
+export * from 'matrix-js-sdk/lib/scheduler';
+export * from 'matrix-js-sdk/lib/store/memory';
 export { createClient } from 'matrix-js-sdk/lib/matrix';
 
 export * from 'matrix-js-sdk/lib/models/event';
