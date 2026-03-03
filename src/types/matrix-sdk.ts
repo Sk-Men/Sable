@@ -15,12 +15,12 @@ export * from 'matrix-js-sdk/lib/content-repo';
 export * from 'matrix-js-sdk/lib/sync';
 export * from 'matrix-js-sdk/lib/sync-accumulator';
 
-const amendClientOpts = (opts: ICreateClientOpts): ICreateClientOpts => {
-  opts.store ??= new MemoryStore({ localStorage: globalThis.localStorage });
-  opts.scheduler ??= new MatrixScheduler();
-  opts.cryptoStore ??= new MemoryCryptoStore();
-  return opts;
-};
+const amendClientOpts = (opts: ICreateClientOpts): ICreateClientOpts => ({
+  ...opts,
+  store: opts.store ?? new MemoryStore({ localStorage: globalThis.localStorage }),
+  scheduler: opts.scheduler ?? new MatrixScheduler(),
+  cryptoStore: opts.cryptoStore ?? new MemoryCryptoStore(),
+});
 
 // Intentionally avoid importing createClient from matrix-js-sdk/lib/matrix to sidestep
 // a production bundling init-order bug involving RoomWidgetClient re-exports.
