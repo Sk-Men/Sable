@@ -14,10 +14,8 @@ export * from 'matrix-js-sdk/lib/interactive-auth';
 export * from 'matrix-js-sdk/lib/content-repo';
 export * from 'matrix-js-sdk/lib/sync';
 export * from 'matrix-js-sdk/lib/sync-accumulator';
-<<<<<<< HEAD
 export * from 'matrix-js-sdk/lib/sliding-sync';
 export { createClient } from 'matrix-js-sdk/lib/matrix';
-=======
 
 const amendClientOpts = (opts: ICreateClientOpts): ICreateClientOpts => ({
   ...opts,
@@ -30,7 +28,6 @@ const amendClientOpts = (opts: ICreateClientOpts): ICreateClientOpts => ({
 // a production bundling init-order bug involving RoomWidgetClient re-exports.
 export const createClient = (opts: ICreateClientOpts): MatrixClient =>
   new MatrixClient(amendClientOpts(opts));
->>>>>>> origin
 
 export * from 'matrix-js-sdk/lib/models/event';
 export * from 'matrix-js-sdk/lib/models/room';
