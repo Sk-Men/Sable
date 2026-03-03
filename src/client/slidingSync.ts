@@ -18,6 +18,9 @@ const LIST_JOINED = 'joined';
 const LIST_INVITES = 'invites';
 const DEFAULT_LIST_PAGE_SIZE = 50;
 const DEFAULT_TIMELINE_LIMIT = 30;
+const TIMELINE_LIMIT_LOW = 10;
+const TIMELINE_LIMIT_MEDIUM = 15;
+const TIMELINE_LIMIT_HIGH = 30;
 const DEFAULT_POLL_TIMEOUT_MS = 30000;
 const DEFAULT_MAX_ROOMS = 5000;
 
@@ -38,14 +41,62 @@ export type SlidingSyncListDiagnostics = {
   rangeEnd: number;
 };
 
+export type SlidingSyncDeviceDiagnostics = {
+  saveData: boolean;
+  effectiveType: string | null;
+  deviceMemoryGb: number | null;
+};
+
 export type SlidingSyncDiagnostics = {
   proxyBaseUrl: string;
+  timelineLimit: number;
+  listPageSize: number;
+  adaptiveTimeline: boolean;
+  device: SlidingSyncDeviceDiagnostics;
   lists: SlidingSyncListDiagnostics[];
 };
 
 const clampPositive = (value: number | undefined, fallback: number): number => {
   if (typeof value !== 'number' || Number.isNaN(value) || value <= 0) return fallback;
   return Math.round(value);
+};
+
+const resolveAdaptiveTimelineLimit = (
+  configuredLimit: number | undefined,
+  pageSize: number
+): number => {
+  if (typeof configuredLimit === 'number' && configuredLimit > 0) {
+    return clampPositive(configuredLimit, DEFAULT_TIMELINE_LIMIT);
+  }
+
+  const navigatorLike = typeof navigator !== 'undefined' ? navigator : undefined;
+  const connection = (navigatorLike as any)?.connection;
+  const saveData = connection?.saveData === true;
+  const effectiveType = connection?.effectiveType as string | undefined;
+  const deviceMemory = (navigatorLike as any)?.deviceMemory as number | undefined;
+
+  if (saveData || effectiveType === 'slow-2g' || effectiveType === '2g') {
+    return Math.min(pageSize, TIMELINE_LIMIT_LOW);
+  }
+
+  if (effectiveType === '3g' || (typeof deviceMemory === 'number' && deviceMemory <= 4)) {
+    return Math.min(pageSize, TIMELINE_LIMIT_MEDIUM);
+  }
+
+  return Math.min(pageSize, TIMELINE_LIMIT_HIGH);
+};
+
+const getDeviceDiagnostics = (): SlidingSyncDeviceDiagnostics => {
+  const navigatorLike = typeof navigator !== 'undefined' ? navigator : undefined;
+  const connection = (navigatorLike as any)?.connection;
+  const effectiveType = connection?.effectiveType;
+  const deviceMemory = (navigatorLike as any)?.deviceMemory;
+
+  return {
+    saveData: connection?.saveData === true,
+    effectiveType: typeof effectiveType === 'string' ? effectiveType : null,
+    deviceMemoryGb: typeof deviceMemory === 'number' ? deviceMemory : null,
+  };
 };
 
 const buildDefaultSubscription = (timelineLimit: number): MSC3575RoomSubscription => ({
@@ -55,13 +106,10 @@ const buildDefaultSubscription = (timelineLimit: number): MSC3575RoomSubscriptio
     [EventType.RoomMember, MSC3575_STATE_KEY_LAZY],
     [EventType.RoomCreate, ''],
     [EventType.RoomName, ''],
-    [EventType.RoomTopic, ''],
     [EventType.RoomAvatar, ''],
     [EventType.RoomCanonicalAlias, ''],
-    [EventType.RoomPowerLevels, ''],
     [EventType.RoomEncryption, ''],
     [EventType.RoomTombstone, ''],
-    [EventType.RoomPinnedEvents, ''],
     [EventType.RoomJoinRules, ''],
     [EventType.RoomHistoryVisibility, ''],
     [StateEvent.PoniesRoomEmotes, '*'],
@@ -115,6 +163,10 @@ export class SlidingSyncManager {
   private readonly maxRooms: number;
 
   private readonly listKeys: string[];
+  private readonly timelineLimit: number;
+  private readonly listPageSize: number;
+  private readonly adaptiveTimeline: boolean;
+  private readonly deviceDiagnostics: SlidingSyncDeviceDiagnostics;
 
   private readonly onLifecycle: (state: SlidingSyncState, resp: unknown, err?: Error) => void;
 
@@ -128,10 +180,15 @@ export class SlidingSyncManager {
     config: SlidingSyncConfig
   ) {
     const listPageSize = clampPositive(config.listPageSize, DEFAULT_LIST_PAGE_SIZE);
-    const timelineLimit = clampPositive(config.timelineLimit, DEFAULT_TIMELINE_LIMIT);
+    const adaptiveTimeline = !(typeof config.timelineLimit === 'number' && config.timelineLimit > 0);
+    const timelineLimit = resolveAdaptiveTimelineLimit(config.timelineLimit, listPageSize);
     const pollTimeoutMs = clampPositive(config.pollTimeoutMs, DEFAULT_POLL_TIMEOUT_MS);
     this.probeTimeoutMs = clampPositive(config.probeTimeoutMs, 5000);
     this.maxRooms = clampPositive(config.maxRooms, DEFAULT_MAX_ROOMS);
+    this.timelineLimit = timelineLimit;
+    this.listPageSize = listPageSize;
+    this.adaptiveTimeline = adaptiveTimeline;
+    this.deviceDiagnostics = getDeviceDiagnostics();
     const includeInviteList = config.includeInviteList !== false;
 
     const subscription = buildDefaultSubscription(timelineLimit);
@@ -163,6 +220,10 @@ export class SlidingSyncManager {
   public getDiagnostics(): SlidingSyncDiagnostics {
     return {
       proxyBaseUrl: this.proxyBaseUrl,
+      timelineLimit: this.timelineLimit,
+      listPageSize: this.listPageSize,
+      adaptiveTimeline: this.adaptiveTimeline,
+      device: this.deviceDiagnostics,
       lists: this.listKeys.map((key) => {
         const listData = this.slidingSync.getListData(key);
         const params = this.slidingSync.getListParams(key);

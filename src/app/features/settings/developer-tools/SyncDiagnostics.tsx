@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Box, Text } from 'folds';
+import { Box, Button, Icon, Icons, Text } from 'folds';
 import { SequenceCard } from '$components/sequence-card';
 import { useMatrixClient } from '$hooks/useMatrixClient';
 import { getClientSyncDiagnostics } from '$client/initMatrix';
@@ -113,6 +113,7 @@ const formatListCoverage = (knownCount: number, rangeEnd: number): string => {
 export function SyncDiagnostics() {
   const mx = useMatrixClient();
   const [, setTick] = useState(0);
+  const [expandSliding, setExpandSliding] = useState(false);
 
   useEffect(() => {
     const intervalId = window.setInterval(() => setTick((v) => v + 1), 1000);
@@ -163,14 +164,43 @@ export function SyncDiagnostics() {
           ))}
 
           {diagnostics.sliding && (
-            <>
-              <Text size="T300">Sliding proxy: {diagnostics.sliding.proxyBaseUrl}</Text>
-              {diagnostics.sliding.lists.map((list) => (
-                <Text size="T300" key={list.key}>
-                  List `{list.key}` coverage: {formatListCoverage(list.knownCount, list.rangeEnd)}
-                </Text>
-              ))}
-            </>
+            <Box direction="Column" gap="100">
+              <Box justifyContent="SpaceBetween" alignItems="Center">
+                <Text size="T300">Sliding Sync</Text>
+                <Button
+                  size="300"
+                  variant="Secondary"
+                  fill="Soft"
+                  radii="300"
+                  before={<Icon src={expandSliding ? Icons.ChevronTop : Icons.ChevronBottom} />}
+                  onClick={() => setExpandSliding((v) => !v)}
+                >
+                  <Text size="B300">{expandSliding ? 'Collapse' : 'Expand'}</Text>
+                </Button>
+              </Box>
+              {expandSliding && (
+                <Box direction="Column" gap="100">
+                  <Text size="T300">Sliding proxy: {diagnostics.sliding.proxyBaseUrl}</Text>
+                  <Text size="T300">
+                    Timeline limit: {diagnostics.sliding.timelineLimit} (page size:{' '}
+                    {diagnostics.sliding.listPageSize})
+                  </Text>
+                  <Text size="T300">
+                    Adaptive timeline: {diagnostics.sliding.adaptiveTimeline ? 'yes' : 'no'}
+                  </Text>
+                  <Text size="T300">
+                    Device/network: saveData {diagnostics.sliding.device.saveData ? 'on' : 'off'} |
+                    effectiveType {diagnostics.sliding.device.effectiveType ?? 'unknown'} | memory{' '}
+                    {diagnostics.sliding.device.deviceMemoryGb ?? 'unknown'} GB
+                  </Text>
+                  {diagnostics.sliding.lists.map((list) => (
+                    <Text size="T300" key={list.key}>
+                      List `{list.key}` coverage: {formatListCoverage(list.knownCount, list.rangeEnd)}
+                    </Text>
+                  ))}
+                </Box>
+              )}
+            </Box>
           )}
         </Box>
       </SequenceCard>
