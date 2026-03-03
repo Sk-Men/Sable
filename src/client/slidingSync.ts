@@ -9,6 +9,7 @@ import {
   MSC3575_STATE_KEY_ME,
   EventType,
 } from '$types/matrix-sdk';
+import { StateEvent } from '$types/matrix/room';
 import { createLogger } from '$utils/debug';
 
 const log = createLogger('slidingSync');
@@ -54,12 +55,19 @@ const buildDefaultSubscription = (timelineLimit: number): MSC3575RoomSubscriptio
     [EventType.RoomMember, MSC3575_STATE_KEY_LAZY],
     [EventType.RoomCreate, ''],
     [EventType.RoomName, ''],
+    [EventType.RoomTopic, ''],
     [EventType.RoomAvatar, ''],
     [EventType.RoomCanonicalAlias, ''],
+    [EventType.RoomPowerLevels, ''],
     [EventType.RoomEncryption, ''],
     [EventType.RoomTombstone, ''],
+    [EventType.RoomPinnedEvents, ''],
     [EventType.RoomJoinRules, ''],
     [EventType.RoomHistoryVisibility, ''],
+    [StateEvent.PoniesRoomEmotes, '*'],
+    [StateEvent.RoomWidget, '*'],
+    [StateEvent.GroupCallPrefix, '*'],
+    [StateEvent.GroupCallMemberPrefix, '*'],
     [EventType.SpaceChild, '*'],
     [EventType.SpaceParent, '*'],
   ],
