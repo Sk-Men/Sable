@@ -100,11 +100,7 @@ function ProfileAvatar({ profile, userId }: ProfileProps) {
 
   return (
     <SettingTile
-      title={
-        <Text as="span" size="L400">
-          Avatar
-        </Text>
-      }
+      title="Avatar"
       after={
         <Avatar size="500" radii="300">
           <UserAvatar
@@ -280,13 +276,7 @@ function ProfileBanner({ profile, userId }: ProfileProps) {
   const previewUrl = isRemoving ? undefined : imageFileURL || stagedUrl || bannerUrl;
 
   return (
-    <SettingTile
-      title={
-        <Text as="span" size="L400">
-          Profile Banner
-        </Text>
-      }
-    >
+    <SettingTile title="Banner">
       <Box direction="Column" gap="300" grow="Yes">
         <Box
           style={{
@@ -432,13 +422,7 @@ function ProfileDisplayName({ profile, userId }: ProfileProps) {
 
   const hasChanges = displayName !== defaultDisplayName;
   return (
-    <SettingTile
-      title={
-        <Text as="span" size="L400">
-          Display Name
-        </Text>
-      }
-    >
+    <SettingTile title="Display Name">
       <Box direction="Column" grow="Yes" gap="100">
         <Box
           as="form"
@@ -635,7 +619,21 @@ export function Profile() {
           gap="400"
         >
           <ProfileBanner userId={userId} profile={profile} />
+        </SequenceCard>
+        <SequenceCard
+          className={SequenceCardStyle}
+          variant="SurfaceVariant"
+          direction="Column"
+          gap="400"
+        >
           <ProfileAvatar userId={userId} profile={profile} />
+        </SequenceCard>
+        <SequenceCard
+          className={SequenceCardStyle}
+          variant="SurfaceVariant"
+          direction="Column"
+          gap="400"
+        >
           <ProfileDisplayName userId={userId} profile={profile} />
         </SequenceCard>
       </Box>

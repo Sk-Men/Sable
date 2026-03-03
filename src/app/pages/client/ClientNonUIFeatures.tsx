@@ -18,17 +18,21 @@ import { useMatrixClient } from '$hooks/useMatrixClient';
 import {
   getMemberDisplayName,
   getNotificationType,
+  getStateEvent,
   getUnreadInfo,
   isNotificationEvent,
 } from '$utils/room';
-import { NotificationType, UnreadInfo } from '$types/matrix/room';
+import { NotificationType, StateEvent, UnreadInfo } from '$types/matrix/room';
 import { getMxIdLocalPart, mxcUrlToHttp } from '$utils/matrix';
 import { useSelectedRoom } from '$hooks/router/useSelectedRoom';
 import { useInboxNotificationsSelected } from '$hooks/router/useInbox';
 import { useMediaAuthentication } from '$hooks/useMediaAuthentication';
 import { registrationAtom } from '$state/serviceWorkerRegistration';
 import { activeSessionIdAtom, pendingNotificationAtom } from '$state/sessions';
-import { buildRoomMessageNotification } from '$utils/notificationStyle';
+import {
+  buildRoomMessageNotification,
+  resolveNotificationPreviewText,
+} from '$utils/notificationStyle';
 import { mobileOrTablet } from '$utils/user-agent';
 import { getInboxInvitesPath, getInboxNotificationsPath } from '../pathUtils';
 import { BackgroundNotifications } from './BackgroundNotifications';
@@ -176,6 +180,11 @@ function MessageNotifications() {
   const [showNotifications] = useSetting(settingsAtom, 'useInAppNotifications');
   const [usePushNotifications] = useSetting(settingsAtom, 'usePushNotifications');
   const [notificationSound] = useSetting(settingsAtom, 'isNotificationSounds');
+  const [showMessageContent] = useSetting(settingsAtom, 'showMessageContentInNotifications');
+  const [showEncryptedMessageContent] = useSetting(
+    settingsAtom,
+    'showMessageContentInEncryptedNotifications'
+  );
   const forcePushOnMobile = usePushNotifications && mobileOrTablet();
   const nicknames = useAtomValue(nicknamesAtom);
   const nicknamesRef = useRef(nicknames);
@@ -192,18 +201,20 @@ function MessageNotifications() {
       username,
       roomId,
       eventId,
+      previewText,
     }: {
       roomName: string;
       roomAvatar?: string;
       username: string;
       roomId: string;
       eventId: string;
+      previewText: string;
     }) => {
       const payload = buildRoomMessageNotification({
         roomName,
         roomAvatar,
         username,
-        previewText: 'new message',
+        previewText,
         silent: true,
         eventId,
       });
@@ -267,6 +278,7 @@ function MessageNotifications() {
       }
 
       if (showNotifications && notificationPermission('granted')) {
+        const isEncryptedRoom = !!getStateEvent(room, StateEvent.RoomEncryption);
         const avatarMxc =
           room.getAvatarFallbackMember()?.getMxcAvatarUrl() ?? room.getMxcAvatarUrl();
         notify({
@@ -280,6 +292,13 @@ function MessageNotifications() {
             sender,
           roomId: room.roomId,
           eventId,
+          previewText: resolveNotificationPreviewText({
+            content: mEvent.getContent(),
+            eventType: mEvent.getType(),
+            isEncryptedRoom,
+            showMessageContent,
+            showEncryptedMessageContent,
+          }),
         });
       }
 
@@ -296,6 +315,8 @@ function MessageNotifications() {
     notificationSound,
     notificationSelected,
     showNotifications,
+    showMessageContent,
+    showEncryptedMessageContent,
     usePushNotifications,
     forcePushOnMobile,
     playSound,
@@ -386,6 +407,11 @@ function HandleNotificationClick() {
 function SyncNotificationSettingsWithServiceWorker() {
   const [notificationSound] = useSetting(settingsAtom, 'isNotificationSounds');
   const [usePushNotifications] = useSetting(settingsAtom, 'usePushNotifications');
+  const [showMessageContent] = useSetting(settingsAtom, 'showMessageContentInNotifications');
+  const [showEncryptedMessageContent] = useSetting(
+    settingsAtom,
+    'showMessageContentInEncryptedNotifications'
+  );
 
   useEffect(() => {
     if (!('serviceWorker' in navigator)) return;
@@ -394,13 +420,15 @@ function SyncNotificationSettingsWithServiceWorker() {
       type: 'setNotificationSettings' as const,
       notificationSoundEnabled: notificationSound,
       preferPushOnMobile,
+      showMessageContent,
+      showEncryptedMessageContent,
     };
 
     navigator.serviceWorker.controller?.postMessage(payload);
     navigator.serviceWorker.ready.then((registration) => {
       registration.active?.postMessage(payload);
     });
-  }, [notificationSound, usePushNotifications]);
+  }, [notificationSound, usePushNotifications, showMessageContent, showEncryptedMessageContent]);
 
   return null;
 }

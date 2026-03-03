@@ -804,7 +804,9 @@ export function Sync() {
 
   return (
     <Box direction="Column" gap="100">
-      <Text size="L400">Sync</Text>
+      <Text size="L400" style={{ opacity: serverSlidingEnabled ? 1 : 0.5 }}>
+        Sync
+      </Text>
       <SequenceCard
         className={SequenceCardStyle}
         variant="SurfaceVariant"
@@ -812,11 +814,34 @@ export function Sync() {
         style={{ opacity: serverSlidingEnabled ? 1 : 0.5 }}
       >
         <SettingTile
-          title="Use Sliding Sync"
+          title="Use Sliding Sync (Experimental)"
           description={
-            serverSlidingEnabled
-              ? 'Enable Sliding Sync for this current login/session.'
-              : 'Unavailable: this server config has Sliding Sync disabled.'
+            serverSlidingEnabled ? (
+              <>
+                Enable Sliding Sync for this current login/session. Requires server support and
+                admin configuration. May cause issues, use with caution.{' '}
+                <a
+                  href="https://github.com/matrix-org/matrix-spec-proposals/blob/erikj/sss/proposals/4186-simplified-sliding-sync.md"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  More info
+                </a>
+                .
+              </>
+            ) : (
+              <>
+                Unavailable: the server has disabled Sliding Sync in its config.{' '}
+                <a
+                  href="https://github.com/matrix-org/matrix-spec-proposals/blob/erikj/sss/proposals/4186-simplified-sliding-sync.md"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  More info
+                </a>
+                .
+              </>
+            )
           }
           after={
             <Switch
