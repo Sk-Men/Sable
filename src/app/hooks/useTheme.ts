@@ -10,6 +10,7 @@ import {
   rosePineTheme,
   silverTheme,
   gruvdarkTheme,
+  accordTheme,
 } from '../../colors.css';
 
 export enum ThemeKind {
@@ -62,6 +63,12 @@ export const CinnyDarkTheme: Theme = {
   classNames: ['cinny-dark-theme', cinnyDarkTheme, onDarkFontWeight, 'prism-dark'],
 };
 
+export const AccordTheme: Theme = {
+  id: 'accord-theme',
+  kind: ThemeKind.Dark,
+  classNames: ['accord-theme', accordTheme, onDarkFontWeight, 'prism-dark'],
+};
+
 export const useThemes = (): Theme[] => {
   const themes: Theme[] = useMemo(
     () => [
@@ -72,6 +79,7 @@ export const useThemes = (): Theme[] => {
       RosePineTheme,
       CinnyDarkTheme,
       GruvdarkTheme,
+      AccordTheme,
     ],
     []
   );
@@ -89,6 +97,7 @@ export const useThemeNames = (): Record<string, string> =>
       [CinnyDarkTheme.id]: 'Cinny Dark',
       [RosePineTheme.id]: 'Rose Pine',
       [GruvdarkTheme.id]: 'GruvDark',
+      [AccordTheme.id]: 'Accord',
     }),
     []
   );
