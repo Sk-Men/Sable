@@ -34,6 +34,7 @@ import { About } from './about';
 import { Account } from './account';
 import { General } from './general';
 import { Cosmetics } from './cosmetics/Cosmetics';
+import { Experimental } from './experimental/Experimental';
 
 export enum SettingsPages {
   GeneralPage,
@@ -43,6 +44,7 @@ export enum SettingsPages {
   EmojisStickersPage,
   CosmeticsPage,
   DeveloperToolsPage,
+  ExperimentalPage,
   AboutPage,
 }
 
@@ -91,6 +93,11 @@ const useSettingsMenuItems = (): SettingsMenuItem[] =>
         page: SettingsPages.DeveloperToolsPage,
         name: 'Developer Tools',
         icon: Icons.Terminal,
+      },
+      {
+        page: SettingsPages.ExperimentalPage,
+        name: 'Experimental',
+        icon: Icons.Funnel,
       },
       {
         page: SettingsPages.AboutPage,
@@ -247,6 +254,9 @@ export function Settings({ initialPage, requestClose }: SettingsProps) {
       )}
       {activePage === SettingsPages.DeveloperToolsPage && (
         <DeveloperTools requestClose={handlePageRequestClose} />
+      )}
+      {activePage === SettingsPages.ExperimentalPage && (
+        <Experimental requestClose={handlePageRequestClose} />
       )}
       {activePage === SettingsPages.AboutPage && <About requestClose={handlePageRequestClose} />}
     </PageRoot>
