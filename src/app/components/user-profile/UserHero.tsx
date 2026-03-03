@@ -9,6 +9,7 @@ import {
   OverlayBackdrop,
   OverlayCenter,
   Text,
+  Tooltip,
 } from 'folds';
 import classNames from 'classnames';
 import FocusTrap from 'focus-trap-react';
@@ -58,51 +59,58 @@ export function UserHero({ userId, avatarUrl, bannerUrl, presence }: UserHeroPro
           />
         )}
       </div>
-      <div className={css.UserHeroAvatarContainer}>
-        <AvatarPresence
-          className={css.UserAvatarContainer}
-          badge={
-            presence && <PresenceBadge presence={presence.presence} status={presence.status} />
-          }
-        >
-          <Avatar
-            as={avatarUrl ? 'button' : 'div'}
-            onClick={avatarUrl ? () => setViewAvatar(avatarUrl) : undefined}
-            className={css.UserHeroAvatar}
-            size="500"
+      <Box direction="Row" className={css.UserHeroAvatarStatusContainer}>
+        <div className={css.UserHeroAvatarContainer}>
+          <AvatarPresence
+            className={css.UserAvatarContainer}
+            badge={presence && <PresenceBadge presence={presence.presence} />}
           >
-            <UserAvatar
-              className={css.UserHeroAvatarImg}
-              userId={userId}
-              src={avatarUrl}
-              alt={userId}
-              renderFallback={() => <Icon size="500" src={Icons.User} filled />}
-            />
-          </Avatar>
-        </AvatarPresence>
-        {viewAvatar && (
-          <Overlay open backdrop={<OverlayBackdrop />}>
-            <OverlayCenter>
-              <FocusTrap
-                focusTrapOptions={{
-                  initialFocus: false,
-                  onDeactivate: () => setViewAvatar(undefined),
-                  clickOutsideDeactivates: true,
-                  escapeDeactivates: stopPropagation,
-                }}
-              >
-                <Modal size="500" onContextMenu={(evt: any) => evt.stopPropagation()}>
-                  <ImageViewer
-                    src={viewAvatar}
-                    alt={userId}
-                    requestClose={() => setViewAvatar(undefined)}
-                  />
-                </Modal>
-              </FocusTrap>
-            </OverlayCenter>
-          </Overlay>
+            <Avatar
+              as={avatarUrl ? 'button' : 'div'}
+              onClick={avatarUrl ? () => setViewAvatar(avatarUrl) : undefined}
+              className={css.UserHeroAvatar}
+              size="500"
+            >
+              <UserAvatar
+                className={css.UserHeroAvatarImg}
+                userId={userId}
+                src={avatarUrl}
+                alt={userId}
+                renderFallback={() => <Icon size="500" src={Icons.User} filled />}
+              />
+            </Avatar>
+          </AvatarPresence>
+          {viewAvatar && (
+            <Overlay open backdrop={<OverlayBackdrop />}>
+              <OverlayCenter>
+                <FocusTrap
+                  focusTrapOptions={{
+                    initialFocus: false,
+                    onDeactivate: () => setViewAvatar(undefined),
+                    clickOutsideDeactivates: true,
+                    escapeDeactivates: stopPropagation,
+                  }}
+                >
+                  <Modal size="500" onContextMenu={(evt: any) => evt.stopPropagation()}>
+                    <ImageViewer
+                      src={viewAvatar}
+                      alt={userId}
+                      requestClose={() => setViewAvatar(undefined)}
+                    />
+                  </Modal>
+                </FocusTrap>
+              </OverlayCenter>
+            </Overlay>
+          )}
+        </div>
+        {presence?.status?.length && (
+          <div className={css.UserHeroStatusContainer}>
+            <Tooltip style={{ maxWidth: '90%', justifySelf: 'left' }}>
+              <Text size="T200"> {presence.status} </Text>
+            </Tooltip>
+          </div>
         )}
-      </div>
+      </Box>
     </Box>
   );
 }
