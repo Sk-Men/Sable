@@ -5,7 +5,6 @@
   "elementCallUrl": null,
 
   "disableAccountSwitcher": false,
-  "matrixToBaseUrl": "https://matrix.to",
 
   "pushNotificationDetails": {
     "pushNotifyUrl": "https://cinny.cc/_matrix/push/v1/notify",
