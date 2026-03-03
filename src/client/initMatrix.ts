@@ -280,7 +280,7 @@ export const startClient = async (mx: MatrixClient, config?: StartClientConfig) 
   disposeSlidingSync(mx);
   const slidingConfig = config?.slidingSync;
   const proxyBaseUrl = slidingConfig?.proxyBaseUrl ?? config?.baseUrl;
-  const slidingEnabled = slidingConfig?.enabled !== false;
+  const slidingEnabled = false; // temporary
   const canUseSliding = slidingEnabled && typeof proxyBaseUrl === 'string';
   syncTransportByClient.set(mx, {
     transport: 'classic',
