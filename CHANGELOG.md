@@ -3,7 +3,7 @@
 ## 1.3.2 - in dev
 
 - Content toggles in push notifications ([#88](https://github.com/7w1/sable/pull/88)) - [Evie Gauthier](https://github.com/Just-Insane)
-- Settings interface consistency updates ([#89](https://github.com/7w1/sable/pull/89)) - [Rosy-iso](https://github.com/Rosy-iso)
+- Settings interface consistency updates ([#89](https://github.com/7w1/sable/pull/89), [#97](https://github.com/7w1/sable/pull/97)) - [Rosy-iso](https://github.com/Rosy-iso)
 - Replace `-#` small html tag with sub html tag to comply with spec.
 
 ## 1.3.1 - 3/3/2026
