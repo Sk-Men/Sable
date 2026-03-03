@@ -110,7 +110,7 @@ export const SmallRule: BlockMDRule = {
   html: (match, parseInline) => {
     const [, g1] = match;
     const content = parseInline ? parseInline(g1) : g1;
-    return `<small data-md="${SMALL_MD}">${content}</small>`;
+    return `<sub data-md="${SMALL_MD}">${content}</sub>`;
   },
 };
 
