@@ -148,7 +148,7 @@ export default defineConfig({
       promiseImportName: (i) => `__tla_${i}`,
     }),
     viteStaticCopy(copyFiles),
-    vanillaExtractPlugin(),
+    vanillaExtractPlugin({ identifiers: 'debug' }),
     wasm(),
     react(),
     svgr(),
