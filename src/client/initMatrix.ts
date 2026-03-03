@@ -21,6 +21,7 @@ import { SlidingSyncConfig, SlidingSyncDiagnostics, SlidingSyncManager } from '.
 
 const log = createLogger('initMatrix');
 const slidingSyncByClient = new WeakMap<MatrixClient, SlidingSyncManager>();
+const FAST_SYNC_POLL_TIMEOUT_MS = 10000;
 type SyncTransport = 'classic' | 'sliding';
 type SyncTransportMeta = {
   transport: SyncTransport;
@@ -29,7 +30,7 @@ type SyncTransportMeta = {
 };
 const syncTransportByClient = new WeakMap<MatrixClient, SyncTransportMeta>();
 
-const resolveSlidingEnabled = (enabled: SlidingSyncConfig['enabled']): boolean => {
+export const resolveSlidingEnabled = (enabled: SlidingSyncConfig['enabled']): boolean => {
   if (enabled === undefined) return false;
   if (typeof enabled === 'boolean') return enabled;
   const normalized = String(enabled).trim().toLowerCase();
@@ -267,6 +268,7 @@ export const initClient = async (session: Session): Promise<MatrixClient> => {
 export type StartClientConfig = {
   baseUrl?: string;
   slidingSync?: SlidingSyncConfig;
+  sessionSlidingSyncOptIn?: boolean;
 };
 
 export type ClientSyncDiagnostics = SyncTransportMeta & {
@@ -290,12 +292,15 @@ export const startClient = async (mx: MatrixClient, config?: StartClientConfig) 
   log.log('startClient', mx.getUserId());
   disposeSlidingSync(mx);
   const slidingConfig = config?.slidingSync;
-  const slidingRequested = resolveSlidingEnabled(slidingConfig?.enabled);
+  const slidingEnabledOnServer = resolveSlidingEnabled(slidingConfig?.enabled);
+  const slidingRequested = slidingEnabledOnServer && config?.sessionSlidingSyncOptIn === true;
   const proxyBaseUrl = slidingConfig?.proxyBaseUrl ?? config?.baseUrl;
   const hasSlidingProxy = typeof proxyBaseUrl === 'string' && proxyBaseUrl.trim().length > 0;
   log.log('startClient sliding config', {
     userId: mx.getUserId(),
     enabled: slidingConfig?.enabled,
+    enabledOnServer: slidingEnabledOnServer,
+    sessionOptIn: config?.sessionSlidingSyncOptIn === true,
     requestedEnabled: slidingRequested,
     proxyBaseUrl,
     hasSlidingProxy,
@@ -304,15 +309,16 @@ export const startClient = async (mx: MatrixClient, config?: StartClientConfig) 
   const startClassicSync = async (fallbackFromSliding: boolean) => {
     syncTransportByClient.set(mx, {
       transport: 'classic',
-      slidingConfigured: slidingRequested,
+      slidingConfigured: slidingEnabledOnServer,
       fallbackFromSliding,
     });
     await mx.startClient({
       lazyLoadMembers: true,
+      pollTimeout: FAST_SYNC_POLL_TIMEOUT_MS,
     });
   };
 
-  if (!slidingRequested) {
+  if (!slidingEnabledOnServer || !slidingRequested) {
     await startClassicSync(false);
     return;
   }
@@ -323,7 +329,11 @@ export const startClient = async (mx: MatrixClient, config?: StartClientConfig) 
   }
 
   const resolvedProxyBaseUrl = proxyBaseUrl;
-  const manager = new SlidingSyncManager(mx, resolvedProxyBaseUrl, slidingConfig ?? {});
+  const manager = new SlidingSyncManager(mx, resolvedProxyBaseUrl, {
+    ...(slidingConfig ?? {}),
+    includeInviteList: true,
+    pollTimeoutMs: slidingConfig?.pollTimeoutMs ?? FAST_SYNC_POLL_TIMEOUT_MS,
+  });
   const supported = await SlidingSyncManager.probe(
     mx,
     resolvedProxyBaseUrl,

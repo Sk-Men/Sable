@@ -46,6 +46,7 @@ const startBackgroundClient = async (
   await startClient(mx, {
     baseUrl: session.baseUrl,
     slidingSync: slidingSyncConfig,
+    sessionSlidingSyncOptIn: session.slidingSyncOptIn,
   });
   return mx;
 };

@@ -122,6 +122,7 @@ import { useMediaAuthentication } from '$hooks/useMediaAuthentication';
 import { useImagePackRooms } from '$hooks/useImagePackRooms';
 import { useComposingCheck } from '$hooks/useComposingCheck';
 import { useSableCosmetics } from '$hooks/useSableCosmetics';
+import { createLogger } from '$utils/debug';
 import { CommandAutocomplete } from './CommandAutocomplete';
 import {
   getAudioMsgContent,
@@ -146,6 +147,8 @@ const getReplyContent = (replyDraft: IReplyDraft | undefined): IEventRelation =>
   }
   return relatesTo;
 };
+
+const log = createLogger('RoomInput');
 interface ReplyEventContent {
   'm.relates_to'?: IEventRelation;
 }
@@ -348,10 +351,17 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
         setReplyDraft(undefined);
       }
 
-      contents.forEach((content) => mx.sendMessage(roomId, content as any));
+      await Promise.all(
+        contents.map((content) =>
+          mx.sendMessage(roomId, content as any).catch((error: unknown) => {
+            log.error('failed to send uploaded message', { roomId }, error);
+            throw error;
+          })
+        )
+      );
     };
 
-    const submit = useCallback(() => {
+    const submit = useCallback(async () => {
       uploadBoardHandlers.current?.handleSend();
 
       const commandName = getBeginCommand(editor);
@@ -417,9 +427,17 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
       }
       if (replyDraft) {
         content['m.relates_to'] = getReplyContent(replyDraft);
+      }
+      try {
+        await mx.sendMessage(roomId, content as any);
+      } catch (error) {
+        log.error('failed to send message', { roomId }, error);
+        return;
+      }
+
+      if (replyDraft) {
         setReplyDraft(undefined);
       }
-      mx.sendMessage(roomId, content as any);
 
       resetEditor(editor);
       resetEditorHistory(editor);
@@ -436,7 +454,9 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
           !isComposing(evt)
         ) {
           evt.preventDefault();
-          submit();
+          submit().catch((error) => {
+            log.error('submit failed', { roomId }, error);
+          });
         }
         if (isKeyHotkey('escape', evt)) {
           evt.preventDefault();
@@ -447,7 +467,7 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
           setReplyDraft(undefined);
         }
       },
-      [submit, setReplyDraft, enterForNewline, autocompleteQuery, isComposing]
+      [submit, roomId, setReplyDraft, enterForNewline, autocompleteQuery, isComposing]
     );
 
     const handleKeyUp: KeyboardEventHandler = useCallback(

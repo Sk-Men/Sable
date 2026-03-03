@@ -200,8 +200,9 @@ export function ClientRoot({ children }: ClientRootProps) {
         startClient(m, {
           baseUrl: activeSession?.baseUrl,
           slidingSync: clientConfig.slidingSync,
+          sessionSlidingSyncOptIn: activeSession?.slidingSyncOptIn,
         }),
-      [activeSession?.baseUrl, clientConfig.slidingSync]
+      [activeSession?.baseUrl, activeSession?.slidingSyncOptIn, clientConfig.slidingSync]
     )
   );
 

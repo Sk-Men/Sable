@@ -116,6 +116,7 @@ const groupNotifications = (
 ): RoomNotificationsGroup[] => {
   const groups: RoomNotificationsGroup[] = [];
   notifications.forEach((notification) => {
+    if (notification.event.type === StateEvent.RoomMember) return;
     if (!allowRooms.has(notification.room_id)) return;
 
     const groupIndex = groups.length - 1;
@@ -560,7 +561,7 @@ const useNotificationsSearchParams = (
     [searchParams]
   );
 
-const DEFAULT_REFRESH_MS = 7000;
+const FAST_REFRESH_MS = 2500;
 
 export function Notifications() {
   const mx = useMatrixClient();
@@ -578,7 +579,6 @@ export function Notifications() {
   const notificationsSearchParams = useNotificationsSearchParams(searchParams);
   const scrollRef = useRef<HTMLDivElement>(null);
   const scrollTopAnchorRef = useRef<HTMLDivElement>(null);
-  const [refreshIntervalTime, setRefreshIntervalTime] = useState(DEFAULT_REFRESH_MS);
 
   const onlyHighlight = notificationsSearchParams.only === 'highlight';
   const setOnlyHighlighted = (highlight: boolean) => {
@@ -611,12 +611,7 @@ export function Notifications() {
     useCallback(() => {
       silentReloadTimeline();
     }, [silentReloadTimeline]),
-    refreshIntervalTime
-  );
-
-  const handleScrollTopVisibility = useCallback(
-    (onTop: boolean) => setRefreshIntervalTime(onTop ? DEFAULT_REFRESH_MS : -1),
-    []
+    FAST_REFRESH_MS
   );
 
   useEffect(() => {
@@ -689,11 +684,7 @@ export function Notifications() {
                     </Chip>
                   </Box>
                 </Box>
-                <ScrollTopContainer
-                  scrollRef={scrollRef}
-                  anchorRef={scrollTopAnchorRef}
-                  onVisibilityChange={handleScrollTopVisibility}
-                >
+                <ScrollTopContainer scrollRef={scrollRef} anchorRef={scrollTopAnchorRef}>
                   <IconButton
                     onClick={() => virtualizer.scrollToOffset(0)}
                     variant="SurfaceVariant"
