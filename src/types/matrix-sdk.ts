@@ -7,6 +7,7 @@ import { MemoryCryptoStore } from 'matrix-js-sdk/lib/crypto/store/memory-crypto-
 // Import Matrix symbols from this module instead of matrix-js-sdk directly.
 export * from 'matrix-js-sdk/lib/client';
 export * from 'matrix-js-sdk/lib/serverCapabilities';
+export * from 'matrix-js-sdk/lib/embedded';
 export * from 'matrix-js-sdk/lib/http-api/index';
 export * from 'matrix-js-sdk/lib/autodiscovery';
 export * from 'matrix-js-sdk/lib/errors';
@@ -14,18 +15,7 @@ export * from 'matrix-js-sdk/lib/interactive-auth';
 export * from 'matrix-js-sdk/lib/content-repo';
 export * from 'matrix-js-sdk/lib/sync';
 export * from 'matrix-js-sdk/lib/sync-accumulator';
-
-const amendClientOpts = (opts: ICreateClientOpts): ICreateClientOpts => ({
-  ...opts,
-  store: opts.store ?? new MemoryStore({ localStorage: globalThis.localStorage }),
-  scheduler: opts.scheduler ?? new MatrixScheduler(),
-  cryptoStore: opts.cryptoStore ?? new MemoryCryptoStore(),
-});
-
-// Intentionally avoid importing createClient from matrix-js-sdk/lib/matrix to sidestep
-// a production bundling init-order bug involving RoomWidgetClient re-exports.
-export const createClient = (opts: ICreateClientOpts): MatrixClient =>
-  new MatrixClient(amendClientOpts(opts));
+export { createClient } from 'matrix-js-sdk/lib/matrix';
 
 export * from 'matrix-js-sdk/lib/models/event';
 export * from 'matrix-js-sdk/lib/models/room';
