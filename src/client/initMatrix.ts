@@ -29,6 +29,17 @@ type SyncTransportMeta = {
 };
 const syncTransportByClient = new WeakMap<MatrixClient, SyncTransportMeta>();
 
+const resolveSlidingEnabled = (enabled: SlidingSyncConfig['enabled']): boolean => {
+  if (enabled === undefined) return false;
+  if (typeof enabled === 'boolean') return enabled;
+  const normalized = String(enabled).trim().toLowerCase();
+  if (normalized === 'false' || normalized === '0' || normalized === 'off' || normalized === 'no')
+    return false;
+  if (normalized === 'true' || normalized === '1' || normalized === 'on' || normalized === 'yes')
+    return true;
+  return false;
+};
+
 const deleteDatabase = (name: string): Promise<void> =>
   new Promise((resolve) => {
     const req = window.indexedDB.deleteDatabase(name);
@@ -279,19 +290,35 @@ export const startClient = async (mx: MatrixClient, config?: StartClientConfig) 
   log.log('startClient', mx.getUserId());
   disposeSlidingSync(mx);
   const slidingConfig = config?.slidingSync;
+  const slidingRequested = resolveSlidingEnabled(slidingConfig?.enabled);
   const proxyBaseUrl = slidingConfig?.proxyBaseUrl ?? config?.baseUrl;
-  const slidingEnabled = slidingConfig?.enabled !== false;
-  const canUseSliding = slidingEnabled && typeof proxyBaseUrl === 'string';
-  syncTransportByClient.set(mx, {
-    transport: 'classic',
-    slidingConfigured: canUseSliding,
-    fallbackFromSliding: false,
+  const hasSlidingProxy = typeof proxyBaseUrl === 'string' && proxyBaseUrl.trim().length > 0;
+  log.log('startClient sliding config', {
+    userId: mx.getUserId(),
+    enabled: slidingConfig?.enabled,
+    requestedEnabled: slidingRequested,
+    proxyBaseUrl,
+    hasSlidingProxy,
   });
 
-  if (!canUseSliding) {
+  const startClassicSync = async (fallbackFromSliding: boolean) => {
+    syncTransportByClient.set(mx, {
+      transport: 'classic',
+      slidingConfigured: slidingRequested,
+      fallbackFromSliding,
+    });
     await mx.startClient({
       lazyLoadMembers: true,
     });
+  };
+
+  if (!slidingRequested) {
+    await startClassicSync(false);
+    return;
+  }
+
+  if (!hasSlidingProxy) {
+    await startClassicSync(false);
     return;
   }
 
@@ -302,16 +329,16 @@ export const startClient = async (mx: MatrixClient, config?: StartClientConfig) 
     resolvedProxyBaseUrl,
     manager.probeTimeoutMs
   );
+  log.log('startClient sliding probe result', {
+    userId: mx.getUserId(),
+    requestedEnabled: slidingRequested,
+    hasSlidingProxy,
+    proxyBaseUrl: resolvedProxyBaseUrl,
+    supported,
+  });
   if (!supported) {
-    syncTransportByClient.set(mx, {
-      transport: 'classic',
-      slidingConfigured: canUseSliding,
-      fallbackFromSliding: true,
-    });
     log.warn('Sliding Sync unavailable, falling back to classic sync for', mx.getUserId());
-    await mx.startClient({
-      lazyLoadMembers: true,
-    });
+    await startClassicSync(true);
     return;
   }
 
