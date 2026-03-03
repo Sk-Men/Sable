@@ -391,7 +391,7 @@ export const getReactCustomHtmlParser = (
           );
         }
 
-        if (name === 'small') {
+        if (name === 'sub') {
           return (
             <Text {...props} className={css.Small} size="Inherit">
               {renderChildren()}

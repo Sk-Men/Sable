@@ -58,7 +58,7 @@ const elementToCustomHtml = (node: CustomElement, children: string): string => {
     case BlockType.UnorderedList:
       return `<ul>${children}</ul>`;
     case BlockType.Small:
-      return `<small>${children}</small>`;
+      return `<sub>${children}</sub>`;
     case BlockType.HorizontalRule:
       return `<hr/>`;
 
