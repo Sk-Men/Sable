@@ -1,4 +1,4 @@
-import { Box, Text, IconButton, Icon, Icons, Scroll, Button, config, toRem } from 'folds';
+import { Box, Text, IconButton, Icon, Icons, Scroll, Button, config, toRem, Spinner } from 'folds';
 import { Page, PageContent, PageHeader } from '$components/page';
 import { SequenceCard } from '$components/sequence-card';
 import { SettingTile } from '$components/setting-tile';
@@ -11,13 +11,36 @@ import { useState } from 'react';
 
 export function HomeserverInfo() {
   const mx = useMatrixClient();
+  const [federationUrl, setFederationUrl] = useState<string>(mx.baseUrl);
   const [version, setVersion] = useState<any>(undefined);
 
+  // By default assume the federationUrl is the same as the baseUrl.
   if (!version)
     mx.http
-      .request(Method.Get, '/version', undefined, undefined, { prefix: '/_matrix/federation/v1' })
+      .request(Method.Get, '/version', undefined, undefined, {
+        prefix: '/_matrix/federation/v1',
+        baseUrl: federationUrl,
+      })
       .then((fetched_version) => setVersion(fetched_version))
-      .catch((error) => setVersion({ error }));
+      .catch((error) => {
+        if (federationUrl === mx.baseUrl) {
+          // Maybe they are *not* the same actually.
+          mx.http
+            .request(Method.Get, '/server', undefined, undefined, {
+              prefix: '/.well-known/matrix',
+              baseUrl: `https://${mx.getSafeUserId().split(':')[1]}`,
+            })
+            .then((well_known: any) => {
+              const newUrl = `https://${well_known['m.server'].split(':')[0]}`;
+              if (newUrl !== federationUrl) {
+                setFederationUrl(newUrl);
+              }
+            })
+            .catch((error2) => setVersion({ error: error2 }));
+        } else {
+          setVersion({ error });
+        }
+      });
 
   return (
     <Box direction="Column" gap="100" id="homeserver-info">
@@ -37,7 +60,7 @@ export function HomeserverInfo() {
         gap="400"
       >
         <SettingTile
-          title="Federation URL"
+          title="Base URL"
           description={
             <a href={mx.baseUrl} target="_blank" rel="noopener noreferrer">
               {mx.baseUrl}
@@ -45,6 +68,23 @@ export function HomeserverInfo() {
           }
         />
       </SequenceCard>
+      {federationUrl !== mx.baseUrl && (
+        <SequenceCard
+          className={SequenceCardStyle}
+          variant="SurfaceVariant"
+          direction="Column"
+          gap="400"
+        >
+          <SettingTile
+            title="Federation URL"
+            description={
+              <a href={federationUrl} target="_blank" rel="noopener noreferrer">
+                {federationUrl}
+              </a>
+            }
+          />
+        </SequenceCard>
+      )}
       {version ? (
         <>
           {version.error && (
@@ -95,7 +135,7 @@ export function HomeserverInfo() {
           direction="Column"
           gap="400"
         >
-          Loading...
+          <Spinner />
         </SequenceCard>
       )}
     </Box>
