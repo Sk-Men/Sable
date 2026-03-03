@@ -812,11 +812,11 @@ function Sync() {
         style={{ opacity: serverSlidingEnabled ? 1 : 0.5 }}
       >
         <SettingTile
-          title="Use Sliding Sync"
+          title="Use Sliding Sync (Experimental)"
           description={
             serverSlidingEnabled
-              ? 'Enable Sliding Sync for this current login/session.'
-              : 'Unavailable: this server config has Sliding Sync disabled.'
+              ? 'Enable Sliding Sync for this current login/session. Requires server support and admin configuration. May cause issues, use with caution. [More Info](https://github.com/matrix-org/matrix-spec-proposals/blob/erikj/sss/proposals/4186-simplified-sliding-sync.md)'
+              : "Unavailable: the server has disabled Sliding Sync in it's config. [More Info](https://github.com/matrix-org/matrix-spec-proposals/blob/erikj/sss/proposals/4186-simplified-sliding-sync.md)"
           }
           after={
             <Switch
