@@ -804,7 +804,9 @@ function Sync() {
 
   return (
     <Box direction="Column" gap="100">
-      <Text size="L400">Sync</Text>
+      <Text size="L400" style={{ opacity: serverSlidingEnabled ? 1 : 0.5 }}>
+        Sync
+      </Text>
       <SequenceCard
         className={SequenceCardStyle}
         variant="SurfaceVariant"
