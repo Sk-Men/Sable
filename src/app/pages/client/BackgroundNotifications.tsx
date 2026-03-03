@@ -19,13 +19,21 @@ import {
 import { useSetting } from '$state/hooks/settings';
 import { settingsAtom } from '$state/settings';
 import { getMxIdLocalPart, mxcUrlToHttp } from '$utils/matrix';
-import { getMemberDisplayName, getNotificationType, isNotificationEvent } from '$utils/room';
-import { NotificationType } from '$types/matrix/room';
+import {
+  getMemberDisplayName,
+  getNotificationType,
+  getStateEvent,
+  isNotificationEvent,
+} from '$utils/room';
+import { NotificationType, StateEvent } from '$types/matrix/room';
 import { createLogger } from '$utils/debug';
 import LogoSVG from '$public/res/svg/cinny.svg';
 import { nicknamesAtom } from '$state/nicknames';
 import { useMatrixClient } from '$hooks/useMatrixClient';
-import { buildRoomMessageNotification } from '$utils/notificationStyle';
+import {
+  buildRoomMessageNotification,
+  resolveNotificationPreviewText,
+} from '$utils/notificationStyle';
 import { mobileOrTablet } from '$utils/user-agent';
 import { startClient, stopClient } from '$client/initMatrix';
 import { useClientConfig } from '$hooks/useClientConfig';
@@ -46,6 +54,7 @@ const startBackgroundClient = async (
   await startClient(mx, {
     baseUrl: session.baseUrl,
     slidingSync: slidingSyncConfig,
+    sessionSlidingSyncOptIn: session.slidingSyncOptIn,
   });
   return mx;
 };
@@ -78,6 +87,11 @@ export function BackgroundNotifications() {
   const [showNotifications] = useSetting(settingsAtom, 'useInAppNotifications');
   const [usePushNotifications] = useSetting(settingsAtom, 'usePushNotifications');
   const [notificationSound] = useSetting(settingsAtom, 'isNotificationSounds');
+  const [showMessageContent] = useSetting(settingsAtom, 'showMessageContentInNotifications');
+  const [showEncryptedMessageContent] = useSetting(
+    settingsAtom,
+    'showMessageContentInEncryptedNotifications'
+  );
   const forcePushOnMobile = usePushNotifications && mobileOrTablet();
   const activeMx = useMatrixClient();
   const nicknames = useAtomValue(nicknamesAtom);
@@ -193,6 +207,7 @@ export function BackgroundNotifications() {
               : LogoSVG;
 
             const isHighlight = pushActions.tweaks?.highlight === true;
+            const isEncryptedRoom = !!getStateEvent(room, StateEvent.RoomEncryption);
 
             notifiedEventsRef.current.add(eventId);
             // Cap the set so it doesn't grow unbounded
@@ -205,7 +220,13 @@ export function BackgroundNotifications() {
               roomName: room.name ?? 'Unknown',
               roomAvatar,
               username: senderName,
-              previewText: 'new message',
+              previewText: resolveNotificationPreviewText({
+                content: mEvent.getContent(),
+                eventType: mEvent.getType(),
+                isEncryptedRoom,
+                showMessageContent,
+                showEncryptedMessageContent,
+              }),
               silent: !notificationSound || !isHighlight,
               eventId,
               data: {
@@ -247,6 +268,8 @@ export function BackgroundNotifications() {
     forcePushOnMobile,
     showNotifications,
     notificationSound,
+    showMessageContent,
+    showEncryptedMessageContent,
     activeMx,
     activeSessionId,
     setActiveSessionId,

@@ -162,7 +162,7 @@ export function About({ requestClose }: AboutProps) {
                     </Button>
                     <Button
                       as="a"
-                      href="https://github.com/7w1/sable"
+                      href="https://github.com/7w1/sable/pulls"
                       rel="noreferrer noopener"
                       target="_blank"
                       variant="Critical"

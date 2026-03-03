@@ -156,34 +156,44 @@ export function Cosmetics({ requestClose }: CosmeticsProps) {
                   variant="SurfaceVariant"
                   direction="Column"
                   gap="400"
-                  style={{ padding: '16px' }}
                 >
-                  <Box direction="Column" gap="200">
-                    <Box direction="Column">
-                      <Text size="T300">/color [hex]</Text>
-                      <Text size="T200" priority="300">
-                        Set room-specific name color. (e.g. /color #ff00ff)
-                      </Text>
-                    </Box>
-                    <Box direction="Column">
-                      <Text size="T300">/font [name]</Text>
-                      <Text size="T200" priority="300">
-                        Set room-specific name font. (e.g. /font monospace)
-                      </Text>
-                    </Box>
-                    <Box direction="Column">
-                      <Text size="T300">/pronoun [pronouns]</Text>
-                      <Text size="T200" priority="300">
-                        Set room-specific pronoun set. (e.g. /pronoun &quot;they\them, it\its&quot;)
-                      </Text>
-                    </Box>
-                    <Box direction="Column">
-                      <Text size="T300">/gcolor | /gfont | /gpronoun</Text>
-                      <Text size="T200" priority="300">
-                        Apply colors/fonts/pronouns to the entire space.
-                      </Text>
-                    </Box>
-                  </Box>
+                  <SettingTile
+                    title="/color [hex]"
+                    description="Set room-specific name color. (e.g. /color #ff00ff)"
+                  />
+                </SequenceCard>
+                <SequenceCard
+                  className={SequenceCardStyle}
+                  variant="SurfaceVariant"
+                  direction="Column"
+                  gap="400"
+                >
+                  <SettingTile
+                    title="/font [name]"
+                    description="Set room-specific name font. (e.g. /font monospace)"
+                  />
+                </SequenceCard>
+                <SequenceCard
+                  className={SequenceCardStyle}
+                  variant="SurfaceVariant"
+                  direction="Column"
+                  gap="400"
+                >
+                  <SettingTile
+                    title="/pronoun [pronouns]"
+                    description='Set room-specific pronoun set. (e.g. /pronoun "they\them, it\its")'
+                  />
+                </SequenceCard>
+                <SequenceCard
+                  className={SequenceCardStyle}
+                  variant="SurfaceVariant"
+                  direction="Column"
+                  gap="400"
+                >
+                  <SettingTile
+                    title="/gcolor | /gfont | /gpronoun"
+                    description="Apply colors/fonts/pronouns to the entire space."
+                  />
                 </SequenceCard>
               </Box>
             </Box>

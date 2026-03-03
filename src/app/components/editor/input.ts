@@ -413,7 +413,7 @@ export const domToEditorInput = (
         return;
       }
 
-      if (node.name === 'small') {
+      if (node.name === 'sub') {
         appendLine();
         children.push(parseSmallNode(node, processText));
         return;

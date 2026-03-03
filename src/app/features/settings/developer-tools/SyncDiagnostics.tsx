@@ -171,6 +171,7 @@ export function SyncDiagnostics() {
                   size="300"
                   variant="Secondary"
                   fill="Soft"
+                  outlined
                   radii="300"
                   before={<Icon src={expandSliding ? Icons.ChevronTop : Icons.ChevronBottom} />}
                   onClick={() => setExpandSliding((v) => !v)}

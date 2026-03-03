@@ -24,6 +24,7 @@ import {
   Text,
 } from 'folds';
 import FocusTrap from 'focus-trap-react';
+import { useAtomValue, useSetAtom } from 'jotai';
 import { Page, PageContent, PageHeader } from '$components/page';
 import { SequenceCard } from '$components/sequence-card';
 import { useSetting } from '$state/hooks/settings';
@@ -42,6 +43,9 @@ import { useMessageLayoutItems } from '$hooks/useMessageLayout';
 import { useMessageSpacingItems } from '$hooks/useMessageSpacing';
 import { useDateFormatItems } from '$hooks/useDateFormat';
 import { SequenceCardStyle } from '$features/settings/styles.css';
+import { sessionsAtom, activeSessionIdAtom } from '$state/sessions';
+import { useClientConfig } from '$hooks/useClientConfig';
+import { resolveSlidingEnabled } from '$client/initMatrix';
 
 type DateHintProps = {
   hasChanges: boolean;
@@ -776,6 +780,83 @@ function Messages() {
   );
 }
 
+function Sync() {
+  const clientConfig = useClientConfig();
+  const sessions = useAtomValue(sessionsAtom);
+  const activeSessionId = useAtomValue(activeSessionIdAtom);
+  const setSessions = useSetAtom(sessionsAtom);
+  const activeSession = sessions.find((s) => s.userId === activeSessionId) ?? sessions[0];
+
+  const serverSlidingEnabled = resolveSlidingEnabled(clientConfig.slidingSync?.enabled);
+  const useSlidingSync = activeSession?.slidingSyncOptIn === true;
+
+  const handleSetSlidingSync = (value: boolean) => {
+    if (!activeSession) return;
+    setSessions({
+      type: 'PUT',
+      session: {
+        ...activeSession,
+        slidingSyncOptIn: value,
+      },
+    });
+    window.location.reload();
+  };
+
+  return (
+    <Box direction="Column" gap="100">
+      <Text size="L400" style={{ opacity: serverSlidingEnabled ? 1 : 0.5 }}>
+        Sync
+      </Text>
+      <SequenceCard
+        className={SequenceCardStyle}
+        variant="SurfaceVariant"
+        direction="Column"
+        style={{ opacity: serverSlidingEnabled ? 1 : 0.5 }}
+      >
+        <SettingTile
+          title="Use Sliding Sync (Experimental)"
+          description={
+            serverSlidingEnabled ? (
+              <>
+                Enable Sliding Sync for this current login/session. Requires server support and
+                admin configuration. May cause issues, use with caution.{' '}
+                <a
+                  href="https://github.com/matrix-org/matrix-spec-proposals/blob/erikj/sss/proposals/4186-simplified-sliding-sync.md"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  More info
+                </a>
+                .
+              </>
+            ) : (
+              <>
+                Unavailable: the server has disabled Sliding Sync in its config.{' '}
+                <a
+                  href="https://github.com/matrix-org/matrix-spec-proposals/blob/erikj/sss/proposals/4186-simplified-sliding-sync.md"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  More info
+                </a>
+                .
+              </>
+            )
+          }
+          after={
+            <Switch
+              variant="Primary"
+              value={useSlidingSync}
+              onChange={handleSetSlidingSync}
+              disabled={!serverSlidingEnabled}
+            />
+          }
+        />
+      </SequenceCard>
+    </Box>
+  );
+}
+
 type GeneralProps = {
   requestClose: () => void;
 };
@@ -801,6 +882,7 @@ export function General({ requestClose }: GeneralProps) {
           <PageContent>
             <Box direction="Column" gap="700">
               <DateAndTime />
+              <Sync />
               <Gestures isMobile={mobileOrTablet()} />
               <Editor isMobile={mobileOrTablet()} />
               <Messages />

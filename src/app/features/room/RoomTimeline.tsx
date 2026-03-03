@@ -75,6 +75,8 @@ import {
   renderMatrixMention,
 } from '$plugins/react-custom-html-parser';
 import {
+  roomHaveNotification,
+  roomHaveUnread,
   canEditEvent,
   decryptAllTimelineEvent,
   getEditedEvent,
@@ -259,6 +261,7 @@ type RoomTimelineProps = {
 };
 
 const PAGINATION_LIMIT = 60;
+const EVENT_TIMELINE_LOAD_TIMEOUT_MS = 12000;
 
 type Timeline = {
   linkedTimelines: EventTimeline[];
@@ -273,12 +276,38 @@ const useEventTimelineLoader = (
 ) =>
   useCallback(
     async (eventId: string) => {
+      const withTimeout = async <T,>(promise: Promise<T>, timeoutMs: number): Promise<T> =>
+        new Promise<T>((resolve, reject) => {
+          const timeoutId = window.setTimeout(() => {
+            reject(new Error('Timed out loading event timeline'));
+          }, timeoutMs);
+
+          promise
+            .then((value) => {
+              window.clearTimeout(timeoutId);
+              resolve(value);
+            })
+            .catch((error) => {
+              window.clearTimeout(timeoutId);
+              reject(error);
+            });
+        });
+
       if (!room.getUnfilteredTimelineSet().getTimelineForEvent(eventId)) {
-        await mx.roomInitialSync(room.roomId, PAGINATION_LIMIT);
-        await mx.getLatestTimeline(room.getUnfilteredTimelineSet());
+        await withTimeout(
+          mx.roomInitialSync(room.roomId, PAGINATION_LIMIT),
+          EVENT_TIMELINE_LOAD_TIMEOUT_MS
+        );
+        await withTimeout(
+          mx.getLatestTimeline(room.getUnfilteredTimelineSet()),
+          EVENT_TIMELINE_LOAD_TIMEOUT_MS
+        );
       }
       const [err, replyEvtTimeline] = await to(
-        mx.getEventTimeline(room.getUnfilteredTimelineSet(), eventId)
+        withTimeout(
+          mx.getEventTimeline(room.getUnfilteredTimelineSet(), eventId),
+          EVENT_TIMELINE_LOAD_TIMEOUT_MS
+        )
       );
       if (!replyEvtTimeline) {
         onError(err ?? null);
@@ -359,31 +388,34 @@ const useTimelinePagination = (
       }
 
       fetching = true;
-      const [err] = await to(
-        mx.paginateEventTimeline(timelineToPaginate, {
-          backwards,
-          limit,
-        })
-      );
-      if (err) {
-        // TODO: handle pagination error.
-        return;
-      }
-      const fetchedTimeline =
-        timelineToPaginate.getNeighbouringTimeline(
-          backwards ? Direction.Backward : Direction.Forward
-        ) ?? timelineToPaginate;
-      // Decrypt all event ahead of render cycle
-      const roomId = fetchedTimeline.getRoomId();
-      const room = roomId ? mx.getRoom(roomId) : null;
+      try {
+        const [err] = await to(
+          mx.paginateEventTimeline(timelineToPaginate, {
+            backwards,
+            limit,
+          })
+        );
+        if (err) {
+          // TODO: handle pagination error.
+          return;
+        }
+        const fetchedTimeline =
+          timelineToPaginate.getNeighbouringTimeline(
+            backwards ? Direction.Backward : Direction.Forward
+          ) ?? timelineToPaginate;
+        // Decrypt all event ahead of render cycle
+        const roomId = fetchedTimeline.getRoomId();
+        const room = roomId ? mx.getRoom(roomId) : null;
 
-      if (room?.hasEncryptionStateEvent()) {
-        await to(decryptAllTimelineEvent(mx, fetchedTimeline));
-      }
+        if (room?.hasEncryptionStateEvent()) {
+          await to(decryptAllTimelineEvent(mx, fetchedTimeline));
+        }
 
-      fetching = false;
-      if (alive()) {
-        recalibratePagination(lTimelines, timelinesEventsCount, backwards);
+        if (alive()) {
+          recalibratePagination(lTimelines, timelinesEventsCount, backwards);
+        }
+      } finally {
+        fetching = false;
       }
     };
   }, [mx, alive, setTimeline, limit]);
@@ -450,6 +482,8 @@ const getEmptyTimeline = () => ({
 });
 
 const getRoomUnreadInfo = (room: Room, scrollTo = false) => {
+  if (!roomHaveNotification(room) && !roomHaveUnread(room.client, room)) return undefined;
+
   const readUptoEventId = room.getEventReadUpTo(room.client.getUserId() ?? '');
   if (!readUptoEventId) return undefined;
   const evtTimeline = getEventTimeline(room, readUptoEventId);
@@ -718,7 +752,6 @@ export function RoomTimeline({
           highlight,
         });
       } else {
-        setTimeline(getEmptyTimeline());
         loadEventTimeline(evtId);
       }
     },
@@ -728,11 +761,20 @@ export function RoomTimeline({
   useLiveTimelineRefresh(
     room,
     useCallback(() => {
-      if (liveTimelineLinked) {
+      if (liveTimelineLinked || timeline.linkedTimelines.length === 0) {
         setTimeline(getInitialTimeline(room));
       }
-    }, [room, liveTimelineLinked])
+    }, [room, liveTimelineLinked, timeline.linkedTimelines.length])
   );
+
+  // Recover from transient empty timeline state when the live timeline
+  // already has events (can happen when opening by event id, then fallbacking).
+  useEffect(() => {
+    if (eventId) return;
+    if (timeline.linkedTimelines.length > 0) return;
+    if (getLiveTimeline(room).getEvents().length === 0) return;
+    setTimeline(getInitialTimeline(room));
+  }, [eventId, room, timeline.linkedTimelines.length]);
 
   // Stay at bottom when room editor resize
   useResizeObserver(
@@ -806,20 +848,10 @@ export function RoomTimeline({
     useCallback(
       (inFocus) => {
         if (inFocus && atBottomRef.current) {
-          if (unreadInfo?.inLiveTimeline) {
-            handleOpenEvent(unreadInfo.readUptoEventId, false, (scrolled) => {
-              // the unread event is already in view
-              // so, try mark as read;
-              if (!scrolled) {
-                tryAutoMarkAsRead();
-              }
-            });
-            return;
-          }
           tryAutoMarkAsRead();
         }
       },
-      [tryAutoMarkAsRead, unreadInfo, handleOpenEvent]
+      [tryAutoMarkAsRead]
     )
   );
 
@@ -991,7 +1023,6 @@ export function RoomTimeline({
 
   const handleJumpToUnread = () => {
     if (unreadInfo?.readUptoEventId) {
-      setTimeline(getEmptyTimeline());
       loadEventTimeline(unreadInfo.readUptoEventId);
     }
   };
