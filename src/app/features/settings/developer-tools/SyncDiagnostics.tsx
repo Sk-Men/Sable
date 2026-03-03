@@ -6,7 +6,7 @@ import { getClientSyncDiagnostics } from '$client/initMatrix';
 import { Direction, EventType, NotificationCountType, Room } from '$types/matrix-sdk';
 import { Membership } from '$types/matrix/room';
 import { SequenceCardStyle } from '$features/settings/styles.css';
-import { isNotificationEvent } from '$utils/room';
+import { getUnreadInfo, isNotificationEvent } from '$utils/room';
 
 type RoomRenderingDiagnostics = {
   totalRooms: number;
@@ -71,9 +71,11 @@ const getUnreadDriftRooms = (mx: ReturnType<typeof useMatrixClient>): UnreadDrif
     .getRooms()
     .filter((room) => !room.isSpaceRoom() && room.getMyMembership() === Membership.Join)
     .reduce<UnreadDriftRoom[]>((driftRooms, room) => {
+      const reconciledUnread = getUnreadInfo(room);
       const sdkTotal = room.getUnreadNotificationCount(NotificationCountType.Total);
       const sdkHighlight = room.getUnreadNotificationCount(NotificationCountType.Highlight);
       if (sdkTotal <= 0 && sdkHighlight <= 0) return driftRooms;
+      if (reconciledUnread.total <= 0 && reconciledUnread.highlight <= 0) return driftRooms;
 
       const latestNotificationEvent = [...room.getLiveTimeline().getEvents()]
         .reverse()
@@ -149,7 +151,7 @@ export function SyncDiagnostics() {
             Rooms without live events: {roomDiagnostics.roomsWithoutLiveEvents}
           </Text>
           <Text size="T300">
-            Rooms with more history to paginate: {roomDiagnostics.roomsWithBackPagination}
+            Rooms with additional history available: {roomDiagnostics.roomsWithBackPagination}
           </Text>
           <Text size="T300">Unread drift rooms: {unreadDriftRooms.length}</Text>
           {unreadDriftRooms.slice(0, 10).map((room) => (

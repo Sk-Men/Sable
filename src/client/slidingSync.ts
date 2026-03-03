@@ -67,7 +67,6 @@ const buildDefaultSubscription = (timelineLimit: number): MSC3575RoomSubscriptio
     [StateEvent.PoniesRoomEmotes, '*'],
     [StateEvent.RoomWidget, '*'],
     [StateEvent.GroupCallPrefix, '*'],
-    [StateEvent.GroupCallMemberPrefix, '*'],
     [EventType.SpaceChild, '*'],
     [EventType.SpaceParent, '*'],
   ],

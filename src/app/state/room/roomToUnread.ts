@@ -11,7 +11,7 @@ import {
   ReceiptType,
   EventType,
 } from '$types/matrix-sdk';
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import {
   Membership,
   NotificationType,
@@ -186,6 +186,7 @@ export const roomToUnreadAtom = atom<RoomToUnread, [RoomToUnreadAction], undefin
 export const useBindRoomToUnreadAtom = (mx: MatrixClient, unreadAtom: typeof roomToUnreadAtom) => {
   const setUnreadAtom = useSetAtom(unreadAtom);
   const roomsNotificationPreferences = useRoomsNotificationPreferencesContext();
+  const spaceChildResetTimerRef = useRef<number | null>(null);
 
   useEffect(() => {
     setUnreadAtom({
@@ -327,15 +328,36 @@ export const useBindRoomToUnreadAtom = (mx: MatrixClient, unreadAtom: typeof roo
     };
   }, [mx, setUnreadAtom]);
 
+  useEffect(
+    () => () => {
+      if (spaceChildResetTimerRef.current !== null) {
+        window.clearTimeout(spaceChildResetTimerRef.current);
+        spaceChildResetTimerRef.current = null;
+      }
+    },
+    []
+  );
+
   useStateEventCallback(
     mx,
     useCallback(
       (mEvent) => {
         if (mEvent.getType() === StateEvent.SpaceChild) {
-          setUnreadAtom({
-            type: 'RESET',
-            unreadInfos: getUnreadInfos(mx),
-          });
+          const roomId = mEvent.getRoomId();
+          if (!roomId) return;
+          const parentRoom = mx.getRoom(roomId);
+          if (!parentRoom || parentRoom.getMyMembership() !== Membership.Join) return;
+
+          if (spaceChildResetTimerRef.current !== null) {
+            window.clearTimeout(spaceChildResetTimerRef.current);
+          }
+          spaceChildResetTimerRef.current = window.setTimeout(() => {
+            setUnreadAtom({
+              type: 'RESET',
+              unreadInfos: getUnreadInfos(mx),
+            });
+            spaceChildResetTimerRef.current = null;
+          }, 150);
         }
       },
       [mx, setUnreadAtom]
