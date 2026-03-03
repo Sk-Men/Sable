@@ -485,7 +485,7 @@ export function EmojiBoard({
     if (groups.length > 0) {
       virtualizer.scrollToIndex(0, { align: 'start' });
     }
-  }, [tab, virtualizer, groups]);
+  }, [tab, virtualizer, groups.length]);
 
   return (
     <FocusTrap

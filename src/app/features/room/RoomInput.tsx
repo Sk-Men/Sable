@@ -428,23 +428,20 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
       if (replyDraft) {
         content['m.relates_to'] = getReplyContent(replyDraft);
       }
-      try {
-        await mx.sendMessage(roomId, content as any);
-      } catch (error) {
-        log.error('failed to send message', { roomId }, error);
-        return;
-      }
-
       if (replyDraft) {
         setReplyDraft(undefined);
       }
 
       resetEditor(editor);
       resetEditorHistory(editor);
-
       setInputKey((prev) => prev + 1);
-
       sendTypingStatus(false);
+
+      try {
+        await mx.sendMessage(roomId, content as any);
+      } catch (error) {
+        log.error('failed to send message', { roomId }, error);
+      }
     }, [mx, roomId, editor, replyDraft, sendTypingStatus, setReplyDraft, isMarkdown, commands]);
 
     const handleKeyDown: KeyboardEventHandler = useCallback(

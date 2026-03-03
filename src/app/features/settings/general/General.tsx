@@ -780,7 +780,7 @@ function Messages() {
   );
 }
 
-function Sync() {
+export function Sync() {
   const clientConfig = useClientConfig();
   const sessions = useAtomValue(sessionsAtom);
   const activeSessionId = useAtomValue(activeSessionIdAtom);
@@ -882,7 +882,6 @@ export function General({ requestClose }: GeneralProps) {
           <PageContent>
             <Box direction="Column" gap="700">
               <DateAndTime />
-              <Sync />
               <Gestures isMobile={mobileOrTablet()} />
               <Editor isMobile={mobileOrTablet()} />
               <Messages />

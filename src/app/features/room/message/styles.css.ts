@@ -55,3 +55,28 @@ export const ReactionsContainer = style({
 export const ReactionsTooltipText = style({
   wordBreak: 'break-word',
 });
+
+export const MessagePending = style({
+  opacity: config.opacity.P500,
+});
+
+export const MessageFailed = style({
+  opacity: config.opacity.P400,
+});
+
+export const SendStatusRow = style({
+  display: 'flex',
+  alignItems: 'center',
+  gap: config.space.S200,
+  marginTop: config.space.S100,
+});
+
+export const SendStatusButton = style([
+  DefaultReset,
+  {
+    color: 'inherit',
+    cursor: 'pointer',
+    textDecoration: 'underline',
+    fontSize: toRem(12),
+  },
+]);

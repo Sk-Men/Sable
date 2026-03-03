@@ -3,6 +3,7 @@ import {
   Fragment,
   Dispatch,
   MouseEventHandler,
+  ReactNode,
   RefObject,
   SetStateAction,
   useCallback,
@@ -17,6 +18,7 @@ import {
   EventTimeline,
   EventTimelineSet,
   EventTimelineSetHandlerMap,
+  EventStatus,
   IContent,
   IRoomTimelineData,
   MatrixClient,
@@ -694,7 +696,7 @@ export function RoomTimeline({
         // keep paginating timeline and conditionally mark as read
         // otherwise we update timeline without paginating
         // so timeline can be updated with evt like: edits, reactions etc
-        if (atBottomRef.current) {
+        if (atBottomRef.current && atLiveEndRef.current) {
           if (document.hasFocus() && (!unreadInfo || mEvt.getSender() === mx.getUserId())) {
             // Check if the document is in focus (user is actively viewing the app),
             // and either there are no unread messages or the latest message is from the current user.
@@ -728,6 +730,24 @@ export function RoomTimeline({
       [mx, room, unreadInfo, hideActivity]
     )
   );
+
+  useEffect(() => {
+    const handleLocalEchoUpdated: RoomEventHandlerMap[RoomEvent.LocalEchoUpdated] = (
+      _mEvent: MatrixEvent,
+      eventRoom: Room | undefined
+    ) => {
+      if (eventRoom?.roomId !== room.roomId) return;
+      setTimeline((ct) => ({ ...ct }));
+      if (!unreadInfo) {
+        setUnreadInfo(getRoomUnreadInfo(room));
+      }
+    };
+
+    room.on(RoomEvent.LocalEchoUpdated, handleLocalEchoUpdated);
+    return () => {
+      room.removeListener(RoomEvent.LocalEchoUpdated, handleLocalEchoUpdated);
+    };
+  }, [room, unreadInfo, setTimeline, setUnreadInfo]);
 
   const handleOpenEvent = useCallback(
     async (
@@ -1167,6 +1187,15 @@ export function RoomTimeline({
     },
     [mx, room]
   );
+
+  const handleResend = useCallback(
+    (mEvent: MatrixEvent) => {
+      if (mEvent.getAssociatedStatus() !== EventStatus.NOT_SENT) return;
+      mx.resendEvent(mEvent, room).catch(() => undefined);
+    },
+    [mx, room]
+  );
+
   const handleEdit = useCallback(
     (editEvtId?: string) => {
       if (editEvtId) {
@@ -1237,6 +1266,8 @@ export function RoomTimeline({
             onReactionToggle={handleReactionToggle}
             senderId={senderId}
             senderDisplayName={senderDisplayName}
+            sendStatus={mEvent.getAssociatedStatus()}
+            onResend={handleResend}
             onEditId={handleEdit}
             activeReplyId={activeReplyId}
             reply={
@@ -1322,6 +1353,8 @@ export function RoomTimeline({
             senderId={senderId}
             activeReplyId={activeReplyId}
             senderDisplayName={senderDisplayName}
+            sendStatus={mEvent.getAssociatedStatus()}
+            onResend={handleResend}
             reply={
               replyEventId && (
                 <Reply
@@ -1438,6 +1471,8 @@ export function RoomTimeline({
             senderId={senderId}
             activeReplyId={activeReplyId}
             senderDisplayName={senderDisplayName}
+            sendStatus={mEvent.getAssociatedStatus()}
+            onResend={handleResend}
             reply={
               replyEventId && (
                 <Reply
@@ -1768,6 +1803,7 @@ export function RoomTimeline({
   let isPrevRendered = false;
   let newDivider = false;
   let dayDivider = false;
+  const timelineItems = getItems();
   const eventRenderer = (item: number) => {
     const [eventTimeline, baseIndex] = getTimelineAndBaseIndex(timeline.linkedTimelines, item);
     if (!eventTimeline) return null;
@@ -1859,6 +1895,86 @@ export function RoomTimeline({
     return eventJSX;
   };
 
+  let backPaginationJSX: ReactNode | undefined;
+  if (canPaginateBack || !rangeAtStart) {
+    if (timelineItems.length === 0) {
+      backPaginationJSX =
+        messageLayout === MessageLayout.Compact ? (
+          <>
+            <MessageBase>
+              <CompactPlaceholder />
+            </MessageBase>
+            <MessageBase>
+              <CompactPlaceholder />
+            </MessageBase>
+            <MessageBase>
+              <CompactPlaceholder />
+            </MessageBase>
+            <MessageBase>
+              <CompactPlaceholder />
+            </MessageBase>
+            <MessageBase ref={observeBackAnchor}>
+              <CompactPlaceholder />
+            </MessageBase>
+          </>
+        ) : (
+          <>
+            <MessageBase>
+              <DefaultPlaceholder />
+            </MessageBase>
+            <MessageBase>
+              <DefaultPlaceholder />
+            </MessageBase>
+            <MessageBase ref={observeBackAnchor}>
+              <DefaultPlaceholder />
+            </MessageBase>
+          </>
+        );
+    } else {
+      backPaginationJSX = <div ref={observeBackAnchor} style={{ height: 1 }} />;
+    }
+  }
+
+  let frontPaginationJSX: ReactNode | undefined;
+  if (!liveTimelineLinked || !rangeAtEnd) {
+    if (timelineItems.length === 0) {
+      frontPaginationJSX =
+        messageLayout === MessageLayout.Compact ? (
+          <>
+            <MessageBase ref={observeFrontAnchor}>
+              <CompactPlaceholder />
+            </MessageBase>
+            <MessageBase>
+              <CompactPlaceholder />
+            </MessageBase>
+            <MessageBase>
+              <CompactPlaceholder />
+            </MessageBase>
+            <MessageBase>
+              <CompactPlaceholder />
+            </MessageBase>
+            <MessageBase>
+              <CompactPlaceholder />
+            </MessageBase>
+          </>
+        ) : (
+          <>
+            <MessageBase ref={observeFrontAnchor}>
+              <DefaultPlaceholder />
+            </MessageBase>
+            <MessageBase>
+              <DefaultPlaceholder />
+            </MessageBase>
+            <MessageBase>
+              <DefaultPlaceholder />
+            </MessageBase>
+          </>
+        );
+    } else {
+      frontPaginationJSX = <div ref={observeFrontAnchor} style={{ height: 1 }} />;
+    }
+  }
+
   return (
     <Box grow="Yes" style={{ position: 'relative' }}>
       {unreadInfo?.readUptoEventId && !unreadInfo?.inLiveTimeline && (
@@ -1902,73 +2018,11 @@ export function RoomTimeline({
               <RoomIntro room={room} />
             </div>
           )}
-          {(canPaginateBack || !rangeAtStart) &&
-            (messageLayout === MessageLayout.Compact ? (
-              <>
-                <MessageBase>
-                  <CompactPlaceholder key={getItems().length} />
-                </MessageBase>
-                <MessageBase>
-                  <CompactPlaceholder key={getItems().length} />
-                </MessageBase>
-                <MessageBase>
-                  <CompactPlaceholder key={getItems().length} />
-                </MessageBase>
-                <MessageBase>
-                  <CompactPlaceholder key={getItems().length} />
-                </MessageBase>
-                <MessageBase ref={observeBackAnchor}>
-                  <CompactPlaceholder key={getItems().length} />
-                </MessageBase>
-              </>
-            ) : (
-              <>
-                <MessageBase>
-                  <DefaultPlaceholder key={getItems().length} />
-                </MessageBase>
-                <MessageBase>
-                  <DefaultPlaceholder key={getItems().length} />
-                </MessageBase>
-                <MessageBase ref={observeBackAnchor}>
-                  <DefaultPlaceholder key={getItems().length} />
-                </MessageBase>
-              </>
-            ))}
+          {backPaginationJSX}
 
-          {getItems().map(eventRenderer)}
+          {timelineItems.map(eventRenderer)}
 
-          {(!liveTimelineLinked || !rangeAtEnd) &&
-            (messageLayout === MessageLayout.Compact ? (
-              <>
-                <MessageBase ref={observeFrontAnchor}>
-                  <CompactPlaceholder key={getItems().length} />
-                </MessageBase>
-                <MessageBase>
-                  <CompactPlaceholder key={getItems().length} />
-                </MessageBase>
-                <MessageBase>
-                  <CompactPlaceholder key={getItems().length} />
-                </MessageBase>
-                <MessageBase>
-                  <CompactPlaceholder key={getItems().length} />
-                </MessageBase>
-                <MessageBase>
-                  <CompactPlaceholder key={getItems().length} />
-                </MessageBase>
-              </>
-            ) : (
-              <>
-                <MessageBase ref={observeFrontAnchor}>
-                  <DefaultPlaceholder key={getItems().length} />
-                </MessageBase>
-                <MessageBase>
-                  <DefaultPlaceholder key={getItems().length} />
-                </MessageBase>
-                <MessageBase>
-                  <DefaultPlaceholder key={getItems().length} />
-                </MessageBase>
-              </>
-            ))}
+          {frontPaginationJSX}
           <span ref={atBottomAnchorRef} />
         </Box>
       </Scroll>
