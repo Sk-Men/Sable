@@ -814,9 +814,32 @@ function Sync() {
         <SettingTile
           title="Use Sliding Sync (Experimental)"
           description={
-            serverSlidingEnabled
-              ? 'Enable Sliding Sync for this current login/session. Requires server support and admin configuration. May cause issues, use with caution. [More Info](https://github.com/matrix-org/matrix-spec-proposals/blob/erikj/sss/proposals/4186-simplified-sliding-sync.md)'
-              : "Unavailable: the server has disabled Sliding Sync in it's config. [More Info](https://github.com/matrix-org/matrix-spec-proposals/blob/erikj/sss/proposals/4186-simplified-sliding-sync.md)"
+            serverSlidingEnabled ? (
+              <>
+                Enable Sliding Sync for this current login/session. Requires server support and
+                admin configuration. May cause issues, use with caution.{' '}
+                <a
+                  href="https://github.com/matrix-org/matrix-spec-proposals/blob/erikj/sss/proposals/4186-simplified-sliding-sync.md"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  More info
+                </a>
+                .
+              </>
+            ) : (
+              <>
+                Unavailable: the server has disabled Sliding Sync in its config.{' '}
+                <a
+                  href="https://github.com/matrix-org/matrix-spec-proposals/blob/erikj/sss/proposals/4186-simplified-sliding-sync.md"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  More info
+                </a>
+                .
+              </>
+            )
           }
           after={
             <Switch
