@@ -5,7 +5,6 @@ const MAX_TAG_NESTING = 100;
 const permittedHtmlTags = [
   'font',
   'del',
-  'small',
   'h1',
   'h2',
   'h3',
@@ -79,7 +78,7 @@ const permittedTagToAttributes = {
   u: ['data-md'],
   s: ['data-md'],
   del: ['data-md'],
-  small: ['data-md'],
+  sub: ['data-md'],
   hr: ['data-md'],
 };
 
