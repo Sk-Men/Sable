@@ -259,6 +259,7 @@ type RoomTimelineProps = {
 };
 
 const PAGINATION_LIMIT = 60;
+const EVENT_TIMELINE_LOAD_TIMEOUT_MS = 12000;
 
 type Timeline = {
   linkedTimelines: EventTimeline[];
@@ -273,12 +274,38 @@ const useEventTimelineLoader = (
 ) =>
   useCallback(
     async (eventId: string) => {
+      const withTimeout = async <T,>(promise: Promise<T>, timeoutMs: number): Promise<T> =>
+        new Promise<T>((resolve, reject) => {
+          const timeoutId = window.setTimeout(() => {
+            reject(new Error('Timed out loading event timeline'));
+          }, timeoutMs);
+
+          promise
+            .then((value) => {
+              window.clearTimeout(timeoutId);
+              resolve(value);
+            })
+            .catch((error) => {
+              window.clearTimeout(timeoutId);
+              reject(error);
+            });
+        });
+
       if (!room.getUnfilteredTimelineSet().getTimelineForEvent(eventId)) {
-        await mx.roomInitialSync(room.roomId, PAGINATION_LIMIT);
-        await mx.getLatestTimeline(room.getUnfilteredTimelineSet());
+        await withTimeout(
+          mx.roomInitialSync(room.roomId, PAGINATION_LIMIT),
+          EVENT_TIMELINE_LOAD_TIMEOUT_MS
+        );
+        await withTimeout(
+          mx.getLatestTimeline(room.getUnfilteredTimelineSet()),
+          EVENT_TIMELINE_LOAD_TIMEOUT_MS
+        );
       }
       const [err, replyEvtTimeline] = await to(
-        mx.getEventTimeline(room.getUnfilteredTimelineSet(), eventId)
+        withTimeout(
+          mx.getEventTimeline(room.getUnfilteredTimelineSet(), eventId),
+          EVENT_TIMELINE_LOAD_TIMEOUT_MS
+        )
       );
       if (!replyEvtTimeline) {
         onError(err ?? null);
@@ -721,7 +748,6 @@ export function RoomTimeline({
           highlight,
         });
       } else {
-        setTimeline(getEmptyTimeline());
         loadEventTimeline(evtId);
       }
     },
@@ -1003,7 +1029,6 @@ export function RoomTimeline({
 
   const handleJumpToUnread = () => {
     if (unreadInfo?.readUptoEventId) {
-      setTimeline(getEmptyTimeline());
       loadEventTimeline(unreadInfo.readUptoEventId);
     }
   };
