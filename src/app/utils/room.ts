@@ -144,7 +144,7 @@ export const mapParentWithChildren = (
 export const getRoomToParents = (mx: MatrixClient): RoomToParents => {
   const map: RoomToParents = new Map();
   mx.getRooms()
-    .filter((room) => isSpace(room))
+    .filter((room) => isSpace(room) && room.getMyMembership() === Membership.Join)
     .forEach((room) => mapParentWithChildren(map, room.roomId, getSpaceChildren(room)));
 
   return map;
