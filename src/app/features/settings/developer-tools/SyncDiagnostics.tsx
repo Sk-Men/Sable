@@ -197,7 +197,8 @@ export function SyncDiagnostics() {
                   </Text>
                   {diagnostics.sliding.lists.map((list) => (
                     <Text size="T300" key={list.key}>
-                      List `{list.key}` coverage: {formatListCoverage(list.knownCount, list.rangeEnd)}
+                      List `{list.key}` coverage:{' '}
+                      {formatListCoverage(list.knownCount, list.rangeEnd)}
                     </Text>
                   ))}
                 </Box>

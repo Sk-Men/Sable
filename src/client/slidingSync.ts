@@ -106,7 +106,10 @@ const resolveAdaptiveTimelineLimit = (
     return Math.min(pageSize, TIMELINE_LIMIT_LOW);
   }
 
-  if (signals.effectiveType === '3g' || (signals.deviceMemoryGb !== null && signals.deviceMemoryGb <= 4)) {
+  if (
+    signals.effectiveType === '3g' ||
+    (signals.deviceMemoryGb !== null && signals.deviceMemoryGb <= 4)
+  ) {
     return Math.min(pageSize, TIMELINE_LIMIT_MEDIUM);
   }
 
@@ -183,11 +186,17 @@ export class SlidingSyncManager {
   private readonly maxRooms: number;
 
   private readonly listKeys: string[];
+
   private timelineLimit: number;
+
   private readonly listPageSize: number;
+
   private readonly adaptiveTimeline: boolean;
+
   private deviceDiagnostics: SlidingSyncDeviceDiagnostics;
+
   private readonly configuredTimelineLimit?: number;
+
   private readonly onConnectionChange: () => void;
 
   private readonly onLifecycle: (state: SlidingSyncState, resp: unknown, err?: Error) => void;
@@ -202,7 +211,9 @@ export class SlidingSyncManager {
     config: SlidingSyncConfig
   ) {
     const listPageSize = clampPositive(config.listPageSize, DEFAULT_LIST_PAGE_SIZE);
-    const adaptiveTimeline = !(typeof config.timelineLimit === 'number' && config.timelineLimit > 0);
+    const adaptiveTimeline = !(
+      typeof config.timelineLimit === 'number' && config.timelineLimit > 0
+    );
     const signals = readAdaptiveSignals();
     const timelineLimit = resolveAdaptiveTimelineLimit(config.timelineLimit, listPageSize, signals);
     const pollTimeoutMs = clampPositive(config.pollTimeoutMs, DEFAULT_POLL_TIMEOUT_MS);
@@ -250,7 +261,9 @@ export class SlidingSyncManager {
 
   public attach(): void {
     this.slidingSync.on(SlidingSyncEvent.Lifecycle, this.onLifecycle);
-    const connection = (typeof navigator !== 'undefined' ? (navigator as any).connection : undefined) as
+    const connection = (
+      typeof navigator !== 'undefined' ? (navigator as any).connection : undefined
+    ) as
       | {
           addEventListener?: (event: string, cb: () => void) => void;
           removeEventListener?: (event: string, cb: () => void) => void;
@@ -271,7 +284,9 @@ export class SlidingSyncManager {
     if (this.disposed) return;
     this.disposed = true;
     this.slidingSync.removeListener(SlidingSyncEvent.Lifecycle, this.onLifecycle);
-    const connection = (typeof navigator !== 'undefined' ? (navigator as any).connection : undefined) as
+    const connection = (
+      typeof navigator !== 'undefined' ? (navigator as any).connection : undefined
+    ) as
       | {
           addEventListener?: (event: string, cb: () => void) => void;
           removeEventListener?: (event: string, cb: () => void) => void;
