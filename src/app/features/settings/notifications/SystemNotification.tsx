@@ -169,6 +169,14 @@ export function SystemNotification() {
     settingsAtom,
     'isNotificationSounds'
   );
+  const [showMessageContent, setShowMessageContent] = useSetting(
+    settingsAtom,
+    'showMessageContentInNotifications'
+  );
+  const [showEncryptedMessageContent, setShowEncryptedMessageContent] = useSetting(
+    settingsAtom,
+    'showMessageContentInEncryptedNotifications'
+  );
 
   return (
     <Box direction="Column" gap="100">
@@ -191,6 +199,36 @@ export function SystemNotification() {
           title="In-App Notifications"
           description="Show a notification when a message arrives while the app is open (but not focused on the room)."
           after={<Switch value={showInAppNotifs} onChange={setShowInAppNotifs} />}
+        />
+      </SequenceCard>
+      <SequenceCard
+        className={SequenceCardStyle}
+        variant="SurfaceVariant"
+        direction="Column"
+        gap="400"
+      >
+        <SettingTile
+          title="Show Message Content"
+          description="Include message text in notification bodies."
+          after={<Switch value={showMessageContent} onChange={setShowMessageContent} />}
+        />
+      </SequenceCard>
+      <SequenceCard
+        className={SequenceCardStyle}
+        variant="SurfaceVariant"
+        direction="Column"
+        gap="400"
+      >
+        <SettingTile
+          title="Show Encrypted Message Content"
+          description="Allow message text from encrypted rooms in notification bodies. May not work on some platforms due to technical limitations."
+          after={
+            <Switch
+              value={showEncryptedMessageContent}
+              onChange={setShowEncryptedMessageContent}
+              disabled={!showMessageContent}
+            />
+          }
         />
       </SequenceCard>
       <SequenceCard

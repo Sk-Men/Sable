@@ -9,8 +9,12 @@ declare const self: ServiceWorkerGlobalScope;
 
 let notificationSoundEnabled = true;
 let preferPushOnMobile = false;
+let showMessageContent = false;
+let showEncryptedMessageContent = false;
 const { handlePushNotificationPushData } = createPushNotifications(self, () => ({
   notificationSoundEnabled,
+  showMessageContent,
+  showEncryptedMessageContent,
 }));
 
 type SessionInfo = {
@@ -123,6 +127,16 @@ self.addEventListener('message', (event: ExtendableMessageEvent) => {
     }
     if (typeof (data as { preferPushOnMobile?: unknown }).preferPushOnMobile === 'boolean') {
       preferPushOnMobile = (data as { preferPushOnMobile: boolean }).preferPushOnMobile;
+    }
+    if (typeof (data as { showMessageContent?: unknown }).showMessageContent === 'boolean') {
+      showMessageContent = (data as { showMessageContent: boolean }).showMessageContent;
+    }
+    if (
+      typeof (data as { showEncryptedMessageContent?: unknown }).showEncryptedMessageContent ===
+      'boolean'
+    ) {
+      showEncryptedMessageContent = (data as { showEncryptedMessageContent: boolean })
+        .showEncryptedMessageContent;
     }
   }
 });
