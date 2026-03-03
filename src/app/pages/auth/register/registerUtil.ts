@@ -8,6 +8,7 @@ import {
 } from '$types/matrix-sdk';
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useSetAtom } from 'jotai';
 import { LoginPathSearchParams } from '$pages/paths';
 import {
   deleteAfterLoginRedirectPath,
@@ -15,7 +16,7 @@ import {
 } from '$pages/afterLoginRedirectPath';
 import { getHomePath, getLoginPath, withSearchParam } from '$pages/pathUtils';
 import { getMxIdLocalPart, getMxIdServer } from '$utils/matrix';
-import { setFallbackSession } from '$state/sessions';
+import { activeSessionIdAtom, sessionsAtom, setFallbackSession } from '$state/sessions';
 import { ErrorCode } from '../../../cs-errorcode';
 
 export enum RegisterError {
@@ -109,6 +110,8 @@ export const register = async (
 
 export const useRegisterComplete = (data?: CustomRegisterResponse) => {
   const navigate = useNavigate();
+  const setSessions = useSetAtom(sessionsAtom);
+  const setActiveSessionId = useSetAtom(activeSessionIdAtom);
 
   useEffect(() => {
     if (data) {
@@ -119,6 +122,17 @@ export const useRegisterComplete = (data?: CustomRegisterResponse) => {
       const deviceId = response.device_id;
 
       if (accessToken && deviceId) {
+        setSessions({
+          type: 'PUT',
+          session: {
+            baseUrl,
+            userId,
+            deviceId,
+            accessToken,
+          },
+        });
+        setActiveSessionId(userId);
+        // Keep legacy keys for SW/backward-compat paths still reading cinny_* values.
         setFallbackSession(accessToken, deviceId, userId, baseUrl);
         const afterLoginRedirectPath = getAfterLoginRedirectPath();
         deleteAfterLoginRedirectPath();
@@ -134,5 +148,5 @@ export const useRegisterComplete = (data?: CustomRegisterResponse) => {
         );
       }
     }
-  }, [data, navigate]);
+  }, [data, navigate, setSessions, setActiveSessionId]);
 };
