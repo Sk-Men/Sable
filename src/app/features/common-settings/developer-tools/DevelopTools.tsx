@@ -13,7 +13,7 @@ import {
   config,
   color,
 } from 'folds';
-import { EventType, NotificationCountType } from '$types/matrix-sdk';
+import { Direction, EventType, MatrixEvent, NotificationCountType } from '$types/matrix-sdk';
 import { Page, PageContent, PageHeader } from '$components/page';
 import { SequenceCard } from '$components/sequence-card';
 import { SettingTile } from '$components/setting-tile';
@@ -22,8 +22,6 @@ import { settingsAtom } from '$state/settings';
 import { copyToClipboard } from '$utils/dom';
 import { getClientSyncDiagnostics } from '$client/initMatrix';
 import { useRoom } from '$hooks/useRoom';
-import { useRoomState } from '$hooks/useRoomState';
-import { useRoomAccountData } from '$hooks/useRoomAccountData';
 import { roomToUnreadAtom } from '$state/room/roomToUnread';
 import { allRoomsAtom } from '$state/room-list/roomList';
 import { allInvitesAtom } from '$state/room-list/inviteList';
@@ -32,6 +30,7 @@ import { CutoutCard } from '$components/cutout-card';
 import { AccountDataEditor, AccountDataSubmitCallback } from '$components/AccountDataEditor';
 import { useMatrixClient } from '$hooks/useMatrixClient';
 import { SequenceCardStyle } from '$features/common-settings/styles.css';
+import { StateEvent } from '$types/matrix/room';
 import { SendRoomEvent } from './SendRoomEvent';
 import { StateEventEditor, StateEventInfo } from './StateEventEditor';
 
@@ -42,9 +41,6 @@ export function DeveloperTools({ requestClose }: DeveloperToolsProps) {
   const [developerTools, setDeveloperTools] = useSetting(settingsAtom, 'developerTools');
   const mx = useMatrixClient();
   const room = useRoom();
-
-  const roomState = useRoomState(room);
-  const accountData = useRoomAccountData(room);
 
   const [expandState, setExpandState] = useState(false);
   const [expandUnreadDiagnostics, setExpandUnreadDiagnostics] = useState(false);
@@ -64,6 +60,29 @@ export function DeveloperTools({ requestClose }: DeveloperToolsProps) {
     const intervalId = window.setInterval(() => setTick((v) => v + 1), 1000);
     return () => window.clearInterval(intervalId);
   }, []);
+
+  const roomState = (() => {
+    const liveState = room.getLiveTimeline().getState(Direction.Forward);
+    const state = new Map<string, Map<string, MatrixEvent>>();
+    if (!liveState) return state;
+
+    liveState.events.forEach((stateKeyToEvents, eventType) => {
+      if (eventType === StateEvent.RoomMember) return;
+      const keyToEvent = new Map<string, MatrixEvent>();
+      stateKeyToEvents.forEach((mEvent, stateKey) => keyToEvent.set(stateKey, mEvent));
+      state.set(eventType, keyToEvent);
+    });
+
+    return state;
+  })();
+
+  const accountData = (() => {
+    const snapshot = new Map<string, object>();
+    Array.from(room.accountData.entries()).forEach(([type, mEvent]) => {
+      snapshot.set(type, mEvent.getContent());
+    });
+    return snapshot;
+  })();
 
   const unreadDiagnostics = useMemo(() => {
     const userId = mx.getUserId();
