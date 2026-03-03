@@ -276,9 +276,7 @@ function ProfileBanner({ profile, userId }: ProfileProps) {
   const previewUrl = isRemoving ? undefined : imageFileURL || stagedUrl || bannerUrl;
 
   return (
-    <SettingTile
-      title="Banner"
-    >
+    <SettingTile title="Banner">
       <Box direction="Column" gap="300" grow="Yes">
         <Box
           style={{
@@ -424,9 +422,7 @@ function ProfileDisplayName({ profile, userId }: ProfileProps) {
 
   const hasChanges = displayName !== defaultDisplayName;
   return (
-    <SettingTile
-      title="Display Name"
-    >
+    <SettingTile title="Display Name">
       <Box direction="Column" grow="Yes" gap="100">
         <Box
           as="form"

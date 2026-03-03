@@ -114,33 +114,31 @@ export function DeregisterAllPushersSetting() {
       <SettingTile
         title="Reset all push notifications"
         description={
-          <div>
-            <Text>
-              This will remove push notifications from all your sessions/devices. You will need to
-              re-enable them on each device individually.
-            </Text>
-            {deregisterState.status === AsyncStatus.Error && (
-              <Text as="span" style={{ color: color.Critical.Main }} size="T200">
-                <br />
-                Failed to deregister devices. Please try again.
-              </Text>
-            )}
-            {deregisterState.status === AsyncStatus.Success && (
-              <Text as="span" style={{ color: color.Success.Main }} size="T200">
-                <br />
-                Successfully deregistered all devices.
-              </Text>
-            )}
-          </div>
+          <>
+            This will remove push notifications from all your sessions/devices.
+            <br />
+            You will need to re-enable them on each device individually.
+          </>
         }
         after={
-          <Button size="300" radii="300" onClick={handleOpenConfirmDialog}>
-            <Text size="B300" style={{ color: color.Critical.Main }}>
-              Reset All
-            </Text>
+          <Button size="300" radii="300" variant="Critical" onClick={handleOpenConfirmDialog}>
+            <Text size="B300">Reset All</Text>
           </Button>
         }
-      />
+      >
+        {deregisterState.status === AsyncStatus.Error && (
+          <Text as="span" style={{ color: color.Critical.Main }} size="T200">
+            <br />
+            Failed to deregister devices. Please try again.
+          </Text>
+        )}
+        {deregisterState.status === AsyncStatus.Success && (
+          <Text as="span" style={{ color: color.Success.Main }} size="T200">
+            <br />
+            Successfully deregistered all devices.
+          </Text>
+        )}
+      </SettingTile>
     </>
   );
 }
