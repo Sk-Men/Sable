@@ -10,6 +10,7 @@ export * from 'matrix-js-sdk/lib/interactive-auth';
 export * from 'matrix-js-sdk/lib/content-repo';
 export * from 'matrix-js-sdk/lib/sync';
 export * from 'matrix-js-sdk/lib/sync-accumulator';
+export * from 'matrix-js-sdk/lib/sliding-sync';
 export { createClient } from 'matrix-js-sdk/lib/matrix';
 
 export * from 'matrix-js-sdk/lib/models/event';
