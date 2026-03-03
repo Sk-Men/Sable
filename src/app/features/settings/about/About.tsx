@@ -16,7 +16,7 @@ export function HomeserverInfo() {
   if (!version)
     mx.http
       .request(Method.Get, '/version', undefined, undefined, { prefix: '/_matrix/federation/v1' })
-      .then((version) => setVersion(version))
+      .then((fetched_version) => setVersion(fetched_version))
       .catch((error) => setVersion({ error }));
 
   return (
