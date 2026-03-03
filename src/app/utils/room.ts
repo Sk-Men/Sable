@@ -228,15 +228,20 @@ export const roomHaveUnread = (mx: MatrixClient, room: Room) => {
   return false;
 };
 
-export const getUnreadInfo = (room: Room): UnreadInfo => {
+type UnreadInfoOptions = {
+  applyFixup?: boolean;
+};
+
+export const getUnreadInfo = (room: Room, options?: UnreadInfoOptions): UnreadInfo => {
   const userId = room.client.getUserId();
-  if (userId) {
+  if (userId && options?.applyFixup) {
     // Reconcile known notification-count drift (notably with Sliding Sync / mixed receipts).
     room.fixupNotifications(userId);
   }
 
   let total = room.getUnreadNotificationCount(NotificationCountType.Total);
-  const highlight = room.getUnreadNotificationCount(NotificationCountType.Highlight);
+  let highlight = room.getUnreadNotificationCount(NotificationCountType.Highlight);
+  let syntheticDotUnread = false;
 
   // If our latest notification event is confirmed read, clamp stale non-highlight totals.
   if (userId && total > 0 && highlight === 0) {
@@ -250,21 +255,30 @@ export const getUnreadInfo = (room: Room): UnreadInfo => {
     }
   }
 
+  // Fallback for cases where SDK counters are stale/zero but unread-by-receipt state still exists.
+  // Represent as a dot badge (count=0) rather than a numeric badge.
+  if (total === 0 && highlight === 0 && roomHaveUnread(room.client, room)) {
+    highlight = 1;
+    syntheticDotUnread = true;
+  }
+
+  const resolvedTotal = syntheticDotUnread ? total : Math.max(total, highlight);
+
   return {
     roomId: room.roomId,
     highlight,
-    total: highlight > total ? highlight : total,
+    total: resolvedTotal,
   };
 };
 
-export const getUnreadInfos = (mx: MatrixClient): UnreadInfo[] =>
+export const getUnreadInfos = (mx: MatrixClient, options?: UnreadInfoOptions): UnreadInfo[] =>
   mx.getRooms().reduce<UnreadInfo[]>((unread, room) => {
     if (room.isSpaceRoom()) return unread;
     if (room.getMyMembership() !== 'join') return unread;
     if (getNotificationType(mx, room.roomId) === NotificationType.Mute) return unread;
 
     if (roomHaveNotification(room) || roomHaveUnread(mx, room)) {
-      const unreadInfo = getUnreadInfo(room);
+      const unreadInfo = getUnreadInfo(room, options);
       if (unreadInfo.total > 0 || unreadInfo.highlight > 0) {
         unread.push(unreadInfo);
       }
