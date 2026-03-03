@@ -48,6 +48,9 @@ import { SpecVersions } from './SpecVersions';
 
 const log = createLogger('ClientRoot');
 
+const isClientReady = (syncState: string | null): boolean =>
+  syncState === 'PREPARED' || syncState === 'SYNCING' || syncState === 'CATCHUP';
+
 function ClientRootLoading() {
   return (
     <SplashScreen>
@@ -259,10 +262,17 @@ export function ClientRoot({ children }: ClientRootProps) {
     }
   }, [mx, startMatrix]);
 
+  useEffect(() => {
+    if (!mx) return;
+    if (isClientReady(mx.getSyncState())) {
+      setLoading(false);
+    }
+  }, [mx]);
+
   useSyncState(
     mx,
     useCallback((state: string) => {
-      if (state === 'PREPARED') {
+      if (isClientReady(state)) {
         setLoading(false);
       }
     }, [])
