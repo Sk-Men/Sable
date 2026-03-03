@@ -3,10 +3,13 @@ import {
   buildRoomMessageNotification,
   DEFAULT_NOTIFICATION_ICON,
   DEFAULT_NOTIFICATION_BADGE,
+  resolveNotificationPreviewText,
 } from '../app/utils/notificationStyle';
 
 type NotificationSettings = {
   notificationSoundEnabled: boolean;
+  showMessageContent: boolean;
+  showEncryptedMessageContent: boolean;
 };
 
 export const createPushNotifications = (
@@ -49,7 +52,13 @@ export const createPushNotifications = (
       roomName: pushData?.room_name,
       username: pushData?.sender_display_name,
       roomAvatar: pushData?.room_avatar_url,
-      previewText: 'new message',
+      previewText: resolveNotificationPreviewText({
+        content: pushData?.content,
+        eventType: pushData?.type,
+        isEncryptedRoom: false,
+        showMessageContent: getNotificationSettings().showMessageContent,
+        showEncryptedMessageContent: getNotificationSettings().showEncryptedMessageContent,
+      }),
       silent: resolveSilent(pushData?.silent),
       eventId: pushData?.event_id,
       data,
@@ -77,7 +86,13 @@ export const createPushNotifications = (
       roomName: pushData?.room_name,
       username: pushData?.sender_display_name,
       roomAvatar: pushData?.room_avatar_url,
-      previewText: 'Encrypted message',
+      previewText: resolveNotificationPreviewText({
+        content: pushData?.content,
+        eventType: pushData?.type,
+        isEncryptedRoom: true,
+        showMessageContent: getNotificationSettings().showMessageContent,
+        showEncryptedMessageContent: getNotificationSettings().showEncryptedMessageContent,
+      }),
       silent: resolveSilent(pushData?.silent),
       eventId: pushData?.event_id,
       data,
