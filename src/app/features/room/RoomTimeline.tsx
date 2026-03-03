@@ -728,11 +728,20 @@ export function RoomTimeline({
   useLiveTimelineRefresh(
     room,
     useCallback(() => {
-      if (liveTimelineLinked) {
+      if (liveTimelineLinked || timeline.linkedTimelines.length === 0) {
         setTimeline(getInitialTimeline(room));
       }
-    }, [room, liveTimelineLinked])
+    }, [room, liveTimelineLinked, timeline.linkedTimelines.length])
   );
+
+  // Recover from transient empty timeline state when the live timeline
+  // already has events (can happen when opening by event id, then fallbacking).
+  useEffect(() => {
+    if (eventId) return;
+    if (timeline.linkedTimelines.length > 0) return;
+    if (getLiveTimeline(room).getEvents().length === 0) return;
+    setTimeline(getInitialTimeline(room));
+  }, [eventId, room, timeline.linkedTimelines.length]);
 
   // Stay at bottom when room editor resize
   useResizeObserver(

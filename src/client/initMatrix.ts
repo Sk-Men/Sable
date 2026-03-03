@@ -21,6 +21,7 @@ import { SlidingSyncConfig, SlidingSyncDiagnostics, SlidingSyncManager } from '.
 
 const log = createLogger('initMatrix');
 const slidingSyncByClient = new WeakMap<MatrixClient, SlidingSyncManager>();
+const FAST_SYNC_POLL_TIMEOUT_MS = 10000;
 type SyncTransport = 'classic' | 'sliding';
 type SyncTransportMeta = {
   transport: SyncTransport;
@@ -28,6 +29,17 @@ type SyncTransportMeta = {
   fallbackFromSliding: boolean;
 };
 const syncTransportByClient = new WeakMap<MatrixClient, SyncTransportMeta>();
+
+export const resolveSlidingEnabled = (enabled: SlidingSyncConfig['enabled']): boolean => {
+  if (enabled === undefined) return false;
+  if (typeof enabled === 'boolean') return enabled;
+  const normalized = String(enabled).trim().toLowerCase();
+  if (normalized === 'false' || normalized === '0' || normalized === 'off' || normalized === 'no')
+    return false;
+  if (normalized === 'true' || normalized === '1' || normalized === 'on' || normalized === 'yes')
+    return true;
+  return false;
+};
 
 const deleteDatabase = (name: string): Promise<void> =>
   new Promise((resolve) => {
@@ -256,6 +268,7 @@ export const initClient = async (session: Session): Promise<MatrixClient> => {
 export type StartClientConfig = {
   baseUrl?: string;
   slidingSync?: SlidingSyncConfig;
+  sessionSlidingSyncOptIn?: boolean;
 };
 
 export type ClientSyncDiagnostics = SyncTransportMeta & {
@@ -279,39 +292,63 @@ export const startClient = async (mx: MatrixClient, config?: StartClientConfig) 
   log.log('startClient', mx.getUserId());
   disposeSlidingSync(mx);
   const slidingConfig = config?.slidingSync;
+  const slidingEnabledOnServer = resolveSlidingEnabled(slidingConfig?.enabled);
+  const slidingRequested = slidingEnabledOnServer && config?.sessionSlidingSyncOptIn === true;
   const proxyBaseUrl = slidingConfig?.proxyBaseUrl ?? config?.baseUrl;
-  const slidingEnabled = false; // temporary
-  const canUseSliding = slidingEnabled && typeof proxyBaseUrl === 'string';
-  syncTransportByClient.set(mx, {
-    transport: 'classic',
-    slidingConfigured: canUseSliding,
-    fallbackFromSliding: false,
+  const hasSlidingProxy = typeof proxyBaseUrl === 'string' && proxyBaseUrl.trim().length > 0;
+  log.log('startClient sliding config', {
+    userId: mx.getUserId(),
+    enabled: slidingConfig?.enabled,
+    enabledOnServer: slidingEnabledOnServer,
+    sessionOptIn: config?.sessionSlidingSyncOptIn === true,
+    requestedEnabled: slidingRequested,
+    proxyBaseUrl,
+    hasSlidingProxy,
   });
 
-  if (!canUseSliding) {
+  const startClassicSync = async (fallbackFromSliding: boolean) => {
+    syncTransportByClient.set(mx, {
+      transport: 'classic',
+      slidingConfigured: slidingEnabledOnServer,
+      fallbackFromSliding,
+    });
     await mx.startClient({
       lazyLoadMembers: true,
+      pollTimeout: FAST_SYNC_POLL_TIMEOUT_MS,
     });
+  };
+
+  if (!slidingEnabledOnServer || !slidingRequested) {
+    await startClassicSync(false);
+    return;
+  }
+
+  if (!hasSlidingProxy) {
+    await startClassicSync(false);
     return;
   }
 
   const resolvedProxyBaseUrl = proxyBaseUrl;
-  const manager = new SlidingSyncManager(mx, resolvedProxyBaseUrl, slidingConfig ?? {});
+  const manager = new SlidingSyncManager(mx, resolvedProxyBaseUrl, {
+    ...(slidingConfig ?? {}),
+    includeInviteList: true,
+    pollTimeoutMs: slidingConfig?.pollTimeoutMs ?? FAST_SYNC_POLL_TIMEOUT_MS,
+  });
   const supported = await SlidingSyncManager.probe(
     mx,
     resolvedProxyBaseUrl,
     manager.probeTimeoutMs
   );
+  log.log('startClient sliding probe result', {
+    userId: mx.getUserId(),
+    requestedEnabled: slidingRequested,
+    hasSlidingProxy,
+    proxyBaseUrl: resolvedProxyBaseUrl,
+    supported,
+  });
   if (!supported) {
-    syncTransportByClient.set(mx, {
-      transport: 'classic',
-      slidingConfigured: canUseSliding,
-      fallbackFromSliding: true,
-    });
     log.warn('Sliding Sync unavailable, falling back to classic sync for', mx.getUserId());
-    await mx.startClient({
-      lazyLoadMembers: true,
-    });
+    await startClassicSync(true);
     return;
   }
 

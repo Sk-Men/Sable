@@ -16,6 +16,7 @@ export type Session = {
   expiresInMs?: number;
   refreshToken?: string;
   fallbackSdkStores?: boolean;
+  slidingSyncOptIn?: boolean;
 };
 
 export type Sessions = Session[];

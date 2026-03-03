@@ -20,10 +20,13 @@ import { SettingTile } from '$components/setting-tile';
 import { useSetting } from '$state/hooks/settings';
 import { settingsAtom } from '$state/settings';
 import { copyToClipboard } from '$utils/dom';
+import { getClientSyncDiagnostics } from '$client/initMatrix';
 import { useRoom } from '$hooks/useRoom';
 import { useRoomState } from '$hooks/useRoomState';
 import { useRoomAccountData } from '$hooks/useRoomAccountData';
 import { roomToUnreadAtom } from '$state/room/roomToUnread';
+import { allRoomsAtom } from '$state/room-list/roomList';
+import { allInvitesAtom } from '$state/room-list/inviteList';
 import { isNotificationEvent } from '$utils/room';
 import { CutoutCard } from '$components/cutout-card';
 import { AccountDataEditor, AccountDataSubmitCallback } from '$components/AccountDataEditor';
@@ -44,6 +47,8 @@ export function DeveloperTools({ requestClose }: DeveloperToolsProps) {
   const accountData = useRoomAccountData(room);
 
   const [expandState, setExpandState] = useState(false);
+  const [expandUnreadDiagnostics, setExpandUnreadDiagnostics] = useState(false);
+  const [expandSlidingDiagnostics, setExpandSlidingDiagnostics] = useState(false);
   const [expandStateType, setExpandStateType] = useState<string>();
   const [openStateEvent, setOpenStateEvent] = useState<StateEventInfo>();
   const [composeEvent, setComposeEvent] = useState<{ type?: string; stateKey?: string }>();
@@ -51,6 +56,8 @@ export function DeveloperTools({ requestClose }: DeveloperToolsProps) {
   const [expandAccountData, setExpandAccountData] = useState(false);
   const [accountDataType, setAccountDataType] = useState<string | null>();
   const roomToUnread = useAtomValue(roomToUnreadAtom);
+  const allRooms = useAtomValue(allRoomsAtom);
+  const allInvites = useAtomValue(allInvitesAtom);
   const [, setTick] = useState(0);
 
   useEffect(() => {
@@ -60,9 +67,15 @@ export function DeveloperTools({ requestClose }: DeveloperToolsProps) {
 
   const unreadDiagnostics = useMemo(() => {
     const userId = mx.getUserId();
+    const clientSyncState = mx.getSyncState();
     const liveEvents = room.getLiveTimeline().getEvents();
-    const latestLiveEvent = liveEvents[liveEvents.length - 1];
-    const latestLiveEventId = latestLiveEvent?.getId() ?? null;
+    const latestTimelineEvent = liveEvents[liveEvents.length - 1];
+    const latestTimelineEventId = latestTimelineEvent?.getId() ?? null;
+    const latestMessageEvent = [...liveEvents].reverse().find((event) => {
+      const type = event.getType();
+      return type === 'm.room.message' || type === 'm.room.encrypted' || type === 'm.sticker';
+    });
+    const latestMessageEventId = latestMessageEvent?.getId() ?? null;
     const latestNotificationEvent = [...liveEvents]
       .reverse()
       .find((event) => isNotificationEvent(event));
@@ -78,15 +91,20 @@ export function DeveloperTools({ requestClose }: DeveloperToolsProps) {
     return {
       roomId: room.roomId,
       userId: userId ?? null,
+      clientSyncState,
+      roomMembership: room.getMyMembership(),
+      roomInJoinedListAtom: allRooms.includes(room.roomId),
+      roomInInviteListAtom: allInvites.includes(room.roomId),
       timelineSize: liveEvents.length,
-      latestLiveEventId,
+      latestTimelineEventId,
+      latestMessageEventId,
       latestNotificationEventId,
       fullyReadEventId,
       readUpToEventId,
       hasReadLatestLive: !!(
         userId &&
-        latestLiveEventId &&
-        room.hasUserReadEvent(userId, latestLiveEventId)
+        latestTimelineEventId &&
+        room.hasUserReadEvent(userId, latestTimelineEventId)
       ),
       hasReadLatestNotification: !!(
         userId &&
@@ -104,7 +122,9 @@ export function DeveloperTools({ requestClose }: DeveloperToolsProps) {
           }
         : null,
     };
-  }, [mx, room, roomToUnread]);
+  }, [mx, room, roomToUnread, allRooms, allInvites]);
+
+  const syncDiagnostics = useMemo(() => getClientSyncDiagnostics(mx), [mx]);
 
   const handleClose = useCallback(() => {
     setOpenStateEvent(undefined);
@@ -270,46 +290,148 @@ export function DeveloperTools({ requestClose }: DeveloperToolsProps) {
                             paddingBottom: config.space.S300,
                           }}
                         >
-                          <Box justifyContent="SpaceBetween" alignItems="Center">
-                            <Text size="L400">Unread Diagnostics</Text>
-                            <Button
-                              onClick={() =>
-                                copyToClipboard(JSON.stringify(unreadDiagnostics, null, 2))
-                              }
-                              variant="Secondary"
-                              fill="Soft"
-                              size="300"
-                              radii="300"
-                              outlined
-                            >
-                              <Text size="B300">Copy JSON</Text>
-                            </Button>
+                          <Box direction="Column" gap="100">
+                            <Box justifyContent="SpaceBetween" alignItems="Center">
+                              <Text size="L400">Unread Diagnostics</Text>
+                              <Button
+                                onClick={() => setExpandUnreadDiagnostics(!expandUnreadDiagnostics)}
+                                variant="Secondary"
+                                fill="Soft"
+                                size="300"
+                                radii="300"
+                                outlined
+                                before={
+                                  <Icon
+                                    src={
+                                      expandUnreadDiagnostics
+                                        ? Icons.ChevronTop
+                                        : Icons.ChevronBottom
+                                    }
+                                    size="100"
+                                    filled
+                                  />
+                                }
+                              >
+                                <Text size="B300">
+                                  {expandUnreadDiagnostics ? 'Collapse' : 'Expand'}
+                                </Text>
+                              </Button>
+                            </Box>
+                            {expandUnreadDiagnostics && (
+                              <Box direction="Column" gap="100">
+                                <Button
+                                  onClick={() =>
+                                    copyToClipboard(JSON.stringify(unreadDiagnostics, null, 2))
+                                  }
+                                  variant="Secondary"
+                                  fill="Soft"
+                                  size="300"
+                                  radii="300"
+                                  outlined
+                                >
+                                  <Text size="B300">Copy JSON</Text>
+                                </Button>
+                                <Text size="T200">
+                                  Client sync: {unreadDiagnostics.clientSyncState ?? 'null'} |
+                                  membership: {unreadDiagnostics.roomMembership}
+                                </Text>
+                                <Text size="T200">
+                                  In room atoms: joined{' '}
+                                  {unreadDiagnostics.roomInJoinedListAtom ? 'yes' : 'no'} | invite{' '}
+                                  {unreadDiagnostics.roomInInviteListAtom ? 'yes' : 'no'}
+                                </Text>
+                                <Text size="T200">
+                                  `readUpTo`: {unreadDiagnostics.readUpToEventId ?? 'null'}
+                                </Text>
+                                <Text size="T200">
+                                  `m.fully_read`: {unreadDiagnostics.fullyReadEventId ?? 'null'}
+                                </Text>
+                                <Text size="T200">
+                                  Latest timeline event:{' '}
+                                  {unreadDiagnostics.latestTimelineEventId ?? 'null'} | read?{' '}
+                                  {unreadDiagnostics.hasReadLatestLive ? 'yes' : 'no'}
+                                </Text>
+                                <Text size="T200">
+                                  Latest message event:{' '}
+                                  {unreadDiagnostics.latestMessageEventId ?? 'null'}
+                                </Text>
+                                <Text size="T200">
+                                  Latest notification:{' '}
+                                  {unreadDiagnostics.latestNotificationEventId ?? 'null'} | read?{' '}
+                                  {unreadDiagnostics.hasReadLatestNotification ? 'yes' : 'no'}
+                                </Text>
+                                <Text size="T200">
+                                  SDK unread: {unreadDiagnostics.sdkUnread.total} total /{' '}
+                                  {unreadDiagnostics.sdkUnread.highlight} highlight
+                                </Text>
+                                <Text size="T200">
+                                  Atom unread:{' '}
+                                  {unreadDiagnostics.atomUnread
+                                    ? `${unreadDiagnostics.atomUnread.total} total / ${unreadDiagnostics.atomUnread.highlight} highlight`
+                                    : 'none'}
+                                </Text>
+                              </Box>
+                            )}
                           </Box>
-                          <Text size="T200">
-                            `readUpTo`: {unreadDiagnostics.readUpToEventId ?? 'null'}
-                          </Text>
-                          <Text size="T200">
-                            `m.fully_read`: {unreadDiagnostics.fullyReadEventId ?? 'null'}
-                          </Text>
-                          <Text size="T200">
-                            Latest live: {unreadDiagnostics.latestLiveEventId ?? 'null'} | read?{' '}
-                            {unreadDiagnostics.hasReadLatestLive ? 'yes' : 'no'}
-                          </Text>
-                          <Text size="T200">
-                            Latest notification:{' '}
-                            {unreadDiagnostics.latestNotificationEventId ?? 'null'} | read?{' '}
-                            {unreadDiagnostics.hasReadLatestNotification ? 'yes' : 'no'}
-                          </Text>
-                          <Text size="T200">
-                            SDK unread: {unreadDiagnostics.sdkUnread.total} total /{' '}
-                            {unreadDiagnostics.sdkUnread.highlight} highlight
-                          </Text>
-                          <Text size="T200">
-                            Atom unread:{' '}
-                            {unreadDiagnostics.atomUnread
-                              ? `${unreadDiagnostics.atomUnread.total} total / ${unreadDiagnostics.atomUnread.highlight} highlight`
-                              : 'none'}
-                          </Text>
+                          <Box direction="Column" gap="100">
+                            <Box justifyContent="SpaceBetween" alignItems="Center">
+                              <Text size="L400">Sliding Sync Diagnostics</Text>
+                              <Button
+                                onClick={() =>
+                                  setExpandSlidingDiagnostics(!expandSlidingDiagnostics)
+                                }
+                                variant="Secondary"
+                                fill="Soft"
+                                size="300"
+                                radii="300"
+                                outlined
+                                before={
+                                  <Icon
+                                    src={
+                                      expandSlidingDiagnostics
+                                        ? Icons.ChevronTop
+                                        : Icons.ChevronBottom
+                                    }
+                                    size="100"
+                                    filled
+                                  />
+                                }
+                              >
+                                <Text size="B300">
+                                  {expandSlidingDiagnostics ? 'Collapse' : 'Expand'}
+                                </Text>
+                              </Button>
+                            </Box>
+                            {expandSlidingDiagnostics && (
+                              <Box direction="Column" gap="100">
+                                <Text size="T200">
+                                  Transport: {syncDiagnostics.transport}
+                                  {syncDiagnostics.fallbackFromSliding ? ' (fallback)' : ''}
+                                </Text>
+                                <Text size="T200">
+                                  Sliding configured:{' '}
+                                  {syncDiagnostics.slidingConfigured ? 'yes' : 'no'}
+                                </Text>
+                                <Text size="T200">
+                                  Client sync state: {syncDiagnostics.syncState ?? 'null'}
+                                </Text>
+                                {syncDiagnostics.sliding ? (
+                                  <>
+                                    <Text size="T200">
+                                      Proxy: {syncDiagnostics.sliding.proxyBaseUrl}
+                                    </Text>
+                                    <Text size="T200">
+                                      Timeline limit: {syncDiagnostics.sliding.timelineLimit} | page
+                                      size: {syncDiagnostics.sliding.listPageSize} | adaptive:{' '}
+                                      {syncDiagnostics.sliding.adaptiveTimeline ? 'yes' : 'no'}
+                                    </Text>
+                                  </>
+                                ) : (
+                                  <Text size="T200">Sliding manager: not attached</Text>
+                                )}
+                              </Box>
+                            )}
+                          </Box>
                         </Box>
                         <Box justifyContent="SpaceBetween">
                           <Text size="L400">Events</Text>
