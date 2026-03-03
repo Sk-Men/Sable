@@ -1,0 +1,147 @@
+name: Cloudflare Infra
+
+on:
+  pull_request:
+    paths:
+      - 'infra/web/**'
+      - '.github/workflows/cloudflare-worker-prod.yml'
+  push:
+    branches:
+      - dev
+  workflow_dispatch:
+
+concurrency:
+  group: cloudflare-infra
+  cancel-in-progress: false
+
+jobs:
+  plan:
+    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.TF_CLOUDFLARE_API_TOKEN }}
+      TF_VAR_account_id: ${{ secrets.TF_VAR_ACCOUNT_ID }}
+      TF_VAR_zone_id: ${{ secrets.TF_VAR_ZONE_ID }}
+      TF_HTTP_ADDRESS: ${{ secrets.TF_HTTP_ADDRESS }}
+      TF_HTTP_LOCK_ADDRESS: ${{ secrets.TF_HTTP_LOCK_ADDRESS }}
+      TF_HTTP_UNLOCK_ADDRESS: ${{ secrets.TF_HTTP_UNLOCK_ADDRESS }}
+      TF_HTTP_USERNAME: ${{ secrets.TF_HTTP_USERNAME }}
+      TF_HTTP_PASSWORD: ${{ secrets.TF_HTTP_PASSWORD }}
+      TF_HTTP_LOCK_METHOD: 'POST'
+      TF_HTTP_UNLOCK_METHOD: 'DELETE'
+      TF_HTTP_RETRY_WAIT_MIN: '5'
+    defaults:
+      run:
+        working-directory: infra/web
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - name: Prepare deployment metadata
+        shell: bash
+        run: |
+          workers_message="$(git log -1 --pretty=%s)"
+          workers_message="$(printf '%s' "$workers_message" | head -c 100)"
+          printf 'TF_VAR_workers_message=%s\n' "$workers_message" >> "$GITHUB_ENV"
+
+      - name: Setup node
+        uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238 # v6.2.0
+        with:
+          node-version-file: '.node-version'
+          cache: 'npm'
+
+      - name: Install dependencies
+        working-directory: .
+        run: npm ci
+
+      - name: Build app
+        working-directory: .
+        run: npm run build
+
+      - name: Setup OpenTofu
+        uses: opentofu/setup-opentofu@9d84900f3238fab8cd84ce47d658d25dd008be2f # v1.0.8
+        with:
+          tofu_version: 1.11.5
+
+      - name: Check formatting
+        run: tofu fmt -check
+
+      - name: Initialize OpenTofu
+        run: tofu init -input=false -reconfigure
+
+      - name: Validate configuration
+        run: tofu validate -no-color
+
+      - name: Plan infrastructure
+        run: tofu plan -input=false -lock=false -no-color
+
+  apply:
+    if: (github.event_name == 'push' && github.ref_name == 'dev') || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.TF_CLOUDFLARE_API_TOKEN }}
+      TF_VAR_account_id: ${{ secrets.TF_VAR_ACCOUNT_ID }}
+      TF_VAR_zone_id: ${{ secrets.TF_VAR_ZONE_ID }}
+      TF_HTTP_ADDRESS: ${{ secrets.TF_HTTP_ADDRESS }}
+      TF_HTTP_LOCK_ADDRESS: ${{ secrets.TF_HTTP_LOCK_ADDRESS }}
+      TF_HTTP_UNLOCK_ADDRESS: ${{ secrets.TF_HTTP_UNLOCK_ADDRESS }}
+      TF_HTTP_USERNAME: ${{ secrets.TF_HTTP_USERNAME }}
+      TF_HTTP_PASSWORD: ${{ secrets.TF_HTTP_PASSWORD }}
+      TF_HTTP_LOCK_METHOD: 'POST'
+      TF_HTTP_UNLOCK_METHOD: 'DELETE'
+      TF_HTTP_RETRY_WAIT_MIN: '5'
+    defaults:
+      run:
+        working-directory: infra/web
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - name: Prepare deployment metadata
+        shell: bash
+        run: |
+          workers_message="$(git log -1 --pretty=%s)"
+          workers_message="$(printf '%s' "$workers_message" | head -c 100)"
+          printf 'TF_VAR_workers_message=%s\n' "$workers_message" >> "$GITHUB_ENV"
+
+      - name: Setup node
+        uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238 # v6.2.0
+        with:
+          node-version-file: '.node-version'
+          cache: 'npm'
+
+      - name: Install dependencies
+        working-directory: .
+        run: npm ci
+
+      - name: Build app
+        working-directory: .
+        run: npm run build
+
+      - name: Setup OpenTofu
+        uses: opentofu/setup-opentofu@9d84900f3238fab8cd84ce47d658d25dd008be2f # v1.0.8
+        with:
+          tofu_version: 1.11.5
+
+      - name: Check formatting
+        run: tofu fmt -check
+
+      - name: Initialize OpenTofu
+        run: tofu init -input=false -reconfigure
+
+      - name: Validate configuration
+        run: tofu validate -no-color
+
+      - name: Plan infrastructure
+        run: tofu plan -input=false -no-color
+
+      - name: Apply infrastructure
+        run: tofu apply -input=false -auto-approve
