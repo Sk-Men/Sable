@@ -45,6 +45,8 @@ export type SlidingSyncDeviceDiagnostics = {
   saveData: boolean;
   effectiveType: string | null;
   deviceMemoryGb: number | null;
+  mobile: boolean;
+  missingSignals: number;
 };
 
 export type SlidingSyncDiagnostics = {
@@ -61,42 +63,60 @@ const clampPositive = (value: number | undefined, fallback: number): number => {
   return Math.round(value);
 };
 
-const resolveAdaptiveTimelineLimit = (
-  configuredLimit: number | undefined,
-  pageSize: number
-): number => {
-  if (typeof configuredLimit === 'number' && configuredLimit > 0) {
-    return clampPositive(configuredLimit, DEFAULT_TIMELINE_LIMIT);
-  }
+type AdaptiveSignals = SlidingSyncDeviceDiagnostics;
 
-  const navigatorLike = typeof navigator !== 'undefined' ? navigator : undefined;
-  const connection = (navigatorLike as any)?.connection;
-  const saveData = connection?.saveData === true;
-  const effectiveType = connection?.effectiveType as string | undefined;
-  const deviceMemory = (navigatorLike as any)?.deviceMemory as number | undefined;
-
-  if (saveData || effectiveType === 'slow-2g' || effectiveType === '2g') {
-    return Math.min(pageSize, TIMELINE_LIMIT_LOW);
-  }
-
-  if (effectiveType === '3g' || (typeof deviceMemory === 'number' && deviceMemory <= 4)) {
-    return Math.min(pageSize, TIMELINE_LIMIT_MEDIUM);
-  }
-
-  return Math.min(pageSize, TIMELINE_LIMIT_HIGH);
-};
-
-const getDeviceDiagnostics = (): SlidingSyncDeviceDiagnostics => {
+const readAdaptiveSignals = (): AdaptiveSignals => {
   const navigatorLike = typeof navigator !== 'undefined' ? navigator : undefined;
   const connection = (navigatorLike as any)?.connection;
   const effectiveType = connection?.effectiveType;
   const deviceMemory = (navigatorLike as any)?.deviceMemory;
 
+  const uaMobile = (navigatorLike as any)?.userAgentData?.mobile;
+  const fallbackMobileUA = navigatorLike?.userAgent ?? '';
+  const mobileByUA =
+    typeof uaMobile === 'boolean'
+      ? uaMobile
+      : /Mobi|Android|iPhone|iPad|iPod|IEMobile|Opera Mini/i.test(fallbackMobileUA);
+
+  const saveData = connection?.saveData === true;
+  const normalizedEffectiveType = typeof effectiveType === 'string' ? effectiveType : null;
+  const normalizedDeviceMemory = typeof deviceMemory === 'number' ? deviceMemory : null;
+  const missingSignals =
+    Number(normalizedEffectiveType === null) + Number(normalizedDeviceMemory === null);
+
   return {
-    saveData: connection?.saveData === true,
-    effectiveType: typeof effectiveType === 'string' ? effectiveType : null,
-    deviceMemoryGb: typeof deviceMemory === 'number' ? deviceMemory : null,
+    saveData,
+    effectiveType: normalizedEffectiveType,
+    deviceMemoryGb: normalizedDeviceMemory,
+    mobile: mobileByUA,
+    missingSignals,
   };
+};
+
+const resolveAdaptiveTimelineLimit = (
+  configuredLimit: number | undefined,
+  pageSize: number,
+  signals: AdaptiveSignals
+): number => {
+  if (typeof configuredLimit === 'number' && configuredLimit > 0) {
+    return clampPositive(configuredLimit, DEFAULT_TIMELINE_LIMIT);
+  }
+
+  if (signals.saveData || signals.effectiveType === 'slow-2g' || signals.effectiveType === '2g') {
+    return Math.min(pageSize, TIMELINE_LIMIT_LOW);
+  }
+
+  if (signals.effectiveType === '3g' || (signals.deviceMemoryGb !== null && signals.deviceMemoryGb <= 4)) {
+    return Math.min(pageSize, TIMELINE_LIMIT_MEDIUM);
+  }
+
+  // Mobile PWAs/browsers often omit NetworkInformation and/or device memory APIs.
+  // If any key adaptive signals are missing on mobile, pick a conservative medium limit.
+  if (signals.mobile && signals.missingSignals > 0) {
+    return Math.min(pageSize, TIMELINE_LIMIT_MEDIUM);
+  }
+
+  return Math.min(pageSize, TIMELINE_LIMIT_HIGH);
 };
 
 const buildDefaultSubscription = (timelineLimit: number): MSC3575RoomSubscription => ({
@@ -163,10 +183,12 @@ export class SlidingSyncManager {
   private readonly maxRooms: number;
 
   private readonly listKeys: string[];
-  private readonly timelineLimit: number;
+  private timelineLimit: number;
   private readonly listPageSize: number;
   private readonly adaptiveTimeline: boolean;
-  private readonly deviceDiagnostics: SlidingSyncDeviceDiagnostics;
+  private deviceDiagnostics: SlidingSyncDeviceDiagnostics;
+  private readonly configuredTimelineLimit?: number;
+  private readonly onConnectionChange: () => void;
 
   private readonly onLifecycle: (state: SlidingSyncState, resp: unknown, err?: Error) => void;
 
@@ -181,14 +203,16 @@ export class SlidingSyncManager {
   ) {
     const listPageSize = clampPositive(config.listPageSize, DEFAULT_LIST_PAGE_SIZE);
     const adaptiveTimeline = !(typeof config.timelineLimit === 'number' && config.timelineLimit > 0);
-    const timelineLimit = resolveAdaptiveTimelineLimit(config.timelineLimit, listPageSize);
+    const signals = readAdaptiveSignals();
+    const timelineLimit = resolveAdaptiveTimelineLimit(config.timelineLimit, listPageSize, signals);
     const pollTimeoutMs = clampPositive(config.pollTimeoutMs, DEFAULT_POLL_TIMEOUT_MS);
     this.probeTimeoutMs = clampPositive(config.probeTimeoutMs, 5000);
     this.maxRooms = clampPositive(config.maxRooms, DEFAULT_MAX_ROOMS);
     this.timelineLimit = timelineLimit;
     this.listPageSize = listPageSize;
     this.adaptiveTimeline = adaptiveTimeline;
-    this.deviceDiagnostics = getDeviceDiagnostics();
+    this.deviceDiagnostics = signals;
+    this.configuredTimelineLimit = config.timelineLimit;
     const includeInviteList = config.includeInviteList !== false;
 
     const subscription = buildDefaultSubscription(timelineLimit);
@@ -205,16 +229,63 @@ export class SlidingSyncManager {
       if (this.disposed || err || !resp || state !== SlidingSyncState.Complete) return;
       this.expandListsToKnownCount();
     };
+
+    this.onConnectionChange = () => {
+      if (this.disposed || !this.adaptiveTimeline) return;
+      const currentSignals = readAdaptiveSignals();
+      this.deviceDiagnostics = currentSignals;
+      const nextTimelineLimit = resolveAdaptiveTimelineLimit(
+        this.configuredTimelineLimit,
+        this.listPageSize,
+        currentSignals
+      );
+      if (nextTimelineLimit === this.timelineLimit) return;
+      this.timelineLimit = nextTimelineLimit;
+      this.applyTimelineLimit(nextTimelineLimit);
+      log.log(
+        `Sliding Sync adaptive timeline updated to ${nextTimelineLimit} for ${this.mx.getUserId()}`
+      );
+    };
   }
 
   public attach(): void {
     this.slidingSync.on(SlidingSyncEvent.Lifecycle, this.onLifecycle);
+    const connection = (typeof navigator !== 'undefined' ? (navigator as any).connection : undefined) as
+      | {
+          addEventListener?: (event: string, cb: () => void) => void;
+          removeEventListener?: (event: string, cb: () => void) => void;
+          onchange?: (() => void) | null;
+        }
+      | undefined;
+    connection?.addEventListener?.('change', this.onConnectionChange);
+    if (connection && connection.onchange === null) {
+      connection.onchange = this.onConnectionChange;
+    }
+    if (typeof window !== 'undefined') {
+      window.addEventListener('online', this.onConnectionChange);
+      window.addEventListener('offline', this.onConnectionChange);
+    }
   }
 
   public dispose(): void {
     if (this.disposed) return;
     this.disposed = true;
     this.slidingSync.removeListener(SlidingSyncEvent.Lifecycle, this.onLifecycle);
+    const connection = (typeof navigator !== 'undefined' ? (navigator as any).connection : undefined) as
+      | {
+          addEventListener?: (event: string, cb: () => void) => void;
+          removeEventListener?: (event: string, cb: () => void) => void;
+          onchange?: (() => void) | null;
+        }
+      | undefined;
+    connection?.removeEventListener?.('change', this.onConnectionChange);
+    if (connection?.onchange === this.onConnectionChange) {
+      connection.onchange = null;
+    }
+    if (typeof window !== 'undefined') {
+      window.removeEventListener('online', this.onConnectionChange);
+      window.removeEventListener('offline', this.onConnectionChange);
+    }
   }
 
   public getDiagnostics(): SlidingSyncDiagnostics {
@@ -253,6 +324,18 @@ export class SlidingSyncManager {
           `Sliding Sync list "${key}" capped at ${this.maxRooms}/${knownCount} rooms for ${this.mx.getUserId()}`
         );
       }
+    });
+  }
+
+  private applyTimelineLimit(timelineLimit: number): void {
+    this.slidingSync.modifyRoomSubscriptionInfo(buildDefaultSubscription(timelineLimit));
+    this.listKeys.forEach((key) => {
+      const existing = this.slidingSync.getListParams(key);
+      if (!existing) return;
+      this.slidingSync.setList(key, {
+        ...existing,
+        timeline_limit: timelineLimit,
+      });
     });
   }
 

@@ -191,7 +191,9 @@ export function SyncDiagnostics() {
                   <Text size="T300">
                     Device/network: saveData {diagnostics.sliding.device.saveData ? 'on' : 'off'} |
                     effectiveType {diagnostics.sliding.device.effectiveType ?? 'unknown'} | memory{' '}
-                    {diagnostics.sliding.device.deviceMemoryGb ?? 'unknown'} GB
+                    {diagnostics.sliding.device.deviceMemoryGb ?? 'unknown'} GB | mobile{' '}
+                    {diagnostics.sliding.device.mobile ? 'yes' : 'no'} | missing signals{' '}
+                    {diagnostics.sliding.device.missingSignals}
                   </Text>
                   {diagnostics.sliding.lists.map((list) => (
                     <Text size="T300" key={list.key}>
