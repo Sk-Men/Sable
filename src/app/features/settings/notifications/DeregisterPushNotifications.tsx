@@ -112,7 +112,7 @@ export function DeregisterAllPushersSetting() {
       )}
 
       <SettingTile
-        title="Reset all push notifications"
+        title="Reset All Push Notifications"
         description={
           <>
             This will remove push notifications from all your sessions/devices.
