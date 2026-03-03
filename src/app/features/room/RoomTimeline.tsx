@@ -75,6 +75,8 @@ import {
   renderMatrixMention,
 } from '$plugins/react-custom-html-parser';
 import {
+  roomHaveNotification,
+  roomHaveUnread,
   canEditEvent,
   decryptAllTimelineEvent,
   getEditedEvent,
@@ -480,6 +482,8 @@ const getEmptyTimeline = () => ({
 });
 
 const getRoomUnreadInfo = (room: Room, scrollTo = false) => {
+  if (!roomHaveNotification(room) && !roomHaveUnread(room.client, room)) return undefined;
+
   const readUptoEventId = room.getEventReadUpTo(room.client.getUserId() ?? '');
   if (!readUptoEventId) return undefined;
   const evtTimeline = getEventTimeline(room, readUptoEventId);
@@ -844,20 +848,10 @@ export function RoomTimeline({
     useCallback(
       (inFocus) => {
         if (inFocus && atBottomRef.current) {
-          if (unreadInfo?.inLiveTimeline) {
-            handleOpenEvent(unreadInfo.readUptoEventId, false, (scrolled) => {
-              // the unread event is already in view
-              // so, try mark as read;
-              if (!scrolled) {
-                tryAutoMarkAsRead();
-              }
-            });
-            return;
-          }
           tryAutoMarkAsRead();
         }
       },
-      [tryAutoMarkAsRead, unreadInfo, handleOpenEvent]
+      [tryAutoMarkAsRead]
     )
   );
 
