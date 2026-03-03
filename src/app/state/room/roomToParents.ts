@@ -29,6 +29,11 @@ export type RoomToParentsAction =
       children: string[];
     }
   | {
+      type: 'REMOVE_CHILD';
+      parent: string;
+      child: string;
+    }
+  | {
       type: 'DELETE';
       roomId: string;
     };
@@ -46,6 +51,22 @@ export const roomToParentsAtom = atom<RoomToParents, [RoomToParentsAction], unde
         baseRoomToParents,
         produce(get(baseRoomToParents), (draftRoomToParents) => {
           mapParentWithChildren(draftRoomToParents, action.parent, action.children);
+        })
+      );
+      return;
+    }
+    if (action.type === 'REMOVE_CHILD') {
+      set(
+        baseRoomToParents,
+        produce(get(baseRoomToParents), (draftRoomToParents) => {
+          const parents = draftRoomToParents.get(action.child);
+          if (!parents) return;
+          parents.delete(action.parent);
+          if (parents.size === 0) {
+            draftRoomToParents.delete(action.child);
+          } else {
+            draftRoomToParents.set(action.child, parents);
+          }
         })
       );
       return;
@@ -100,7 +121,7 @@ export const useBindRoomToParentsAtom = (
           if (isValidChild(mEvent)) {
             setRoomToParents({ type: 'PUT', parent: roomId, children: [childId] });
           } else {
-            setRoomToParents({ type: 'DELETE', roomId: childId });
+            setRoomToParents({ type: 'REMOVE_CHILD', parent: roomId, child: childId });
           }
         }
       }
