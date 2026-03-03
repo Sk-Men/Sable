@@ -34,6 +34,16 @@ import { StateEvent } from '$types/matrix/room';
 import { SendRoomEvent } from './SendRoomEvent';
 import { StateEventEditor, StateEventInfo } from './StateEventEditor';
 
+const formatSyncReason = (reason: string): string => {
+  if (reason === 'sliding_active') return 'Sliding Sync active';
+  if (reason === 'sliding_disabled_server') return 'Server-side sliding sync disabled';
+  if (reason === 'session_opt_out') return 'Session opt-in is off';
+  if (reason === 'missing_proxy') return 'Sliding proxy URL missing';
+  if (reason === 'cold_cache_bootstrap') return 'Cold-cache bootstrap (classic for this run)';
+  if (reason === 'probe_failed_fallback') return 'Sliding probe failed, using fallback';
+  return reason;
+};
+
 type DeveloperToolsProps = {
   requestClose: () => void;
 };
@@ -430,6 +440,21 @@ export function DeveloperTools({ requestClose }: DeveloperToolsProps) {
                                 <Text size="T200">
                                   Sliding configured:{' '}
                                   {syncDiagnostics.slidingConfigured ? 'yes' : 'no'}
+                                </Text>
+                                <Text size="T200">
+                                  Sliding server-enabled:{' '}
+                                  {syncDiagnostics.slidingEnabledOnServer ? 'yes' : 'no'}
+                                </Text>
+                                <Text size="T200">
+                                  Sliding session opt-in:{' '}
+                                  {syncDiagnostics.sessionOptIn ? 'yes' : 'no'}
+                                </Text>
+                                <Text size="T200">
+                                  Sliding requested:{' '}
+                                  {syncDiagnostics.slidingRequested ? 'yes' : 'no'}
+                                </Text>
+                                <Text size="T200">
+                                  Sync reason: {formatSyncReason(syncDiagnostics.reason)}
                                 </Text>
                                 <Text size="T200">
                                   Client sync state: {syncDiagnostics.syncState ?? 'null'}
