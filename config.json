@@ -13,7 +13,7 @@
   },
 
   "slidingSync": {
-    "enabled": false
+    "enabled": true
   },
 
   "featuredCommunities": {
