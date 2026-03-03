@@ -14,65 +14,82 @@ export function HomeserverInfo() {
   const [version, setVersion] = useState<any>(undefined);
 
   if (!version)
-    mx.http.request(Method.Get, "/version", undefined, undefined, { prefix: "/_matrix/federation/v1" })
-      .then(version => setVersion(version))
-      .catch(error => setVersion({ error }));
+    mx.http
+      .request(Method.Get, '/version', undefined, undefined, { prefix: '/_matrix/federation/v1' })
+      .then((version) => setVersion(version))
+      .catch((error) => setVersion({ error }));
 
-  return <Box direction="Column" gap="100" id="homeserver-info">
-    <Text size="L400">Homeserver</Text>
-    <SequenceCard
-      className={SequenceCardStyle}
-      variant="SurfaceVariant"
-      direction="Column"
-      gap="400"
-    >
-      <SettingTile title="Domain" description={mx.getSafeUserId().split(":")[1]}/>
-    </SequenceCard>
-    <SequenceCard
-      className={SequenceCardStyle}
-      variant="SurfaceVariant"
-      direction="Column"
-      gap="400"
-    >
-      <SettingTile title="Federation URL" description={<a href={mx.baseUrl} target="_blank" rel="noopener noreferrer">{mx.baseUrl}</a>}/>
-    </SequenceCard>
-    {
-      version
-        ? <>
-          {version.error && <SequenceCard
-            className={SequenceCardStyle}
-            variant="SurfaceVariant"
-            direction="Column"
-            gap="400"
-          >
-            {version.error.message}
-          </SequenceCard>}
-          {version.server?.name && <SequenceCard
-            className={SequenceCardStyle}
-            variant="SurfaceVariant"
-            direction="Column"
-            gap="400"
-          >
-            <SettingTile title="Name" description={version.server?.name}/>
-          </SequenceCard>}
-          {version.server?.version && <SequenceCard
-            className={SequenceCardStyle}
-            variant="SurfaceVariant"
-            direction="Column"
-            gap="400"
-          >
-            <SettingTile title="Version" description={version.server?.version}/>
-          </SequenceCard>}
-          {version.server?.compiler && <SequenceCard
-            className={SequenceCardStyle}
-            variant="SurfaceVariant"
-            direction="Column"
-            gap="400"
-          >
-            <SettingTile title="Compiler" description={version.server?.compiler}/>
-          </SequenceCard>}
+  return (
+    <Box direction="Column" gap="100" id="homeserver-info">
+      <Text size="L400">Homeserver</Text>
+      <SequenceCard
+        className={SequenceCardStyle}
+        variant="SurfaceVariant"
+        direction="Column"
+        gap="400"
+      >
+        <SettingTile title="Domain" description={mx.getSafeUserId().split(':')[1]} />
+      </SequenceCard>
+      <SequenceCard
+        className={SequenceCardStyle}
+        variant="SurfaceVariant"
+        direction="Column"
+        gap="400"
+      >
+        <SettingTile
+          title="Federation URL"
+          description={
+            <a href={mx.baseUrl} target="_blank" rel="noopener noreferrer">
+              {mx.baseUrl}
+            </a>
+          }
+        />
+      </SequenceCard>
+      {version ? (
+        <>
+          {version.error && (
+            <SequenceCard
+              className={SequenceCardStyle}
+              variant="SurfaceVariant"
+              direction="Column"
+              gap="400"
+            >
+              {version.error.message}
+            </SequenceCard>
+          )}
+          {version.server?.name && (
+            <SequenceCard
+              className={SequenceCardStyle}
+              variant="SurfaceVariant"
+              direction="Column"
+              gap="400"
+            >
+              <SettingTile title="Name" description={version.server?.name} />
+            </SequenceCard>
+          )}
+          {version.server?.version && (
+            <SequenceCard
+              className={SequenceCardStyle}
+              variant="SurfaceVariant"
+              direction="Column"
+              gap="400"
+            >
+              <SettingTile title="Version" description={version.server?.version} />
+            </SequenceCard>
+          )}
+          {version.server?.compiler && (
+            <SequenceCard
+              className={SequenceCardStyle}
+              variant="SurfaceVariant"
+              direction="Column"
+              gap="400"
+            >
+              <SettingTile title="Compiler" description={version.server?.compiler} />
+            </SequenceCard>
+          )}
         </>
-        : <SequenceCard
+      ) : (
+        <SequenceCard
           className={SequenceCardStyle}
           variant="SurfaceVariant"
           direction="Column"
@@ -80,8 +97,9 @@ export function HomeserverInfo() {
         >
           Loading...
         </SequenceCard>
-    }
-  </Box>
+      )}
+    </Box>
+  );
 }
 
 type AboutProps = {
@@ -184,7 +202,7 @@ export function About({ requestClose }: AboutProps) {
                   />
                 </SequenceCard>
               </Box>
-              <HomeserverInfo/>
+              <HomeserverInfo />
               <Box direction="Column" gap="100">
                 <Text size="L400">Credits</Text>
                 <SequenceCard
