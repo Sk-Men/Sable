@@ -3,9 +3,10 @@ import { Box, Text } from 'folds';
 import { SequenceCard } from '$components/sequence-card';
 import { useMatrixClient } from '$hooks/useMatrixClient';
 import { getClientSyncDiagnostics } from '$client/initMatrix';
-import { Direction, Room } from '$types/matrix-sdk';
+import { Direction, EventType, NotificationCountType, Room } from '$types/matrix-sdk';
 import { Membership } from '$types/matrix/room';
 import { SequenceCardStyle } from '$features/settings/styles.css';
+import { isNotificationEvent } from '$utils/room';
 
 type RoomRenderingDiagnostics = {
   totalRooms: number;
@@ -15,6 +16,16 @@ type RoomRenderingDiagnostics = {
   roomsMissingAvatar: number;
   roomsWithoutLiveEvents: number;
   roomsWithBackPagination: number;
+};
+
+type UnreadDriftRoom = {
+  roomId: string;
+  roomName: string;
+  sdkTotal: number;
+  sdkHighlight: number;
+  latestNotificationEventId: string | null;
+  readUpToEventId: string | null;
+  fullyReadEventId: string | null;
 };
 
 const getRoomRenderingDiagnostics = (rooms: Room[]): RoomRenderingDiagnostics => {
@@ -52,6 +63,45 @@ const getRoomRenderingDiagnostics = (rooms: Room[]): RoomRenderingDiagnostics =>
   };
 };
 
+const getUnreadDriftRooms = (mx: ReturnType<typeof useMatrixClient>): UnreadDriftRoom[] => {
+  const userId = mx.getUserId();
+  if (!userId) return [];
+
+  return mx
+    .getRooms()
+    .filter((room) => !room.isSpaceRoom() && room.getMyMembership() === Membership.Join)
+    .reduce<UnreadDriftRoom[]>((driftRooms, room) => {
+      const sdkTotal = room.getUnreadNotificationCount(NotificationCountType.Total);
+      const sdkHighlight = room.getUnreadNotificationCount(NotificationCountType.Highlight);
+      if (sdkTotal <= 0 && sdkHighlight <= 0) return driftRooms;
+
+      const latestNotificationEvent = [...room.getLiveTimeline().getEvents()]
+        .reverse()
+        .find((event) => !event.isSending() && isNotificationEvent(event));
+      const latestNotificationEventId = latestNotificationEvent?.getId() ?? null;
+      if (!latestNotificationEventId) return driftRooms;
+
+      const hasReadLatestNotification = room.hasUserReadEvent(userId, latestNotificationEventId);
+      if (!hasReadLatestNotification || sdkHighlight > 0) return driftRooms;
+
+      const readUpToEventId = room.getEventReadUpTo(userId) ?? null;
+      const fullyReadEventId =
+        room.getAccountData(EventType.FullyRead)?.getContent<{ event_id?: string }>()?.event_id ??
+        null;
+
+      driftRooms.push({
+        roomId: room.roomId,
+        roomName: room.name || room.roomId,
+        sdkTotal,
+        sdkHighlight,
+        latestNotificationEventId,
+        readUpToEventId,
+        fullyReadEventId,
+      });
+      return driftRooms;
+    }, []);
+};
+
 const formatListCoverage = (knownCount: number, rangeEnd: number): string => {
   if (knownCount <= 0) return '0/0';
   const loadedCount = Math.max(0, Math.min(knownCount, rangeEnd + 1));
@@ -69,6 +119,7 @@ export function SyncDiagnostics() {
 
   const diagnostics = getClientSyncDiagnostics(mx);
   const roomDiagnostics = getRoomRenderingDiagnostics(mx.getRooms());
+  const unreadDriftRooms = getUnreadDriftRooms(mx);
 
   return (
     <Box direction="Column" gap="100">
@@ -100,6 +151,14 @@ export function SyncDiagnostics() {
           <Text size="T300">
             Rooms with more history to paginate: {roomDiagnostics.roomsWithBackPagination}
           </Text>
+          <Text size="T300">Unread drift rooms: {unreadDriftRooms.length}</Text>
+          {unreadDriftRooms.slice(0, 10).map((room) => (
+            <Text key={room.roomId} size="T200" priority="300">
+              {room.roomName}: sdk {room.sdkTotal}/{room.sdkHighlight} | latest{' '}
+              {room.latestNotificationEventId ?? 'null'} | readUpTo {room.readUpToEventId ?? 'null'}{' '}
+              | fullyRead {room.fullyReadEventId ?? 'null'}
+            </Text>
+          ))}
 
           {diagnostics.sliding && (
             <>

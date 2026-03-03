@@ -68,13 +68,14 @@ const buildDefaultSubscription = (timelineLimit: number): MSC3575RoomSubscriptio
 const buildLists = (
   pageSize: number,
   timelineLimit: number,
-  includeInviteList: boolean
+  includeInviteList: boolean,
+  requiredState: MSC3575RoomSubscription['required_state']
 ): Map<string, MSC3575List> => {
   const lists = new Map<string, MSC3575List>();
   lists.set(LIST_JOINED, {
     ranges: [[0, Math.max(0, pageSize - 1)]],
     timeline_limit: timelineLimit,
-    required_state: [],
+    required_state: requiredState,
     slow_get_all_rooms: true,
     filters: {
       is_invite: false,
@@ -85,7 +86,7 @@ const buildLists = (
     lists.set(LIST_INVITES, {
       ranges: [[0, Math.max(0, pageSize - 1)]],
       timeline_limit: timelineLimit,
-      required_state: [],
+      required_state: requiredState,
       slow_get_all_rooms: true,
       filters: {
         is_invite: true,
@@ -127,7 +128,12 @@ export class SlidingSyncManager {
     const includeInviteList = config.includeInviteList !== false;
 
     const subscription = buildDefaultSubscription(timelineLimit);
-    const lists = buildLists(listPageSize, timelineLimit, includeInviteList);
+    const lists = buildLists(
+      listPageSize,
+      timelineLimit,
+      includeInviteList,
+      subscription.required_state
+    );
     this.listKeys = Array.from(lists.keys());
     this.slidingSync = new SlidingSync(proxyBaseUrl, lists, subscription, mx, pollTimeoutMs);
 

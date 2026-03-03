@@ -9,6 +9,7 @@ import {
   SyncState,
   ReceiptContent,
   ReceiptType,
+  EventType,
 } from '$types/matrix-sdk';
 import { useCallback, useEffect } from 'react';
 import {
@@ -134,6 +135,21 @@ export const roomToUnreadAtom = atom<RoomToUnread, [RoomToUnreadAction], undefin
     }
     if (action.type === 'PUT') {
       const { unreadInfo } = action;
+      if (unreadInfo.total <= 0 && unreadInfo.highlight <= 0) {
+        if (get(baseRoomToUnread).has(unreadInfo.roomId)) {
+          set(
+            baseRoomToUnread,
+            produce(get(baseRoomToUnread), (draftRoomToUnread) =>
+              deleteUnreadInfo(
+                draftRoomToUnread,
+                getAllParents(get(roomToParentsAtom), unreadInfo.roomId),
+                unreadInfo.roomId
+              )
+            )
+          );
+        }
+        return;
+      }
       const currentUnread = get(baseRoomToUnread).get(unreadInfo.roomId);
       if (currentUnread && unreadEqual(currentUnread, unreadInfoToUnread(unreadInfo))) {
         // Do not update if unread data has not changes
@@ -241,6 +257,46 @@ export const useBindRoomToUnreadAtom = (mx: MatrixClient, unreadAtom: typeof roo
     mx.on(RoomEvent.Receipt, handleReceipt);
     return () => {
       mx.removeListener(RoomEvent.Receipt, handleReceipt);
+    };
+  }, [mx, setUnreadAtom]);
+
+  useEffect(() => {
+    const handleUnreadNotifications = (
+      _notification: unknown,
+      _threadId: string | undefined,
+      room: Room
+    ) => {
+      if (!room || room.isSpaceRoom()) return;
+      if (room.getMyMembership() !== Membership.Join) return;
+
+      const unreadInfo = getUnreadInfo(room);
+      if (unreadInfo.total === 0 && unreadInfo.highlight === 0) {
+        setUnreadAtom({ type: 'DELETE', roomId: room.roomId });
+        return;
+      }
+      setUnreadAtom({ type: 'PUT', unreadInfo });
+    };
+    (mx as any).on(RoomEvent.UnreadNotifications, handleUnreadNotifications);
+    return () => {
+      (mx as any).removeListener(RoomEvent.UnreadNotifications, handleUnreadNotifications);
+    };
+  }, [mx, setUnreadAtom]);
+
+  useEffect(() => {
+    const handleRoomAccountData = (mEvent: MatrixEvent, room: Room) => {
+      if (room.isSpaceRoom()) return;
+      if (mEvent.getType() !== EventType.FullyRead) return;
+
+      const unreadInfo = getUnreadInfo(room);
+      if (unreadInfo.total === 0 && unreadInfo.highlight === 0) {
+        setUnreadAtom({ type: 'DELETE', roomId: room.roomId });
+        return;
+      }
+      setUnreadAtom({ type: 'PUT', unreadInfo });
+    };
+    mx.on(RoomEvent.AccountData, handleRoomAccountData);
+    return () => {
+      mx.removeListener(RoomEvent.AccountData, handleRoomAccountData);
     };
   }, [mx, setUnreadAtom]);
 
