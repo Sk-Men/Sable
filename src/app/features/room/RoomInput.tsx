@@ -126,13 +126,6 @@ import { useImagePackRooms } from '$hooks/useImagePackRooms';
 import { useComposingCheck } from '$hooks/useComposingCheck';
 import { useSableCosmetics } from '$hooks/useSableCosmetics';
 import { createLogger } from '$utils/debug';
-import { CommandAutocomplete } from './CommandAutocomplete';
-import {
-  getAudioMsgContent,
-  getFileMsgContent,
-  getImageMsgContent,
-  getVideoMsgContent,
-} from './msgContent';
 import FocusTrap from 'focus-trap-react';
 import { useQueryClient } from '@tanstack/react-query';
 import {
@@ -146,10 +139,17 @@ import {
   computeDelayMs,
   cancelDelayedEvent,
 } from '$utils/delayedEvents';
-import { SchedulePickerDialog } from './schedule-send';
-import * as css from './schedule-send/SchedulePickerDialog.css';
 import { timeHourMinute, timeDayMonthYear } from '$utils/time';
 import { stopPropagation } from '$utils/keyboard';
+import { SchedulePickerDialog } from './schedule-send';
+import * as css from './schedule-send/SchedulePickerDialog.css';
+import {
+  getAudioMsgContent,
+  getFileMsgContent,
+  getImageMsgContent,
+  getVideoMsgContent,
+} from './msgContent';
+import { CommandAutocomplete } from './CommandAutocomplete';
 
 const getReplyContent = (replyDraft: IReplyDraft | undefined): IEventRelation => {
   if (!replyDraft) return {};
@@ -506,7 +506,23 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
         }
         resetInput();
       }
-    }, [mx, roomId, room, editor, replyDraft, sendTypingStatus, setReplyDraft, isMarkdown, commands, scheduledTime, setScheduledTime, isEncrypted, queryClient, editingScheduledDelayId, setEditingScheduledDelayId]);
+    }, [
+      mx,
+      roomId,
+      room,
+      editor,
+      replyDraft,
+      sendTypingStatus,
+      setReplyDraft,
+      isMarkdown,
+      commands,
+      scheduledTime,
+      setScheduledTime,
+      isEncrypted,
+      queryClient,
+      editingScheduledDelayId,
+      setEditingScheduledDelayId,
+    ]);
 
     const handleKeyDown: KeyboardEventHandler = useCallback(
       (evt) => {

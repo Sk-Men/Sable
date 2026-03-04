@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Box, Text, Chip, Icon, Icons, IconButton } from 'folds';
 import { Room } from '$types/matrix-sdk';
@@ -91,28 +91,21 @@ export function ScheduledMessagesList({ room, onEditMessage }: ScheduledMessages
           variant="SurfaceVariant"
           radii="Pill"
           before={<Icon size="50" src={Icons.Clock} />}
-          after={
-            <Icon size="50" src={expanded ? Icons.ChevronTop : Icons.ChevronBottom} />
-          }
+          after={<Icon size="50" src={expanded ? Icons.ChevronTop : Icons.ChevronBottom} />}
           onClick={() => setExpanded(!expanded)}
         >
           <Text size="B300">
-            {visibleEvents.length} scheduled{' '}
-            {visibleEvents.length === 1 ? 'message' : 'messages'}
+            {visibleEvents.length} scheduled {visibleEvents.length === 1 ? 'message' : 'messages'}
           </Text>
         </Chip>
       </Box>
       {expanded && (
         <Box direction="Column" className={css.ScheduledMessagesPanel}>
           {visibleEvents.map((evt) => {
-            const deliveryTs =
-              'delay' in evt ? evt.running_since + evt.delay : evt.running_since;
+            const deliveryTs = 'delay' in evt ? evt.running_since + evt.delay : evt.running_since;
             const isEncryptedEvt = evt.type === 'm.room.encrypted';
-            const body = isEncryptedEvt
-              ? ''
-              : typeof evt.content.body === 'string'
-                ? evt.content.body
-                : '';
+            const body =
+              !isEncryptedEvt && typeof evt.content.body === 'string' ? evt.content.body : '';
             const formattedBody =
               !isEncryptedEvt && typeof evt.content.formatted_body === 'string'
                 ? evt.content.formatted_body

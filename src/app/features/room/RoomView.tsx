@@ -24,6 +24,8 @@ import { useOpenRoomSettings } from '$state/hooks/roomSettings';
 import { useSpaceOptionally } from '$hooks/useSpace';
 import { RoomSettingsPage } from '$state/roomSettings';
 import { GlobalModalManager } from '$components/message/modals/GlobalModalManager';
+import { useDelayedEventsSupport } from '$hooks/useDelayedEventsSupport';
+import { delayedEventsSupportedAtom } from '$state/scheduledMessages';
 import { RoomViewFollowing, RoomViewFollowingPlaceholder } from './RoomViewFollowing';
 import { RoomInput } from './RoomInput';
 import { RoomTombstone } from './RoomTombstone';
@@ -31,8 +33,6 @@ import { RoomViewTyping } from './RoomViewTyping';
 import { RoomTimeline } from './RoomTimeline';
 import { RoomInputPlaceholder } from './RoomInputPlaceholder';
 import { ScheduledMessagesList } from './schedule-send';
-import { useDelayedEventsSupport } from '$hooks/useDelayedEventsSupport';
-import { delayedEventsSupportedAtom } from '$state/scheduledMessages';
 
 const FN_KEYS_REGEX = /^F\d+$/;
 const shouldFocusMessageField = (evt: KeyboardEvent): boolean => {

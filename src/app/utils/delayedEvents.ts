@@ -6,10 +6,7 @@ import {
   Room,
   UpdateDelayedEventAction,
 } from '$types/matrix-sdk';
-import type {
-  DelayedEventInfo,
-  SendDelayedEventResponse,
-} from '$types/matrix-sdk';
+import type { DelayedEventInfo, SendDelayedEventResponse } from '$types/matrix-sdk';
 
 // Grab types needed for encryption
 interface EncryptableBackend {
@@ -36,7 +33,7 @@ export async function sendDelayedMessage(
     { delay: delayMs },
     threadId ?? null,
     EventType.RoomMessage,
-    content as any // eslint-disable-line @typescript-eslint/no-explicit-any
+    content as any
   );
 }
 
@@ -77,7 +74,7 @@ export async function sendDelayedMessageE2EE(
   //   event.getWireType()    === 'm.room.encrypted'
   //   event.getWireContent() === the Megolm ciphertext object
   // Pass the pre-encrypted payload directly to the delayed-events API.
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
   return (mx as any)._unstable_sendDelayedEvent(
     roomId,
     { delay: delayMs },
@@ -87,23 +84,15 @@ export async function sendDelayedMessageE2EE(
   );
 }
 
-export async function getDelayedEvents(
-  mx: MatrixClient
-): Promise<DelayedEventInfo> {
+export async function getDelayedEvents(mx: MatrixClient): Promise<DelayedEventInfo> {
   return mx._unstable_getDelayedEvents();
 }
 
-export async function cancelDelayedEvent(
-  mx: MatrixClient,
-  delayId: string
-): Promise<void> {
+export async function cancelDelayedEvent(mx: MatrixClient, delayId: string): Promise<void> {
   await mx._unstable_updateDelayedEvent(delayId, UpdateDelayedEventAction.Cancel);
 }
 
-export async function sendDelayedEventNow(
-  mx: MatrixClient,
-  delayId: string
-): Promise<void> {
+export async function sendDelayedEventNow(mx: MatrixClient, delayId: string): Promise<void> {
   await mx._unstable_updateDelayedEvent(delayId, UpdateDelayedEventAction.Send);
 }
 

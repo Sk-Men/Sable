@@ -1,4 +1,4 @@
-import React, { MouseEventHandler, useState } from 'react';
+import { MouseEventHandler, useState } from 'react';
 import FocusTrap from 'focus-trap-react';
 import {
   Dialog,
@@ -139,12 +139,7 @@ export function SchedulePickerDialog({
                             escapeDeactivates: stopPropagation,
                           }}
                         >
-                          <TimePicker
-                            min={now}
-                            max={now + maxDelay}
-                            value={ts}
-                            onChange={setTs}
-                          />
+                          <TimePicker min={now} max={now + maxDelay} value={ts} onChange={setTs} />
                         </FocusTrap>
                       }
                     />
@@ -185,12 +180,7 @@ export function SchedulePickerDialog({
                             escapeDeactivates: stopPropagation,
                           }}
                         >
-                          <DatePicker
-                            min={now}
-                            max={now + maxDelay}
-                            value={ts}
-                            onChange={setTs}
-                          />
+                          <DatePicker min={now} max={now + maxDelay} value={ts} onChange={setTs} />
                         </FocusTrap>
                       }
                     />
@@ -244,8 +234,8 @@ export function SchedulePickerDialog({
               </Box>
               {showEncryptionWarning && (
                 <Text size="T300" priority="400">
-                  Note: This message will be encrypted with current room keys. Devices that join
-                  or are added after scheduling may not be able to decrypt it.
+                  Note: This message will be encrypted with current room keys. Devices that join or
+                  are added after scheduling may not be able to decrypt it.
                 </Text>
               )}
               {(error || isPast) && (
@@ -253,12 +243,7 @@ export function SchedulePickerDialog({
                   {error || 'Selected time is in the past'}
                 </Text>
               )}
-              <Button
-                type="submit"
-                variant="Primary"
-                aria-disabled={isPast}
-                onClick={handleSubmit}
-              >
+              <Button type="submit" variant="Primary" aria-disabled={isPast} onClick={handleSubmit}>
                 <Text size="B400">Schedule Send</Text>
               </Button>
             </Box>
