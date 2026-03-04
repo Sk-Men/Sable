@@ -27,7 +27,7 @@ import {
   config,
   toRem,
 } from 'folds';
-import { Room, RoomMember } from '$types/matrix-sdk';
+import { MatrixClient, Room, RoomMember } from '$types/matrix-sdk';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import classNames from 'classnames';
 
@@ -102,6 +102,16 @@ function MemberDrawerHeader({ room }: MemberDrawerHeaderProps) {
     </Header>
   );
 }
+
+type MemberItemProps = {
+  mx: MatrixClient;
+  useAuthentication: boolean;
+  room: Room;
+  member: RoomMember;
+  onClick: MouseEventHandler<HTMLButtonElement>;
+  pressed?: boolean;
+  typing?: boolean;
+};
 function MemberItem({
   mx,
   useAuthentication,
