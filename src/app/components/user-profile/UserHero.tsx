@@ -124,6 +124,13 @@ export function UserHero({ userId, avatarUrl, bannerUrl, presence }: UserHeroPro
               >
                 {presence.status}
               </Text>
+              {presence.status.length > 70 && (
+                <Icon
+                  size="50"
+                  style={{ position: 'relative', left: '2.5%' }}
+                  src={isFullStatus ? Icons.ChevronTop : Icons.ChevronBottom}
+                />
+              )}
             </Tooltip>
           </div>
         )}
