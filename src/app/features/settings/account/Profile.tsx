@@ -45,12 +45,12 @@ import { CompactUploadCardRenderer } from '$components/upload-card';
 import { useCapabilities } from '$hooks/useCapabilities';
 import { profilesCacheAtom } from '$state/userRoomProfile';
 import { SequenceCardStyle } from '$features/settings/styles.css';
+import { useUserPresence } from '$hooks/useUserPresence';
 import { TimezoneEditor } from './TimezoneEditor';
 import { PronounEditor } from './PronounEditor';
 import { BioEditor } from './BioEditor';
 import { NameColorEditor } from './NameColorEditor';
 import { StatusEditor } from './StatusEditor';
-import { useUserPresence } from '$hooks/useUserPresence';
 
 type PronounSet = {
   summary: string;

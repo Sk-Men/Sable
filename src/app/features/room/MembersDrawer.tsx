@@ -27,7 +27,7 @@ import {
   config,
   toRem,
 } from 'folds';
-import { MatrixClient, Room, RoomMember } from '$types/matrix-sdk';
+import { Room, RoomMember } from '$types/matrix-sdk';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import classNames from 'classnames';
 
