@@ -9,6 +9,7 @@ import {
   lightTheme,
   rosePineTheme,
   silverTheme,
+  cinnyLightTheme,
   cinnySilverTheme,
   gruvdarkTheme,
   accordTheme,
@@ -35,6 +36,11 @@ export const SilverTheme: Theme = {
   id: 'silver-theme',
   kind: ThemeKind.Light,
   classNames: ['silver-theme', silverTheme, onLightFontWeight, 'prism-light'],
+};
+export const CinnyLightTheme: Theme = {
+  id: 'cinny-light-theme',
+  kind: ThemeKind.Light,
+  classNames: ['cinny-light-theme', cinnyLightTheme, onLightFontWeight, 'prism-light'],
 };
 export const CinnySilverTheme: Theme = {
   id: 'cinny-silver-theme',
@@ -80,6 +86,7 @@ export const useThemes = (): Theme[] => {
     () => [
       LightTheme,
       SilverTheme,
+      CinnyLightTheme,
       CinnySilverTheme,
       DarkTheme,
       ButterTheme,
@@ -99,6 +106,7 @@ export const useThemeNames = (): Record<string, string> =>
     () => ({
       [LightTheme.id]: 'Light',
       [SilverTheme.id]: 'Silver',
+      [CinnyLightTheme.id]: 'Cinny Light',
       [CinnySilverTheme.id]: 'Cinny Silver',
       [DarkTheme.id]: 'Dark',
       [ButterTheme.id]: 'Butter',
