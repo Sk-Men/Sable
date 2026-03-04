@@ -10,6 +10,7 @@ import {
   OverlayCenter,
   Text,
   Tooltip,
+  toRem,
 } from 'folds';
 import classNames from 'classnames';
 import FocusTrap from 'focus-trap-react';
@@ -35,6 +36,7 @@ type UserHeroProps = {
 };
 export function UserHero({ userId, avatarUrl, bannerUrl, presence }: UserHeroProps) {
   const [viewAvatar, setViewAvatar] = useState<string>();
+  const [isFullStatus, setIsFullStatus] = useState(false);
 
   const cachedBannerUrl = useBlobCache(bannerUrl);
   const cachedAvatarUrl = useBlobCache(avatarUrl);
@@ -105,8 +107,23 @@ export function UserHero({ userId, avatarUrl, bannerUrl, presence }: UserHeroPro
         </div>
         {presence?.status?.length && (
           <div className={css.UserHeroStatusContainer}>
-            <Tooltip style={{ maxWidth: '90%', justifySelf: 'left' }}>
-              <Text size="T200"> {presence.status} </Text>
+            <Tooltip
+              onClick={() => setIsFullStatus(!isFullStatus)}
+              className={css.UserHeroStatusTooltip}
+              style={{
+                maxHeight: isFullStatus ? toRem(105) : toRem(48),
+              }}
+            >
+              <Text
+                size="T200"
+                style={{
+                  overflow: isFullStatus ? 'scroll' : 'hidden',
+                  height: '100%',
+                  wordBreak: 'break-word',
+                }}
+              >
+                {presence.status}
+              </Text>
             </Tooltip>
           </div>
         )}

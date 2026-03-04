@@ -168,8 +168,7 @@ function MemberItem({
           {name}
         </Text>
         {presence?.status && (
-          /* The Color value should be edited to the theme specific disabled text color */
-          <Text size="T300" truncate style={{ color: '#888888', fontFamily: font }}>
+          <Text size="T300" truncate style={{ color: config.opacity.P300, fontFamily: font }}>
             {presence.status}
           </Text>
         )}

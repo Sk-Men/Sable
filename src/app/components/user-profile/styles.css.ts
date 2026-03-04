@@ -54,6 +54,15 @@ export const UserHeroStatusContainer = style({
   width: '100%',
   paddingLeft: '2%',
 });
+export const UserHeroStatusTooltip = style({
+  maxWidth: '98%',
+  justifySelf: 'left',
+  cursor: 'pointer',
+  ':hover': {
+    filter: 'brightness(0.8)',
+    transform: 'translateY(-1px)',
+  },
+});
 export const UserHeroAvatar = style({
   outline: `${config.borderWidth.B600} solid ${color.Surface.Container}`,
   selectors: {
