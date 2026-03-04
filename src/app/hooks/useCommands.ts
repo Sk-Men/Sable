@@ -10,6 +10,7 @@ import {
   Visibility,
   RoomServerAclEventContent,
   MsgType,
+  MatrixEvent,
 } from '$types/matrix-sdk';
 import { useMemo } from 'react';
 import { Membership, StateEvent } from '$types/matrix/room';
@@ -231,7 +232,12 @@ export enum Command {
   Pronoun = 'pronoun',
   GPronoun = 'gpronoun',
   Rainbow = 'rainbow',
+  RawMsg = 'rawmsg',
   Raw = 'raw',
+  RawAcc = 'rawacc',
+  DelAcc = 'delacc',
+  SetExt = 'setext',
+  DelExt = 'delext',
 }
 
 export type CommandContent = {
@@ -615,7 +621,7 @@ export const useCommands = (mx: MatrixClient, room: Room): CommandRecord => {
           const userId = mx.getSafeUserId();
 
           const sendFeedback = (msg: string) => {
-            const localNotice = new (window as any).matrixcs.MatrixEvent({
+            const localNotice = new MatrixEvent({
               type: 'm.room.message',
               content: { msgtype: 'm.notice', body: msg },
               event_id: `~sable-${Date.now()}`,
@@ -666,7 +672,7 @@ export const useCommands = (mx: MatrixClient, room: Room): CommandRecord => {
           const userId = mx.getSafeUserId();
 
           const sendFeedback = (msg: string) => {
-            const localNotice = new (window as any).matrixcs.MatrixEvent({
+            const localNotice = new MatrixEvent({
               type: 'm.room.message',
               content: { msgtype: 'm.notice', body: msg },
               event_id: `~sable-g-${Date.now()}`,
@@ -727,7 +733,7 @@ export const useCommands = (mx: MatrixClient, room: Room): CommandRecord => {
           const userId = mx.getSafeUserId();
 
           const sendFeedback = (msg: string) => {
-            const localNotice = new (window as any).matrixcs.MatrixEvent({
+            const localNotice = new MatrixEvent({
               type: 'm.room.message',
               content: { msgtype: 'm.notice', body: msg },
               event_id: `~font-${Date.now()}`,
@@ -772,7 +778,7 @@ export const useCommands = (mx: MatrixClient, room: Room): CommandRecord => {
           const userId = mx.getSafeUserId();
 
           const sendFeedback = (msg: string) => {
-            const localNotice = new (window as any).matrixcs.MatrixEvent({
+            const localNotice = new MatrixEvent({
               type: 'm.room.message',
               content: { msgtype: 'm.notice', body: msg },
               event_id: `~gfont-${Date.now()}`,
@@ -825,7 +831,7 @@ export const useCommands = (mx: MatrixClient, room: Room): CommandRecord => {
           const userId = mx.getSafeUserId();
 
           const sendFeedback = (msg: string) => {
-            const localNotice = new (window as any).matrixcs.MatrixEvent({
+            const localNotice = new MatrixEvent({
               type: 'm.room.message',
               content: { msgtype: 'm.notice', body: msg },
               event_id: `~nullptr-widget-${Date.now()}`,
@@ -888,7 +894,7 @@ export const useCommands = (mx: MatrixClient, room: Room): CommandRecord => {
           const userId = mx.getSafeUserId();
 
           const sendFeedback = (msg: string) => {
-            const localNotice = new (window as any).matrixcs.MatrixEvent({
+            const localNotice = new MatrixEvent({
               type: 'm.room.message',
               content: { msgtype: 'm.notice', body: msg },
               event_id: `~pronoun-${Date.now()}`,
@@ -940,7 +946,7 @@ export const useCommands = (mx: MatrixClient, room: Room): CommandRecord => {
           const userId = mx.getSafeUserId();
 
           const sendFeedback = (msg: string) => {
-            const localNotice = new (window as any).matrixcs.MatrixEvent({
+            const localNotice = new MatrixEvent({
               type: 'm.room.message',
               content: { msgtype: 'm.notice', body: msg },
               event_id: `~gpronoun-${Date.now()}`,
@@ -1005,17 +1011,17 @@ export const useCommands = (mx: MatrixClient, room: Room): CommandRecord => {
           });
         },
       },
-      [Command.Raw]: {
-        name: Command.Raw,
+      [Command.RawMsg]: {
+        name: Command.RawMsg,
         description:
-          'Send raw JSON event (Dev Mode only). Example: /raw {"msgtype":"m.text", "body":"hello"}',
+          '[Dev only] Send raw message event. Example: /rawmsg {"msgtype":"m.text", "body":"hello"}',
         exe: async (payload) => {
           const userId = mx.getSafeUserId();
           const sendFeedback = (msg: string) => {
-            const localNotice = new (window as any).matrixcs.MatrixEvent({
+            const localNotice = new MatrixEvent({
               type: 'm.room.message',
               content: { msgtype: 'm.notice', body: msg },
-              event_id: `~raw-${Date.now()}`,
+              event_id: `~rawmsg-${Date.now()}`,
               room_id: room.roomId,
               sender: userId,
             });
@@ -1030,6 +1036,222 @@ export const useCommands = (mx: MatrixClient, room: Room): CommandRecord => {
             await mx.sendMessage(room.roomId, content);
           } catch (e: any) {
             sendFeedback(`Invalid JSON: ${e.message}`);
+          }
+        },
+      },
+      [Command.Raw]: {
+        name: Command.Raw,
+        description: '[Dev only] Send any raw event. Usage: /raw <type> <json> [-s stateKey]',
+        exe: async (payload) => {
+          const userId = mx.getSafeUserId();
+          const sendFeedback = (msg: string) => {
+            const localNotice = new MatrixEvent({
+              type: 'm.room.message',
+              content: { msgtype: 'm.notice', body: msg },
+              event_id: `~rawevent-${Date.now()}`,
+              room_id: room.roomId,
+              sender: userId,
+            });
+            room.addLiveEvents([localNotice], { duplicateStrategy: 'ignore' } as any);
+          };
+
+          if (!developerTools) {
+            sendFeedback('Command available in Developer Mode only.');
+            return;
+          }
+
+          const [mainPayload, flags] = splitPayloadContentAndFlags(payload);
+          const flagMap = parseFlags(flags);
+          const stateKey = flagMap.s;
+          const parts = mainPayload.trim().split(/\s+/);
+          const eventType = parts[0];
+          const jsonString = mainPayload.trim().substring(eventType.length).trim();
+
+          if (!eventType || !jsonString) {
+            sendFeedback('Usage: /rawevent <type> <json> [-s stateKey]');
+            return;
+          }
+
+          try {
+            const content = JSON.parse(jsonString);
+
+            if (typeof stateKey === 'string') {
+              await mx.sendStateEvent(room.roomId, eventType as any, content, stateKey);
+              sendFeedback(`State event "${eventType}" sent with state key "${stateKey}".`);
+            } else {
+              await mx.sendEvent(room.roomId, eventType as any, content);
+              sendFeedback(`Event "${eventType}" sent.`);
+            }
+          } catch (e: any) {
+            sendFeedback(`Error: ${e.message}`);
+          }
+        },
+      },
+      [Command.RawAcc]: {
+        name: Command.RawAcc,
+        description: '[Dev only] Merge global account data. Usage: /rawacc <type> <json>',
+        exe: async (payload) => {
+          const userId = mx.getSafeUserId();
+          const sendFeedback = (msg: string) => {
+            const localNotice = new MatrixEvent({
+              type: 'm.room.message',
+              content: { msgtype: 'm.notice', body: msg },
+              event_id: `~rawacc-${Date.now()}`,
+              room_id: room.roomId,
+              sender: userId,
+            });
+            (room as any).addLiveEvents([localNotice], { duplicateStrategy: 'ignore' } as any);
+          };
+
+          if (!developerTools) {
+            sendFeedback('Command available in Developer Mode only.');
+            return;
+          }
+
+          const trimmed = payload.trim();
+          const firstSpaceIndex = trimmed.indexOf(' ');
+          if (firstSpaceIndex === -1) {
+            sendFeedback('Usage: /rawacc <type> <json>');
+            return;
+          }
+
+          const type = trimmed.substring(0, firstSpaceIndex);
+          const jsonString = trimmed.substring(firstSpaceIndex).trim();
+
+          try {
+            const newContent = JSON.parse(jsonString);
+
+            const existingEvent = mx.getAccountData(type as any);
+            const existingContent = existingEvent ? existingEvent.getContent() : {};
+
+            const mergedContent = { ...existingContent, ...newContent };
+
+            await mx.setAccountData(type as any, mergedContent);
+            sendFeedback(`Account data "${type}" merged successfully.`);
+          } catch (e: any) {
+            sendFeedback(`Error: ${e.message}`);
+          }
+        },
+      },
+      [Command.DelAcc]: {
+        name: Command.DelAcc,
+        description: '[Dev Only] Remove a key from account data. Usage: /delacc <type> <key>',
+        exe: async (payload) => {
+          const userId = mx.getSafeUserId();
+          const sendFeedback = (msg: string) => {
+            const localNotice = new MatrixEvent({
+              type: 'm.room.message',
+              content: { msgtype: 'm.notice', body: msg },
+              event_id: `~removeacc-${Date.now()}`,
+              room_id: room.roomId,
+              sender: userId,
+            });
+            room.addLiveEvents([localNotice], { duplicateStrategy: 'ignore' } as any);
+          };
+          const parts = payload.trim().split(/\s+/);
+          if (parts.length < 2) {
+            sendFeedback('Usage: /delacc <type> <key>');
+            return;
+          }
+          const [type, key] = parts;
+          try {
+            const existingEvent = mx.getAccountData(type as any);
+            if (!existingEvent) {
+              sendFeedback(`No account data found for type "${type}".`);
+              return;
+            }
+            const content = { ...existingEvent.getContent() };
+            if (!(key in content)) {
+              sendFeedback(`Key "${key}" not found in "${type}".`);
+              return;
+            }
+            delete content[key];
+            await mx.setAccountData(type as any, content as any);
+            sendFeedback(`Key "${key}" removed from "${type}".`);
+          } catch (e: any) {
+            sendFeedback(`Error: ${e.message}`);
+          }
+        },
+      },
+      [Command.SetExt]: {
+        name: Command.SetExt,
+        description: '[Dev Only] Set an extended profile property. Usage: /setext <key> <value>',
+        exe: async (payload) => {
+          const userId = mx.getSafeUserId();
+          const sendFeedback = (msg: string) => {
+            const localNotice = new MatrixEvent({
+              type: 'm.room.message',
+              content: { msgtype: 'm.notice', body: msg },
+              event_id: `~setext-${Date.now()}`,
+              room_id: room.roomId,
+              sender: userId,
+            });
+            room.addLiveEvents([localNotice], { duplicateStrategy: 'ignore' } as any);
+          };
+          if (!developerTools) {
+            sendFeedback('Command available in Developer Mode only.');
+            return;
+          }
+          const parts = payload.trim().split(/\s+/);
+          if (parts.length < 2) {
+            sendFeedback('Usage: /setext <key> <value>');
+            return;
+          }
+          const key = parts[0];
+          const value = parts.slice(1).join(' ');
+          let finalValue: any = value;
+          if (value === 'true') finalValue = true;
+          else if (value === 'false') finalValue = false;
+          else if (!isNaN(Number(value)) && value.trim() !== '') finalValue = Number(value);
+          try {
+            if (typeof mx.setExtendedProfileProperty === 'function') {
+              await mx.setExtendedProfileProperty(key, finalValue);
+              sendFeedback(`Extended profile property "${key}" set to: ${finalValue}`);
+            } else {
+              sendFeedback('Error: setExtendedProfileProperty is not supported.');
+            }
+          } catch (e: any) {
+            sendFeedback(`Failed to set extended profile: ${e.message}`);
+          }
+        },
+      },
+      [Command.DelExt]: {
+        name: Command.DelExt,
+        description: '[Dev Only] Remove an extended profile property. Usage: /delext <key>',
+        exe: async (payload) => {
+          const userId = mx.getSafeUserId();
+          const key = payload.trim();
+
+          const sendFeedback = (msg: string) => {
+            const localNotice = new MatrixEvent({
+              type: 'm.room.message',
+              content: { msgtype: 'm.notice', body: msg },
+              event_id: `~removeext-${Date.now()}`,
+              room_id: room.roomId,
+              sender: userId,
+            });
+            room.addLiveEvents([localNotice], { duplicateStrategy: 'ignore' } as any);
+          };
+
+          if (!developerTools) {
+            sendFeedback('Command available in Developer Mode only.');
+            return;
+          }
+
+          if (!key) {
+            sendFeedback('Usage: /delext <key>');
+            return;
+          }
+
+          try {
+            if (typeof mx.deleteExtendedProfileProperty === 'function') {
+              await mx.deleteExtendedProfileProperty(key);
+              sendFeedback(`Extended profile property "${key}" removed.`);
+            } else {
+              sendFeedback('Error: setExtendedProfileProperty is not supported.');
+            }
+          } catch (e: any) {
+            sendFeedback(`Failed to remove property: ${e.message}`);
           }
         },
       },
