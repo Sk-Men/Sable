@@ -1,5 +1,9 @@
 # Sable Client Changelog
 
+## 1.3.3
+
+- Fix unread counts and dot badges for muted rooms ([#118](https://github.com/7w1/sable/pull/118)) - [Evie Gauthier](https://github.com/Just-Insane)
+
 ## 1.3.2 - 3/3/2026
 
 - Content toggles in push notifications ([#88](https://github.com/7w1/sable/pull/88)) - [Evie Gauthier](https://github.com/Just-Insane)
