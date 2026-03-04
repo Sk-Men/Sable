@@ -97,6 +97,8 @@ Preview deploys:
 
 Production deploys:
 
+- PRs that change `infra/web` get an OpenTofu plan comment on the PR from
+  `.github/workflows/cloudflare-worker-prod.yml`.
 - `.github/workflows/cloudflare-worker-prod.yml` builds the app and runs `tofu apply` on
   pushes to `dev`, or via manual workflow dispatch.
 - `tofu apply` uploads `dist/` as a new immutable Worker version with

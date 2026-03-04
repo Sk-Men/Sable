@@ -10,6 +10,9 @@ on:
       - dev
   workflow_dispatch:
 
+env:
+  OPENTOFU_VERSION: '1.11.5'
+
 concurrency:
   group: cloudflare-infra
   cancel-in-progress: false
@@ -20,8 +23,10 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
+      pull-requests: write
     env:
       CLOUDFLARE_API_TOKEN: ${{ secrets.TF_CLOUDFLARE_API_TOKEN }}
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       TF_VAR_account_id: ${{ secrets.TF_VAR_ACCOUNT_ID }}
       TF_VAR_zone_id: ${{ secrets.TF_VAR_ZONE_ID }}
       TF_HTTP_ADDRESS: ${{ secrets.TF_HTTP_ADDRESS }}
@@ -49,7 +54,7 @@ jobs:
           printf 'TF_VAR_workers_message=%s\n' "$workers_message" >> "$GITHUB_ENV"
 
       - name: Setup node
-        uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238 # v6.2.0
+        uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6.3.0
         with:
           node-version-file: '.node-version'
           cache: 'npm'
@@ -65,7 +70,7 @@ jobs:
       - name: Setup OpenTofu
         uses: opentofu/setup-opentofu@9d84900f3238fab8cd84ce47d658d25dd008be2f # v1.0.8
         with:
-          tofu_version: 1.11.5
+          tofu_version: ${{ env.OPENTOFU_VERSION }}
 
       - name: Check formatting
         run: tofu fmt -check
@@ -76,8 +81,11 @@ jobs:
       - name: Validate configuration
         run: tofu validate -no-color
 
-      - name: Plan infrastructure
-        run: tofu plan -input=false -lock=false -no-color
+      - name: Comment PR plan
+        uses: dflook/tofu-plan@3f5dc358343fb58cd60f83b019e810315aa8258f # v2.2.3
+        with:
+          path: infra/web
+          label: production
 
   apply:
     if: (github.event_name == 'push' && github.ref_name == 'dev') || github.event_name == 'workflow_dispatch'
@@ -113,7 +121,7 @@ jobs:
           printf 'TF_VAR_workers_message=%s\n' "$workers_message" >> "$GITHUB_ENV"
 
       - name: Setup node
-        uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238 # v6.2.0
+        uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6.3.0
         with:
           node-version-file: '.node-version'
           cache: 'npm'
@@ -129,7 +137,7 @@ jobs:
       - name: Setup OpenTofu
         uses: opentofu/setup-opentofu@9d84900f3238fab8cd84ce47d658d25dd008be2f # v1.0.8
         with:
-          tofu_version: 1.11.5
+          tofu_version: ${{ env.OPENTOFU_VERSION }}
 
       - name: Check formatting
         run: tofu fmt -check
