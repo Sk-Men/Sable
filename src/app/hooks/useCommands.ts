@@ -238,6 +238,7 @@ export enum Command {
   DelAcc = 'delacc',
   SetExt = 'setext',
   DelExt = 'delext',
+  DiscardSession = 'discardsession',
 }
 
 export type CommandContent = {
@@ -1252,6 +1253,35 @@ export const useCommands = (mx: MatrixClient, room: Room): CommandRecord => {
             }
           } catch (e: any) {
             sendFeedback(`Failed to remove property: ${e.message}`);
+          }
+        },
+      },
+      [Command.DiscardSession]: {
+        name: Command.DiscardSession,
+        description: 'Force discard the current outbound E2EE session in this room.',
+        exe: async () => {
+          const userId = mx.getSafeUserId();
+          const sendFeedback = (msg: string) => {
+            const localNotice = new MatrixEvent({
+              type: 'm.room.message',
+              content: { msgtype: 'm.notice', body: msg },
+              event_id: `~discard-${Date.now()}`,
+              room_id: room.roomId,
+              sender: userId,
+            });
+            room.addLiveEvents([localNotice], { duplicateStrategy: 'ignore' } as any);
+          };
+
+          try {
+            const crypto = mx.getCrypto();
+            if (!crypto) {
+              sendFeedback('Encryption is not enabled on this client.');
+              return;
+            }
+            await crypto.forceDiscardSession(room.roomId);
+            sendFeedback('Outbound encryption session discarded.');
+          } catch (e: any) {
+            sendFeedback(`Failed to discard session: ${e.message}`);
           }
         },
       },
