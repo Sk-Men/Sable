@@ -1,9 +1,7 @@
 # Infrastructure
 
-`infra/web` manages the Cloudflare Worker service, immutable Worker version uploads,
-the live production deployment, and the Worker custom domain. Local setup uses
-`terraform.tfvars.example` for shared inputs and `gitlab.http.tfbackend.example` for
-the GitLab state backend config.
+`infra/web` manages the Cloudflare Worker, immutable Worker versions, the live
+production deployment, and the production custom domain.
 
 Prerequisites:
 
@@ -84,28 +82,23 @@ If you already created local state before switching to GitLab state, use
 `tofu -chdir=infra/web init -reconfigure -migrate-state -backend-config="../gitlab.http.tfbackend"`
 once instead.
 
-Preview deploys:
+Preview builds:
 
-- PR previews use Wrangler `versions upload` against the generated
-  `dist/wrangler.json`.
-- That Wrangler-based preview path is temporary until the Cloudflare provider adds support for preview version/alias management.
-- `npm run build` generates both `dist/` and `dist/wrangler.json`; Wrangler uploads a
-  preview Worker version and binds a stable alias such as `pr-123`.
-- GitHub Actions also sets the preview version message from the current git commit
-  subject, truncated to 100 bytes to fit Cloudflare's limit.
-- Preview URLs live on `workers.dev` and do not touch the live custom domain.
+- `infra/web/main.tf` enables preview URL capability with `subdomain.previews_enabled = true`.
+- Previews are handled by Cloudflare Workers Builds, not GitHub Actions.
+- Connect the repo once in Cloudflare Workers Builds.
+- Set the Cloudflare Builds deploy command to `npx wrangler versions upload`.
+- This disables automatic deployments while still allowing Cloudflare to build PRs/branches and save them as preview versions.
+- That keeps Cloudflare from promoting `dev` commits to production. Production stays on the OpenTofu/GitHub Actions path in this repo.
+
+```bash
+npx wrangler versions upload
+```
 
 Production deploys:
 
-- PRs that change `infra/web` get an OpenTofu plan comment on the PR from
-  `.github/workflows/cloudflare-worker-prod.yml`.
-- `.github/workflows/cloudflare-worker-prod.yml` builds the app and runs `tofu apply` on
-  pushes to `dev`, or via manual workflow dispatch.
-- `tofu apply` uploads `dist/` as a new immutable Worker version with
-  `cloudflare_worker_version`, then `cloudflare_workers_deployment` moves live traffic
-  to that exact version.
-- GitHub Actions sets the production deployment message from the current git commit
-  subject, truncated to 100 bytes to fit Cloudflare's limit.
-- `app.sable.moe` is the Worker custom domain for production.
-- `cloudflare_workers_custom_domain` attaches the Worker to `app.sable.moe`, and
-  Cloudflare creates the backing DNS record automatically.
+- `.github/workflows/cloudflare-worker-prod.yml` comments PR plans for `infra/web` changes.
+- That PR plan job only runs for same-repo PRs, not fork PRs, because it needs repo secrets.
+- The same workflow applies production on pushes to `dev` or manual dispatch.
+- `tofu apply` uploads `dist/` through `cloudflare_worker_version` and promotes it with `cloudflare_workers_deployment`.
+- Production lives on `app.sable.moe`.
