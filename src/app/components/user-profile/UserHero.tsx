@@ -8,6 +8,7 @@ import {
   Overlay,
   OverlayBackdrop,
   OverlayCenter,
+  Scroll,
   Text,
   Tooltip,
   toRem,
@@ -118,25 +119,42 @@ export function UserHero({ userId, avatarUrl, bannerUrl, presence }: UserHeroPro
                 cursor: isExpandable ? 'pointer' : 'default',
                 transform: 'none',
                 transition: 'none',
+                display: 'flex',
               }}
             >
-              <Text
-                size="T200"
-                style={{
-                  overflow: isFullStatus ? 'scroll' : 'hidden',
-                  height: '100%',
-                  wordBreak: 'break-word',
-                }}
-              >
-                {status}
-              </Text>
-              {isExpandable && (
-                <Icon
-                  size="50"
-                  style={{ position: 'relative', left: '2.5%' }}
-                  src={isFullStatus ? Icons.ChevronTop : Icons.ChevronBottom}
-                />
-              )}
+              <Box direction="Row" gap="100" style={{ height: '100%', width: '100%' }}>
+                {isFullStatus ? (
+                  <Scroll visibility="Hover" hideTrack style={{ height: '100%', flex: 1 }}>
+                    <Text size="T200" style={{ wordBreak: 'break-word' }}>
+                      {status}
+                    </Text>
+                  </Scroll>
+                ) : (
+                  <Text
+                    size="T200"
+                    style={{
+                      flex: 1,
+                      wordBreak: 'break-word',
+                      WebkitLineClamp: 2,
+                      WebkitBoxOrient: 'vertical',
+                      overflow: 'hidden',
+                    }}
+                  >
+                    {status}
+                  </Text>
+                )}
+
+                {isExpandable && (
+                  <Box
+                    shrink="No"
+                    alignItems="Center"
+                    justifyContent="Center"
+                    style={{ alignSelf: isFullStatus ? 'flex-start' : 'center' }}
+                  >
+                    <Icon size="50" src={isFullStatus ? Icons.ChevronTop : Icons.ChevronBottom} />
+                  </Box>
+                )}
+              </Box>
             </Tooltip>
           </div>
         )}
