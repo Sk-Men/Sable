@@ -67,7 +67,7 @@ After that, you can copy the dist/ directory to your server and serve it.
 Execute the following commands to start a development server:
 ```sh
 npm ci # Installs all dependencies
-npm start # Serve a development version
+npm run dev # Serve a development version
 ```
 
 To build the app:
