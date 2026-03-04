@@ -44,6 +44,9 @@ export function UserHero({ userId, avatarUrl, bannerUrl, presence }: UserHeroPro
   const coverUrl = cachedBannerUrl || cachedAvatarUrl;
   const isFallbackCover = !cachedBannerUrl && !!cachedAvatarUrl;
 
+  const status = presence?.status;
+  const isExpandable = (status?.length ?? 0) > 70;
+
   return (
     <Box direction="Column" className={css.UserHero}>
       <div
@@ -105,13 +108,16 @@ export function UserHero({ userId, avatarUrl, bannerUrl, presence }: UserHeroPro
             </Overlay>
           )}
         </div>
-        {presence?.status?.length && (
+        {status && status.length > 0 && (
           <div className={css.UserHeroStatusContainer}>
             <Tooltip
-              onClick={() => setIsFullStatus(!isFullStatus)}
+              onClick={isExpandable ? () => setIsFullStatus(!isFullStatus) : undefined}
               className={css.UserHeroStatusTooltip}
               style={{
                 maxHeight: isFullStatus ? toRem(105) : toRem(48),
+                cursor: isExpandable ? 'pointer' : 'default',
+                transform: 'none',
+                transition: 'none',
               }}
             >
               <Text
@@ -122,9 +128,9 @@ export function UserHero({ userId, avatarUrl, bannerUrl, presence }: UserHeroPro
                   wordBreak: 'break-word',
                 }}
               >
-                {presence.status}
+                {status}
               </Text>
-              {presence.status.length > 70 && (
+              {isExpandable && (
                 <Icon
                   size="50"
                   style={{ position: 'relative', left: '2.5%' }}
