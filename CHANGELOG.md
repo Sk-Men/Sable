@@ -15,7 +15,7 @@
 - Potentially fix bio scroll appearing when it shouldn't ([#104](https://github.com/7w1/sable/pull/104))
 - Add /raw command to send raw message events ([#96](https://github.com/7w1/sable/issues/96), [#106](https://github.com/7w1/sable/pull/106))
 - Adds a reset button and changes the system sync button to text for clarity ([#103](https://github.com/7w1/sable/issues/103), [#107](https://github.com/7w1/sable/pull/107))
-- Display statuses, no support for setting them yet ([#98](https://github.com/7w1/sable/pull/98))
+- Display statuses, no support for setting them yet ([#98](https://github.com/7w1/sable/pull/98)) - [Shea](https://github.com/nushea)
 
 ## 1.3.1 - 3/3/2026
 
