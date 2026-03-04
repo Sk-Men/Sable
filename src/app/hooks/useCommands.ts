@@ -1202,7 +1202,7 @@ export const useCommands = (mx: MatrixClient, room: Room): CommandRecord => {
           let finalValue: any = value;
           if (value === 'true') finalValue = true;
           else if (value === 'false') finalValue = false;
-          else if (!isNaN(Number(value)) && value.trim() !== '') finalValue = Number(value);
+          else if (!Number.isNaN(Number(value)) && value.trim() !== '') finalValue = Number(value);
           try {
             if (typeof mx.setExtendedProfileProperty === 'function') {
               await mx.setExtendedProfileProperty(key, finalValue);
