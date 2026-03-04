@@ -26,6 +26,8 @@ import {
 } from '$utils/matrix';
 import { getStateEvent } from '$utils/room';
 import { splitWithSpace } from '$utils/common';
+import { useSetting } from '$state/hooks/settings';
+import { settingsAtom } from '$state/settings';
 import { createRoomEncryptionState } from '$components/create-room';
 import { useRoomNavigate } from './useRoomNavigate';
 import { enrichWidgetUrl } from './useRoomWidgets';
@@ -229,6 +231,7 @@ export enum Command {
   Pronoun = 'pronoun',
   GPronoun = 'gpronoun',
   Rainbow = 'rainbow',
+  Raw = 'raw',
 }
 
 export type CommandContent = {
@@ -241,6 +244,7 @@ export type CommandRecord = Record<Command, CommandContent>;
 
 export const useCommands = (mx: MatrixClient, room: Room): CommandRecord => {
   const { navigateRoom } = useRoomNavigate();
+  const [developerTools] = useSetting(settingsAtom, 'developerTools');
 
   const commands: CommandRecord = useMemo(
     () => ({
@@ -1001,8 +1005,36 @@ export const useCommands = (mx: MatrixClient, room: Room): CommandRecord => {
           });
         },
       },
+      [Command.Raw]: {
+        name: Command.Raw,
+        description:
+          'Send raw JSON event (Dev Mode only). Example: /raw {"msgtype":"m.text", "body":"hello"}',
+        exe: async (payload) => {
+          const userId = mx.getSafeUserId();
+          const sendFeedback = (msg: string) => {
+            const localNotice = new (window as any).matrixcs.MatrixEvent({
+              type: 'm.room.message',
+              content: { msgtype: 'm.notice', body: msg },
+              event_id: `~raw-${Date.now()}`,
+              room_id: room.roomId,
+              sender: userId,
+            });
+            (room as any).addLiveEvents([localNotice], { duplicateStrategy: 'ignore' } as any);
+          };
+          if (!developerTools) {
+            sendFeedback('Command available in Developer Mode only.');
+            return;
+          }
+          try {
+            const content = JSON.parse(payload);
+            await mx.sendMessage(room.roomId, content);
+          } catch (e: any) {
+            sendFeedback(`Invalid JSON: ${e.message}`);
+          }
+        },
+      },
     }),
-    [mx, room, navigateRoom]
+    [mx, room, navigateRoom, developerTools]
   );
 
   return commands;
