@@ -66,13 +66,8 @@ export const TextViewer = as<'div', TextViewerProps>(
           </Box>
         </Header>
 
-        <Box
-          grow="Yes"
-          className={css.TextViewerContent}
-          justifyContent="Center"
-          alignItems="Center"
-        >
-          <Scroll hideTrack variant="Background" visibility="Hover">
+        <Box grow="Yes" className={css.TextViewerContent} direction="Column">
+          <Scroll hideTrack variant="Background" visibility="Always">
             <TextViewerContent
               className={css.TextViewerPrePadding}
               text={text}
