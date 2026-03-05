@@ -17,8 +17,14 @@ import {
 import FocusTrap from 'focus-trap-react';
 import { useAtom, useAtomValue, useSetAtom } from 'jotai';
 import { useNavigate } from 'react-router-dom';
-import { sessionsAtom, activeSessionIdAtom, Session } from '$state/sessions';
-import { SidebarItem, SidebarItemTooltip, SidebarAvatar } from '$components/sidebar';
+import { sessionsAtom, activeSessionIdAtom, Session, sessionsHighlightAtom } from '$state/sessions';
+import {
+  SidebarItem,
+  SidebarItemTooltip,
+  SidebarAvatar,
+  SidebarItemBadge,
+} from '$components/sidebar';
+import { UnreadBadge } from '$components/unread-badge';
 import { UserAvatar } from '$components/user-avatar';
 import { nameInitials } from '$utils/common';
 import { getMxIdLocalPart, mxcUrlToHttp } from '$utils/matrix';
@@ -42,6 +48,7 @@ function AccountRow({
   displayName,
   avatarUrl,
   isBusy,
+  highlightCount,
   onSwitch,
   onSignOut,
 }: {
@@ -50,6 +57,7 @@ function AccountRow({
   displayName?: string;
   avatarUrl?: string;
   isBusy?: boolean;
+  highlightCount?: number;
   onSwitch: (session: Session) => void;
   onSignOut: (session: Session) => void;
 }) {
@@ -77,6 +85,9 @@ function AccountRow({
       }
       after={
         <Box gap="200" alignItems="Center" shrink="No">
+          {!isActive && highlightCount != null && highlightCount > 0 && (
+            <UnreadBadge highlight count={highlightCount} />
+          )}
           {isActive && (
             <Icon size="200" src={Icons.Check} style={{ color: 'var(--mx-c-success)' }} />
           )}
@@ -126,6 +137,7 @@ export function AccountSwitcherTab() {
   const sessions = useAtomValue(sessionsAtom);
   const [activeSessionId, setActiveSessionId] = useAtom(activeSessionIdAtom);
   const setSessions = useSetAtom(sessionsAtom);
+  const [sessionHighlights, setSessionHighlights] = useAtom(sessionsHighlightAtom);
   const useAuthentication = useMediaAuthentication();
 
   const [menuAnchor, setMenuAnchor] = useState<RectCords>();
@@ -161,8 +173,14 @@ export function AccountSwitcherTab() {
       setMenuAnchor(undefined);
       navigate(getHomePath(), { replace: true });
       setActiveSessionId(session.userId);
+      // Clear the highlight badge for the account we're switching to.
+      setSessionHighlights((prev) => {
+        const next = { ...prev };
+        delete next[session.userId];
+        return next;
+      });
     },
-    [navigate, setActiveSessionId]
+    [navigate, setActiveSessionId, setSessionHighlights]
   );
 
   const handleSignOut = useCallback(
@@ -219,6 +237,10 @@ export function AccountSwitcherTab() {
     getMxIdLocalPart(activeSession?.userId ?? '') ?? activeSession?.userId ?? '';
   const label = activeDisplayName ?? activeLocalPart;
 
+  const inactiveHighlightTotal = sessions
+    .filter((s) => s.userId !== (activeSessionId ?? sessions[0]?.userId))
+    .reduce((sum, s) => sum + (sessionHighlights[s.userId] ?? 0), 0);
+
   if (!activeSession) return null;
 
   return (
@@ -240,6 +262,11 @@ export function AccountSwitcherTab() {
           </SidebarAvatar>
         )}
       </SidebarItemTooltip>
+      {inactiveHighlightTotal > 0 && (
+        <SidebarItemBadge hasCount>
+          <UnreadBadge highlight count={inactiveHighlightTotal} />
+        </SidebarItemBadge>
+      )}
 
       <PopOut
         anchor={menuAnchor}
@@ -283,6 +310,7 @@ export function AccountSwitcherTab() {
                       displayName={rowDisplayName}
                       avatarUrl={rowAvatarUrl}
                       isBusy={busyUserIds.has(session.userId)}
+                      highlightCount={sessionHighlights[session.userId]}
                       onSwitch={handleSwitch}
                       onSignOut={handleSignOut}
                     />

@@ -10,6 +10,7 @@ import {
   ReceiptContent,
   ReceiptType,
   EventType,
+  ClientEvent,
 } from '$types/matrix-sdk';
 import { useCallback, useEffect, useRef } from 'react';
 import {
@@ -32,7 +33,6 @@ import { useSyncState } from '$hooks/useSyncState';
 import { useRoomsNotificationPreferencesContext } from '$hooks/useRoomsNotificationPreferences';
 import { getClientSyncDiagnostics } from '$client/initMatrix';
 import { roomToParentsAtom } from './roomToParents';
-import { mDirectAtom } from '../mDirectList';
 
 export type RoomToUnreadAction =
   | {
@@ -123,14 +123,13 @@ const baseRoomToUnread = atom<RoomToUnread>(new Map());
 export const roomToUnreadAtom = atom<RoomToUnread, [RoomToUnreadAction], undefined>(
   (get) => get(baseRoomToUnread),
   (get, set, action) => {
-    const dmRoomIds = get(mDirectAtom);
-    const getEffectiveParents = (roomId: string): Set<string> =>
-      dmRoomIds.has(roomId) ? new Set() : getAllParents(get(roomToParentsAtom), roomId);
+    const allParentsOf = (roomId: string): Set<string> =>
+      getAllParents(get(roomToParentsAtom), roomId);
 
     if (action.type === 'RESET') {
       const draftRoomToUnread: RoomToUnread = new Map();
       action.unreadInfos.forEach((unreadInfo) => {
-        putUnreadInfo(draftRoomToUnread, getEffectiveParents(unreadInfo.roomId), unreadInfo);
+        putUnreadInfo(draftRoomToUnread, allParentsOf(unreadInfo.roomId), unreadInfo);
       });
       set(baseRoomToUnread, draftRoomToUnread);
       return;
@@ -144,7 +143,7 @@ export const roomToUnreadAtom = atom<RoomToUnread, [RoomToUnreadAction], undefin
             produce(get(baseRoomToUnread), (draftRoomToUnread) =>
               deleteUnreadInfo(
                 draftRoomToUnread,
-                getEffectiveParents(unreadInfo.roomId),
+                allParentsOf(unreadInfo.roomId),
                 unreadInfo.roomId
               )
             )
@@ -154,14 +153,14 @@ export const roomToUnreadAtom = atom<RoomToUnread, [RoomToUnreadAction], undefin
       }
       const currentUnread = get(baseRoomToUnread).get(unreadInfo.roomId);
       if (currentUnread && unreadEqual(currentUnread, unreadInfoToUnread(unreadInfo))) {
-        // Do not update if unread data has not changes
+        // Do not update if unread data has not changed
         // like total & highlight
         return;
       }
       set(
         baseRoomToUnread,
         produce(get(baseRoomToUnread), (draftRoomToUnread) =>
-          putUnreadInfo(draftRoomToUnread, getEffectiveParents(unreadInfo.roomId), unreadInfo)
+          putUnreadInfo(draftRoomToUnread, allParentsOf(unreadInfo.roomId), unreadInfo)
         )
       );
       return;
@@ -170,7 +169,7 @@ export const roomToUnreadAtom = atom<RoomToUnread, [RoomToUnreadAction], undefin
       set(
         baseRoomToUnread,
         produce(get(baseRoomToUnread), (draftRoomToUnread) =>
-          deleteUnreadInfo(draftRoomToUnread, getEffectiveParents(action.roomId), action.roomId)
+          deleteUnreadInfo(draftRoomToUnread, allParentsOf(action.roomId), action.roomId)
         )
       );
     }
@@ -328,6 +327,25 @@ export const useBindRoomToUnreadAtom = (mx: MatrixClient, unreadAtom: typeof roo
       mx.removeListener(RoomEvent.MyMembership, handleMembershipChange);
     };
   }, [mx, setUnreadAtom]);
+
+  // Seed badge state immediately when a room is first registered with the client
+  // (e.g. after joining or receiving an invite that gets auto-accepted).
+  // This avoids the brief window after refresh where badges are invisible until
+  // the next timeline event arrives. Notifications are NOT triggered here —
+  // ClientNonUIFeatures handles live notification pop-ups via its own listener.
+  useEffect(() => {
+    const handleRoomAdded = (room: Room) => {
+      if (room.isSpaceRoom() || room.getMyMembership() !== Membership.Join) return;
+      const unreadInfo = getUnreadInfo(room, { applyFixup: shouldApplyUnreadFixup() });
+      if (unreadInfo.total > 0 || unreadInfo.highlight > 0) {
+        setUnreadAtom({ type: 'PUT', unreadInfo });
+      }
+    };
+    mx.on(ClientEvent.Room, handleRoomAdded as (room: Room) => void);
+    return () => {
+      mx.removeListener(ClientEvent.Room, handleRoomAdded as (room: Room) => void);
+    };
+  }, [mx, setUnreadAtom, shouldApplyUnreadFixup]);
 
   useEffect(
     () => () => {

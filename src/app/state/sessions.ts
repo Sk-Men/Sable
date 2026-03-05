@@ -165,8 +165,15 @@ export const activeSessionIdAtom = atom<string | undefined, [string | undefined]
 
 export type PendingNotification = {
   roomId: string;
-  eventId: string;
+  eventId?: string;
   targetSessionId?: string;
 };
 
 export const pendingNotificationAtom = atom<PendingNotification | null>(null);
+
+/**
+ * Tracks the count of highlight-level (mention/keyword) notifications received
+ * by each background (inactive) session. Keyed by userId.
+ * Cleared when a session becomes active or is signed out.
+ */
+export const sessionsHighlightAtom = atom<Record<string, number>>({});
