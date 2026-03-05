@@ -72,6 +72,7 @@ export interface Settings {
   hideMembershipInReadOnly: boolean;
   useRightBubbles: boolean;
   showUnreadCounts: boolean;
+  showPingCounts: boolean;
 }
 
 const defaultSettings: Settings = {
@@ -128,6 +129,7 @@ const defaultSettings: Settings = {
   hideMembershipInReadOnly: true,
   useRightBubbles: false,
   showUnreadCounts: true,
+  showPingCounts: true,
 };
 
 export const getSettings = () => {

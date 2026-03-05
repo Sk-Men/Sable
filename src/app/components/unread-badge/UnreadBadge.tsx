@@ -20,8 +20,11 @@ export function UnreadBadgeCenter({ children }: { children: ReactNode }) {
 }
 
 export function UnreadBadge({ highlight, count }: UnreadBadgeProps) {
-  const [showCounts] = useSetting(settingsAtom, 'showUnreadCounts');
-  const showNumber = showCounts && count > 0;
+  const [showUnreadCounts] = useSetting(settingsAtom, 'showUnreadCounts');
+  const [showPingCounts] = useSetting(settingsAtom, 'showPingCounts');
+
+  const showNumber = count > 0 && (showUnreadCounts || (highlight && showPingCounts));
+
   return (
     <Badge
       variant={highlight ? 'Success' : 'Secondary'}
