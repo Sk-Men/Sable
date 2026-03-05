@@ -13,6 +13,11 @@ export type ClientConfig = {
 
   disableAccountSwitcher?: boolean;
 
+  languageSpecificPronouns?: {
+    enabled?: boolean;
+    languages?: string[];
+  };
+
   pushNotificationDetails?: {
     pushNotifyUrl?: string;
     vapidPublicKey?: string;
