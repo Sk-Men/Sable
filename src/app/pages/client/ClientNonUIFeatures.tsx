@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { EventType, PushProcessor, RoomEvent, RoomEventHandlerMap } from '$types/matrix-sdk';
 import { roomToUnreadAtom } from '$state/room/roomToUnread';
 import LogoSVG from '$public/res/svg/cinny.svg';
+import { NotificationBanner } from '$components/notification-banner';
 import LogoUnreadSVG from '$public/res/svg/cinny-unread.svg';
 import LogoHighlightSVG from '$public/res/svg/cinny-highlight.svg';
 import NotificationSound from '$public/sound/notification.ogg';
@@ -27,7 +28,7 @@ import { useSelectedRoom } from '$hooks/router/useSelectedRoom';
 import { useInboxNotificationsSelected } from '$hooks/router/useInbox';
 import { useMediaAuthentication } from '$hooks/useMediaAuthentication';
 import { registrationAtom } from '$state/serviceWorkerRegistration';
-import { activeSessionIdAtom, pendingNotificationAtom } from '$state/sessions';
+import { activeSessionIdAtom, pendingNotificationAtom, inAppBannerAtom } from '$state/sessions';
 import {
   buildRoomMessageNotification,
   resolveNotificationPreviewText,
@@ -187,7 +188,6 @@ function InviteNotifications() {
 
 function MessageNotifications() {
   const audioRef = useRef<HTMLAudioElement>(null);
-  const notifRef = useRef<Notification>();
   const notifiedEventsRef = useRef<Set<string>>(new Set());
   const mx = useMatrixClient();
   const useAuthentication = useMediaAuthentication();
@@ -204,50 +204,9 @@ function MessageNotifications() {
   nicknamesRef.current = nicknames;
 
   const setPending = useSetAtom(pendingNotificationAtom);
+  const setInAppBanner = useSetAtom(inAppBannerAtom);
   const selectedRoomId = useSelectedRoom();
   const notificationSelected = useInboxNotificationsSelected();
-
-  const notify = useCallback(
-    ({
-      roomName,
-      roomAvatar,
-      username,
-      roomId,
-      eventId,
-      previewText,
-      silent,
-    }: {
-      roomName: string;
-      roomAvatar?: string;
-      username: string;
-      roomId: string;
-      eventId: string;
-      previewText: string;
-      silent: boolean;
-    }) => {
-      const payload = buildRoomMessageNotification({
-        roomName,
-        roomAvatar,
-        username,
-        previewText,
-        silent,
-        eventId,
-      });
-      const noti = new window.Notification(payload.title, payload.options);
-
-      noti.onclick = () => {
-        window.focus();
-        setPending({ roomId, eventId, targetSessionId: mx.getUserId() ?? undefined });
-
-        noti.close();
-        notifRef.current = undefined;
-      };
-
-      notifRef.current?.close();
-      notifRef.current = noti;
-    },
-    [mx, setPending]
-  );
 
   const playSound = useCallback(() => {
     const audioElement = audioRef.current;
@@ -279,32 +238,85 @@ function MessageNotifications() {
       const sender = mEvent.getSender();
       const eventId = mEvent.getId();
       if (!sender || !eventId || mEvent.getSender() === mx.getUserId()) return;
+
+      // Deduplicate: don't show a second banner if this event fires twice
+      // (e.g., decrypted events re-emitted by the SDK).
+      if (notifiedEventsRef.current.has(eventId)) return;
+
       const pushActions = pushProcessor.actionsForEvent(mEvent);
       if (!pushActions?.notify) return;
       const loudByRule = Boolean(pushActions.tweaks?.sound);
+      const isHighlightByRule = Boolean(pushActions.tweaks?.highlight);
 
-      // Deduplicate: never fire the same notification twice for the same event.
-      if (notifiedEventsRef.current.has(eventId)) return;
+      // If neither a loud nor a highlight rule matches, nothing to show.
+      if (!isHighlightByRule && !loudByRule) return;
+
+      // Page hidden: SW (push) handles the OS notification. Nothing to do in-app.
+      if (document.visibilityState !== 'visible') return;
+
+      // Record as notified to prevent duplicate banners (e.g. re-emitted decrypted events).
       notifiedEventsRef.current.add(eventId);
       if (notifiedEventsRef.current.size > 200) {
         const first = notifiedEventsRef.current.values().next().value;
         if (first) notifiedEventsRef.current.delete(first);
       }
 
-      // Page hidden: if push is enabled, SW handles the OS notification. If not, nothing to do.
-      if (document.visibilityState !== 'visible') return;
+      // Page is visible — show the themed in-app notification banner for any
+      // highlighted message (mention / keyword) or loud push rule.
+      if ((isHighlightByRule || loudByRule) && showNotifications) {
+        const isEncryptedRoom = !!getStateEvent(room, StateEvent.RoomEncryption);
+        const avatarMxc =
+          room.getAvatarFallbackMember()?.getMxcAvatarUrl() ?? room.getMxcAvatarUrl();
+        const roomAvatar = avatarMxc
+          ? (mxcUrlToHttp(mx, avatarMxc, useAuthentication, 96, 96, 'crop') ?? undefined)
+          : undefined;
+        const resolvedSenderName =
+          getMemberDisplayName(room, sender, nicknamesRef.current) ??
+          getMxIdLocalPart(sender) ??
+          sender;
+        const previewText = resolveNotificationPreviewText({
+          content: mEvent.getContent(),
+          eventType: mEvent.getType(),
+          isEncryptedRoom,
+          showMessageContent,
+          showEncryptedMessageContent,
+        });
+        const payload = buildRoomMessageNotification({
+          roomName: room.name ?? 'Unknown',
+          roomAvatar,
+          username: resolvedSenderName,
+          previewText,
+          silent: !notificationSound,
+          eventId,
+        });
+        const { roomId } = room;
+        const capturedEventId = eventId;
+        const capturedUserId = mx.getUserId() ?? undefined;
+        const canonicalAlias = room.getCanonicalAlias();
+        const serverName = canonicalAlias?.split(':')[1] ?? room.roomId.split(':')[1] ?? undefined;
+        setInAppBanner({
+          id: eventId,
+          title: payload.title,
+          roomName: room.name ?? undefined,
+          serverName,
+          senderName: resolvedSenderName,
+          body: previewText,
+          icon: roomAvatar,
+          onClick: () => {
+            window.focus();
+            setPending({ roomId, eventId: capturedEventId, targetSessionId: capturedUserId });
+          },
+        });
+      }
 
-      // Page is visible — show in-app experience.
-      // On mobile with push: iOS-style — play sound only, no OS notification (SW is silent when
-      // the app is visible on mobile, matching foreground behaviour of native chat apps).
-      // On desktop with push: SW skipped (saw a visible client), so we show the OS notification.
-      // Without push: always show OS notification when page is visible.
+      // On desktop without push: also fire an OS notification as a secondary fallback
+      // so the user is alerted even if the browser window is minimised.
       const isVisibleMobileWithPush = usePushNotifications && mobileOrTablet();
       if (!isVisibleMobileWithPush && showNotifications && notificationPermission('granted')) {
         const isEncryptedRoom = !!getStateEvent(room, StateEvent.RoomEncryption);
         const avatarMxc =
           room.getAvatarFallbackMember()?.getMxcAvatarUrl() ?? room.getMxcAvatarUrl();
-        notify({
+        const osPayload = buildRoomMessageNotification({
           roomName: room.name ?? 'Unknown',
           roomAvatar: avatarMxc
             ? (mxcUrlToHttp(mx, avatarMxc, useAuthentication, 96, 96, 'crop') ?? undefined)
@@ -313,8 +325,6 @@ function MessageNotifications() {
             getMemberDisplayName(room, sender, nicknamesRef.current) ??
             getMxIdLocalPart(sender) ??
             sender,
-          roomId: room.roomId,
-          eventId,
           previewText: resolveNotificationPreviewText({
             content: mEvent.getContent(),
             eventType: mEvent.getType(),
@@ -324,7 +334,15 @@ function MessageNotifications() {
           }),
           // Play sound only if the push rule requests it and the user has sounds enabled.
           silent: !notificationSound || !loudByRule,
+          eventId,
         });
+        const noti = new window.Notification(osPayload.title, osPayload.options);
+        const { roomId } = room;
+        noti.onclick = () => {
+          window.focus();
+          setPending({ roomId, eventId, targetSessionId: mx.getUserId() ?? undefined });
+          noti.close();
+        };
       }
 
       if (notificationSound && loudByRule) {
@@ -344,7 +362,8 @@ function MessageNotifications() {
     showEncryptedMessageContent,
     usePushNotifications,
     playSound,
-    notify,
+    setInAppBanner,
+    setPending,
     selectedRoomId,
     useAuthentication,
   ]);
@@ -470,6 +489,7 @@ export function ClientNonUIFeatures({ children }: ClientNonUIFeaturesProps) {
       <MessageNotifications />
       <BackgroundNotifications />
       <SyncNotificationSettingsWithServiceWorker />
+      <NotificationBanner />
       {children}
     </>
   );
