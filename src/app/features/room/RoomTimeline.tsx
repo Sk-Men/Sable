@@ -1197,6 +1197,14 @@ export function RoomTimeline({
     [mx, room]
   );
 
+  const handleDeleteFailedSend = useCallback(
+    (mEvent: MatrixEvent) => {
+      if (mEvent.getAssociatedStatus() !== EventStatus.NOT_SENT) return;
+      mx.cancelPendingEvent(mEvent);
+    },
+    [mx]
+  );
+
   const handleEdit = useCallback(
     (editEvtId?: string) => {
       if (editEvtId) {
@@ -1269,6 +1277,7 @@ export function RoomTimeline({
             senderDisplayName={senderDisplayName}
             sendStatus={mEvent.getAssociatedStatus()}
             onResend={handleResend}
+            onDeleteFailedSend={handleDeleteFailedSend}
             onEditId={handleEdit}
             activeReplyId={activeReplyId}
             reply={
@@ -1356,6 +1365,7 @@ export function RoomTimeline({
             senderDisplayName={senderDisplayName}
             sendStatus={mEvent.getAssociatedStatus()}
             onResend={handleResend}
+            onDeleteFailedSend={handleDeleteFailedSend}
             reply={
               replyEventId && (
                 <Reply
@@ -1474,6 +1484,7 @@ export function RoomTimeline({
             senderDisplayName={senderDisplayName}
             sendStatus={mEvent.getAssociatedStatus()}
             onResend={handleResend}
+            onDeleteFailedSend={handleDeleteFailedSend}
             reply={
               replyEventId && (
                 <Reply

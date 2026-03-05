@@ -499,12 +499,10 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
           // Cancel failed — leave state intact for retry
         }
       } else {
-        try {
-          await mx.sendMessage(roomId, content as any);
-        } catch (error) {
-          log.error('failed to send message', { roomId }, error);
-        }
         resetInput();
+        mx.sendMessage(roomId, content as any).catch((error: unknown) => {
+          log.error('failed to send message', { roomId }, error);
+        });
       }
     }, [
       mx,
