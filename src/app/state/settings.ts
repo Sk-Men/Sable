@@ -61,13 +61,10 @@ export interface Settings {
   privacyBlurEmotes: boolean;
   showPronouns: boolean;
   renderGlobalNameColors: boolean;
-<<<<<<< feat-honor-language-of-pronouns
   filterPronounsBasedOnLanguage?: boolean;
   filterPronounsLanguages?: string[];
-=======
   renderRoomColors: boolean;
   renderRoomFonts: boolean;
->>>>>>> dev
 
   // Sable features!
   mobileGestures: boolean;
