@@ -1,18 +1,15 @@
 
-[package.sable]
+[packages.sable]
 versioned_files = ["package.json", "package-lock.json"]
 changelog = "CHANGELOG.md"
-# tag_prefix = "sable/"
-# assets = "marker for GitHub bot" // TODO: add this later once we have assets
-
-[changes]
-ignore_conventional_commits = true
-
-[package]
 extra_changelog_sections = [
     { name = "Documentation", types = ["docs"] },
     { name = "Notes", types = ["note"] }
 ]
+# assets = "marker for GitHub bot" // TODO: add this later once we have assets
+
+[changes]
+ignore_conventional_commits = true
 
 [[workflows]]
 name = "release"
