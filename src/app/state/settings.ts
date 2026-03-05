@@ -61,6 +61,8 @@ export interface Settings {
   privacyBlurEmotes: boolean;
   showPronouns: boolean;
   renderGlobalNameColors: boolean;
+  filterPronounsBasedOnLanguage?: boolean;
+  filterPronounsLanguages?: string[];
   renderRoomColors: boolean;
   renderRoomFonts: boolean;
 

@@ -31,6 +31,8 @@ import {
 } from '$plugins/react-custom-html-parser';
 import { useSpoilerClickHandler } from '$hooks/useSpoilerClickHandler';
 import { RenderBody } from '$components/message';
+import { getSettings } from '$state/settings';
+import { filterPronounsByLanguage } from '$utils/pronouns';
 import { CreatorChip } from './CreatorChip';
 import { UserInviteAlert, UserBanAlert, UserModeration, UserKickAlert } from './UserModeration';
 import { PowerChip } from './PowerChip';
@@ -74,7 +76,16 @@ function UserExtendedSection({
     return String(val);
   };
 
-  const pronouns = profile.pronouns?.map((p: any) => clamp(p.summary, 16)).join(', ');
+  const languageFilterEnabled = getSettings().filterPronounsBasedOnLanguage ?? false;
+  const languagesToFilterFor = getSettings().filterPronounsLanguages ?? ['en'];
+
+  const pronouns = filterPronounsByLanguage(
+    profile.pronouns!,
+    languageFilterEnabled,
+    languagesToFilterFor
+  )
+    .map((p) => p.summary)
+    .join(', ');
   const localTime = useMemo(() => {
     if (!profile.timezone) return null;
 
