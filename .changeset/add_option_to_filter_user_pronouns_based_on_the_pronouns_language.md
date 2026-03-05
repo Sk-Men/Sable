@@ -20,7 +20,7 @@ In this case it's equivalent to just entering `she/her`
 
 Also a way to filter the shown pronouns based on a specified language was introduced. This will find it's home under experimental features for the time being.
 
-It also accepts "*weird*" string inputs as pronoun, for example setting your pronouns just to `meow` will internally be transformed to `en:meow`.
+It also accepts "_weird_" string inputs as pronoun, for example setting your pronouns just to `meow` will internally be transformed to `en:meow`.
 
 There are multiple ways to set your pronouns:
 
