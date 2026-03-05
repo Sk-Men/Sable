@@ -327,6 +327,7 @@ function PageZoomInput() {
 }
 export function Appearance() {
   const [twitterEmoji, setTwitterEmoji] = useSetting(settingsAtom, 'twitterEmoji');
+  const [showUnreadCounts, setShowUnreadCounts] = useSetting(settingsAtom, 'showUnreadCounts');
 
   return (
     <Box direction="Column" gap="700">
@@ -345,6 +346,15 @@ export function Appearance() {
 
         <SequenceCard className={SequenceCardStyle} variant="SurfaceVariant" direction="Column">
           <SettingTile title="Page Zoom" after={<PageZoomInput />} />
+        </SequenceCard>
+        <SequenceCard className={SequenceCardStyle} variant="SurfaceVariant" direction="Column">
+          <SettingTile
+            title="Show Unread Counts"
+            description="Display the number of unread messages on room and sidebar badges."
+            after={
+              <Switch variant="Primary" value={showUnreadCounts} onChange={setShowUnreadCounts} />
+            }
+          />
         </SequenceCard>
       </Box>
     </Box>

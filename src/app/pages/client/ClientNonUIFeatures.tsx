@@ -1,8 +1,8 @@
 import { useAtomValue, useSetAtom } from 'jotai';
 import { ReactNode, useCallback, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { EventType, RoomEvent, RoomEventHandlerMap } from '$types/matrix-sdk';
-import { roomToUnreadAtom, unreadEqual, unreadInfoToUnread } from '$state/room/roomToUnread';
+import { EventType, PushProcessor, RoomEvent, RoomEventHandlerMap } from '$types/matrix-sdk';
+import { roomToUnreadAtom } from '$state/room/roomToUnread';
 import LogoSVG from '$public/res/svg/cinny.svg';
 import LogoUnreadSVG from '$public/res/svg/cinny-unread.svg';
 import LogoHighlightSVG from '$public/res/svg/cinny-highlight.svg';
@@ -19,10 +19,9 @@ import {
   getMemberDisplayName,
   getNotificationType,
   getStateEvent,
-  getUnreadInfo,
   isNotificationEvent,
 } from '$utils/room';
-import { NotificationType, StateEvent, UnreadInfo } from '$types/matrix/room';
+import { NotificationType, StateEvent } from '$types/matrix/room';
 import { getMxIdLocalPart, mxcUrlToHttp } from '$utils/matrix';
 import { useSelectedRoom } from '$hooks/router/useSelectedRoom';
 import { useInboxNotificationsSelected } from '$hooks/router/useInbox';
@@ -89,13 +88,24 @@ function FaviconUpdater() {
     }
     try {
       navigator.setAppBadge(total);
-      if (usePushNotifications && total === 0) {
-        registration
-          .getNotifications()
-          .then((pushNotifications) =>
-            pushNotifications.forEach((pushNotification) => pushNotification.close())
-          );
-        navigator.clearAppBadge();
+      if (usePushNotifications) {
+        if (total === 0) {
+          // All rooms read — clear every notification and the badge.
+          registration.getNotifications().then((notifs) => notifs.forEach((n) => n.close()));
+          navigator.clearAppBadge();
+        } else {
+          // Dismiss notifications for individual rooms that are now fully read.
+          registration.getNotifications().then((notifs) => {
+            notifs.forEach((n) => {
+              const notifRoomId = n.data?.room_id;
+              if (!notifRoomId) return;
+              const roomUnread = roomToUnread.get(notifRoomId);
+              if (!roomUnread || (roomUnread.total === 0 && roomUnread.highlight === 0)) {
+                n.close();
+              }
+            });
+          });
+        }
       }
     } catch {
       // Likely Firefox/Gecko-based and doesn't support badging API
@@ -115,7 +125,6 @@ function InviteNotifications() {
   const [showNotifications] = useSetting(settingsAtom, 'useInAppNotifications');
   const [usePushNotifications] = useSetting(settingsAtom, 'usePushNotifications');
   const [notificationSound] = useSetting(settingsAtom, 'isNotificationSounds');
-  const forcePushOnMobile = usePushNotifications && mobileOrTablet();
 
   const notify = useCallback(
     (count: number) => {
@@ -140,16 +149,22 @@ function InviteNotifications() {
   }, []);
 
   useEffect(() => {
-    if (forcePushOnMobile) return;
-    if (usePushNotifications && document.visibilityState !== 'visible') return;
-    if (invites.length > perviousInviteLen && mx.getSyncState() === 'SYNCING') {
-      if (showNotifications && notificationPermission('granted')) {
-        notify(invites.length - perviousInviteLen);
-      }
+    if (invites.length <= perviousInviteLen || mx.getSyncState() !== 'SYNCING') return;
 
-      if (notificationSound) {
-        playSound();
-      }
+    // Page hidden: if push is enabled, SW handles the OS notification. If not, nothing to do.
+    if (document.visibilityState !== 'visible') return;
+
+    // Page is visible — show in-app experience.
+    // On mobile with push: iOS-style — play sound only, no OS notification (SW is silent when
+    // the app is visible on mobile, matching foreground behaviour of native chat apps).
+    // On desktop with push: SW skipped (saw a visible client), so we show the OS notification.
+    // Without push: always show OS notification when page is visible.
+    const isVisibleMobileWithPush = usePushNotifications && mobileOrTablet();
+    if (!isVisibleMobileWithPush && showNotifications && notificationPermission('granted')) {
+      notify(invites.length - perviousInviteLen);
+    }
+    if (notificationSound) {
+      playSound();
     }
   }, [
     mx,
@@ -157,7 +172,6 @@ function InviteNotifications() {
     perviousInviteLen,
     showNotifications,
     usePushNotifications,
-    forcePushOnMobile,
     notificationSound,
     notify,
     playSound,
@@ -174,7 +188,7 @@ function InviteNotifications() {
 function MessageNotifications() {
   const audioRef = useRef<HTMLAudioElement>(null);
   const notifRef = useRef<Notification>();
-  const unreadCacheRef = useRef<Map<string, UnreadInfo>>(new Map());
+  const notifiedEventsRef = useRef<Set<string>>(new Set());
   const mx = useMatrixClient();
   const useAuthentication = useMediaAuthentication();
   const [showNotifications] = useSetting(settingsAtom, 'useInAppNotifications');
@@ -185,7 +199,6 @@ function MessageNotifications() {
     settingsAtom,
     'showMessageContentInEncryptedNotifications'
   );
-  const forcePushOnMobile = usePushNotifications && mobileOrTablet();
   const nicknames = useAtomValue(nicknamesAtom);
   const nicknamesRef = useRef(nicknames);
   nicknamesRef.current = nicknames;
@@ -202,6 +215,7 @@ function MessageNotifications() {
       roomId,
       eventId,
       previewText,
+      silent,
     }: {
       roomName: string;
       roomAvatar?: string;
@@ -209,13 +223,14 @@ function MessageNotifications() {
       roomId: string;
       eventId: string;
       previewText: string;
+      silent: boolean;
     }) => {
       const payload = buildRoomMessageNotification({
         roomName,
         roomAvatar,
         username,
         previewText,
-        silent: true,
+        silent,
         eventId,
       });
       const noti = new window.Notification(payload.title, payload.options);
@@ -240,6 +255,7 @@ function MessageNotifications() {
   }, []);
 
   useEffect(() => {
+    const pushProcessor = new PushProcessor(mx);
     const handleTimelineEvent: RoomEventHandlerMap[RoomEvent.Timeline] = (
       mEvent,
       room,
@@ -247,9 +263,7 @@ function MessageNotifications() {
       removed,
       data
     ) => {
-      if (forcePushOnMobile) return;
       if (mx.getSyncState() !== 'SYNCING') return;
-      if (usePushNotifications && document.visibilityState !== 'visible') return;
       if (document.hasFocus() && (selectedRoomId === room?.roomId || notificationSelected)) return;
 
       if (
@@ -265,19 +279,28 @@ function MessageNotifications() {
       const sender = mEvent.getSender();
       const eventId = mEvent.getId();
       if (!sender || !eventId || mEvent.getSender() === mx.getUserId()) return;
-      const unreadInfo = getUnreadInfo(room);
-      const cachedUnreadInfo = unreadCacheRef.current.get(room.roomId);
-      unreadCacheRef.current.set(room.roomId, unreadInfo);
+      const pushActions = pushProcessor.actionsForEvent(mEvent);
+      if (!pushActions?.notify) return;
+      const loudByRule = Boolean(pushActions.tweaks?.sound);
 
-      if (unreadInfo.total === 0) return;
-      if (
-        cachedUnreadInfo &&
-        unreadEqual(unreadInfoToUnread(cachedUnreadInfo), unreadInfoToUnread(unreadInfo))
-      ) {
-        return;
+      // Deduplicate: never fire the same notification twice for the same event.
+      if (notifiedEventsRef.current.has(eventId)) return;
+      notifiedEventsRef.current.add(eventId);
+      if (notifiedEventsRef.current.size > 200) {
+        const first = notifiedEventsRef.current.values().next().value;
+        if (first) notifiedEventsRef.current.delete(first);
       }
 
-      if (showNotifications && notificationPermission('granted')) {
+      // Page hidden: if push is enabled, SW handles the OS notification. If not, nothing to do.
+      if (document.visibilityState !== 'visible') return;
+
+      // Page is visible — show in-app experience.
+      // On mobile with push: iOS-style — play sound only, no OS notification (SW is silent when
+      // the app is visible on mobile, matching foreground behaviour of native chat apps).
+      // On desktop with push: SW skipped (saw a visible client), so we show the OS notification.
+      // Without push: always show OS notification when page is visible.
+      const isVisibleMobileWithPush = usePushNotifications && mobileOrTablet();
+      if (!isVisibleMobileWithPush && showNotifications && notificationPermission('granted')) {
         const isEncryptedRoom = !!getStateEvent(room, StateEvent.RoomEncryption);
         const avatarMxc =
           room.getAvatarFallbackMember()?.getMxcAvatarUrl() ?? room.getMxcAvatarUrl();
@@ -299,10 +322,12 @@ function MessageNotifications() {
             showMessageContent,
             showEncryptedMessageContent,
           }),
+          // Play sound only if the push rule requests it and the user has sounds enabled.
+          silent: !notificationSound || !loudByRule,
         });
       }
 
-      if (notificationSound) {
+      if (notificationSound && loudByRule) {
         playSound();
       }
     };
@@ -318,7 +343,6 @@ function MessageNotifications() {
     showMessageContent,
     showEncryptedMessageContent,
     usePushNotifications,
-    forcePushOnMobile,
     playSound,
     notify,
     selectedRoomId,
@@ -351,15 +375,17 @@ type ClientNonUIFeaturesProps = {
   children: ReactNode;
 };
 
-function HandleNotificationClick() {
+export function HandleNotificationClick() {
   const navigate = useNavigate();
-  const activeSessionId = useAtomValue(activeSessionIdAtom);
   const setActiveSessionId = useSetAtom(activeSessionIdAtom);
   const setPending = useSetAtom(pendingNotificationAtom);
 
   useEffect(() => {
     const handleNotificationClickEvent = (event: any) => {
-      if (!event.data || !event.source) return;
+      if (!event.data) return;
+      // Note: do NOT guard on event.source — iOS Safari sets it to null for
+      // SW-to-client postMessages (Webkit divergence from spec). The type check
+      // below is the correct way to filter unrelated messages.
       const eventData = event.data;
       if (!(eventData?.type === 'notificationToRoomEvent')) return;
       const messageData = eventData?.message;
@@ -374,9 +400,9 @@ function HandleNotificationClick() {
       switch (eventType) {
         case EventType.RoomMessage:
         case EventType.RoomMessageEncrypted:
-          if (targetSessionId && targetSessionId !== activeSessionId) {
-            setActiveSessionId(targetSessionId);
-          }
+          // Always set the target session — jotai ignores no-ops if already active.
+          // This ensures we never accidentally navigate under the wrong account.
+          if (targetSessionId) setActiveSessionId(targetSessionId);
           setPending({
             roomId: messageData!.room_id,
             eventId: messageData!.event_id,
@@ -385,9 +411,7 @@ function HandleNotificationClick() {
           return;
         case EventType.RoomMember:
           if (!(messageData?.content?.membership === 'invite')) return;
-          if (targetSessionId && targetSessionId !== activeSessionId) {
-            setActiveSessionId(targetSessionId);
-          }
+          if (targetSessionId) setActiveSessionId(targetSessionId);
           navigate(getInboxInvitesPath());
           break;
         default:
@@ -399,7 +423,7 @@ function HandleNotificationClick() {
     return () => {
       navigator.serviceWorker.removeEventListener('message', handleNotificationClickEvent);
     };
-  }, [activeSessionId, navigate, setActiveSessionId, setPending]);
+  }, [navigate, setActiveSessionId, setPending]);
 
   return null;
 }
@@ -415,7 +439,9 @@ function SyncNotificationSettingsWithServiceWorker() {
 
   useEffect(() => {
     if (!('serviceWorker' in navigator)) return;
-    const preferPushOnMobile = usePushNotifications && mobileOrTablet();
+    // preferPushOnMobile=false: SW skips push when page is visible on all devices.
+    // The in-app path handles the visible case (sound on mobile, OS notification on desktop).
+    const preferPushOnMobile = false;
     const payload = {
       type: 'setNotificationSettings' as const,
       notificationSoundEnabled: notificationSound,
@@ -443,7 +469,6 @@ export function ClientNonUIFeatures({ children }: ClientNonUIFeaturesProps) {
       <InviteNotifications />
       <MessageNotifications />
       <BackgroundNotifications />
-      <HandleNotificationClick />
       <SyncNotificationSettingsWithServiceWorker />
       {children}
     </>
