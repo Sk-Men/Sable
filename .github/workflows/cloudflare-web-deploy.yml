@@ -8,8 +8,8 @@ on:
       - '.github/actions/prepare-tofu/**'
       - '.github/actions/setup/**'
   push:
-    branches:
-      - dev
+    tags:
+      - 'v*'
   workflow_dispatch:
 
 env:
@@ -57,7 +57,7 @@ jobs:
           label: production
 
   apply:
-    if: (github.event_name == 'push' && github.ref_name == 'dev') || github.event_name == 'workflow_dispatch'
+    if: (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')) || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     permissions:
       contents: read
