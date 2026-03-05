@@ -2,7 +2,7 @@
 [package.sable]
 versioned_files = ["package.json", "package-lock.json"]
 changelog = "CHANGELOG.md"
-tag_prefix = "sable/"
+# tag_prefix = "sable/"
 # assets = "marker for GitHub bot" // TODO: add this later once we have assets
 
 [changes]
