@@ -5,3 +5,4 @@ export * from './PackImagesReader';
 export * from './ImagePack';
 export * from './types';
 export * from './utils';
+export * from './imagePackCache';
