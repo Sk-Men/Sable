@@ -31,13 +31,13 @@ import {
 } from '$plugins/react-custom-html-parser';
 import { useSpoilerClickHandler } from '$hooks/useSpoilerClickHandler';
 import { RenderBody } from '$components/message';
+import { getSettings } from '$state/settings';
+import { filterPronounsByLanguage } from '$utils/pronouns';
 import { CreatorChip } from './CreatorChip';
 import { UserInviteAlert, UserBanAlert, UserModeration, UserKickAlert } from './UserModeration';
 import { PowerChip } from './PowerChip';
 import { IgnoredUserAlert, MutualRoomsChip, OptionsChip, ServerChip, ShareChip } from './UserChips';
 import { UserHero, UserHeroName } from './UserHero';
-import { getSettings } from '$state/settings';
-import { filterPronounsByLanguage } from '$utils/pronouns';
 
 const KNOWN_KEYS = [
   'moe.sable.app.bio',
