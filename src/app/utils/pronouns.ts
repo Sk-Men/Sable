@@ -29,13 +29,22 @@ export function filterPronounsByLanguage(
   enabled: boolean,
   languages: string[]
 ): { summary: string; language?: string }[] {
-  if (!enabled) return pronouns;
-  const normalizedLanguages = languages.map((lang) => lang.trim().toLowerCase());
-  const filteredPronouns = pronouns.filter((p) =>
-    normalizedLanguages.includes((p.language || 'en').trim().toLowerCase())
-  );
-  if (filteredPronouns.length === 0) {
-    return pronouns;
+  if (!enabled) {
+    return pronouns.map((p) => ({ ...p, summary: p.summary.slice(0, 16) }));
   }
+
+  const normalizedLanguages = languages.map((lang) => lang.trim().toLowerCase());
+
+  const filteredPronouns = pronouns
+    .filter((p) => normalizedLanguages.includes((p.language || 'en').trim().toLowerCase()))
+    .map((p) => ({
+      ...p,
+      summary: p.summary.slice(0, 16),
+    }));
+
+  if (filteredPronouns.length === 0) {
+    return pronouns.map((p) => ({ ...p, summary: p.summary.slice(0, 16) }));
+  }
+
   return filteredPronouns;
 }
