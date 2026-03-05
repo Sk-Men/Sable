@@ -1,0 +1,50 @@
+
+[package.sable]
+versioned_files = ["package.json", "package-lock.json"]
+changelog = "CHANGELOG.md"
+tag_prefix = "sable/"
+# assets = "marker for GitHub bot" // TODO: add this later once we have assets
+
+[changes]
+ignore_conventional_commits = true
+
+[package]
+extra_changelog_sections = [
+    { name = "Documentation", types = ["docs"] },
+    { name = "Notes", types = ["note"] }
+]
+
+[[workflows]]
+name = "release"
+help_text = "Prepare and create a new release (update changelog, bump version, create release)"
+
+[[workflows.steps]]
+type = "PrepareRelease"
+
+[[workflows.steps]]
+type = "Command"
+command = 'git commit -m "chore: prepare release $version"'
+
+[[workflows.steps]]
+type = "Command"
+command = "git push"
+
+[[workflows.steps]]
+type = "Release"
+
+[[workflows]]
+name = "document-change"
+help_text = "Create a new change file to be included in the next release"
+
+[[workflows.steps]]
+type = "CreateChangeFile"
+
+[github]
+owner = "7w1"
+repo = "sable"
+
+[bot.releases]
+enabled = true
+
+[bot.checks]
+skip_labels = ["internal"]
