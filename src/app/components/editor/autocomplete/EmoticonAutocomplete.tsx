@@ -23,10 +23,14 @@ type EmoticonCompleteHandler = (key: string, shortcode: string) => void;
 type EmoticonSearchItem = PackImageReader | IEmoji;
 
 type EmoticonAutocompleteProps = {
+  title?: string;
   imagePackRooms: Room[];
   editor: Editor;
   query: AutocompleteQuery<string>;
   requestClose: () => void;
+  // this allows you to override the default behaviour of inserting the selection
+  // used to implement the +: reaction shortcut
+  onEmoticonSelected?: EmoticonCompleteHandler;
 };
 
 const SEARCH_OPTIONS: UseAsyncSearchOptions = {
@@ -36,10 +40,12 @@ const SEARCH_OPTIONS: UseAsyncSearchOptions = {
 };
 
 export function EmoticonAutocomplete({
+  title,
   imagePackRooms,
   editor,
   query,
   requestClose,
+  onEmoticonSelected,
 }: EmoticonAutocompleteProps) {
   const mx = useMatrixClient();
   const useAuthentication = useMediaAuthentication();
@@ -67,12 +73,14 @@ export function EmoticonAutocomplete({
     else resetSearch();
   }, [query.text, search, resetSearch]);
 
-  const handleAutocomplete: EmoticonCompleteHandler = (key, shortcode) => {
-    const emoticonEl = createEmoticonElement(key, shortcode);
-    replaceWithElement(editor, query.range, emoticonEl);
-    moveCursor(editor, true);
-    requestClose();
-  };
+  const handleAutocomplete: EmoticonCompleteHandler =
+    onEmoticonSelected ??
+    ((key, shortcode) => {
+      const emoticonEl = createEmoticonElement(key, shortcode);
+      replaceWithElement(editor, query.range, emoticonEl);
+      moveCursor(editor, true);
+      requestClose();
+    });
 
   useKeyDown(window, (evt: KeyboardEvent) => {
     onTabPress(evt, () => {
@@ -84,7 +92,10 @@ export function EmoticonAutocomplete({
   });
 
   return autoCompleteEmoticon.length === 0 ? null : (
-    <AutocompleteMenu headerContent={<Text size="L400">Emojis</Text>} requestClose={requestClose}>
+    <AutocompleteMenu
+      headerContent={<Text size="L400">{title ?? 'Emojis'}</Text>}
+      requestClose={requestClose}
+    >
       {autoCompleteEmoticon.map((emoticon) => {
         const isCustomEmoji = 'url' in emoticon;
         const key = isCustomEmoji ? emoticon.url : emoticon.unicode;
