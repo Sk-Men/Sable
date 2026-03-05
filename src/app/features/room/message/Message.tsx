@@ -507,7 +507,11 @@ function MessageInternal(
             </button>
           )}
           {canDeleteFailedSend && (
-            <button type="button" className={css.SendStatusButton} onClick={handleDeleteFailedSendClick}>
+            <button
+              type="button"
+              className={css.SendStatusButton}
+              onClick={handleDeleteFailedSendClick}
+            >
               Delete
             </button>
           )}
