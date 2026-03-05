@@ -7,7 +7,7 @@ ARG VITE_BUILD_HASH
 ENV VITE_BUILD_HASH=$VITE_BUILD_HASH
 
 COPY .npmrc package.json package-lock.json /src/
-RUN npm ci
+RUN npm ci --ignore-scripts
 COPY . /src/
 ENV NODE_OPTIONS=--max_old_space_size=4096
 RUN npm run build
