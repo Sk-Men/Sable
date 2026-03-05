@@ -5,8 +5,21 @@ export function parsePronounsInput(pronouns: string): { summary: string; languag
     .map((s) => s.trim())
     .filter(Boolean)
     .map((s) => {
-      const [language, summary] = s.split(':');
-      return { summary: summary.slice(0, 16), language: language || 'en' };
+      const parts = s.split(':');
+
+      if (parts.length === 1) {
+        return {
+          summary: parts[0].slice(0, 16),
+          language: 'en',
+        };
+      }
+
+      const [language, summary] = parts;
+
+      return {
+        language: language || 'en',
+        summary: summary.slice(0, 16),
+      };
     });
 }
 
