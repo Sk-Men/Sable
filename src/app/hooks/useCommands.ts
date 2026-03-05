@@ -941,11 +941,7 @@ export const useCommands = (mx: MatrixClient, room: Room): CommandRecord => {
       [Command.SPronoun]: {
         name: Command.SPronoun,
         description:
-<<<<<<< fix-naming-space-commands
-          'Set your pronouns for this space. Example: /spronoun "they/them, it/its" | /spronoun reset',
-=======
-          'Set your global pronouns for this space. Example: /gpronoun "en:they/them, de:sie/ihr" | /gpronoun reset',
->>>>>>> dev
+          'Set your pronouns for this space. Example: /spronoun "en:they/them, de:sie/ihr" | /spronoun reset',
         exe: async (payload) => {
           const match = payload.trim().match(/^"(.*)"$/);
           const rawInput = match ? match[1].trim() : payload.trim();
