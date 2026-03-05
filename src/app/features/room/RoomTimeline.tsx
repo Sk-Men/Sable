@@ -23,6 +23,7 @@ import {
   IRoomTimelineData,
   MatrixClient,
   MatrixEvent,
+  RelationType,
   Room,
   RoomEvent,
   RoomEventHandlerMap,
@@ -451,6 +452,30 @@ const useLiveEventArrive = (room: Room, onArrive: (mEvent: MatrixEvent) => void)
   }, [room, onArrive]);
 };
 
+const useRelationUpdate = (room: Room, onRelation: () => void) => {
+  useEffect(() => {
+    const handleTimelineEvent: EventTimelineSetHandlerMap[RoomEvent.Timeline] = (
+      mEvent: MatrixEvent,
+      eventRoom: Room | undefined,
+      _toStartOfTimeline: boolean | undefined,
+      _removed: boolean,
+      data: IRoomTimelineData
+    ) => {
+      // Live Replace events are handled by useLiveEventArrive re-render.
+      // Non-live Replace events (bundled/historical edits from sliding sync)
+      // also need to trigger a re-render so makeReplaced state is reflected.
+      if (eventRoom?.roomId !== room.roomId || data.liveEvent) return;
+      if (mEvent.getRelation()?.rel_type === RelationType.Replace) {
+        onRelation();
+      }
+    };
+    room.on(RoomEvent.Timeline, handleTimelineEvent);
+    return () => {
+      room.removeListener(RoomEvent.Timeline, handleTimelineEvent);
+    };
+  }, [room, onRelation]);
+};
+
 const useLiveTimelineRefresh = (room: Room, onRefresh: () => void) => {
   useEffect(() => {
     const handleTimelineRefresh: RoomEventHandlerMap[RoomEvent.TimelineRefresh] = (r: Room) => {
@@ -784,6 +809,15 @@ export function RoomTimeline({
         setTimeline(getInitialTimeline(room));
       }
     }, [room, liveTimelineLinked, timeline.linkedTimelines.length])
+  );
+
+  // Re-render when non-live Replace relations arrive (bundled/historical edits
+  // from sliding sync that wouldn't otherwise trigger a timeline update).
+  useRelationUpdate(
+    room,
+    useCallback(() => {
+      setTimeline((ct) => ({ ...ct }));
+    }, [])
   );
 
   // Recover from transient empty timeline state when the live timeline
@@ -1233,8 +1267,14 @@ export function RoomTimeline({
         const highlighted = focusItem?.index === item && focusItem.highlight;
 
         const editedEvent = getEditedEvent(mEventId, mEvent, timelineSet);
-        const getContent = (() =>
-          editedEvent?.getContent()['m.new_content'] ?? mEvent.getContent()) as GetContentCallback;
+        const editedNewContent = editedEvent?.getContent()['m.new_content'];
+        // If makeReplaced was called with a stripped edit (no m.new_content),
+        // mEvent.getContent() returns {}. Fall back to getOriginalContent() so
+        // the message renders with its original content instead of breaking.
+        const baseContent = mEvent.getContent();
+        const safeContent =
+          Object.keys(baseContent).length > 0 ? baseContent : mEvent.getOriginalContent();
+        const getContent = (() => editedNewContent ?? safeContent) as GetContentCallback;
 
         const senderId = mEvent.getSender() ?? '';
         const senderDisplayName =
@@ -1302,7 +1342,7 @@ export function RoomTimeline({
             ) : (
               <RenderMessageContent
                 displayName={senderDisplayName}
-                msgType={mEvent.getContent().msgtype ?? ''}
+                msgType={(editedNewContent ?? safeContent).msgtype ?? ''}
                 ts={mEvent.getTs()}
                 edited={!!editedEvent}
                 getContent={getContent}
@@ -1402,14 +1442,16 @@ export function RoomTimeline({
                   );
                 if (mEvent.getType() === MessageEvent.RoomMessage) {
                   const editedEvent = getEditedEvent(mEventId, mEvent, timelineSet);
-                  const getContent = (() =>
-                    editedEvent?.getContent()['m.new_content'] ??
-                    mEvent.getContent()) as GetContentCallback;
+                  const editedNewContent = editedEvent?.getContent()['m.new_content'];
+                  const baseContent = mEvent.getContent();
+                  const safeContent =
+                    Object.keys(baseContent).length > 0 ? baseContent : mEvent.getOriginalContent();
+                  const getContent = (() => editedNewContent ?? safeContent) as GetContentCallback;
 
                   return (
                     <RenderMessageContent
                       displayName={senderDisplayName}
-                      msgType={mEvent.getContent().msgtype ?? ''}
+                      msgType={(editedNewContent ?? safeContent).msgtype ?? ''}
                       ts={mEvent.getTs()}
                       edited={!!editedEvent}
                       getContent={getContent}

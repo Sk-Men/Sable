@@ -520,9 +520,18 @@ export const getLatestEditableEvt = (
   return undefined;
 };
 
-export const reactionOrEditEvent = (mEvent: MatrixEvent) =>
-  mEvent.getRelation()?.rel_type === RelationType.Annotation ||
-  mEvent.getRelation()?.rel_type === RelationType.Replace;
+export const reactionOrEditEvent = (mEvent: MatrixEvent): boolean => {
+  const relType = mEvent.getRelation()?.rel_type;
+  if (relType === RelationType.Annotation || relType === RelationType.Replace) return true;
+
+  // Sliding sync proxies may omit m.relates_to on the initial delivery of timeline
+  // events.  Detect edit events by the presence of m.new_content in the event
+  // content even when the relation metadata is absent, so they are filtered from
+  // the rendered timeline rather than falling through as unsupported messages.
+  if (mEvent.getContent()['m.new_content'] !== undefined) return true;
+
+  return false;
+};
 
 export const getMentionContent = (userIds: string[], room: boolean): IMentions => {
   const mMentions: IMentions = {};
