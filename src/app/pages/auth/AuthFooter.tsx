@@ -14,7 +14,7 @@ export function AuthFooter() {
         target="_blank"
         rel="noreferrer"
       >
-        v1.3.2
+        v1.3.3
       </Text>
       <Text as="a" size="T300" href="https://matrix.org" target="_blank" rel="noreferrer">
         Powered by Matrix

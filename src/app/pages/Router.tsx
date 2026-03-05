@@ -55,6 +55,7 @@ import {
   getSpaceLobbyPath,
 } from './pathUtils';
 import { ClientBindAtoms, ClientLayout, ClientRoot } from './client';
+import { HandleNotificationClick, ClientNonUIFeatures } from './client/ClientNonUIFeatures';
 import { Home, HomeRouteRoomProvider, HomeSearch } from './client/home';
 import { Direct, DirectCreate, DirectRouteRoomProvider } from './client/direct';
 import { RouteSpaceProvider, Space, SpaceRouteRoomProvider, SpaceSearch } from './client/space';
@@ -65,7 +66,6 @@ import { WelcomePage } from './client/WelcomePage';
 import { SidebarNav } from './client/SidebarNav';
 import { MobileFriendlyPageNav, MobileFriendlyClientNav } from './MobileFriendly';
 import { ClientInitStorageAtom } from './client/ClientInitStorageAtom';
-import { ClientNonUIFeatures } from './client/ClientNonUIFeatures';
 import { AuthRouteThemeManager, UnAuthRouteThemeManager } from './ThemeManager';
 import { ClientRoomsNotificationPreferences } from './client/ClientRoomsNotificationPreferences';
 import { HomeCreateRoom } from './client/home/CreateRoom';
@@ -141,6 +141,10 @@ export const createRouter = (clientConfig: ClientConfig, screenSize: ScreenSize)
         }}
         element={
           <AuthRouteThemeManager>
+            {/* HandleNotificationClick must live outside ClientRoot's loading gate so
+                SW notification-click postMessages are never dropped during client
+                reloads (e.g., account switches). It only needs navigate + Jotai atoms. */}
+            <HandleNotificationClick />
             <ClientRoot>
               <ClientInitStorageAtom>
                 <ClientRoomsNotificationPreferences>

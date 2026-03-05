@@ -7,3 +7,14 @@ devAssets
 .idea
 
 .env
+
+.wrangler
+.dev.vars*
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars
+!*.tfvars.example
+*.tfbackend
+!*.tfbackend.example
+crash.log

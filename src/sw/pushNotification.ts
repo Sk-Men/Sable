@@ -16,8 +16,11 @@ export const createPushNotifications = (
   self: ServiceWorkerGlobalScope,
   getNotificationSettings: () => NotificationSettings
 ) => {
-  const resolveSilent = (silent: unknown): boolean => {
+  const resolveSilent = (silent: unknown, tweakSound?: unknown): boolean => {
     if (typeof silent === 'boolean') return silent;
+    // If the push rule doesn't request a sound tweak, the notification should be silent
+    // (no sound), regardless of the user's global sound preference.
+    if (!tweakSound) return true;
     return !getNotificationSettings().notificationSoundEnabled;
   };
 
@@ -29,14 +32,24 @@ export const createPushNotifications = (
     icon?: string,
     badge?: string
   ) => {
-    await self.registration.showNotification(title, {
+    const roomId: string | undefined = data?.room_id;
+    // Group by room so new messages in the same room replace the previous
+    // notification rather than stacking individually. renotify: true ensures
+    // the user is still alerted when the existing tag is replaced.
+    const tag = roomId ? `room-${roomId}` : (data?.event_id ?? 'Cinny');
+    const renotify = !!roomId;
+    // `renotify` is a valid Web API property absent from TypeScript's NotificationOptions type.
+    // Build the options object separately to avoid the excess-property check, then cast.
+    const notifOptions = {
       body,
       icon: icon ?? DEFAULT_NOTIFICATION_ICON,
       badge: badge ?? DEFAULT_NOTIFICATION_BADGE,
-      tag: data?.event_id ?? 'Cinny',
+      tag,
+      renotify,
       silent,
       data,
-    });
+    };
+    await self.registration.showNotification(title, notifOptions as NotificationOptions);
   };
 
   const handleRoomMessageNotification = async (pushData: any) => {
@@ -59,8 +72,9 @@ export const createPushNotifications = (
         showMessageContent: getNotificationSettings().showMessageContent,
         showEncryptedMessageContent: getNotificationSettings().showEncryptedMessageContent,
       }),
-      silent: resolveSilent(pushData?.silent),
+      silent: resolveSilent(pushData?.silent, pushData?.tweaks?.sound),
       eventId: pushData?.event_id,
+      recipientId: typeof pushData?.user_id === 'string' ? pushData.user_id : undefined,
       data,
     });
     await showNotificationWithData(
@@ -93,8 +107,9 @@ export const createPushNotifications = (
         showMessageContent: getNotificationSettings().showMessageContent,
         showEncryptedMessageContent: getNotificationSettings().showEncryptedMessageContent,
       }),
-      silent: resolveSilent(pushData?.silent),
+      silent: resolveSilent(pushData?.silent, pushData?.tweaks?.sound),
       eventId: pushData?.event_id,
+      recipientId: typeof pushData?.user_id === 'string' ? pushData.user_id : undefined,
       data,
     });
     await showNotificationWithData(
@@ -128,27 +143,6 @@ export const createPushNotifications = (
     await showNotificationWithData('New Invitation', body, data, resolveSilent(pushData?.silent));
   };
 
-  const fallbackNotification = async (pushData: any) => {
-    const body = pushData?.content?.body;
-    let title;
-    if (body) {
-      title = pushData?.sender_display_name
-        ? `${pushData.sender_display_name}${pushData?.room_name ? ` in ${pushData.room_name}` : ''}`
-        : 'New Notification';
-    } else {
-      title = 'You have a new Notification';
-    }
-    const data = {
-      type: pushData?.type,
-      room_id: pushData?.room_id,
-      event_id: pushData?.event_id,
-      user_id: pushData?.user_id,
-      timestamp: Date.now(),
-      ...pushData.data,
-    };
-    await showNotificationWithData(title, body, data, resolveSilent(pushData?.silent));
-  };
-
   const handlePushNotificationPushData = async (pushData: any) => {
     const eventType = pushData?.type as EventType | undefined;
     if (!eventType) {
@@ -158,19 +152,19 @@ export const createPushNotifications = (
     switch (eventType) {
       case EventType.RoomMessage:
       case EventType.Sticker:
-        return handleRoomMessageNotification(pushData);
+        await handleRoomMessageNotification(pushData);
+        break;
       case EventType.RoomMessageEncrypted:
-        return handleEncryptedMessageNotification(pushData);
+        await handleEncryptedMessageNotification(pushData);
+        break;
       case EventType.RoomMember:
         if (!(pushData?.content?.membership === 'invite')) break;
-        return handleInvitationNotification(pushData);
-
+        await handleInvitationNotification(pushData);
+        break;
       default:
         // no voip support in app anyway
         break;
     }
-
-    return fallbackNotification(pushData);
   };
 
   return { handlePushNotificationPushData };

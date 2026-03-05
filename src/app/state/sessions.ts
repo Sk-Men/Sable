@@ -165,8 +165,42 @@ export const activeSessionIdAtom = atom<string | undefined, [string | undefined]
 
 export type PendingNotification = {
   roomId: string;
-  eventId: string;
+  eventId?: string;
   targetSessionId?: string;
 };
 
 export const pendingNotificationAtom = atom<PendingNotification | null>(null);
+
+// ─── In-app notification banner ────────────────────────────────────────────
+
+export type InAppBannerNotification = {
+  /** Unique id; used to deduplicate rapid-fire events. */
+  id: string;
+  /** Primary title line – kept for backwards-compat (background accounts). */
+  title: string;
+  /** Room display name (used as the #channel part of the subtitle). */
+  roomName?: string;
+  /** Homeserver extracted from the canonical alias or room ID (e.g. matrix.org). */
+  serverName?: string;
+  /** Display name of the sender. */
+  senderName?: string;
+  body?: string;
+  /** URL of an avatar or room icon to display inside the banner. */
+  icon?: string;
+  onClick: () => void;
+};
+
+export const inAppBannerAtom = atom<InAppBannerNotification | null>(null);
+
+// ─── Per-background-account unread counts ──────────────────────────────────
+
+export type BackgroundUnread = {
+  total: number;
+  highlight: number;
+};
+
+/**
+ * Keyed by userId.  Counts accumulate while a session is in the background
+ * and are cleared when the user switches to that account.
+ */
+export const backgroundUnreadCountsAtom = atom<Record<string, BackgroundUnread>>({});
