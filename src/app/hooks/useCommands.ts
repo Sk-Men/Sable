@@ -226,12 +226,12 @@ export enum Command {
   Acl = 'acl',
   // Sable commands
   Color = 'color',
-  GColor = 'gcolor',
+  SColor = 'scolor',
   Font = 'font',
-  GFont = 'gfont',
+  SFont = 'sfont',
   AddWidget = 'addwidget',
   Pronoun = 'pronoun',
-  GPronoun = 'gpronoun',
+  SPronoun = 'spronoun',
   Rainbow = 'rainbow',
   RawMsg = 'rawmsg',
   Raw = 'raw',
@@ -665,10 +665,10 @@ export const useCommands = (mx: MatrixClient, room: Room): CommandRecord => {
           }
         },
       },
-      [Command.GColor]: {
-        name: Command.GColor,
+      [Command.SColor]: {
+        name: Command.SColor,
         description:
-          'Set your global color for the current Space. Example: /gcolor #ff00ff | /gcolor reset',
+          'Set your color for the current Space. Example: /scolor #ff00ff | /scolor reset',
         exe: async (payload) => {
           const input = payload.trim().toLowerCase();
           const userId = mx.getSafeUserId();
@@ -768,10 +768,9 @@ export const useCommands = (mx: MatrixClient, room: Room): CommandRecord => {
           }
         },
       },
-      [Command.GFont]: {
-        name: Command.GFont,
-        description:
-          'Set a global font for the current Space. Example: /gfont Courier New | /gfont reset',
+      [Command.SFont]: {
+        name: Command.SFont,
+        description: 'Set a font for the current Space. Example: /sfont Courier New | /sfont reset',
         exe: async (payload) => {
           const input = payload
             .trim()
@@ -783,7 +782,7 @@ export const useCommands = (mx: MatrixClient, room: Room): CommandRecord => {
             const localNotice = new MatrixEvent({
               type: 'm.room.message',
               content: { msgtype: 'm.notice', body: msg },
-              event_id: `~gfont-${Date.now()}`,
+              event_id: `~sfont-${Date.now()}`,
               room_id: room.roomId,
               sender: userId,
             });
@@ -939,10 +938,10 @@ export const useCommands = (mx: MatrixClient, room: Room): CommandRecord => {
           }
         },
       },
-      [Command.GPronoun]: {
-        name: Command.GPronoun,
+      [Command.SPronoun]: {
+        name: Command.SPronoun,
         description:
-          'Set your global pronouns for this space. Example: /gpronoun "en:they/them, de:sie/ihr" | /gpronoun reset',
+          'Set your pronouns for this space. Example: /spronoun "en:they/them, de:sie/ihr" | /spronoun reset',
         exe: async (payload) => {
           const match = payload.trim().match(/^"(.*)"$/);
           const rawInput = match ? match[1].trim() : payload.trim();

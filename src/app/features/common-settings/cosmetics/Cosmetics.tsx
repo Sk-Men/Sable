@@ -83,7 +83,7 @@ export function Cosmetics({ requestClose }: CosmeticsProps) {
                     title={isSpace ? 'Space-Wide Colors' : 'Room Colors'}
                     description={
                       isSpace
-                        ? 'Allow everyone to use /gcolor in this space.'
+                        ? 'Allow everyone to use /scolor in this space.'
                         : 'Allow everyone to use /color in this room.'
                     }
                     after={
@@ -107,7 +107,7 @@ export function Cosmetics({ requestClose }: CosmeticsProps) {
                     title={isSpace ? 'Space-Wide Fonts' : 'Room Fonts'}
                     description={
                       isSpace
-                        ? 'Allow everyone to use /gfont in this space.'
+                        ? 'Allow everyone to use /sfont in this space.'
                         : 'Allow everyone to use /font in this room.'
                     }
                     after={
@@ -131,7 +131,7 @@ export function Cosmetics({ requestClose }: CosmeticsProps) {
                     title={isSpace ? 'Space-Wide Pronouns' : 'Room Pronouns'}
                     description={
                       isSpace
-                        ? 'Allow everyone to use /gpronoun in this space.'
+                        ? 'Allow everyone to use /spronoun in this space.'
                         : 'Allow everyone to use /pronoun in this room.'
                     }
                     after={
@@ -191,7 +191,7 @@ export function Cosmetics({ requestClose }: CosmeticsProps) {
                   gap="400"
                 >
                   <SettingTile
-                    title="/gcolor | /gfont | /gpronoun"
+                    title="/scolor | /sfont | /spronoun"
                     description="Apply colors/fonts/pronouns to the entire space."
                   />
                 </SequenceCard>
