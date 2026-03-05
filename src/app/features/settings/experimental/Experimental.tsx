@@ -1,7 +1,8 @@
 import { Box, Text, IconButton, Icon, Icons, Scroll } from 'folds';
 import { Page, PageContent, PageHeader } from '$components/page';
 import { InfoCard } from '$components/info-card';
-import { Sync, LanguageSpecificPronouns } from '../general';
+import { LanguageSpecificPronouns } from '../cosmetics/LanguageSpecificPronouns';
+import { Sync } from '../general';
 
 type ExperimentalProps = {
   requestClose: () => void;
