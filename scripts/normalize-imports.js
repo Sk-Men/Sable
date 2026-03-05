@@ -5,6 +5,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import process from 'node:process';
 import ts from 'typescript';
+import { createTextHelpers } from './utils/console-style.js';
 
 const DEFAULT_ROOTS = ['src'];
 const SKIP_DIRS = new Set(['.git', '.hg', '.svn', 'node_modules', 'dist', 'coverage']);
@@ -13,23 +14,6 @@ const MATRIX_IMPORT_BOUNDARY_FILES = new Set([
   path.normalize('src/types/matrix-sdk.ts'),
   path.normalize('src/types/matrix-sdk-events.d.ts'),
 ]);
-const ANSI = {
-  reset: '\x1b[0m',
-  red: '\x1b[31m',
-  green: '\x1b[32m',
-  dim: '\x1b[2m',
-};
-
-function shouldUseColor() {
-  if (process.env.NO_COLOR !== undefined) return false;
-  if (process.env.FORCE_COLOR && process.env.FORCE_COLOR !== '0') return true;
-  return Boolean(process.stdout.isTTY);
-}
-
-function styleText(text, color, enabled) {
-  if (!enabled) return text;
-  return `${color}${text}${ANSI.reset}`;
-}
 
 function toPosix(inputPath) {
   return inputPath.split(path.sep).join('/');
@@ -251,7 +235,7 @@ async function main() {
   const projectRoot = process.cwd();
   const { write, roots } = parseArgs(process.argv.slice(2));
   const aliases = await loadAliasMap(path.join(projectRoot, 'vite.config.ts'), projectRoot);
-  const useColor = shouldUseColor();
+  const { dim, red, green } = createTextHelpers();
 
   if (aliases.length === 0) {
     throw new Error('No aliases found in vite.config.ts');
@@ -311,10 +295,10 @@ async function main() {
     a.file === b.file ? a.from.localeCompare(b.from) : a.file.localeCompare(b.file)
   );
   displayRows.forEach((row) => {
-    const fileLabel = styleText(row.file, ANSI.dim, useColor);
-    const fromLabel = styleText(`"${row.from}"`, ANSI.red, useColor);
-    const arrowLabel = styleText(' -> ', ANSI.dim, useColor);
-    const toLabel = styleText(`"${row.to}"`, ANSI.green, useColor);
+    const fileLabel = dim(row.file);
+    const fromLabel = red(`"${row.from}"`);
+    const arrowLabel = dim(' -> ');
+    const toLabel = green(`"${row.to}"`);
     console.log(`${fileLabel}: ${fromLabel}${arrowLabel}${toLabel}`);
   });
 
