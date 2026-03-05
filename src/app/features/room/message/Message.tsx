@@ -1,6 +1,7 @@
 import {
   Avatar,
   Box,
+  Chip,
   Icon,
   IconButton,
   Icons,
@@ -520,18 +521,19 @@ function MessageInternal(
             Failed to send.
           </Text>
           {canResend && (
-            <button type="button" className={css.SendStatusButton} onClick={handleResendClick}>
-              Retry
-            </button>
+            <Chip type="button" variant="Primary" radii="Pill" outlined onClick={handleResendClick}>
+              <Text size="B300">Retry</Text>
+            </Chip>
           )}
           {canDeleteFailedSend && (
-            <button
+            <Chip
               type="button"
-              className={css.SendStatusButton}
+              variant="Critical"
+              radii="Pill"
               onClick={handleDeleteFailedSendClick}
             >
-              Delete
-            </button>
+              <Text size="B300">Delete</Text>
+            </Chip>
           )}
         </Box>
       )}
