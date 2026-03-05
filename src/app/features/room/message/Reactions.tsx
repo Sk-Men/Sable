@@ -27,12 +27,25 @@ import * as css from './styles.css';
 export type ReactionsProps = {
   room: Room;
   mEventId: string;
-  canSendReaction?: boolean;
+  canSendReaction: boolean;
+  canDeleteOwn: boolean;
   relations: Relations;
   onReactionToggle: (targetEventId: string, key: string, shortcode?: string) => void;
 };
 export const Reactions = as<'div', ReactionsProps>(
-  ({ className, room, relations, mEventId, canSendReaction, onReactionToggle, ...props }, ref) => {
+  (
+    {
+      className,
+      room,
+      relations,
+      mEventId,
+      canSendReaction,
+      canDeleteOwn,
+      onReactionToggle,
+      ...props
+    },
+    ref
+  ) => {
     const mx = useMatrixClient();
     const useAuthentication = useMediaAuthentication();
     const [viewer, setViewer] = useState<boolean | string>(false);
@@ -63,6 +76,7 @@ export const Reactions = as<'div', ReactionsProps>(
           if (rEvents.length === 0 || typeof key !== 'string') return null;
           const myREvent = myUserId ? rEvents.find(factoryEventSentBy(myUserId)) : undefined;
           const isPressed = !!myREvent?.getRelation();
+          const canToggle = isPressed ? canDeleteOwn : canSendReaction;
 
           return (
             <TooltipProvider
@@ -85,9 +99,9 @@ export const Reactions = as<'div', ReactionsProps>(
                   mx={mx}
                   reaction={key}
                   count={events.size}
-                  onClick={canSendReaction ? () => onReactionToggle(mEventId, key) : undefined}
+                  onClick={canToggle ? () => onReactionToggle(mEventId, key) : undefined}
                   onContextMenu={handleViewReaction}
-                  aria-disabled={!canSendReaction}
+                  aria-disabled={!canToggle}
                   useAuthentication={useAuthentication}
                 />
               )}

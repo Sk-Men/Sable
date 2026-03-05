@@ -144,6 +144,10 @@ import {
 import { timeHourMinute, timeDayMonthYear } from '$utils/time';
 import { stopPropagation } from '$utils/keyboard';
 import { MessageEvent } from '$types/matrix/room';
+import { usePowerLevelsContext } from '$hooks/usePowerLevels';
+import { useRoomCreators } from '$hooks/useRoomCreators';
+import { useRoomPermissions } from '$hooks/useRoomPermissions';
+import { AutocompleteNotice } from '$components/editor/autocomplete/AutocompleteNotice';
 import { SchedulePickerDialog } from './schedule-send';
 import * as css from './schedule-send/SchedulePickerDialog.css';
 import {
@@ -194,6 +198,11 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
     const roomToParents = useAtomValue(roomToParentsAtom);
     const nicknames = useAtomValue(nicknamesAtom);
 
+    const powerLevels = usePowerLevelsContext();
+    const creators = useRoomCreators(room);
+    const permissions = useRoomPermissions(creators, powerLevels);
+    const canSendReaction = permissions.event(MessageEvent.Reaction, mx.getSafeUserId());
+
     const [msgDraft, setMsgDraft] = useAtom(roomIdToMsgDraftAtomFamily(roomId));
     const [replyDraft, setReplyDraft] = useAtom(roomIdToReplyDraftAtomFamily(roomId));
     const replyUserID = replyDraft?.userId;
@@ -216,6 +225,7 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
     const [toolbar, setToolbar] = useSetting(settingsAtom, 'editorToolbar');
     const [autocompleteQuery, setAutocompleteQuery] =
       useState<AutocompleteQuery<AutocompletePrefix>>();
+    const [isQuickTextReact, setQuickTextReact] = useState(false);
 
     const sendTypingStatus = useTypingStatusUpdater(mx, roomId);
 
@@ -395,6 +405,41 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
       );
     };
 
+    const handleCloseAutocomplete = useCallback(() => {
+      setAutocompleteQuery(undefined);
+      ReactEditor.focus(editor);
+    }, [editor]);
+
+    const handleQuickReact = useCallback(
+      (key: string, shortcode?: string) => {
+        if (key.length > 0) {
+          const lastMessage = room
+            .getLiveTimeline()
+            .getEvents()
+            .findLast((event) =>
+              (
+                [
+                  MessageEvent.RoomMessage,
+                  MessageEvent.RoomMessageEncrypted,
+                  MessageEvent.Sticker,
+                ] as string[]
+              ).includes(event.getType())
+            );
+          const lastMessageId = lastMessage?.getId();
+
+          if (lastMessageId) {
+            toggleReaction(mx, room, lastMessageId, key, shortcode);
+          }
+        }
+
+        resetEditor(editor);
+        resetEditorHistory(editor);
+        sendTypingStatus(false);
+        handleCloseAutocomplete();
+      },
+      [editor, handleCloseAutocomplete, mx, room, sendTypingStatus]
+    );
+
     const submit = useCallback(async () => {
       uploadBoardHandlers.current?.handleSend();
 
@@ -408,6 +453,12 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
         })
       );
       let msgType = MsgType.Text;
+
+      // quick text react
+      if (canSendReaction && plainText.startsWith('+#')) {
+        handleQuickReact(plainText.substring(2));
+        return;
+      }
 
       if (commandName) {
         plainText = trimCommand(commandName, plainText);
@@ -508,21 +559,23 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
         });
       }
     }, [
+      editor,
+      isMarkdown,
+      canSendReaction,
       mx,
       roomId,
-      room,
-      editor,
       replyDraft,
-      sendTypingStatus,
-      setReplyDraft,
-      isMarkdown,
-      commands,
       scheduledTime,
-      setScheduledTime,
-      isEncrypted,
-      queryClient,
       editingScheduledDelayId,
+      handleQuickReact,
+      commands,
+      sendTypingStatus,
+      queryClient,
+      setReplyDraft,
+      isEncrypted,
       setEditingScheduledDelayId,
+      setScheduledTime,
+      room,
     ]);
 
     const handleKeyDown: KeyboardEventHandler = useCallback(
@@ -559,13 +612,28 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
           sendTypingStatus(!isEmptyEditor(editor));
         }
 
+        const firstPosition = Editor.start(editor, []);
+        const secondChar = Editor.after(editor, firstPosition, {
+          distance: 2,
+          unit: 'character',
+        });
+        const quickReactPrefix = Editor.string(
+          editor,
+          Editor.range(editor, firstPosition, secondChar)
+        );
+        if (quickReactPrefix === '+#') {
+          setQuickTextReact(true);
+          setAutocompleteQuery(undefined);
+          return;
+        }
+        setQuickTextReact(false);
+
         const prevWordRange = getPrevWorldRange(editor);
         if (!prevWordRange) {
           setAutocompleteQuery(undefined);
           return;
         }
 
-        const firstPosition = Editor.start(editor, []);
         const isRangeAtBeginning = !Point.isAfter(Range.start(prevWordRange), firstPosition);
         const query =
           (isRangeAtBeginning
@@ -577,36 +645,6 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
       },
       [editor, sendTypingStatus, hideActivity]
     );
-
-    const handleCloseAutocomplete = useCallback(() => {
-      setAutocompleteQuery(undefined);
-      ReactEditor.focus(editor);
-    }, [editor]);
-
-    const handleReactionAutocomplete = (key: string, shortcode: string) => {
-      const lastMessage = room
-        .getLiveTimeline()
-        .getEvents()
-        .findLast((event) =>
-          (
-            [
-              MessageEvent.RoomMessage,
-              MessageEvent.RoomMessageEncrypted,
-              MessageEvent.Sticker,
-            ] as string[]
-          ).includes(event.getType())
-        );
-      const lastMessageId = lastMessage?.getId();
-
-      if (lastMessageId) {
-        toggleReaction(mx, room, lastMessageId, key, shortcode);
-      }
-
-      resetEditor(editor);
-      resetEditorHistory(editor);
-      sendTypingStatus(false);
-      handleCloseAutocomplete();
-    };
 
     const handleEmoticonSelect = (key: string, shortcode: string) => {
       editor.insertNode(createEmoticonElement(key, shortcode));
@@ -716,16 +754,21 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
             requestClose={handleCloseAutocomplete}
           />
         )}
-        {autocompleteQuery?.prefix === AutocompletePrefix.Reaction && (
-          <EmoticonAutocomplete
-            title={`React with :${autocompleteQuery.text}`}
-            imagePackRooms={imagePackRooms}
-            editor={editor}
-            query={autocompleteQuery}
-            requestClose={handleCloseAutocomplete}
-            onEmoticonSelected={handleReactionAutocomplete}
-          />
-        )}
+        {autocompleteQuery?.prefix === AutocompletePrefix.Reaction &&
+          (canSendReaction ? (
+            <EmoticonAutocomplete
+              title={`React with :${autocompleteQuery.text}`}
+              imagePackRooms={imagePackRooms}
+              editor={editor}
+              query={autocompleteQuery}
+              requestClose={handleCloseAutocomplete}
+              onEmoticonSelected={handleQuickReact}
+            />
+          ) : (
+            <AutocompleteNotice>
+              You do not have permission to send reactions in this room
+            </AutocompleteNotice>
+          ))}
         {autocompleteQuery?.prefix === AutocompletePrefix.Command && (
           <CommandAutocomplete
             room={room}
@@ -734,6 +777,14 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
             requestClose={handleCloseAutocomplete}
           />
         )}
+        {isQuickTextReact &&
+          (canSendReaction ? (
+            <AutocompleteNotice>Sending as text reaction to the latest message</AutocompleteNotice>
+          ) : (
+            <AutocompleteNotice>
+              You do not have permission to send reactions in this room
+            </AutocompleteNotice>
+          ))}
         <CustomEditor
           editableName="RoomInput"
           editor={editor}

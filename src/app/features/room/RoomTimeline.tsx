@@ -1327,6 +1327,7 @@ export function RoomTimeline({
                   relations={reactionRelations}
                   mEventId={mEventId}
                   canSendReaction={canSendReaction}
+                  canDeleteOwn={canDeleteOwn}
                   onReactionToggle={handleReactionToggle}
                 />
               )
@@ -1413,6 +1414,7 @@ export function RoomTimeline({
                   relations={reactionRelations}
                   mEventId={mEventId}
                   canSendReaction={canSendReaction}
+                  canDeleteOwn={canDeleteOwn}
                   onReactionToggle={handleReactionToggle}
                 />
               )
@@ -1534,6 +1536,7 @@ export function RoomTimeline({
                   relations={reactionRelations}
                   mEventId={mEventId}
                   canSendReaction={canSendReaction}
+                  canDeleteOwn={canDeleteOwn}
                   onReactionToggle={handleReactionToggle}
                 />
               )
