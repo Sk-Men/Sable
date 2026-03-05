@@ -12,6 +12,7 @@
 - Fix view source scroll bar ([#125](https://github.com/7w1/sable/pull/125))
 - Added back Cinny Light theme as an option ([#80](https://github.com/7w1/sable/issues/80), [#126](https://github.com/7w1/sable/pull/126))
 - Fix auto capitalization in login screen ([#131](https://github.com/7w1/sable/pull/131)) - [Rose](https://github.com/dozro)
+- Automated deployments with Cloudflare Workers IaC ([#116](https://github.com/7w1/sable/pull/116))
 
 ## 1.3.2 - 3/3/2026
 
