@@ -182,6 +182,7 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
 
     const [uploadBoard, setUploadBoard] = useState(true);
     const [selectedFiles, setSelectedFiles] = useAtom(roomIdToUploadItemsAtomFamily(roomId));
+    const [describedFile, setDescribedFile] = useState<TUploadContent | undefined>(undefined);
     const uploadFamilyObserverAtom = createUploadFamilyObserverAtom(
       roomUploadAtomFamily,
       selectedFiles.map((f) => f.file)
@@ -214,6 +215,7 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
               metadata: {
                 markedAsSpoiler: false,
               },
+              body: 'aaa',
             })
           );
         } else {
@@ -225,6 +227,7 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
               metadata: {
                 markedAsSpoiler: false,
               },
+              body: 'aaa',
             })
           );
         }
@@ -303,7 +306,12 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
       },
       [setSelectedFiles]
     );
-
+    const handleDescription = useCallback(
+      (fileItem: TUploadContent) => {
+        setDescribedFile(fileItem);
+      },
+      [setDescribedFile]
+    );
     const handleRemoveUpload = useCallback(
       (upload: TUploadContent | TUploadContent[]) => {
         const uploads = Array.isArray(upload) ? upload : [upload];
@@ -331,6 +339,14 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
         const fileItem = selectedFiles.find((f) => f.file === upload.file);
         if (!fileItem) throw new Error('Broken upload');
 
+        if (fileItem.file === describedFile) {
+          fileItem.body = plaintext;
+          resetEditor(editor);
+          resetEditorHistory(editor);
+          setInputKey((prev) => prev + 1);
+          sendTypingStatus(false);
+          setDescribedFile(undefined);
+        }
         if (fileItem.file.type.startsWith('image')) {
           return getImageMsgContent(mx, fileItem, upload.mxc);
         }
@@ -364,6 +380,7 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
     const submit = useCallback(async () => {
       uploadBoardHandlers.current?.handleSend();
 
+      if (describedFile !== undefined) return;
       const commandName = getBeginCommand(editor);
       let plainText = toPlainText(editor.children, isMarkdown).trim();
       let customHtml = trimCustomHtml(
@@ -436,13 +453,24 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
       resetEditorHistory(editor);
       setInputKey((prev) => prev + 1);
       sendTypingStatus(false);
+      setDescribedFile(undefined);
 
       try {
         await mx.sendMessage(roomId, content as any);
       } catch (error) {
         log.error('failed to send message', { roomId }, error);
       }
-    }, [mx, roomId, editor, replyDraft, sendTypingStatus, setReplyDraft, isMarkdown, commands]);
+    }, [
+      mx,
+      roomId,
+      editor,
+      replyDraft,
+      describedFile,
+      sendTypingStatus,
+      setReplyDraft,
+      isMarkdown,
+      commands,
+    ]);
 
     const handleKeyDown: KeyboardEventHandler = useCallback(
       (evt) => {
@@ -546,6 +574,7 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
                         fileItem={fileItem}
                         setMetadata={handleFileMetadata}
                         onRemove={handleRemoveUpload}
+                        setDescription={handleDescription}
                       />
                     ))}
                 </UploadBoardContent>

@@ -98,6 +98,7 @@ type UploadCardRendererProps = {
   isEncrypted?: boolean;
   fileItem: TUploadItem;
   setMetadata: (fileItem: TUploadItem, metadata: TUploadMetadata) => void;
+  setDescription: (fileContent: TUploadContent) => void;
   onRemove: (file: TUploadContent) => void;
   onComplete?: (upload: UploadSuccess) => void;
 };
@@ -105,6 +106,7 @@ export function UploadCardRenderer({
   isEncrypted,
   fileItem,
   setMetadata,
+  setDescription,
   onRemove,
   onComplete,
 }: UploadCardRendererProps) {
@@ -130,13 +132,15 @@ export function UploadCardRenderer({
     cancelUpload();
     onRemove(file);
   };
+  const handleDescription = () => {
+    setDescription(file);
+  };
 
   useEffect(() => {
     if (upload.status === UploadStatus.Success) {
       onComplete?.(upload);
     }
   }, [upload, onComplete]);
-
   return (
     <UploadCard
       radii="300"
@@ -155,6 +159,16 @@ export function UploadCardRenderer({
               <Text size="B300">Retry</Text>
             </Chip>
           )}
+          <IconButton
+            onClick={handleDescription}
+            aria-label="Add Upload Description"
+            variant="SurfaceVariant"
+            radii="Pill"
+            size="300"
+          >
+            <Icon src={Icons.Pencil} size="50" />
+          </IconButton>
+
           <IconButton
             onClick={removeUpload}
             aria-label="Cancel Upload"

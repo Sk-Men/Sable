@@ -16,6 +16,7 @@ export type TUploadItem = {
   originalFile: TUploadContent;
   metadata: TUploadMetadata;
   encInfo: EncryptedAttachmentInfo | undefined;
+  body?: string;
 };
 
 export type TUploadListAtom = ReturnType<typeof createListAtom<TUploadItem>>;

@@ -77,6 +77,7 @@ export const getImageMsgContent = async (
   } else {
     content.url = mxc;
   }
+  if (item.body?.length && item.body.length > 0) content.body = item.body;
   return content;
 };
 
@@ -126,6 +127,7 @@ export const getVideoMsgContent = async (
   } else {
     content.url = mxc;
   }
+  if (item.body?.length && item.body.length > 0) content.body = item.body;
   return content;
 };
 
@@ -148,6 +150,7 @@ export const getAudioMsgContent = (item: TUploadItem, mxc: string): IContent => 
   } else {
     content.url = mxc;
   }
+  if (item.body?.length && item.body.length > 0) content.body = item.body;
   return content;
 };
 
@@ -155,8 +158,8 @@ export const getFileMsgContent = (item: TUploadItem, mxc: string): IContent => {
   const { file, encInfo } = item;
   const content: IContent = {
     msgtype: MsgType.File,
-    body: file.name,
     filename: file.name,
+    body: file.name,
     info: {
       mimetype: file.type,
       size: file.size,
@@ -170,5 +173,6 @@ export const getFileMsgContent = (item: TUploadItem, mxc: string): IContent => {
   } else {
     content.url = mxc;
   }
+  if (item.body?.length && item.body.length > 0) content.body = item.body;
   return content;
 };
