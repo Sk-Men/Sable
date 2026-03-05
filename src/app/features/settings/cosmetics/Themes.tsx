@@ -328,6 +328,7 @@ function PageZoomInput() {
 export function Appearance() {
   const [twitterEmoji, setTwitterEmoji] = useSetting(settingsAtom, 'twitterEmoji');
   const [showUnreadCounts, setShowUnreadCounts] = useSetting(settingsAtom, 'showUnreadCounts');
+  const [showPingCounts, setShowPingCounts] = useSetting(settingsAtom, 'showPingCounts');
 
   return (
     <Box direction="Column" gap="700">
@@ -354,6 +355,13 @@ export function Appearance() {
             after={
               <Switch variant="Primary" value={showUnreadCounts} onChange={setShowUnreadCounts} />
             }
+          />
+        </SequenceCard>
+        <SequenceCard className={SequenceCardStyle} variant="SurfaceVariant" direction="Column">
+          <SettingTile
+            title="Show Unread Ping Counts"
+            description="When enabled overrides Show Unread Counts to still display counts."
+            after={<Switch variant="Primary" value={showPingCounts} onChange={setShowPingCounts} />}
           />
         </SequenceCard>
       </Box>

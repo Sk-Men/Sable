@@ -237,15 +237,6 @@ function IdentityCosmetics() {
           after={<Switch variant="Primary" value={rightBubbles} onChange={setRightBubbles} />}
         />
       </SequenceCard>
-      <SequenceCard className={SequenceCardStyle} variant="SurfaceVariant" direction="Column">
-        <SettingTile
-          title="Show Unread Counts"
-          description="Display the number of unread messages on room and sidebar badges."
-          after={
-            <Switch variant="Primary" value={showUnreadCounts} onChange={setShowUnreadCounts} />
-          }
-        />
-      </SequenceCard>
     </Box>
   );
 }
