@@ -46,6 +46,7 @@ import {
   Icons,
   Line,
   Scroll,
+  Spinner,
   Text,
   toRem,
 } from 'folds';
@@ -265,6 +266,8 @@ type RoomTimelineProps = {
 const PAGINATION_LIMIT = 60;
 const EVENT_TIMELINE_LOAD_TIMEOUT_MS = 12000;
 
+type PaginationStatus = 'idle' | 'loading' | 'error';
+
 type Timeline = {
   linkedTimelines: EventTimeline[];
   range: ItemRange;
@@ -337,8 +340,10 @@ const useTimelinePagination = (
   const timelineRef = useRef(timeline);
   timelineRef.current = timeline;
   const alive = useAlive();
+  const [backwardStatus, setBackwardStatus] = useState<PaginationStatus>('idle');
+  const [forwardStatus, setForwardStatus] = useState<PaginationStatus>('idle');
 
-  return useMemo(() => {
+  const paginate = useMemo(() => {
     let fetching = false;
 
     const recalibratePagination = (
@@ -390,6 +395,9 @@ const useTimelinePagination = (
       }
 
       fetching = true;
+      if (alive()) {
+        (backwards ? setBackwardStatus : setForwardStatus)('loading');
+      }
       try {
         const [err] = await to(
           mx.paginateEventTimeline(timelineToPaginate, {
@@ -398,7 +406,9 @@ const useTimelinePagination = (
           })
         );
         if (err) {
-          // TODO: handle pagination error.
+          if (alive()) {
+            (backwards ? setBackwardStatus : setForwardStatus)('error');
+          }
           return;
         }
         const fetchedTimeline =
@@ -415,16 +425,24 @@ const useTimelinePagination = (
 
         if (alive()) {
           recalibratePagination(lTimelines, timelinesEventsCount, backwards);
+          (backwards ? setBackwardStatus : setForwardStatus)('idle');
         }
       } finally {
         fetching = false;
       }
     };
-  }, [mx, alive, setTimeline, limit]);
+  }, [mx, alive, setTimeline, limit, setBackwardStatus, setForwardStatus]);
+
+  return { paginate, backwardStatus, forwardStatus };
 };
 
 const useLiveEventArrive = (room: Room, onArrive: (mEvent: MatrixEvent) => void) => {
   useEffect(() => {
+    // Capture the live timeline and registration time. Events appended to the
+    // live timeline AFTER this point can be genuinely new even when
+    // liveEvent=false (older sliding sync proxies that omit num_live).
+    const liveTimeline = getLiveTimeline(room);
+    const registeredAt = Date.now();
     const handleTimelineEvent: EventTimelineSetHandlerMap[RoomEvent.Timeline] = (
       mEvent: MatrixEvent,
       eventRoom: Room | undefined,
@@ -432,7 +450,19 @@ const useLiveEventArrive = (room: Room, onArrive: (mEvent: MatrixEvent) => void)
       removed: boolean,
       data: IRoomTimelineData
     ) => {
-      if (eventRoom?.roomId !== room.roomId || !data.liveEvent) return;
+      if (eventRoom?.roomId !== room.roomId) return;
+      // Standard sync: liveEvent=true for real-time events.
+      // Sliding sync fallback: liveEvent=false on buggy proxies. Treat events
+      // on the live timeline as new only when their server timestamp is within
+      // 60 s before registration — this filters out initial-sync backfill that
+      // happens to fire after mount while excluding genuine reconnect messages.
+      const isLive =
+        data.liveEvent ||
+        (!toStartOfTimeline &&
+          !removed &&
+          data.timeline === liveTimeline &&
+          mEvent.getTs() >= registeredAt - 60_000);
+      if (!isLive) return;
       onArrive(mEvent);
     };
     const handleRedaction: RoomEventHandlerMap[RoomEvent.Redaction] = (
@@ -645,12 +675,11 @@ export function RoomTimeline({
   const atLiveEndRef = useRef(liveTimelineLinked && rangeAtEnd);
   atLiveEndRef.current = liveTimelineLinked && rangeAtEnd;
 
-  const handleTimelinePagination = useTimelinePagination(
-    mx,
-    timeline,
-    setTimeline,
-    PAGINATION_LIMIT
-  );
+  const {
+    paginate: handleTimelinePagination,
+    backwardStatus,
+    forwardStatus,
+  } = useTimelinePagination(mx, timeline, setTimeline, PAGINATION_LIMIT);
 
   const getScrollElement = useCallback(() => scrollRef.current, []);
 
@@ -878,9 +907,11 @@ export function RoomTimeline({
         if (!target) return;
         const targetEntry = getIntersectionObserverEntry(target, entries);
         if (targetEntry) debounceSetAtBottom(targetEntry);
-        if (targetEntry?.isIntersecting && atLiveEndRef.current) {
+        if (targetEntry?.isIntersecting) {
+          // Track scroll position independently of atLiveEndRef so that atBottom
+          // is always accurate. tryAutoMarkAsRead still requires atLiveEndRef.
           setAtBottom(true);
-          if (document.hasFocus()) {
+          if (atLiveEndRef.current && document.hasFocus()) {
             tryAutoMarkAsRead();
           }
         }
@@ -1941,8 +1972,35 @@ export function RoomTimeline({
   };
 
   let backPaginationJSX: ReactNode | undefined;
-  if (canPaginateBack || !rangeAtStart) {
-    if (timelineItems.length === 0) {
+  if (canPaginateBack || !rangeAtStart || backwardStatus !== 'idle') {
+    if (backwardStatus === 'error') {
+      backPaginationJSX = (
+        <Box
+          justifyContent="Center"
+          alignItems="Center"
+          gap="200"
+          style={{ padding: config.space.S300 }}
+        >
+          <Text style={{ color: color.Critical.Main }} size="T300">
+            Failed to load history.
+          </Text>
+          <Chip
+            variant="SurfaceVariant"
+            radii="Pill"
+            outlined
+            onClick={() => handleTimelinePagination(true)}
+          >
+            <Text size="B300">Retry</Text>
+          </Chip>
+        </Box>
+      );
+    } else if (backwardStatus === 'loading' && timelineItems.length > 0) {
+      backPaginationJSX = (
+        <Box justifyContent="Center" style={{ padding: config.space.S300 }}>
+          <Spinner variant="Secondary" size="400" />
+        </Box>
+      );
+    } else if (timelineItems.length === 0) {
       backPaginationJSX =
         messageLayout === MessageLayout.Compact ? (
           <>
@@ -1981,8 +2039,35 @@ export function RoomTimeline({
   }
 
   let frontPaginationJSX: ReactNode | undefined;
-  if (!liveTimelineLinked || !rangeAtEnd) {
-    if (timelineItems.length === 0) {
+  if (!liveTimelineLinked || !rangeAtEnd || forwardStatus !== 'idle') {
+    if (forwardStatus === 'error') {
+      frontPaginationJSX = (
+        <Box
+          justifyContent="Center"
+          alignItems="Center"
+          gap="200"
+          style={{ padding: config.space.S300 }}
+        >
+          <Text style={{ color: color.Critical.Main }} size="T300">
+            Failed to load messages.
+          </Text>
+          <Chip
+            variant="SurfaceVariant"
+            radii="Pill"
+            outlined
+            onClick={() => handleTimelinePagination(false)}
+          >
+            <Text size="B300">Retry</Text>
+          </Chip>
+        </Box>
+      );
+    } else if (forwardStatus === 'loading' && timelineItems.length > 0) {
+      frontPaginationJSX = (
+        <Box justifyContent="Center" style={{ padding: config.space.S300 }}>
+          <Spinner variant="Secondary" size="400" />
+        </Box>
+      );
+    } else if (timelineItems.length === 0) {
       frontPaginationJSX =
         messageLayout === MessageLayout.Compact ? (
           <>
@@ -2071,7 +2156,7 @@ export function RoomTimeline({
           <span ref={atBottomAnchorRef} />
         </Box>
       </Scroll>
-      {!atBottom && (
+      {(!atBottom || !(liveTimelineLinked && rangeAtEnd)) && (
         <TimelineFloat position="Bottom">
           <Chip
             variant="SurfaceVariant"
