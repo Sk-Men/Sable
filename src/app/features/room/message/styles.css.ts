@@ -57,11 +57,11 @@ export const ReactionsTooltipText = style({
 });
 
 export const MessagePending = style({
-  opacity: config.opacity.P500,
+  opacity: config.opacity.Placeholder,
 });
 
 export const MessageFailed = style({
-  opacity: config.opacity.P400,
+  opacity: config.opacity.P300,
 });
 
 export const SendStatusRow = style({
