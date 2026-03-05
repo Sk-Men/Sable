@@ -942,7 +942,7 @@ export const useCommands = (mx: MatrixClient, room: Room): CommandRecord => {
       [Command.GPronoun]: {
         name: Command.GPronoun,
         description:
-          'Set your global pronouns for this space. Example: /gpronoun "they/them, it/its" | /gpronoun reset',
+          'Set your global pronouns for this space. Example: /gpronoun "en:they/them, de:sie/ihr" | /gpronoun reset',
         exe: async (payload) => {
           const match = payload.trim().match(/^"(.*)"$/);
           const rawInput = match ? match[1].trim() : payload.trim();
