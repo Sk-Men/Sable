@@ -78,7 +78,6 @@ import { MessageDeleteItem } from '$components/message/modals/MessageDelete';
 import { MessageReportItem } from '$components/message/modals/MessageReport';
 import { MessageEditor } from './MessageEditor';
 import * as css from './styles.css';
-import { useClientConfig } from '$hooks/useClientConfig';
 
 export type ReactionHandler = (keyOrMxc: string, shortcode: string) => void;
 

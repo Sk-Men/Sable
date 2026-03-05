@@ -1,6 +1,7 @@
 import { useState, useEffect, ChangeEvent } from 'react';
 import { Input } from 'folds';
 import { SettingTile } from '$components/setting-tile';
+import { parsePronounsInput } from '$utils/pronouns';
 
 type PronounSet = {
   summary: string;
@@ -24,14 +25,7 @@ export function PronounEditor({ current, onSave }: PronounEditorProps) {
   const handleSave = () => {
     if (val === initialString) return;
     const safeVal = val.slice(0, 128);
-    const next = safeVal
-      .split(',')
-      .map((s) => s.trim())
-      .filter(Boolean)
-      .map((s) => {
-        const [language, summary] = s.split(':');
-        return { summary: summary.slice(0, 16), language: language || 'en' };
-      });
+    const next = parsePronounsInput(safeVal);
     onSave(next);
   };
 
