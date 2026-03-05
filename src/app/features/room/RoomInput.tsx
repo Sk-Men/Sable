@@ -210,6 +210,8 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
       selectedFiles.map((f) => f.file)
     );
     const uploadBoardHandlers = useRef<UploadBoardImperativeHandlers>();
+    const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const isLongPress = useRef(false);
 
     const imagePackRooms: Room[] = useImagePackRooms(roomId, roomToParents);
 
@@ -943,8 +945,35 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
               />
               <Box display="Flex" alignItems="Center">
                 <IconButton
-                  onClick={submit}
+                  onClick={() => {
+                    if (isLongPress.current) {
+                      isLongPress.current = false;
+                      return;
+                    }
+                    submit();
+                  }}
                   onMouseDown={(e: MouseEvent) => e.preventDefault()}
+                  onPointerDown={() => {
+                    isLongPress.current = false;
+                    if (mobileOrTablet() && delayedEventsSupported) {
+                      longPressTimer.current = setTimeout(() => {
+                        isLongPress.current = true;
+                        setShowSchedulePicker(true);
+                      }, 1000);
+                    }
+                  }}
+                  onPointerUp={() => {
+                    if (longPressTimer.current !== null) {
+                      clearTimeout(longPressTimer.current);
+                      longPressTimer.current = null;
+                    }
+                  }}
+                  onPointerCancel={() => {
+                    if (longPressTimer.current !== null) {
+                      clearTimeout(longPressTimer.current);
+                      longPressTimer.current = null;
+                    }
+                  }}
                   variant={scheduledTime ? 'Primary' : 'SurfaceVariant'}
                   size="300"
                   radii="0"
@@ -952,7 +981,7 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
                 >
                   <Icon src={scheduledTime ? Icons.Clock : Icons.Send} />
                 </IconButton>
-                {delayedEventsSupported && (
+                {delayedEventsSupported && !mobileOrTablet() && (
                   <IconButton
                     onClick={(evt: MouseEvent<HTMLButtonElement>) => {
                       setScheduleMenuAnchor(evt.currentTarget.getBoundingClientRect());
