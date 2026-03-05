@@ -61,6 +61,8 @@ export interface Settings {
   privacyBlurEmotes: boolean;
   showPronouns: boolean;
   renderGlobalNameColors: boolean;
+  renderRoomColors: boolean;
+  renderRoomFonts: boolean;
 
   // Sable features!
   mobileGestures: boolean;
@@ -115,6 +117,8 @@ const defaultSettings: Settings = {
   privacyBlurEmotes: false,
   showPronouns: true,
   renderGlobalNameColors: true,
+  renderRoomColors: true,
+  renderRoomFonts: true,
 
   // Sable features!
   mobileGestures: true,
