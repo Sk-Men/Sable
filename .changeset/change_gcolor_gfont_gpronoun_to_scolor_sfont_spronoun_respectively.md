@@ -2,4 +2,4 @@
 sable: patch
 ---
 
-change gcolor, gfont, gpronoun to scolor, sfont, spronoun respectively
+Rename gcolor, gfont, and gpronoun commands to scolor, sfont, and spronoun respectively.
