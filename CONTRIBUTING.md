@@ -44,6 +44,68 @@ Also, we use [ESLint](https://eslint.org/) for clean and stylistically consisten
 - `npm run typecheck`
 - `npm run knip`
 
+## Release notes and versioning (Knope)
+
+We use [Knope](https://knope.tech/) with the Knope GitHub Bot to manage change documentation and releases. The workflow configuration lives in [`knope.toml`](./knope.toml).
+
+If you have used [Changesets](https://github.com/changesets/changesets) before, Knope should feel very similar. The main difference is scope: Changesets is typically used for JavaScript repositories because it relies on `package.json`, while Knope is multi-language.
+
+If you prefer, you can install the Knope CLI yourself using the [official installation guide](https://knope.tech/installation/). This repo also exposes the CLI through npm scripts, so you can run `npm run knope -- <subcommand>` (for example: `npm run knope -- document-change`). Otherwise, this repo installs Knope for you via `postinstall`, so running `npm i` is enough.
+
+### Documenting a change
+
+A changeset is a Markdown file (usually in `.changeset/`) that captures intent to change: the semver bump (`major`, `minor`, `patch`) and the user-facing release note text. Knope later combines all pending changesets to decide version bumps and generate changelog entries.
+
+For user-facing pull requests, add one before requesting review.
+
+CLI paths:
+
+- `npm run document-change`
+- `npm run knope -- document-change`
+- `knope document-change` (if Knope is installed locally)
+
+All commands open an interactive prompt; fill in the package, change type, and short summary, then commit the generated change file in your PR.
+
+Alternatively, you can document the change manually by creating a change file:
+
+1. Create a file named `.changeset/fix-room-timeline-pagination.md` (or another descriptive file name).
+2. Copy and paste this Markdown into the file:
+
+```md
+---
+sable: patch
+---
+
+Short user-facing summary of the change.
+```
+
+3. Replace `patch` with one of: `major`, `minor`, `patch`, `docs`, or `note`.
+4. Edit the summary so it describes user-facing impact (not maintainer-only details).
+
+In this repo, the `internal` label skips Knope's documentation check (`[bot.checks].skip_labels`).
+
+Further reading:
+
+- https://github.com/knope-dev/changesets?tab=readme-ov-file#what-is-a-changeset
+- https://github.com/changesets/changesets/blob/main/docs/detailed-explanation.md
+
+### Release flow (GitHub Bot)
+
+Releases are driven by Knope Bot (`[bot.releases].enabled = true`):
+
+- The bot keeps an up-to-date release PR from `knope/release`.
+- Merging that bot release PR publishes the GitHub release.
+
+### Local validation and dry-run (optional)
+
+Maintainers can preview behavior without changing files:
+
+- `npm run knope -- release --dry-run`
+
+You can also validate the local Knope config with:
+
+- `npm run knope -- --validate`
+
 **For any query or design discussion, join our [Matrix room](https://matrix.to/#/#sable:sable.moe).**
 
 ## Helpful links
