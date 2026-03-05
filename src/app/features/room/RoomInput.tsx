@@ -144,6 +144,10 @@ import {
 import { timeHourMinute, timeDayMonthYear } from '$utils/time';
 import { stopPropagation } from '$utils/keyboard';
 import { MessageEvent } from '$types/matrix/room';
+import { usePowerLevelsContext } from '$hooks/usePowerLevels';
+import { useRoomCreators } from '$hooks/useRoomCreators';
+import { useRoomPermissions } from '$hooks/useRoomPermissions';
+import { AutocompleteNotice } from '$components/editor/autocomplete/AutocompleteNotice';
 import { SchedulePickerDialog } from './schedule-send';
 import * as css from './schedule-send/SchedulePickerDialog.css';
 import {
@@ -193,6 +197,11 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
     const emojiBtnRef = useRef<HTMLButtonElement>(null);
     const roomToParents = useAtomValue(roomToParentsAtom);
     const nicknames = useAtomValue(nicknamesAtom);
+
+    const powerLevels = usePowerLevelsContext();
+    const creators = useRoomCreators(room);
+    const permissions = useRoomPermissions(creators, powerLevels);
+    const canSendReaction = permissions.event(MessageEvent.Reaction, mx.getSafeUserId());
 
     const [msgDraft, setMsgDraft] = useAtom(roomIdToMsgDraftAtomFamily(roomId));
     const [replyDraft, setReplyDraft] = useAtom(roomIdToReplyDraftAtomFamily(roomId));
@@ -716,16 +725,21 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
             requestClose={handleCloseAutocomplete}
           />
         )}
-        {autocompleteQuery?.prefix === AutocompletePrefix.Reaction && (
-          <EmoticonAutocomplete
-            title={`React with :${autocompleteQuery.text}`}
-            imagePackRooms={imagePackRooms}
-            editor={editor}
-            query={autocompleteQuery}
-            requestClose={handleCloseAutocomplete}
-            onEmoticonSelected={handleReactionAutocomplete}
-          />
-        )}
+        {autocompleteQuery?.prefix === AutocompletePrefix.Reaction &&
+          (canSendReaction ? (
+            <EmoticonAutocomplete
+              title={`React with :${autocompleteQuery.text}`}
+              imagePackRooms={imagePackRooms}
+              editor={editor}
+              query={autocompleteQuery}
+              requestClose={handleCloseAutocomplete}
+              onEmoticonSelected={handleReactionAutocomplete}
+            />
+          ) : (
+            <AutocompleteNotice>
+              <Text align="Center">You do not have permission to send reactions in this room</Text>
+            </AutocompleteNotice>
+          ))}
         {autocompleteQuery?.prefix === AutocompletePrefix.Command && (
           <CommandAutocomplete
             room={room}
