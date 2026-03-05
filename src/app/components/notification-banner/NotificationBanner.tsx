@@ -111,8 +111,7 @@ function BannerItem({ notification, onDismiss }: BannerItemProps) {
               {' (​'}
               {notification.roomName && `#${notification.roomName}`}
               {notification.roomName && notification.serverName && ', '}
-              {notification.serverName}
-              {')'}
+              {notification.serverName})
             </span>
           )}
         </Text>

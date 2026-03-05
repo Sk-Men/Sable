@@ -293,8 +293,7 @@ function MessageNotifications() {
         const capturedEventId = eventId;
         const capturedUserId = mx.getUserId() ?? undefined;
         const canonicalAlias = room.getCanonicalAlias();
-        const serverName =
-          canonicalAlias?.split(':')[1] ?? room.roomId.split(':')[1] ?? undefined;
+        const serverName = canonicalAlias?.split(':')[1] ?? room.roomId.split(':')[1] ?? undefined;
         setInAppBanner({
           id: eventId,
           title: payload.title,
