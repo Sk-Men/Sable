@@ -136,11 +136,15 @@ const buildDefaultSubscription = (timelineLimit: number): MSC3575RoomSubscriptio
     [EventType.RoomTombstone, ''],
     [EventType.RoomJoinRules, ''],
     [EventType.RoomHistoryVisibility, ''],
+    [EventType.RoomPowerLevels, ''],
     [StateEvent.PoniesRoomEmotes, '*'],
     [StateEvent.RoomWidget, '*'],
     [StateEvent.GroupCallPrefix, '*'],
     [EventType.SpaceChild, '*'],
     [EventType.SpaceParent, '*'],
+    [StateEvent.RoomCosmeticsColor, '*'],
+    [StateEvent.RoomCosmeticsFont, '*'],
+    [StateEvent.RoomCosmeticsPronouns, '*'],
   ],
 });
 
