@@ -2,7 +2,7 @@ import { Box, Input, Switch, Text } from 'folds';
 import { SettingTile } from '$components/setting-tile';
 import { SequenceCard } from '$components/sequence-card';
 import { useEffect, useState } from 'react';
-import { getSettings, setSettings, Settings } from '$state/settings';
+import { getSettings, setSettings } from '$state/settings';
 import { SequenceCardStyle } from '../styles.css';
 
 export type LanguageSpecificPronounsConfig = {
@@ -62,7 +62,6 @@ export function LanguageSpecificPronouns() {
 
   // handler for toggling the enabled state of language specific pronouns
   const handleSetEnabled = (enabled: boolean) => {
-    console.debug('Updating language specific pronouns enabled to', enabled);
     handleSave(enabled, getSettings().languageSpecificPronounsLanguages?.join(',') || '');
     setEnabled(enabled);
   };
