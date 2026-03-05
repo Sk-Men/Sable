@@ -21,7 +21,7 @@ import {
   StickerEventContent,
 } from '$types/matrix-sdk';
 import { ReactEditor } from 'slate-react';
-import { Editor, Transforms } from 'slate';
+import { Editor, Point, Range, Transforms } from 'slate';
 import {
   Box,
   config,
@@ -51,7 +51,6 @@ import {
 
 import { useMatrixClient } from '$hooks/useMatrixClient';
 import {
-  AUTOCOMPLETE_PREFIXES,
   AutocompletePrefix,
   AutocompleteQuery,
   createEmoticonElement,
@@ -73,6 +72,8 @@ import {
   getBeginCommand,
   trimCommand,
   getMentions,
+  ANYWHERE_AUTOCOMPLETE_PREFIXES,
+  BEGINNING_AUTOCOMPLETE_PREFIXES,
 } from '$components/editor';
 import { EmojiBoard, EmojiBoardTab } from '$components/emoji-board';
 import { UseStateProvider } from '$components/UseStateProvider';
@@ -82,6 +83,7 @@ import {
   getImageInfo,
   getMxIdLocalPart,
   mxcUrlToHttp,
+  toggleReaction,
 } from '$utils/matrix';
 import { useTypingStatusUpdater } from '$hooks/useTypingStatusUpdater';
 import { useFilePicker } from '$hooks/useFilePicker';
@@ -141,6 +143,7 @@ import {
 } from '$utils/delayedEvents';
 import { timeHourMinute, timeDayMonthYear } from '$utils/time';
 import { stopPropagation } from '$utils/keyboard';
+import { MessageEvent } from '$types/matrix/room';
 import { SchedulePickerDialog } from './schedule-send';
 import * as css from './schedule-send/SchedulePickerDialog.css';
 import {
@@ -557,9 +560,19 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
         }
 
         const prevWordRange = getPrevWorldRange(editor);
-        const query = prevWordRange
-          ? getAutocompleteQuery<AutocompletePrefix>(editor, prevWordRange, AUTOCOMPLETE_PREFIXES)
-          : undefined;
+        if (!prevWordRange) {
+          setAutocompleteQuery(undefined);
+          return;
+        }
+
+        const firstPosition = Editor.start(editor, []);
+        const isRangeAtBeginning = !Point.isAfter(Range.start(prevWordRange), firstPosition);
+        const query =
+          (isRangeAtBeginning
+            ? getAutocompleteQuery(editor, prevWordRange, BEGINNING_AUTOCOMPLETE_PREFIXES)
+            : undefined) ??
+          getAutocompleteQuery(editor, prevWordRange, ANYWHERE_AUTOCOMPLETE_PREFIXES);
+
         setAutocompleteQuery(query);
       },
       [editor, sendTypingStatus, hideActivity]
@@ -569,6 +582,31 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
       setAutocompleteQuery(undefined);
       ReactEditor.focus(editor);
     }, [editor]);
+
+    const handleReactionAutocomplete = (key: string, shortcode: string) => {
+      const lastMessage = room
+        .getLiveTimeline()
+        .getEvents()
+        .findLast((event) =>
+          (
+            [
+              MessageEvent.RoomMessage,
+              MessageEvent.RoomMessageEncrypted,
+              MessageEvent.Sticker,
+            ] as string[]
+          ).includes(event.getType())
+        );
+      const lastMessageId = lastMessage?.getId();
+
+      if (lastMessageId) {
+        toggleReaction(mx, room, lastMessageId, key, shortcode);
+      }
+
+      resetEditor(editor);
+      resetEditorHistory(editor);
+      sendTypingStatus(false);
+      handleCloseAutocomplete();
+    };
 
     const handleEmoticonSelect = (key: string, shortcode: string) => {
       editor.insertNode(createEmoticonElement(key, shortcode));
@@ -676,6 +714,16 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
             editor={editor}
             query={autocompleteQuery}
             requestClose={handleCloseAutocomplete}
+          />
+        )}
+        {autocompleteQuery?.prefix === AutocompletePrefix.Reaction && (
+          <EmoticonAutocomplete
+            title={`React with :${autocompleteQuery.text}`}
+            imagePackRooms={imagePackRooms}
+            editor={editor}
+            query={autocompleteQuery}
+            requestClose={handleCloseAutocomplete}
+            onEmoticonSelected={handleReactionAutocomplete}
           />
         )}
         {autocompleteQuery?.prefix === AutocompletePrefix.Command && (

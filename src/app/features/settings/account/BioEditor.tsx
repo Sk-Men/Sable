@@ -16,7 +16,6 @@ import { Editor, Transforms } from 'slate';
 import { ReactEditor } from 'slate-react';
 import { isKeyHotkey } from 'is-hotkey';
 import {
-  AUTOCOMPLETE_PREFIXES,
   AutocompletePrefix,
   AutocompleteQuery,
   CustomEditor,
@@ -145,7 +144,7 @@ export function BioEditor({ value, isSaving, imagePackRooms, onSave }: BioEditor
       }
       const prevWordRange = getPrevWorldRange(editor);
       const query = prevWordRange
-        ? getAutocompleteQuery<AutocompletePrefix>(editor, prevWordRange, AUTOCOMPLETE_PREFIXES)
+        ? getAutocompleteQuery(editor, prevWordRange, [AutocompletePrefix.Emoticon])
         : undefined;
       setAutocompleteQuery(query);
     },

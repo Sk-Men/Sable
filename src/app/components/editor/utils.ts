@@ -261,7 +261,8 @@ export const getPrevWorldRange = (editor: Editor): BaseRange | undefined => {
   const [cursorPoint] = Range.edges(selection);
   const worldStartPoint = getPointUntilChar(editor, cursorPoint, {
     reverse: true,
-    match: (char) => char === ' ',
+    // line breaks produce empty chars, not \n
+    match: (char) => /\s|^$/.test(char),
   });
   return worldStartPoint && Editor.range(editor, worldStartPoint, cursorPoint);
 };
