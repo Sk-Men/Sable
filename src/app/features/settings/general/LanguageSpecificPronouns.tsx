@@ -1,11 +1,10 @@
 import { Box, Input, Switch, Text } from 'folds';
 import { SettingTile } from '$components/setting-tile';
 import { SequenceCard } from '$components/sequence-card';
-import { useClientConfig } from '$hooks/useClientConfig';
 import { useEffect, useState } from 'react';
+import { getSettings, setSettings, Settings } from '$state/settings';
 import { SequenceCardStyle } from '../styles.css';
 
-// type definition for the language specific pronouns configuration, which can be stored in the client config
 export type LanguageSpecificPronounsConfig = {
   enabled?: boolean | string;
   languages?: string[];
@@ -33,21 +32,17 @@ function splitAndTrimLanguages(languages: string): string[] {
 }
 
 export function LanguageSpecificPronouns() {
-  const clientConfig = useClientConfig();
-
   const [useLanguageSpecificPronouns, setEnabled] = useState(false);
   const [languageList, setLanguageList] = useState('');
 
   // common handler for saving changes to the language specific pronouns settings
   const handleSave = (enabled: boolean, languages: string) => {
-    clientConfig.languageSpecificPronouns = {
-      ...clientConfig.languageSpecificPronouns,
-      enabled,
-    };
-    clientConfig.languageSpecificPronouns = {
-      ...clientConfig.languageSpecificPronouns,
-      languages: splitAndTrimLanguages(languages),
-    };
+    const currentSettings = getSettings();
+    setSettings({
+      ...currentSettings,
+      languageSpecificPronounsEnabled: enabled,
+      languageSpecificPronounsLanguages: splitAndTrimLanguages(languages),
+    });
   };
 
   // handler for when the language list input changes
@@ -55,23 +50,20 @@ export function LanguageSpecificPronouns() {
     const val = e.target.value.trim();
     setLanguageList(val);
     // save the new language list to the client config, keeping the enabled state unchanged
-    handleSave(clientConfig.languageSpecificPronouns?.enabled ?? false, val);
+    handleSave(getSettings().languageSpecificPronounsEnabled ?? false, val);
   };
 
   useEffect(() => {
     setEnabled(
-      resolveLanguageSpecificPronounsEnabled(clientConfig.languageSpecificPronouns?.enabled)
+      resolveLanguageSpecificPronounsEnabled(getSettings().languageSpecificPronounsEnabled ?? false)
     );
-    setLanguageList(clientConfig.languageSpecificPronouns?.languages?.join(',') || '');
-  }, [
-    clientConfig.languageSpecificPronouns?.enabled,
-    clientConfig.languageSpecificPronouns?.languages,
-  ]);
+    setLanguageList(getSettings().languageSpecificPronounsLanguages?.join(',') || '');
+  }, []);
 
   // handler for toggling the enabled state of language specific pronouns
   const handleSetEnabled = (enabled: boolean) => {
     console.debug('Updating language specific pronouns enabled to', enabled);
-    handleSave(enabled, clientConfig.languageSpecificPronouns?.languages?.join(',') || '');
+    handleSave(enabled, getSettings().languageSpecificPronounsLanguages?.join(',') || '');
     setEnabled(enabled);
   };
 

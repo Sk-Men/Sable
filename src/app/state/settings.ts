@@ -61,6 +61,8 @@ export interface Settings {
   privacyBlurEmotes: boolean;
   showPronouns: boolean;
   renderGlobalNameColors: boolean;
+  languageSpecificPronounsEnabled?: boolean;
+  languageSpecificPronounsLanguages?: string[];
 
   // Sable features!
   mobileGestures: boolean;
