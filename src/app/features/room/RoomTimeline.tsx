@@ -51,7 +51,7 @@ import {
 import { isKeyHotkey } from 'is-hotkey';
 import { Opts as LinkifyOpts } from 'linkifyjs';
 import { useTranslation } from 'react-i18next';
-import { eventWithShortcode, factoryEventSentBy, getMxIdLocalPart } from '$utils/matrix';
+import { getMxIdLocalPart, toggleReaction } from '$utils/matrix';
 import { useMatrixClient } from '$hooks/useMatrixClient';
 import { ItemRange, useVirtualPaginator } from '$hooks/useVirtualPaginator';
 import { useAlive } from '$hooks/useAlive';
@@ -85,7 +85,6 @@ import {
   getEventReactions,
   getLatestEditableEvt,
   getMemberDisplayName,
-  getReactionContent,
   isMembershipChanged,
   reactionOrEditEvent,
 } from '$utils/room';
@@ -1166,26 +1165,8 @@ export function RoomTimeline({
   );
 
   const handleReactionToggle = useCallback(
-    (targetEventId: string, key: string, shortcode?: string) => {
-      const relations = getEventReactions(room.getUnfilteredTimelineSet(), targetEventId);
-      const allReactions = relations?.getSortedAnnotationsByKey() ?? [];
-      const [, reactionsSet] = allReactions.find(([k]: [string, any]) => k === key) ?? [];
-      const reactions: MatrixEvent[] = reactionsSet ? Array.from(reactionsSet) : [];
-      const myReaction = reactions.find(factoryEventSentBy(mx.getUserId()!));
-
-      if (myReaction && !!(myReaction as any)?.isRelation()) {
-        mx.redactEvent(room.roomId, (myReaction as any).getId());
-        return;
-      }
-      const rShortcode =
-        shortcode ||
-        ((reactions.find(eventWithShortcode) as any)?.getContent().shortcode as string | undefined);
-      mx.sendEvent(
-        room.roomId,
-        MessageEvent.Reaction as any,
-        getReactionContent(targetEventId, key, rShortcode)
-      );
-    },
+    (targetEventId: string, key: string, shortcode?: string) =>
+      toggleReaction(mx, room, targetEventId, key, shortcode),
     [mx, room]
   );
 
