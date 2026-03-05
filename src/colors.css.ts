@@ -92,6 +92,7 @@ const sableThemeMapping = {
 };
 
 export const silverTheme = createTheme(color, sableThemeMapping);
+export const cinnyLightTheme = createTheme(color, sableThemeMapping);
 export const cinnySilverTheme = createTheme(color, sableThemeMapping);
 export const darkTheme = createTheme(color, sableThemeMapping);
 export const butterTheme = createTheme(color, sableThemeMapping);

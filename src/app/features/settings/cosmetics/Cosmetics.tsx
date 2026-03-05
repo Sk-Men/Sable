@@ -171,6 +171,7 @@ function IdentityCosmetics() {
   );
   const [uniformIcons, setUniformIcons] = useSetting(settingsAtom, 'uniformIcons');
   const [rightBubbles, setRightBubbles] = useSetting(settingsAtom, 'useRightBubbles');
+  const [showUnreadCounts, setShowUnreadCounts] = useSetting(settingsAtom, 'showUnreadCounts');
 
   return (
     <Box direction="Column" gap="100">
@@ -216,6 +217,15 @@ function IdentityCosmetics() {
           title="Right Aligned Bubbles"
           description="When using bubble layout, have your bubbles right aligned."
           after={<Switch variant="Primary" value={rightBubbles} onChange={setRightBubbles} />}
+        />
+      </SequenceCard>
+      <SequenceCard className={SequenceCardStyle} variant="SurfaceVariant" direction="Column">
+        <SettingTile
+          title="Show Unread Counts"
+          description="Display the number of unread messages on room and sidebar badges."
+          after={
+            <Switch variant="Primary" value={showUnreadCounts} onChange={setShowUnreadCounts} />
+          }
         />
       </SequenceCard>
     </Box>

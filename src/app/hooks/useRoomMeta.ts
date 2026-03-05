@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { RoomJoinRulesEventContent, Room, RoomEvent, RoomStateEvent } from '$types/matrix-sdk';
 import { StateEvent } from '$types/matrix/room';
 import { useStateEvent } from './useStateEvent';
+import { useNickname } from './useNickname';
 
 export const useRoomAvatar = (room: Room, dm?: boolean): string | undefined => {
   const avatarEvent = useStateEvent(room, StateEvent.RoomAvatar);
@@ -16,6 +17,8 @@ export const useRoomAvatar = (room: Room, dm?: boolean): string | undefined => {
 };
 
 export const useRoomName = (room: Room): string => {
+  const dmUserId = room.guessDMUserId();
+  const dmNickname = useNickname(dmUserId || '');
   const [name, setName] = useState(room.name);
 
   useEffect(() => {
@@ -24,8 +27,10 @@ export const useRoomName = (room: Room): string => {
         room.recalculate();
       }
 
-      setName((prev) => (prev !== room.name ? room.name : prev));
+      const nextName = dmNickname ?? room.name;
+      setName((prev) => (prev !== nextName ? nextName : prev));
     };
+
     updateName();
 
     room.on(RoomEvent.Name, updateName);
@@ -35,7 +40,7 @@ export const useRoomName = (room: Room): string => {
       room.removeListener(RoomEvent.Name, updateName);
       room.removeListener(RoomStateEvent.Members, updateName);
     };
-  }, [room]);
+  }, [room, dmNickname]);
 
   return name;
 };

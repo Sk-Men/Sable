@@ -21,7 +21,7 @@ import {
   StickerEventContent,
 } from '$types/matrix-sdk';
 import { ReactEditor } from 'slate-react';
-import { Editor, Transforms } from 'slate';
+import { Editor, Point, Range, Transforms } from 'slate';
 import {
   Box,
   config,
@@ -30,10 +30,13 @@ import {
   IconButton,
   Icons,
   Line,
+  Menu,
+  MenuItem,
   Overlay,
   OverlayBackdrop,
   OverlayCenter,
   PopOut,
+  RectCords,
   Scroll,
   Text,
   toRem,
@@ -48,7 +51,6 @@ import {
 
 import { useMatrixClient } from '$hooks/useMatrixClient';
 import {
-  AUTOCOMPLETE_PREFIXES,
   AutocompletePrefix,
   AutocompleteQuery,
   createEmoticonElement,
@@ -70,6 +72,8 @@ import {
   getBeginCommand,
   trimCommand,
   getMentions,
+  ANYWHERE_AUTOCOMPLETE_PREFIXES,
+  BEGINNING_AUTOCOMPLETE_PREFIXES,
 } from '$components/editor';
 import { EmojiBoard, EmojiBoardTab } from '$components/emoji-board';
 import { UseStateProvider } from '$components/UseStateProvider';
@@ -79,6 +83,7 @@ import {
   getImageInfo,
   getMxIdLocalPart,
   mxcUrlToHttp,
+  toggleReaction,
 } from '$utils/matrix';
 import { useTypingStatusUpdater } from '$hooks/useTypingStatusUpdater';
 import { useFilePicker } from '$hooks/useFilePicker';
@@ -123,13 +128,31 @@ import { useImagePackRooms } from '$hooks/useImagePackRooms';
 import { useComposingCheck } from '$hooks/useComposingCheck';
 import { useSableCosmetics } from '$hooks/useSableCosmetics';
 import { createLogger } from '$utils/debug';
-import { CommandAutocomplete } from './CommandAutocomplete';
+import FocusTrap from 'focus-trap-react';
+import { useQueryClient } from '@tanstack/react-query';
+import {
+  delayedEventsSupportedAtom,
+  roomIdToScheduledTimeAtomFamily,
+  roomIdToEditingScheduledDelayIdAtomFamily,
+} from '$state/scheduledMessages';
+import {
+  sendDelayedMessage,
+  sendDelayedMessageE2EE,
+  computeDelayMs,
+  cancelDelayedEvent,
+} from '$utils/delayedEvents';
+import { timeHourMinute, timeDayMonthYear } from '$utils/time';
+import { stopPropagation } from '$utils/keyboard';
+import { MessageEvent } from '$types/matrix/room';
+import { SchedulePickerDialog } from './schedule-send';
+import * as css from './schedule-send/SchedulePickerDialog.css';
 import {
   getAudioMsgContent,
   getFileMsgContent,
   getImageMsgContent,
   getVideoMsgContent,
 } from './msgContent';
+import { CommandAutocomplete } from './CommandAutocomplete';
 
 const getReplyContent = (replyDraft: IReplyDraft | undefined): IEventRelation => {
   if (!replyDraft) return {};
@@ -244,6 +267,17 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
     const [hideStickerBtn, setHideStickerBtn] = useState(document.body.clientWidth < 500);
 
     const isComposing = useComposingCheck();
+
+    const queryClient = useQueryClient();
+    const delayedEventsSupported = useAtomValue(delayedEventsSupportedAtom);
+    const [scheduledTime, setScheduledTime] = useAtom(roomIdToScheduledTimeAtomFamily(roomId));
+    const [editingScheduledDelayId, setEditingScheduledDelayId] = useAtom(
+      roomIdToEditingScheduledDelayIdAtomFamily(roomId)
+    );
+    const [scheduleMenuAnchor, setScheduleMenuAnchor] = useState<RectCords>();
+    const [showSchedulePicker, setShowSchedulePicker] = useState(false);
+    const [hour24Clock] = useSetting(settingsAtom, 'hour24Clock');
+    const isEncrypted = room.hasEncryptionStateEvent();
 
     useElementSizeObserver(
       useCallback(() => document.body, []),
@@ -445,31 +479,70 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
       if (replyDraft) {
         content['m.relates_to'] = getReplyContent(replyDraft);
       }
-      if (replyDraft) {
+      const invalidate = () =>
+        queryClient.invalidateQueries({ queryKey: ['delayedEvents', roomId] });
+
+      const resetInput = () => {
+        resetEditor(editor);
+        resetEditorHistory(editor);
+        setInputKey((prev) => prev + 1);
         setReplyDraft(undefined);
-      }
+        sendTypingStatus(false);
+      };
 
-      resetEditor(editor);
-      resetEditorHistory(editor);
-      setInputKey((prev) => prev + 1);
-      sendTypingStatus(false);
-      setDescribedFile(undefined);
-
-      try {
-        await mx.sendMessage(roomId, content as any);
-      } catch (error) {
-        log.error('failed to send message', { roomId }, error);
+      if (scheduledTime) {
+        try {
+          const delayMs = computeDelayMs(scheduledTime);
+          if (editingScheduledDelayId) {
+            await cancelDelayedEvent(mx, editingScheduledDelayId);
+          }
+          if (isEncrypted) {
+            await sendDelayedMessageE2EE(mx, roomId, room, content, delayMs);
+          } else {
+            await sendDelayedMessage(mx, roomId, content, delayMs);
+          }
+          invalidate();
+          setEditingScheduledDelayId(null);
+          setScheduledTime(null);
+          resetInput();
+          setDescribedFile(undefined);
+        } catch {
+          // Network/server error — leave editor and scheduled state intact for retry
+        }
+      } else if (editingScheduledDelayId) {
+        try {
+          await cancelDelayedEvent(mx, editingScheduledDelayId);
+          mx.sendMessage(roomId, content as any);
+          invalidate();
+          setEditingScheduledDelayId(null);
+          resetInput();
+          setDescribedFile(undefined);
+        } catch {
+          // Cancel failed — leave state intact for retry
+        }
+      } else {
+        resetInput();
+        mx.sendMessage(roomId, content as any).catch((error: unknown) => {
+          log.error('failed to send message', { roomId }, error);
+        });
       }
     }, [
       mx,
       roomId,
+      room,
       editor,
       replyDraft,
-      describedFile,
       sendTypingStatus,
       setReplyDraft,
+      describedFile,
       isMarkdown,
       commands,
+      scheduledTime,
+      setScheduledTime,
+      isEncrypted,
+      queryClient,
+      editingScheduledDelayId,
+      setEditingScheduledDelayId,
     ]);
 
     const handleKeyDown: KeyboardEventHandler = useCallback(
@@ -507,9 +580,19 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
         }
 
         const prevWordRange = getPrevWorldRange(editor);
-        const query = prevWordRange
-          ? getAutocompleteQuery<AutocompletePrefix>(editor, prevWordRange, AUTOCOMPLETE_PREFIXES)
-          : undefined;
+        if (!prevWordRange) {
+          setAutocompleteQuery(undefined);
+          return;
+        }
+
+        const firstPosition = Editor.start(editor, []);
+        const isRangeAtBeginning = !Point.isAfter(Range.start(prevWordRange), firstPosition);
+        const query =
+          (isRangeAtBeginning
+            ? getAutocompleteQuery(editor, prevWordRange, BEGINNING_AUTOCOMPLETE_PREFIXES)
+            : undefined) ??
+          getAutocompleteQuery(editor, prevWordRange, ANYWHERE_AUTOCOMPLETE_PREFIXES);
+
         setAutocompleteQuery(query);
       },
       [editor, sendTypingStatus, hideActivity]
@@ -519,6 +602,31 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
       setAutocompleteQuery(undefined);
       ReactEditor.focus(editor);
     }, [editor]);
+
+    const handleReactionAutocomplete = (key: string, shortcode: string) => {
+      const lastMessage = room
+        .getLiveTimeline()
+        .getEvents()
+        .findLast((event) =>
+          (
+            [
+              MessageEvent.RoomMessage,
+              MessageEvent.RoomMessageEncrypted,
+              MessageEvent.Sticker,
+            ] as string[]
+          ).includes(event.getType())
+        );
+      const lastMessageId = lastMessage?.getId();
+
+      if (lastMessageId) {
+        toggleReaction(mx, room, lastMessageId, key, shortcode);
+      }
+
+      resetEditor(editor);
+      resetEditorHistory(editor);
+      sendTypingStatus(false);
+      handleCloseAutocomplete();
+    };
 
     const handleEmoticonSelect = (key: string, shortcode: string) => {
       editor.insertNode(createEmoticonElement(key, shortcode));
@@ -629,6 +737,16 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
             requestClose={handleCloseAutocomplete}
           />
         )}
+        {autocompleteQuery?.prefix === AutocompletePrefix.Reaction && (
+          <EmoticonAutocomplete
+            title={`React with :${autocompleteQuery.text}`}
+            imagePackRooms={imagePackRooms}
+            editor={editor}
+            query={autocompleteQuery}
+            requestClose={handleCloseAutocomplete}
+            onEmoticonSelected={handleReactionAutocomplete}
+          />
+        )}
         {autocompleteQuery?.prefix === AutocompletePrefix.Command && (
           <CommandAutocomplete
             room={room}
@@ -646,43 +764,73 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
           onKeyUp={handleKeyUp}
           onPaste={handlePaste}
           top={
-            replyDraft && (
-              <div>
-                <Box
-                  alignItems="Center"
-                  gap="300"
-                  style={{ padding: `${config.space.S200} ${config.space.S300} 0` }}
-                >
-                  <IconButton
-                    onClick={() => setReplyDraft(undefined)}
-                    variant="SurfaceVariant"
-                    size="300"
-                    radii="300"
+            <>
+              {scheduledTime && (
+                <div>
+                  <Box
+                    alignItems="Center"
+                    gap="300"
+                    style={{ padding: `${config.space.S200} ${config.space.S300} 0` }}
                   >
-                    <Icon src={Icons.Cross} size="50" />
-                  </IconButton>
-                  <Box direction="Row" gap="200" alignItems="Center">
-                    {replyDraft.relation?.rel_type === RelationType.Thread && <ThreadIndicator />}
-                    <ReplyLayout
-                      userColor={replyUsernameColor}
-                      username={
-                        <Text size="T300" truncate style={{ fontFamily: replyUsernameFont }}>
-                          <b>
-                            {getMemberDisplayName(room, replyDraft.userId, nicknames) ??
-                              getMxIdLocalPart(replyDraft.userId) ??
-                              replyDraft.userId}
-                          </b>
-                        </Text>
-                      }
+                    <IconButton
+                      onClick={() => {
+                        setScheduledTime(null);
+                        setEditingScheduledDelayId(null);
+                      }}
+                      variant="SurfaceVariant"
+                      size="300"
+                      radii="300"
                     >
-                      <Text size="T300" truncate>
-                        {replyBodyJSX}
+                      <Icon src={Icons.Cross} size="50" />
+                    </IconButton>
+                    <Box direction="Row" gap="200" alignItems="Center">
+                      <Icon size="100" src={Icons.Clock} />
+                      <Text size="T300">
+                        Scheduled for {timeDayMonthYear(scheduledTime.getTime())} at{' '}
+                        {timeHourMinute(scheduledTime.getTime(), hour24Clock)}
                       </Text>
-                    </ReplyLayout>
+                    </Box>
                   </Box>
-                </Box>
-              </div>
-            )
+                </div>
+              )}
+              {replyDraft && (
+                <div>
+                  <Box
+                    alignItems="Center"
+                    gap="300"
+                    style={{ padding: `${config.space.S200} ${config.space.S300} 0` }}
+                  >
+                    <IconButton
+                      onClick={() => setReplyDraft(undefined)}
+                      variant="SurfaceVariant"
+                      size="300"
+                      radii="300"
+                    >
+                      <Icon src={Icons.Cross} size="50" />
+                    </IconButton>
+                    <Box direction="Row" gap="200" alignItems="Center">
+                      {replyDraft.relation?.rel_type === RelationType.Thread && <ThreadIndicator />}
+                      <ReplyLayout
+                        userColor={replyUsernameColor}
+                        username={
+                          <Text size="T300" truncate style={{ fontFamily: replyUsernameFont }}>
+                            <b>
+                              {getMemberDisplayName(room, replyDraft.userId, nicknames) ??
+                                getMxIdLocalPart(replyDraft.userId) ??
+                                replyDraft.userId}
+                            </b>
+                          </Text>
+                        }
+                      >
+                        <Text size="T300" truncate>
+                          {replyBodyJSX}
+                        </Text>
+                      </ReplyLayout>
+                    </Box>
+                  </Box>
+                </div>
+              )}
+            </>
           }
           before={
             <IconButton
@@ -771,15 +919,74 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
                   </PopOut>
                 )}
               </UseStateProvider>
-              <IconButton
-                onClick={submit}
-                onMouseDown={(e: MouseEvent) => e.preventDefault()}
-                variant="SurfaceVariant"
-                size="300"
-                radii="300"
-              >
-                <Icon src={Icons.Send} />
-              </IconButton>
+              <PopOut
+                anchor={scheduleMenuAnchor}
+                position="Top"
+                align="End"
+                offset={5}
+                content={
+                  <FocusTrap
+                    focusTrapOptions={{
+                      initialFocus: false,
+                      onDeactivate: () => setScheduleMenuAnchor(undefined),
+                      clickOutsideDeactivates: true,
+                      escapeDeactivates: stopPropagation,
+                    }}
+                  >
+                    <Menu>
+                      <Box direction="Column" gap="100" style={{ padding: config.space.S100 }}>
+                        <MenuItem
+                          size="300"
+                          radii="300"
+                          onClick={() => {
+                            setScheduleMenuAnchor(undefined);
+                            submit();
+                          }}
+                          before={<Icon size="100" src={Icons.Send} />}
+                        >
+                          <Text size="B300">Send Now</Text>
+                        </MenuItem>
+                        <MenuItem
+                          size="300"
+                          radii="300"
+                          onClick={() => {
+                            setScheduleMenuAnchor(undefined);
+                            setShowSchedulePicker(true);
+                          }}
+                          before={<Icon size="100" src={Icons.Clock} />}
+                        >
+                          <Text size="B300">Schedule Send</Text>
+                        </MenuItem>
+                      </Box>
+                    </Menu>
+                  </FocusTrap>
+                }
+              />
+              <Box display="Flex" alignItems="Center">
+                <IconButton
+                  onClick={submit}
+                  onMouseDown={(e: MouseEvent) => e.preventDefault()}
+                  variant={scheduledTime ? 'Primary' : 'SurfaceVariant'}
+                  size="300"
+                  radii="0"
+                  className={delayedEventsSupported ? css.SplitSendButton : undefined}
+                >
+                  <Icon src={scheduledTime ? Icons.Clock : Icons.Send} />
+                </IconButton>
+                {delayedEventsSupported && (
+                  <IconButton
+                    onClick={(evt: MouseEvent<HTMLButtonElement>) => {
+                      setScheduleMenuAnchor(evt.currentTarget.getBoundingClientRect());
+                    }}
+                    variant={scheduledTime ? 'Primary' : 'SurfaceVariant'}
+                    size="300"
+                    radii="0"
+                    className={css.SplitChevronButton}
+                  >
+                    <Icon size="50" src={Icons.ChevronBottom} />
+                  </IconButton>
+                )}
+              </Box>
             </>
           }
           bottom={
@@ -791,6 +998,17 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
             )
           }
         />
+        {showSchedulePicker && (
+          <SchedulePickerDialog
+            initialTime={scheduledTime?.getTime()}
+            showEncryptionWarning={isEncrypted}
+            onCancel={() => setShowSchedulePicker(false)}
+            onSubmit={(date) => {
+              setScheduledTime(date);
+              setShowSchedulePicker(false);
+            }}
+          />
+        )}
       </div>
     );
   }

@@ -77,3 +77,7 @@ To build the app:
 ```sh
 npm run build # Compiles the app into the dist/ directory
 ```
+
+## Deployment and infrastructure
+Deployment workflows and infrastructure details live in
+[`infra/README.md`](infra/README.md).

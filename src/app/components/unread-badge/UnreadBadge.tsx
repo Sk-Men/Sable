@@ -1,6 +1,8 @@
 import { CSSProperties, ReactNode } from 'react';
 import { Box, Badge, toRem, Text } from 'folds';
 import { millify } from '$plugins/millify';
+import { useSetting } from '$state/hooks/settings';
+import { settingsAtom } from '$state/settings';
 
 type UnreadBadgeProps = {
   highlight?: boolean;
@@ -18,15 +20,17 @@ export function UnreadBadgeCenter({ children }: { children: ReactNode }) {
 }
 
 export function UnreadBadge({ highlight, count }: UnreadBadgeProps) {
+  const [showCounts] = useSetting(settingsAtom, 'showUnreadCounts');
+  const showNumber = showCounts && count > 0;
   return (
     <Badge
       variant={highlight ? 'Success' : 'Secondary'}
-      size={count > 0 ? '400' : '200'}
+      size={showNumber ? '400' : '200'}
       fill="Solid"
       radii="Pill"
       outlined={false}
     >
-      {count > 0 && (
+      {showNumber && (
         <Text as="span" size="L400">
           {millify(count)}
         </Text>

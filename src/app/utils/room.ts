@@ -13,6 +13,7 @@ import {
   MatrixEvent,
   MsgType,
   NotificationCountType,
+  PushProcessor,
   RelationType,
   Room,
   RoomMember,
@@ -240,34 +241,60 @@ export const getUnreadInfo = (room: Room, options?: UnreadInfoOptions): UnreadIn
   }
 
   let total = room.getUnreadNotificationCount(NotificationCountType.Total);
-  let highlight = room.getUnreadNotificationCount(NotificationCountType.Highlight);
-  let syntheticDotUnread = false;
+  const highlight = room.getUnreadNotificationCount(NotificationCountType.Highlight);
 
-  // If our latest notification event is confirmed read, clamp stale non-highlight totals.
-  if (userId && total > 0 && highlight === 0) {
-    const liveEvents = room.getLiveTimeline().getEvents();
-    const latestNotification = [...liveEvents]
-      .reverse()
-      .find((event) => !event.isSending() && isNotificationEvent(event));
-    const latestNotificationId = latestNotification?.getId();
-    if (latestNotificationId && room.hasUserReadEvent(userId, latestNotificationId)) {
-      total = 0;
+  // If our latest main-timeline notification event is confirmed read, clamp its stale count.
+  // Only apply to the room (non-thread) portion so thread reply counts are preserved.
+  // Guard: only clamp when the room has NO receipt-confirmed unread events; if roomHaveUnread
+  // is true then there genuinely are unread messages and the SDK count is not fully stale.
+  if (userId && total > 0 && highlight === 0 && !roomHaveUnread(room.client, room)) {
+    const roomTotal = room.getRoomUnreadNotificationCount(NotificationCountType.Total);
+    if (roomTotal > 0) {
+      const liveEvents = room.getLiveTimeline().getEvents();
+      // Exclude the user's own messages: own sent events are always "read" (hasUserReadEvent
+      // returns true for them), which would cause the clamp to fire incorrectly.
+      const latestNotification = [...liveEvents]
+        .reverse()
+        .find(
+          (event) =>
+            !event.isSending() && event.getSender() !== userId && isNotificationEvent(event)
+        );
+      const latestNotificationId = latestNotification?.getId();
+      if (latestNotificationId && room.hasUserReadEvent(userId, latestNotificationId)) {
+        // Subtract only the stale main-timeline count; thread totals remain intact.
+        total -= roomTotal;
+      }
     }
   }
 
-  // Fallback for cases where SDK counters are stale/zero but unread-by-receipt state still exists.
-  // Represent as a dot badge (count=0) rather than a numeric badge.
-  if (total === 0 && highlight === 0 && roomHaveUnread(room.client, room)) {
-    highlight = 1;
-    syntheticDotUnread = true;
+  // Fallback: SDK counters are stale/zero but there are receipt-confirmed unread
+  // messages. Walk the live timeline to compute real counts so the badge number
+  // and highlight colour reflect actual state rather than a hard-coded stub.
+  if (total === 0 && highlight === 0 && userId && roomHaveUnread(room.client, room)) {
+    const readUpToId = room.getEventReadUpTo(userId);
+    const liveEvents = room.getLiveTimeline().getEvents();
+    let fallbackTotal = 0;
+    let fallbackHighlight = 0;
+    const pushProcessor = new PushProcessor(room.client);
+    for (let i = liveEvents.length - 1; i >= 0; i -= 1) {
+      const event = liveEvents[i];
+      if (!event) break;
+      if (event.getId() === readUpToId) break;
+      if (isNotificationEvent(event) && event.getSender() !== userId) {
+        fallbackTotal += 1;
+        const pushActions = pushProcessor.actionsForEvent(event);
+        if (pushActions?.tweaks?.highlight) fallbackHighlight += 1;
+      }
+    }
+    if (fallbackTotal > 0) {
+      return { roomId: room.roomId, highlight: fallbackHighlight, total: fallbackTotal };
+    }
   }
-
-  const resolvedTotal = syntheticDotUnread ? total : Math.max(total, highlight);
 
   return {
     roomId: room.roomId,
     highlight,
-    total: resolvedTotal,
+    total: Math.max(total, highlight),
   };
 };
 
@@ -493,9 +520,18 @@ export const getLatestEditableEvt = (
   return undefined;
 };
 
-export const reactionOrEditEvent = (mEvent: MatrixEvent) =>
-  mEvent.getRelation()?.rel_type === RelationType.Annotation ||
-  mEvent.getRelation()?.rel_type === RelationType.Replace;
+export const reactionOrEditEvent = (mEvent: MatrixEvent): boolean => {
+  const relType = mEvent.getRelation()?.rel_type;
+  if (relType === RelationType.Annotation || relType === RelationType.Replace) return true;
+
+  // Sliding sync proxies may omit m.relates_to on the initial delivery of timeline
+  // events.  Detect edit events by the presence of m.new_content in the event
+  // content even when the relation metadata is absent, so they are filtered from
+  // the rendered timeline rather than falling through as unsupported messages.
+  if (mEvent.getContent()['m.new_content'] !== undefined) return true;
+
+  return false;
+};
 
 export const getMentionContent = (userIds: string[], room: boolean): IMentions => {
   const mMentions: IMentions = {};

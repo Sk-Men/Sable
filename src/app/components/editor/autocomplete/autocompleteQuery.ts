@@ -5,12 +5,16 @@ export enum AutocompletePrefix {
   UserMention = '@',
   Emoticon = ':',
   Command = '/',
+  Reaction = '+:',
 }
-export const AUTOCOMPLETE_PREFIXES: readonly AutocompletePrefix[] = [
+export const ANYWHERE_AUTOCOMPLETE_PREFIXES: readonly AutocompletePrefix[] = [
   AutocompletePrefix.RoomMention,
   AutocompletePrefix.UserMention,
   AutocompletePrefix.Emoticon,
+];
+export const BEGINNING_AUTOCOMPLETE_PREFIXES: readonly AutocompletePrefix[] = [
   AutocompletePrefix.Command,
+  AutocompletePrefix.Reaction,
 ];
 
 export type AutocompleteQuery<TPrefix extends string> = {
@@ -34,7 +38,7 @@ export const getAutocompleteQueryText = (
   prefix: string
 ): string => Editor.string(editor, queryRange).slice(prefix.length);
 
-export const getAutocompleteQuery = <TPrefix extends string>(
+export const getAutocompleteQuery = <TPrefix extends string = AutocompletePrefix>(
   editor: Editor,
   queryRange: BaseRange,
   validPrefixes: readonly TPrefix[]

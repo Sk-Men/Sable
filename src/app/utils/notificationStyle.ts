@@ -11,6 +11,10 @@ type RoomMessageNotificationInput = {
   silent?: boolean;
   eventId?: string;
   data?: unknown;
+  /** Matrix user ID of the account that received the notification. When provided,
+   * the account's localpart is appended to the title so multi-account users know
+   * which account the notification is for. */
+  recipientId?: string;
 };
 
 type NotificationPayload = {
@@ -62,6 +66,9 @@ export const resolveNotificationPreviewText = ({
   return encryptedContext ? ENCRYPTED_MESSAGE_PREVIEW : DEFAULT_MESSAGE_PREVIEW;
 };
 
+/** Extracts the localpart (everything between @ and the first :) from a Matrix user ID. */
+const toLocalpart = (userId: string): string => userId.match(/^@([^:]+):/)?.[1] ?? userId;
+
 export const buildRoomMessageNotification = ({
   roomName,
   username,
@@ -70,14 +77,16 @@ export const buildRoomMessageNotification = ({
   silent,
   eventId,
   data,
+  recipientId,
 }: RoomMessageNotificationInput): NotificationPayload => {
   const sender = getString(username, 'Someone');
   const room = getString(roomName, 'Unknown');
   const message = getString(previewText, DEFAULT_MESSAGE_PREVIEW);
   const avatar = getString(roomAvatar, DEFAULT_NOTIFICATION_ICON);
+  const recipientSuffix = recipientId ? ` • ${toLocalpart(recipientId)}` : '';
 
   return {
-    title: `${sender} in ${room}`,
+    title: `${sender} in ${room}${recipientSuffix}`,
     options: {
       icon: avatar,
       badge: avatar || DEFAULT_NOTIFICATION_BADGE,

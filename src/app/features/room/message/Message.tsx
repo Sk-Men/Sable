@@ -227,6 +227,7 @@ export type MessageProps = {
   activeReplyId?: string | null;
   sendStatus?: EventStatus | null;
   onResend?: (event: MatrixEvent) => void;
+  onDeleteFailedSend?: (event: MatrixEvent) => void;
 };
 
 function useMobileDoubleTap(callback: () => void, delay = 300) {
@@ -308,6 +309,7 @@ function MessageInternal(
     activeReplyId,
     sendStatus,
     onResend,
+    onDeleteFailedSend,
     ...props
   }: MessageProps & { className?: string; children?: ReactNode },
   ref: any
@@ -445,6 +447,7 @@ function MessageInternal(
     sendStatus === EventStatus.SENDING;
   const isFailedSend = sendStatus === EventStatus.NOT_SENT;
   const canResend = isFailedSend && senderId === mx.getUserId() && !!onResend;
+  const canDeleteFailedSend = isFailedSend && senderId === mx.getUserId() && !!onDeleteFailedSend;
 
   const handleResendClick: MouseEventHandler<HTMLButtonElement> = useCallback(
     (evt) => {
@@ -453,6 +456,15 @@ function MessageInternal(
       onResend?.(mEvent);
     },
     [mEvent, onResend]
+  );
+
+  const handleDeleteFailedSendClick: MouseEventHandler<HTMLButtonElement> = useCallback(
+    (evt) => {
+      evt.preventDefault();
+      evt.stopPropagation();
+      onDeleteFailedSend?.(mEvent);
+    },
+    [mEvent, onDeleteFailedSend]
   );
 
   const MSG_CONTENT_STYLE = { maxWidth: '100%' };
@@ -484,13 +496,6 @@ function MessageInternal(
         <MemoizedBody key={stableContent}>{children}</MemoizedBody>
       )}
       {reactions}
-      {isPendingSend && (
-        <Box className={css.SendStatusRow}>
-          <Text size="T200" priority="300">
-            Sending...
-          </Text>
-        </Box>
-      )}
       {isFailedSend && (
         <Box className={css.SendStatusRow}>
           <Text size="T200" priority="300">
@@ -499,6 +504,15 @@ function MessageInternal(
           {canResend && (
             <button type="button" className={css.SendStatusButton} onClick={handleResendClick}>
               Retry
+            </button>
+          )}
+          {canDeleteFailedSend && (
+            <button
+              type="button"
+              className={css.SendStatusButton}
+              onClick={handleDeleteFailedSendClick}
+            >
+              Delete
             </button>
           )}
         </Box>
