@@ -293,8 +293,7 @@ export const mxcUrlToHttp = (
   width?: number,
   height?: number,
   resizeMethod?: string,
-  allowDirectLinks?: boolean,
-  allowRedirects?: boolean
+  allowDirectLinks?: boolean
 ): string | null =>
   mx.mxcUrlToHttp(
     mxcUrl.replace(/^["']|["']$/g, ''),
@@ -302,7 +301,7 @@ export const mxcUrlToHttp = (
     height,
     resizeMethod,
     allowDirectLinks,
-    allowRedirects,
+    undefined,
     useAuthentication
   );
 
