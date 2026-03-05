@@ -169,6 +169,8 @@ function IdentityCosmetics() {
     settingsAtom,
     'renderGlobalNameColors'
   );
+  const [renderRoomColors, setRenderRoomColors] = useSetting(settingsAtom, 'renderRoomColors');
+  const [renderRoomFonts, setRenderRoomFonts] = useSetting(settingsAtom, 'renderRoomFonts');
   const [uniformIcons, setUniformIcons] = useSetting(settingsAtom, 'uniformIcons');
   const [rightBubbles, setRightBubbles] = useSetting(settingsAtom, 'useRightBubbles');
   const [showUnreadCounts, setShowUnreadCounts] = useSetting(settingsAtom, 'showUnreadCounts');
@@ -203,6 +205,22 @@ function IdentityCosmetics() {
           after={
             <Switch variant="Primary" value={renderGlobalColors} onChange={setRenderGlobalColors} />
           }
+        />
+      </SequenceCard>
+      <SequenceCard className={SequenceCardStyle} variant="SurfaceVariant" direction="Column">
+        <SettingTile
+          title="Render Space/Room Username Colors"
+          description="Display the username colors that can be set with /color."
+          after={
+            <Switch variant="Primary" value={renderRoomColors} onChange={setRenderRoomColors} />
+          }
+        />
+      </SequenceCard>
+      <SequenceCard className={SequenceCardStyle} variant="SurfaceVariant" direction="Column">
+        <SettingTile
+          title="Render Space/Room Fonts"
+          description="Display the username fonts that can be set with /font."
+          after={<Switch variant="Primary" value={renderRoomFonts} onChange={setRenderRoomFonts} />}
         />
       </SequenceCard>
       <SequenceCard className={SequenceCardStyle} variant="SurfaceVariant" direction="Column">
