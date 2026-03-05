@@ -12,6 +12,7 @@ import topLevelAwait from 'vite-plugin-top-level-await';
 import { VitePWA } from 'vite-plugin-pwa';
 import fs from 'fs';
 import path from 'path';
+import { cloudflare } from '@cloudflare/vite-plugin';
 import buildConfig from './build.config';
 
 const packageJson = JSON.parse(
@@ -55,10 +56,6 @@ const copyFiles = {
       src: 'node_modules/pdfjs-dist/build/pdf.worker.min.mjs',
       dest: '',
       rename: 'pdf.worker.min.js',
-    },
-    {
-      src: 'netlify.toml',
-      dest: '',
     },
     {
       src: 'config.json',
@@ -164,6 +161,14 @@ export default defineConfig({
       devOptions: {
         enabled: true,
         type: 'module',
+      },
+    }),
+    cloudflare({
+      config: {
+        compatibility_date: '2026-03-03',
+        assets: {
+          not_found_handling: 'single-page-application',
+        },
       },
     }),
   ],

@@ -27,7 +27,6 @@ import {
 } from '$types/matrix-sdk';
 import { isKeyHotkey } from 'is-hotkey';
 import {
-  AUTOCOMPLETE_PREFIXES,
   AutocompletePrefix,
   AutocompleteQuery,
   CustomEditor,
@@ -47,6 +46,7 @@ import {
   trimCustomHtml,
   useEditor,
   getMentions,
+  ANYWHERE_AUTOCOMPLETE_PREFIXES,
 } from '$components/editor';
 import { useSetting } from '$state/hooks/settings';
 import { settingsAtom } from '$state/settings';
@@ -207,7 +207,7 @@ export const MessageEditor = as<'div', MessageEditorProps>(
 
         const prevWordRange = getPrevWorldRange(editor);
         const query = prevWordRange
-          ? getAutocompleteQuery<AutocompletePrefix>(editor, prevWordRange, AUTOCOMPLETE_PREFIXES)
+          ? getAutocompleteQuery(editor, prevWordRange, ANYWHERE_AUTOCOMPLETE_PREFIXES)
           : undefined;
         setAutocompleteQuery(query);
       },

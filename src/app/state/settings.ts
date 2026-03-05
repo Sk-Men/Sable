@@ -61,12 +61,17 @@ export interface Settings {
   privacyBlurEmotes: boolean;
   showPronouns: boolean;
   renderGlobalNameColors: boolean;
+  filterPronounsBasedOnLanguage?: boolean;
+  filterPronounsLanguages?: string[];
+  renderRoomColors: boolean;
+  renderRoomFonts: boolean;
 
   // Sable features!
   mobileGestures: boolean;
   rightSwipeAction: RightSwipeAction;
   hideMembershipInReadOnly: boolean;
   useRightBubbles: boolean;
+  showUnreadCounts: boolean;
 }
 
 const defaultSettings: Settings = {
@@ -114,12 +119,15 @@ const defaultSettings: Settings = {
   privacyBlurEmotes: false,
   showPronouns: true,
   renderGlobalNameColors: true,
+  renderRoomColors: true,
+  renderRoomFonts: true,
 
   // Sable features!
   mobileGestures: true,
   rightSwipeAction: RightSwipeAction.Reply,
   hideMembershipInReadOnly: true,
   useRightBubbles: false,
+  showUnreadCounts: true,
 };
 
 export const getSettings = () => {

@@ -17,6 +17,47 @@ const { handlePushNotificationPushData } = createPushNotifications(self, () => (
   showEncryptedMessageContent,
 }));
 
+/** Cache key used to persist notification settings across SW restarts (iOS kills the SW frequently). */
+const SW_SETTINGS_CACHE = 'sable-sw-settings-v1';
+const SW_SETTINGS_URL = '/sw-settings-meta';
+
+async function persistSettings() {
+  try {
+    const cache = await self.caches.open(SW_SETTINGS_CACHE);
+    await cache.put(
+      SW_SETTINGS_URL,
+      new Response(
+        JSON.stringify({
+          notificationSoundEnabled,
+          preferPushOnMobile,
+          showMessageContent,
+          showEncryptedMessageContent,
+        }),
+        { headers: { 'Content-Type': 'application/json' } }
+      )
+    );
+  } catch {
+    // Ignore — caches may be unavailable in some environments.
+  }
+}
+
+async function loadPersistedSettings() {
+  try {
+    const cache = await self.caches.open(SW_SETTINGS_CACHE);
+    const response = await cache.match(SW_SETTINGS_URL);
+    if (!response) return;
+    const s = await response.json();
+    if (typeof s.notificationSoundEnabled === 'boolean')
+      notificationSoundEnabled = s.notificationSoundEnabled;
+    if (typeof s.preferPushOnMobile === 'boolean') preferPushOnMobile = s.preferPushOnMobile;
+    if (typeof s.showMessageContent === 'boolean') showMessageContent = s.showMessageContent;
+    if (typeof s.showEncryptedMessageContent === 'boolean')
+      showEncryptedMessageContent = s.showEncryptedMessageContent;
+  } catch {
+    // Ignore — stale or missing cache is fine; we fall back to defaults.
+  }
+}
+
 type SessionInfo = {
   accessToken: string;
   baseUrl: string;
@@ -138,6 +179,8 @@ self.addEventListener('message', (event: ExtendableMessageEvent) => {
       showEncryptedMessageContent = (data as { showEncryptedMessageContent: boolean })
         .showEncryptedMessageContent;
     }
+    // Persist so settings survive SW restart (iOS kills the SW aggressively).
+    event.waitUntil(persistSettings());
   }
 });
 
@@ -213,6 +256,10 @@ const onPushNotification = async (event: PushEvent) => {
     return;
   }
 
+  // The SW may have been restarted by the OS (iOS is aggressive about this),
+  // so in-memory settings would be at their defaults. Reload from the cache.
+  await loadPersistedSettings();
+
   const clients = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
   const hasVisibleClient = clients.some((client) => client.visibilityState === 'visible');
   if (hasVisibleClient && !preferPushOnMobile) {
@@ -258,8 +305,16 @@ self.addEventListener('notificationclick', (event: NotificationEvent) => {
     (eventType === EventType.RoomMessage || eventType === EventType.RoomMessageEncrypted) &&
     messageData?.room_id &&
     messageData?.event_id
-  )
-    targetUrl = `${scope}to/${messageData.room_id}/${messageData.event_id}`;
+  ) {
+    // Include the target user ID as ?uid= so ToRoomEvent can switch to the
+    // correct account before navigating. This covers client.navigate() on iOS
+    // Safari where postMessage is unreliable after focus().
+    const uidParam =
+      typeof messageData?.user_id === 'string'
+        ? `?uid=${encodeURIComponent(messageData.user_id)}`
+        : '';
+    targetUrl = `${scope}to/${messageData.room_id}/${messageData.event_id}${uidParam}`;
+  }
   if (eventType === EventType.RoomMember && messageData?.content?.membership === 'invite')
     targetUrl = `${scope}inbox/invites/`;
 
@@ -272,13 +327,27 @@ self.addEventListener('notificationclick', (event: NotificationEvent) => {
 
   event.waitUntil(
     self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
-      const focusedClient = clientList.find((client): client is WindowClient => 'focus' in client);
+      // Prefer a visible (foreground) tab; fall back to any open window client.
+      const focusedClient =
+        clientList.find((c) => c.visibilityState === 'visible') ??
+        clientList.find((c): c is WindowClient => 'focus' in c);
       if (focusedClient) {
-        return focusedClient.focus().then(() => {
-          postMessageToClient(focusedClient);
+        return focusedClient.focus().then((wc) => {
+          // Prefer client.navigate() — draft API, available on Chrome/Chromium
+          // (all Android PWAs and desktop), unavailable on iOS Safari / Firefox.
+          const client = wc ?? focusedClient;
+          if ('navigate' in client && typeof (client as any).navigate === 'function') {
+            return (client as any).navigate(targetUrl);
+          }
+          // navigate() unavailable: use postMessage. The existing client (whether
+          // it was in the foreground or just minimized) has a live JS context by
+          // the time focus() resolves. HandleNotificationClick in the page will
+          // receive the message and dispatch the account-switch + deep link.
+          postMessageToClient(client);
           return null;
         });
       }
+      // No existing client — open a new window. ToRoomEvent handles the route.
       if (self.clients.openWindow) {
         return self.clients.openWindow(targetUrl).then(() => null);
       }

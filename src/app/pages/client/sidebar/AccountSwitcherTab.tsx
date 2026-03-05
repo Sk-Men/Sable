@@ -17,8 +17,18 @@ import {
 import FocusTrap from 'focus-trap-react';
 import { useAtom, useAtomValue, useSetAtom } from 'jotai';
 import { useNavigate } from 'react-router-dom';
-import { sessionsAtom, activeSessionIdAtom, Session } from '$state/sessions';
-import { SidebarItem, SidebarItemTooltip, SidebarAvatar } from '$components/sidebar';
+import {
+  sessionsAtom,
+  activeSessionIdAtom,
+  Session,
+  backgroundUnreadCountsAtom,
+} from '$state/sessions';
+import {
+  SidebarItem,
+  SidebarItemTooltip,
+  SidebarAvatar,
+  SidebarItemBadge,
+} from '$components/sidebar';
 import { UserAvatar } from '$components/user-avatar';
 import { nameInitials } from '$utils/common';
 import { getMxIdLocalPart, mxcUrlToHttp } from '$utils/matrix';
@@ -33,6 +43,7 @@ import { Settings } from '$features/settings';
 import { Modal500 } from '$components/Modal500';
 import { createLogger } from '$utils/debug';
 import { useClientConfig } from '$hooks/useClientConfig';
+import { UnreadBadge, UnreadBadgeCenter } from '$components/unread-badge';
 
 const log = createLogger('AccountSwitcherTab');
 
@@ -42,6 +53,7 @@ function AccountRow({
   displayName,
   avatarUrl,
   isBusy,
+  unread,
   onSwitch,
   onSignOut,
 }: {
@@ -50,6 +62,7 @@ function AccountRow({
   displayName?: string;
   avatarUrl?: string;
   isBusy?: boolean;
+  unread?: { total: number; highlight: number };
   onSwitch: (session: Session) => void;
   onSignOut: (session: Session) => void;
 }) {
@@ -77,6 +90,11 @@ function AccountRow({
       }
       after={
         <Box gap="200" alignItems="Center" shrink="No">
+          {!isActive && unread && unread.total > 0 && (
+            <UnreadBadgeCenter>
+              <UnreadBadge highlight={unread.highlight > 0} count={unread.total} />
+            </UnreadBadgeCenter>
+          )}
           {isActive && (
             <Icon size="200" src={Icons.Check} style={{ color: 'var(--mx-c-success)' }} />
           )}
@@ -127,6 +145,16 @@ export function AccountSwitcherTab() {
   const [activeSessionId, setActiveSessionId] = useAtom(activeSessionIdAtom);
   const setSessions = useSetAtom(sessionsAtom);
   const useAuthentication = useMediaAuthentication();
+  const backgroundUnreads = useAtomValue(backgroundUnreadCountsAtom);
+  const setBackgroundUnreads = useSetAtom(backgroundUnreadCountsAtom);
+
+  // Total unread count across all background sessions (for the sidebar badge).
+  const totalBackgroundUnread = Object.entries(backgroundUnreads)
+    .filter(([uid]) => uid !== (activeSessionId ?? sessions[0]?.userId))
+    .reduce((acc, [, u]) => acc + u.total, 0);
+  const anyBackgroundHighlight = Object.entries(backgroundUnreads)
+    .filter(([uid]) => uid !== (activeSessionId ?? sessions[0]?.userId))
+    .some(([, u]) => u.highlight > 0);
 
   const [menuAnchor, setMenuAnchor] = useState<RectCords>();
   const [busyUserIds, setBusyUserIds] = useState<Set<string>>(new Set());
@@ -161,8 +189,14 @@ export function AccountSwitcherTab() {
       setMenuAnchor(undefined);
       navigate(getHomePath(), { replace: true });
       setActiveSessionId(session.userId);
+      // Clear the unread badge for the account we're now switching into.
+      setBackgroundUnreads((prev) => {
+        const next = { ...prev };
+        delete next[session.userId];
+        return next;
+      });
     },
-    [navigate, setActiveSessionId]
+    [navigate, setActiveSessionId, setBackgroundUnreads]
   );
 
   const handleSignOut = useCallback(
@@ -240,6 +274,11 @@ export function AccountSwitcherTab() {
           </SidebarAvatar>
         )}
       </SidebarItemTooltip>
+      {totalBackgroundUnread > 0 && (
+        <SidebarItemBadge hasCount>
+          <UnreadBadge highlight={anyBackgroundHighlight} count={totalBackgroundUnread} />
+        </SidebarItemBadge>
+      )}
 
       <PopOut
         anchor={menuAnchor}
@@ -283,6 +322,7 @@ export function AccountSwitcherTab() {
                       displayName={rowDisplayName}
                       avatarUrl={rowAvatarUrl}
                       isBusy={busyUserIds.has(session.userId)}
+                      unread={!isActive ? backgroundUnreads[session.userId] : undefined}
                       onSwitch={handleSwitch}
                       onSignOut={handleSignOut}
                     />

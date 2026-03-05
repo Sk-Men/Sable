@@ -1,4 +1,4 @@
-import { FormEventHandler, MouseEvent, useCallback } from 'react';
+import { FormEventHandler, MouseEvent, useCallback, useEffect } from 'react';
 import { Room, MatrixEvent } from '$types/matrix-sdk';
 import { useSetAtom } from 'jotai';
 import {
@@ -64,6 +64,12 @@ export function MessageDeleteInternal({ room, mEvent, onClose }: MessageDeleteIn
       [mx, room]
     )
   );
+
+  useEffect(() => {
+    if (deleteState.status === AsyncStatus.Success) {
+      onClose();
+    }
+  }, [deleteState.status, onClose]);
 
   const handleSubmit: FormEventHandler<HTMLFormElement> = (evt) => {
     evt.preventDefault();

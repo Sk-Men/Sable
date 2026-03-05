@@ -1,6 +1,7 @@
 import { useState, useEffect, ChangeEvent } from 'react';
 import { Input } from 'folds';
 import { SettingTile } from '$components/setting-tile';
+import { parsePronounsInput } from '$utils/pronouns';
 
 type PronounSet = {
   summary: string;
@@ -14,7 +15,9 @@ type PronounEditorProps = {
 };
 
 export function PronounEditor({ current, onSave }: PronounEditorProps) {
-  const initialString = current.map((p) => p.summary).join(', ');
+  const initialString = current
+    .map((p) => `${p.language ? `${p.language}:` : ''}${p.summary}`)
+    .join(', ');
   const [val, setVal] = useState(initialString);
 
   useEffect(() => setVal(initialString), [initialString]);
@@ -22,11 +25,7 @@ export function PronounEditor({ current, onSave }: PronounEditorProps) {
   const handleSave = () => {
     if (val === initialString) return;
     const safeVal = val.slice(0, 128);
-    const next = safeVal
-      .split(',')
-      .map((s) => s.trim())
-      .filter(Boolean)
-      .map((s) => ({ summary: s.slice(0, 16), language: 'en' }));
+    const next = parsePronounsInput(safeVal);
     onSave(next);
   };
 
@@ -37,7 +36,9 @@ export function PronounEditor({ current, onSave }: PronounEditorProps) {
   return (
     <SettingTile
       title="Pronouns"
-      description="Separate sets with commas (e.g. 'they/them, it/its')."
+      // let people specify multiple sets of pronouns for different languages
+      // the input is a comma separated list of pronoun sets, each set can have an optional language tag (e.g. "en:they/them, de:sie/ihr")
+      description="Separate sets with commas (e.g. 'en:they/them, en:it/its, de:sie/ihr')."
       after={
         <Input
           value={val}

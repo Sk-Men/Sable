@@ -23,6 +23,7 @@ import {
   IRoomTimelineData,
   MatrixClient,
   MatrixEvent,
+  RelationType,
   Room,
   RoomEvent,
   RoomEventHandlerMap,
@@ -51,7 +52,7 @@ import {
 import { isKeyHotkey } from 'is-hotkey';
 import { Opts as LinkifyOpts } from 'linkifyjs';
 import { useTranslation } from 'react-i18next';
-import { eventWithShortcode, factoryEventSentBy, getMxIdLocalPart } from '$utils/matrix';
+import { getMxIdLocalPart, toggleReaction } from '$utils/matrix';
 import { useMatrixClient } from '$hooks/useMatrixClient';
 import { ItemRange, useVirtualPaginator } from '$hooks/useVirtualPaginator';
 import { useAlive } from '$hooks/useAlive';
@@ -85,7 +86,6 @@ import {
   getEventReactions,
   getLatestEditableEvt,
   getMemberDisplayName,
-  getReactionContent,
   isMembershipChanged,
   reactionOrEditEvent,
 } from '$utils/room';
@@ -452,6 +452,30 @@ const useLiveEventArrive = (room: Room, onArrive: (mEvent: MatrixEvent) => void)
   }, [room, onArrive]);
 };
 
+const useRelationUpdate = (room: Room, onRelation: () => void) => {
+  useEffect(() => {
+    const handleTimelineEvent: EventTimelineSetHandlerMap[RoomEvent.Timeline] = (
+      mEvent: MatrixEvent,
+      eventRoom: Room | undefined,
+      _toStartOfTimeline: boolean | undefined,
+      _removed: boolean,
+      data: IRoomTimelineData
+    ) => {
+      // Live Replace events are handled by useLiveEventArrive re-render.
+      // Non-live Replace events (bundled/historical edits from sliding sync)
+      // also need to trigger a re-render so makeReplaced state is reflected.
+      if (eventRoom?.roomId !== room.roomId || data.liveEvent) return;
+      if (mEvent.getRelation()?.rel_type === RelationType.Replace) {
+        onRelation();
+      }
+    };
+    room.on(RoomEvent.Timeline, handleTimelineEvent);
+    return () => {
+      room.removeListener(RoomEvent.Timeline, handleTimelineEvent);
+    };
+  }, [room, onRelation]);
+};
+
 const useLiveTimelineRefresh = (room: Room, onRefresh: () => void) => {
   useEffect(() => {
     const handleTimelineRefresh: RoomEventHandlerMap[RoomEvent.TimelineRefresh] = (r: Room) => {
@@ -787,6 +811,15 @@ export function RoomTimeline({
     }, [room, liveTimelineLinked, timeline.linkedTimelines.length])
   );
 
+  // Re-render when non-live Replace relations arrive (bundled/historical edits
+  // from sliding sync that wouldn't otherwise trigger a timeline update).
+  useRelationUpdate(
+    room,
+    useCallback(() => {
+      setTimeline((ct) => ({ ...ct }));
+    }, [])
+  );
+
   // Recover from transient empty timeline state when the live timeline
   // already has events (can happen when opening by event id, then fallbacking).
   useEffect(() => {
@@ -899,11 +932,18 @@ export function RoomTimeline({
     )
   );
 
+  // Keep a stable ref so timeline state updates (new messages arriving) don't
+  // cause handleOpenEvent to rebuild and re-trigger this effect, yanking the
+  // user back to the notification event on every incoming message.
+  // We only want to scroll once per unique eventId value.
+  const handleOpenEventRef = useRef(handleOpenEvent);
+  handleOpenEventRef.current = handleOpenEvent;
+
   useEffect(() => {
     if (eventId) {
-      handleOpenEvent(eventId);
+      handleOpenEventRef.current(eventId);
     }
-  }, [eventId, handleOpenEvent]);
+  }, [eventId]); // handleOpenEvent intentionally omitted — use ref above
 
   // Scroll to bottom on initial timeline load
   useLayoutEffect(() => {
@@ -1166,26 +1206,8 @@ export function RoomTimeline({
   );
 
   const handleReactionToggle = useCallback(
-    (targetEventId: string, key: string, shortcode?: string) => {
-      const relations = getEventReactions(room.getUnfilteredTimelineSet(), targetEventId);
-      const allReactions = relations?.getSortedAnnotationsByKey() ?? [];
-      const [, reactionsSet] = allReactions.find(([k]: [string, any]) => k === key) ?? [];
-      const reactions: MatrixEvent[] = reactionsSet ? Array.from(reactionsSet) : [];
-      const myReaction = reactions.find(factoryEventSentBy(mx.getUserId()!));
-
-      if (myReaction && !!(myReaction as any)?.isRelation()) {
-        mx.redactEvent(room.roomId, (myReaction as any).getId());
-        return;
-      }
-      const rShortcode =
-        shortcode ||
-        ((reactions.find(eventWithShortcode) as any)?.getContent().shortcode as string | undefined);
-      mx.sendEvent(
-        room.roomId,
-        MessageEvent.Reaction as any,
-        getReactionContent(targetEventId, key, rShortcode)
-      );
-    },
+    (targetEventId: string, key: string, shortcode?: string) =>
+      toggleReaction(mx, room, targetEventId, key, shortcode),
     [mx, room]
   );
 
@@ -1195,6 +1217,14 @@ export function RoomTimeline({
       mx.resendEvent(mEvent, room).catch(() => undefined);
     },
     [mx, room]
+  );
+
+  const handleDeleteFailedSend = useCallback(
+    (mEvent: MatrixEvent) => {
+      if (mEvent.getAssociatedStatus() !== EventStatus.NOT_SENT) return;
+      mx.cancelPendingEvent(mEvent);
+    },
+    [mx]
   );
 
   const handleEdit = useCallback(
@@ -1237,8 +1267,14 @@ export function RoomTimeline({
         const highlighted = focusItem?.index === item && focusItem.highlight;
 
         const editedEvent = getEditedEvent(mEventId, mEvent, timelineSet);
-        const getContent = (() =>
-          editedEvent?.getContent()['m.new_content'] ?? mEvent.getContent()) as GetContentCallback;
+        const editedNewContent = editedEvent?.getContent()['m.new_content'];
+        // If makeReplaced was called with a stripped edit (no m.new_content),
+        // mEvent.getContent() returns {}. Fall back to getOriginalContent() so
+        // the message renders with its original content instead of breaking.
+        const baseContent = mEvent.getContent();
+        const safeContent =
+          Object.keys(baseContent).length > 0 ? baseContent : mEvent.getOriginalContent();
+        const getContent = (() => editedNewContent ?? safeContent) as GetContentCallback;
 
         const senderId = mEvent.getSender() ?? '';
         const senderDisplayName =
@@ -1269,6 +1305,7 @@ export function RoomTimeline({
             senderDisplayName={senderDisplayName}
             sendStatus={mEvent.getAssociatedStatus()}
             onResend={handleResend}
+            onDeleteFailedSend={handleDeleteFailedSend}
             onEditId={handleEdit}
             activeReplyId={activeReplyId}
             reply={
@@ -1305,7 +1342,7 @@ export function RoomTimeline({
             ) : (
               <RenderMessageContent
                 displayName={senderDisplayName}
-                msgType={mEvent.getContent().msgtype ?? ''}
+                msgType={(editedNewContent ?? safeContent).msgtype ?? ''}
                 ts={mEvent.getTs()}
                 edited={!!editedEvent}
                 getContent={getContent}
@@ -1356,6 +1393,7 @@ export function RoomTimeline({
             senderDisplayName={senderDisplayName}
             sendStatus={mEvent.getAssociatedStatus()}
             onResend={handleResend}
+            onDeleteFailedSend={handleDeleteFailedSend}
             reply={
               replyEventId && (
                 <Reply
@@ -1404,14 +1442,16 @@ export function RoomTimeline({
                   );
                 if (mEvent.getType() === MessageEvent.RoomMessage) {
                   const editedEvent = getEditedEvent(mEventId, mEvent, timelineSet);
-                  const getContent = (() =>
-                    editedEvent?.getContent()['m.new_content'] ??
-                    mEvent.getContent()) as GetContentCallback;
+                  const editedNewContent = editedEvent?.getContent()['m.new_content'];
+                  const baseContent = mEvent.getContent();
+                  const safeContent =
+                    Object.keys(baseContent).length > 0 ? baseContent : mEvent.getOriginalContent();
+                  const getContent = (() => editedNewContent ?? safeContent) as GetContentCallback;
 
                   return (
                     <RenderMessageContent
                       displayName={senderDisplayName}
-                      msgType={mEvent.getContent().msgtype ?? ''}
+                      msgType={(editedNewContent ?? safeContent).msgtype ?? ''}
                       ts={mEvent.getTs()}
                       edited={!!editedEvent}
                       getContent={getContent}
@@ -1474,6 +1514,7 @@ export function RoomTimeline({
             senderDisplayName={senderDisplayName}
             sendStatus={mEvent.getAssociatedStatus()}
             onResend={handleResend}
+            onDeleteFailedSend={handleDeleteFailedSend}
             reply={
               replyEventId && (
                 <Reply

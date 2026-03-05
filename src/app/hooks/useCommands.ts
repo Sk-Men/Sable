@@ -30,6 +30,7 @@ import { splitWithSpace } from '$utils/common';
 import { useSetting } from '$state/hooks/settings';
 import { settingsAtom } from '$state/settings';
 import { createRoomEncryptionState } from '$components/create-room';
+import { parsePronounsInput } from '$utils/pronouns';
 import { useRoomNavigate } from './useRoomNavigate';
 import { enrichWidgetUrl } from './useRoomWidgets';
 
@@ -887,7 +888,7 @@ export const useCommands = (mx: MatrixClient, room: Room): CommandRecord => {
       [Command.Pronoun]: {
         name: Command.Pronoun,
         description:
-          'Set your pronouns for this room. Example: /pronoun "they/them, it/its" | /pronoun reset',
+          'Set your pronouns for this room. Example: /pronoun "en:they/them, de:sie/ihr" | /pronoun reset',
         exe: async (payload) => {
           const match = payload.trim().match(/^"(.*)"$/);
           const rawInput = match ? match[1].trim() : payload.trim();
@@ -916,11 +917,7 @@ export const useCommands = (mx: MatrixClient, room: Room): CommandRecord => {
               return;
             }
 
-            const pronounsArray = rawInput
-              .split(',')
-              .map((p) => p.trim())
-              .filter((p) => p.length > 0)
-              .map((p) => ({ summary: p }));
+            const pronounsArray = parsePronounsInput(rawInput);
 
             await mx.sendStateEvent(
               room.roomId,
@@ -928,7 +925,12 @@ export const useCommands = (mx: MatrixClient, room: Room): CommandRecord => {
               { pronouns: pronounsArray },
               userId
             );
-            sendFeedback(`Room pronouns set: ${rawInput}`);
+
+            const feedbackString = pronounsArray
+              .map((p) => (p.language ? `for ${p.language} "${p.summary}" was set` : p.summary))
+              .join(', ');
+
+            sendFeedback(`Room pronouns set: ${feedbackString}`);
           } catch (e: any) {
             if (e.errcode === 'M_FORBIDDEN') {
               sendFeedback('Permission Denied. Could not update room pronouns.');
@@ -939,7 +941,11 @@ export const useCommands = (mx: MatrixClient, room: Room): CommandRecord => {
       [Command.SPronoun]: {
         name: Command.SPronoun,
         description:
+<<<<<<< fix-naming-space-commands
           'Set your pronouns for this space. Example: /spronoun "they/them, it/its" | /spronoun reset',
+=======
+          'Set your global pronouns for this space. Example: /gpronoun "en:they/them, de:sie/ihr" | /gpronoun reset',
+>>>>>>> dev
         exe: async (payload) => {
           const match = payload.trim().match(/^"(.*)"$/);
           const rawInput = match ? match[1].trim() : payload.trim();
@@ -976,11 +982,7 @@ export const useCommands = (mx: MatrixClient, room: Room): CommandRecord => {
               return;
             }
 
-            const pronounsArray = rawInput
-              .split(',')
-              .map((p) => p.trim())
-              .filter((p) => p.length > 0)
-              .map((p) => ({ summary: p }));
+            const pronounsArray = parsePronounsInput(rawInput);
 
             await mx.sendStateEvent(
               targetSpaceId as any,
@@ -988,7 +990,12 @@ export const useCommands = (mx: MatrixClient, room: Room): CommandRecord => {
               { pronouns: pronounsArray },
               userId
             );
-            sendFeedback(`Global space pronouns set: ${rawInput}`);
+
+            const feedbackString = pronounsArray
+              .map((p) => (p.language ? `for ${p.language} "${p.summary}" was set` : p.summary))
+              .join(', ');
+
+            sendFeedback(`Global space pronouns set: ${feedbackString}`);
           } catch (e: any) {
             if (e.errcode === 'M_FORBIDDEN') {
               sendFeedback('Permission Denied. Could not update space pronouns.');
