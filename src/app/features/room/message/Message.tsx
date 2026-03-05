@@ -76,6 +76,7 @@ import { MessageReadReceiptItem } from '$components/message/modals/MessageReadRe
 import { MessageSourceCodeItem } from '$components/message/modals/MessageSource';
 import { MessageDeleteItem } from '$components/message/modals/MessageDelete';
 import { MessageReportItem } from '$components/message/modals/MessageReport';
+import { filterPronounsByLanguage } from '$utils/pronouns';
 import { MessageEditor } from './MessageEditor';
 import * as css from './styles.css';
 
@@ -260,25 +261,17 @@ const Pronouns = as<
 >(({ as: AsPronouns = 'span', pronouns, tagColor, ...props }, ref) => {
   if (!pronouns || pronouns.length === 0) return null;
 
-  const languageFilterEnabled = Boolean(getSettings().languageSpecificPronounsEnabled ?? false);
+  const languageFilterEnabled = Boolean(getSettings().filterPronounsBasedOnLanguage ?? false);
   // if no language is given use english
-  const selectedLanguages = (getSettings().languageSpecificPronounsLanguages ?? ['en'])
+  const selectedLanguages = (getSettings().filterPronounsLanguages ?? ['en'])
     .map((lang) => lang.trim().toLowerCase())
     .filter(Boolean);
 
-  const visiblePronouns = languageFilterEnabled
-    ? pronouns.filter((p) => {
-        const lang = String(p?.language ?? 'en')
-          .trim()
-          .toLowerCase();
-        return selectedLanguages.some(
-          (selected) =>
-            lang === selected ||
-            lang.startsWith(`${selected}-`) || // e.g. en-US matches en
-            selected.startsWith(`${lang}-`) // e.g. en matches en-US (if reversed)
-        );
-      })
-    : pronouns;
+  const visiblePronouns = filterPronounsByLanguage(
+    pronouns,
+    languageFilterEnabled,
+    selectedLanguages
+  );
 
   const clamp = (str: string, len: number) => (str.length > len ? `${str.slice(0, len)}...` : str);
   const limit = mobileOrTablet() ? 1 : 3;

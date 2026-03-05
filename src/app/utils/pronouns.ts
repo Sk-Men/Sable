@@ -9,3 +9,20 @@ export function parsePronounsInput(pronouns: string): { summary: string; languag
       return { summary: summary.slice(0, 16), language: language || 'en' };
     });
 }
+
+// helper function to filter a list of pronouns based on the user's language settings
+export function filterPronounsByLanguage(
+  pronouns: { summary: string; language?: string }[],
+  enabled: boolean,
+  languages: string[]
+): { summary: string; language?: string }[] {
+  if (!enabled) return pronouns;
+  const normalizedLanguages = languages.map((lang) => lang.trim().toLowerCase());
+  const filteredPronouns = pronouns.filter((p) =>
+    normalizedLanguages.includes((p.language || 'en').trim().toLowerCase())
+  );
+  if (filteredPronouns.length === 0) {
+    return pronouns;
+  }
+  return filteredPronouns;
+}

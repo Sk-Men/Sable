@@ -41,8 +41,8 @@ export function LanguageSpecificPronouns() {
     const currentSettings = getSettings();
     setSettings({
       ...currentSettings,
-      languageSpecificPronounsEnabled: enabled,
-      languageSpecificPronounsLanguages: splitAndTrimLanguages(languages),
+      filterPronounsBasedOnLanguage: enabled,
+      filterPronounsLanguages: splitAndTrimLanguages(languages),
     });
   };
 
@@ -51,19 +51,19 @@ export function LanguageSpecificPronouns() {
     const val = e.target.value.trim();
     setLanguageList(val);
     // save the new language list to the client config, keeping the enabled state unchanged
-    handleSave(getSettings().languageSpecificPronounsEnabled ?? false, val);
+    handleSave(getSettings().filterPronounsBasedOnLanguage ?? false, val);
   };
 
   useEffect(() => {
     setEnabled(
-      resolveLanguageSpecificPronounsEnabled(getSettings().languageSpecificPronounsEnabled ?? false)
+      resolveLanguageSpecificPronounsEnabled(getSettings().filterPronounsBasedOnLanguage ?? false)
     );
-    setLanguageList(getSettings().languageSpecificPronounsLanguages?.join(',') || '');
+    setLanguageList(getSettings().filterPronounsLanguages?.join(',') || '');
   }, []);
 
   // handler for toggling the enabled state of language specific pronouns
   const handleSetEnabled = (enabled: boolean) => {
-    handleSave(enabled, getSettings().languageSpecificPronounsLanguages?.join(',') || '');
+    handleSave(enabled, getSettings().filterPronounsLanguages?.join(',') || '');
     setEnabled(enabled);
   };
 
