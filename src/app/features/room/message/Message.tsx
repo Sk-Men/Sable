@@ -50,7 +50,7 @@ import {
 } from '$components/message';
 import { canEditEvent, getMemberAvatarMxc } from '$utils/room';
 import { mxcUrlToHttp } from '$utils/matrix';
-import { MessageLayout, MessageSpacing, settingsAtom } from '$state/settings';
+import { getSettings, MessageLayout, MessageSpacing, settingsAtom } from '$state/settings';
 import { nicknamesAtom, setNicknameAtom } from '$state/nicknames';
 import { useMatrixClient } from '$hooks/useMatrixClient';
 import { useRecentEmoji } from '$hooks/useRecentEmoji';
@@ -78,6 +78,7 @@ import { MessageDeleteItem } from '$components/message/modals/MessageDelete';
 import { MessageReportItem } from '$components/message/modals/MessageReport';
 import { MessageEditor } from './MessageEditor';
 import * as css from './styles.css';
+import { useClientConfig } from '$hooks/useClientConfig';
 
 export type ReactionHandler = (keyOrMxc: string, shortcode: string) => void;
 
@@ -260,17 +261,42 @@ const Pronouns = as<
 >(({ as: AsPronouns = 'span', pronouns, tagColor, ...props }, ref) => {
   if (!pronouns || pronouns.length === 0) return null;
 
+  const languageFilterEnabled = Boolean(getSettings().languageSpecificPronounsEnabled ?? false);
+  // if no language is given use english
+  const selectedLanguages = (getSettings().languageSpecificPronounsLanguages ?? ['en'])
+    .map((lang) => lang.trim().toLowerCase())
+    .filter(Boolean);
+
+  const visiblePronouns = languageFilterEnabled
+    ? pronouns.filter((p) => {
+        const lang = String(p?.language ?? 'en')
+          .trim()
+          .toLowerCase();
+        return selectedLanguages.some(
+          (selected) =>
+            lang === selected ||
+            lang.startsWith(`${selected}-`) || // e.g. en-US matches en
+            selected.startsWith(`${lang}-`) // e.g. en matches en-US (if reversed)
+        );
+      })
+    : pronouns;
+
   const clamp = (str: string, len: number) => (str.length > len ? `${str.slice(0, len)}...` : str);
   const limit = mobileOrTablet() ? 1 : 3;
 
+  // if language specific pronouns can't be found matching the filter return unfiltered
+  if (visiblePronouns.length === 0) {
+    visiblePronouns.push(...pronouns);
+  }
+
   return (
     <AsPronouns {...props} ref={ref}>
-      {pronouns.slice(0, limit).map((p) => (
+      {visiblePronouns.slice(0, limit).map((p) => (
         <PronounPill key={p.summary} style={{ color: tagColor }}>
           {clamp(p.summary, 16)}
         </PronounPill>
       ))}
-      {pronouns.length > limit && <PronounPill style={{ color: tagColor }}>...</PronounPill>}
+      {visiblePronouns.length > limit && <PronounPill style={{ color: tagColor }}>...</PronounPill>}
     </AsPronouns>
   );
 });

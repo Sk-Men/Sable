@@ -31,6 +31,7 @@ function splitAndTrimLanguages(languages: string): string[] {
     .filter((lang) => lang.length > 0);
 }
 
+// MSC4247 allows users to set pronouns in different languages
 export function LanguageSpecificPronouns() {
   const [useLanguageSpecificPronouns, setEnabled] = useState(false);
   const [languageList, setLanguageList] = useState('');
@@ -77,7 +78,7 @@ export function LanguageSpecificPronouns() {
       >
         <SettingTile
           title="Show pronouns only in selected language"
-          description="If enabled, pronouns are only shown when they match your selected language. This helps if your contacts set pronouns in different languages. However many clients don't offer to set language specific pronouns. It doesn't affect how your pronouns are shared with others."
+          description="If enabled, pronouns are only shown when they match your selected language. This helps if your contacts set pronouns in different languages. It doesn't affect how your pronouns are shared with others."
           after={
             <Switch
               variant="Primary"
@@ -89,7 +90,7 @@ export function LanguageSpecificPronouns() {
         {useLanguageSpecificPronouns && (
           <SettingTile
             title="Selected language for pronouns"
-            description="The language to show pronouns for when the above setting is enabled. It's recommended to include English because many clients set it to english no matter the actual language of the pronouns."
+            description="The language to show pronouns for when the above setting is enabled."
             after={
               <Input
                 value={languageList}
