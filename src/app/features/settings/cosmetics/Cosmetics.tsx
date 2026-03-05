@@ -173,7 +173,6 @@ function IdentityCosmetics() {
   const [renderRoomFonts, setRenderRoomFonts] = useSetting(settingsAtom, 'renderRoomFonts');
   const [uniformIcons, setUniformIcons] = useSetting(settingsAtom, 'uniformIcons');
   const [rightBubbles, setRightBubbles] = useSetting(settingsAtom, 'useRightBubbles');
-  const [showUnreadCounts, setShowUnreadCounts] = useSetting(settingsAtom, 'showUnreadCounts');
 
   return (
     <Box direction="Column" gap="100">
