@@ -147,8 +147,65 @@ export function Cosmetics({ requestClose }: CosmeticsProps) {
                   />
                 </SequenceCard>
               </Box>
-
-              {/* --- COMMAND REFERENCE SECTION --- */}
+              <Box direction="Column" gap="100">
+                <Text size="L400">Profile</Text>
+                <SequenceCard
+                  className={SequenceCardStyle}
+                  variant="SurfaceVariant"
+                  direction="Column"
+                  gap="400"
+                >
+                  <SettingTile
+                    title="Avatar"
+                    description="Placeholder. This is a work in progress still!"
+                  />
+                </SequenceCard>
+                <SequenceCard
+                  className={SequenceCardStyle}
+                  variant="SurfaceVariant"
+                  direction="Column"
+                  gap="400"
+                >
+                  <SettingTile
+                    title="Nickname"
+                    description="Placeholder. This is a work in progress still!"
+                  />
+                </SequenceCard>
+                <SequenceCard
+                  className={SequenceCardStyle}
+                  variant="SurfaceVariant"
+                  direction="Column"
+                  gap="400"
+                >
+                  <SettingTile
+                    title="Color"
+                    description='Placeholder. This is a work in progress still!'
+                  />
+                </SequenceCard>
+                <SequenceCard
+                  className={SequenceCardStyle}
+                  variant="SurfaceVariant"
+                  direction="Column"
+                  gap="400"
+                >
+                  <SettingTile
+                    title="Pronouns"
+                    description="Placeholder. This is a work in progress still!"
+                  />
+                </SequenceCard>
+                <SequenceCard
+                  className={SequenceCardStyle}
+                  variant="SurfaceVariant"
+                  direction="Column"
+                  gap="400"
+                >
+                  <SettingTile
+                    title="Font"
+                    description="Placeholder. This is a work in progress still!"
+                  />
+                </SequenceCard>
+              </Box>
+              {/* }
               <Box direction="Column" gap="100">
                 <Text size="L400">Commands</Text>
                 <SequenceCard
@@ -196,6 +253,7 @@ export function Cosmetics({ requestClose }: CosmeticsProps) {
                   />
                 </SequenceCard>
               </Box>
+              { */}
             </Box>
           </PageContent>
         </Scroll>
