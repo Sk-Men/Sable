@@ -899,11 +899,18 @@ export function RoomTimeline({
     )
   );
 
+  // Keep a stable ref so timeline state updates (new messages arriving) don't
+  // cause handleOpenEvent to rebuild and re-trigger this effect, yanking the
+  // user back to the notification event on every incoming message.
+  // We only want to scroll once per unique eventId value.
+  const handleOpenEventRef = useRef(handleOpenEvent);
+  handleOpenEventRef.current = handleOpenEvent;
+
   useEffect(() => {
     if (eventId) {
-      handleOpenEvent(eventId);
+      handleOpenEventRef.current(eventId);
     }
-  }, [eventId, handleOpenEvent]);
+  }, [eventId]); // handleOpenEvent intentionally omitted — use ref above
 
   // Scroll to bottom on initial timeline load
   useLayoutEffect(() => {

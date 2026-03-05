@@ -1,43 +1,35 @@
-import { useEffect, useState, useCallback } from 'react';
-import { useParams } from 'react-router-dom';
-import { useAtomValue } from 'jotai';
-import { SyncState } from '$types/matrix-sdk';
+import { useEffect } from 'react';
+import { useParams, useSearchParams } from 'react-router-dom';
+import { useSetAtom } from 'jotai';
+import { activeSessionIdAtom, pendingNotificationAtom } from '$state/sessions';
 
-import { useRoomNavigate } from '../../hooks/useRoomNavigate';
-import { useMatrixClient } from '../../hooks/useMatrixClient';
-import { useSyncState } from '../../hooks/useSyncState';
-import { roomToParentsAtom } from '../../state/room/roomToParents';
-import { mDirectAtom } from '../../state/mDirectList';
-
+// ToRoomEvent handles the /to/:room_id/:event_id route used by the SW when it
+// opens a new window for a push notification (killed-app case) OR by client.navigate()
+// on iOS where postMessage is unreliable after focus().
+//
+// It does NOT navigate itself. Instead it writes to pendingNotificationAtom so
+// that NotificationJumper handles the actual navigation once the correct client
+// is synced. This survives the ClientRoot account-switch reload that happens when
+// setActiveSessionId() changes the active session: ToRoomEvent unmounts as soon
+// as ClientRoot calls navigate(getHomePath()), but the atom value persists and
+// NotificationJumper picks it up once the new client is ready.
 export function ToRoomEvent() {
-  const mx = useMatrixClient();
-  const roomToParents = useAtomValue(roomToParentsAtom);
-  const mDirects = useAtomValue(mDirectAtom);
   const { room_id: roomId, event_id: eventId } = useParams();
-  const { navigateRoom } = useRoomNavigate();
-  const [syncState, setSyncState] = useState<SyncState | null>(mx?.getSyncState() ?? null);
-
-  useSyncState(
-    mx,
-    useCallback((s) => setSyncState(s), [])
-  );
+  const [searchParams] = useSearchParams();
+  const targetUserId = searchParams.get('uid') ?? undefined;
+  const setActiveSessionId = useSetAtom(activeSessionIdAtom);
+  const setPending = useSetAtom(pendingNotificationAtom);
 
   useEffect(() => {
-    if (!roomId || !mx) {
-      return;
-    }
-    if (syncState !== SyncState.Syncing) {
-      return;
-    }
-    if (!roomToParents.size || !mDirects.size) {
-      return;
-    }
-
+    if (!roomId) return;
+    const rid = roomId; // narrowed to string
+    if (targetUserId) setActiveSessionId(targetUserId);
+    setPending({ roomId: rid, eventId, targetSessionId: targetUserId });
+    // Push a clean entry onto history so the back button doesn't return to /to/…
     if (window.history.length <= 2) {
       window.history.pushState({}, '', '/');
     }
-    navigateRoom(roomId, eventId);
-  }, [mx, syncState, roomToParents, mDirects, roomId, eventId, navigateRoom]);
+  }, [roomId, eventId, targetUserId, setActiveSessionId, setPending]);
 
   return null;
 }
