@@ -67,6 +67,7 @@ export interface Settings {
   rightSwipeAction: RightSwipeAction;
   hideMembershipInReadOnly: boolean;
   useRightBubbles: boolean;
+  showUnreadCounts: boolean;
 }
 
 const defaultSettings: Settings = {
@@ -120,6 +121,7 @@ const defaultSettings: Settings = {
   rightSwipeAction: RightSwipeAction.Reply,
   hideMembershipInReadOnly: true,
   useRightBubbles: false,
+  showUnreadCounts: true,
 };
 
 export const getSettings = () => {
