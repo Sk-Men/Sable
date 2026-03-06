@@ -27,7 +27,11 @@ export const useRoomName = (room: Room): string => {
         room.recalculate();
       }
 
-      const nextName = dmNickname ?? room.name;
+      // small room = dm i promise trust
+      const memberCount = room.getJoinedMemberCount();
+      const isSmallRoom = memberCount <= 2;
+
+      const nextName = isSmallRoom && dmNickname ? dmNickname : room.name;
       setName((prev) => (prev !== nextName ? nextName : prev));
     };
 
