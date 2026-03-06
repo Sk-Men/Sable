@@ -423,7 +423,7 @@ type ClientNonUIFeaturesProps = {
   children: ReactNode;
 };
 
-function ServiceWorkerClickHandler() {
+export function HandleNotificationClick() {
   const setPending = useSetAtom(pendingNotificationAtom);
   const setActiveSessionId = useSetAtom(activeSessionIdAtom);
   const navigate = useNavigate();
@@ -522,7 +522,6 @@ export function ClientNonUIFeatures({ children }: ClientNonUIFeaturesProps) {
       <MessageNotifications />
       <BackgroundNotifications />
       <SyncNotificationSettingsWithServiceWorker />
-      <ServiceWorkerClickHandler />
       <NotificationBanner />
       {children}
     </>
