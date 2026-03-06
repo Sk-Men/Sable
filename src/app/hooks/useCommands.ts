@@ -33,6 +33,7 @@ import { createRoomEncryptionState } from '$components/create-room';
 import { parsePronounsInput } from '$utils/pronouns';
 import { useRoomNavigate } from './useRoomNavigate';
 import { enrichWidgetUrl } from './useRoomWidgets';
+import { useUserProfile } from './useUserProfile';
 
 export const SHRUG = '¯\\_(ツ)_/¯';
 export const TABLEFLIP = '(╯°□°)╯︵ ┻━┻';
@@ -253,6 +254,7 @@ export type CommandRecord = Record<Command, CommandContent>;
 export const useCommands = (mx: MatrixClient, room: Room): CommandRecord => {
   const { navigateRoom } = useRoomNavigate();
   const [developerTools] = useSetting(settingsAtom, 'developerTools');
+  const profile = useUserProfile(mx.getSafeUserId());
 
   const commands: CommandRecord = useMemo(
     () => ({
@@ -439,8 +441,8 @@ export const useCommands = (mx: MatrixClient, room: Room): CommandRecord => {
         name: Command.MyRoomNick,
         description: 'Change nick in current room.',
         exe: async (payload) => {
-          const nick = payload.trim();
-          if (nick === '') return;
+          let nick: string | null = payload.trim();
+          if (nick === '') nick = profile.displayName ?? null;
           const mEvent = room
             .getLiveTimeline()
             .getState(EventTimeline.FORWARDS)
@@ -1288,7 +1290,7 @@ export const useCommands = (mx: MatrixClient, room: Room): CommandRecord => {
         },
       },
     }),
-    [mx, room, navigateRoom, developerTools]
+    [mx, navigateRoom, room, profile.displayName, profile.avatarUrl, developerTools]
   );
 
   return commands;
