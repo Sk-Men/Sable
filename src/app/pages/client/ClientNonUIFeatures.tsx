@@ -299,7 +299,7 @@ function MessageNotifications() {
 
       // Page is visible — show the themed in-app notification banner for any
       // highlighted message (mention / keyword) or loud push rule.
-      if ((isHighlightByRule || loudByRule) && showNotifications) {
+      if (mobileOrTablet() && (isHighlightByRule || loudByRule) && showNotifications) {
         const isEncryptedRoom = !!getStateEvent(room, StateEvent.RoomEncryption);
         const avatarMxc =
           room.getAvatarFallbackMember()?.getMxcAvatarUrl() ?? room.getMxcAvatarUrl();
