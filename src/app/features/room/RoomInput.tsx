@@ -298,25 +298,30 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
       format: replyFormat,
     } = replyEvent?.getContent() ?? {};
 
+    // Prefer the live event content; fall back to what was snapshotted in the
+    // draft when the user hit Reply (the event may not be in SDK state if it
+    // was redacted or evicted, but the draft always carries the original body).
+    const htmlBody =
+      replyFormat === 'org.matrix.custom.html' ? replyFormattedBody : replyDraft?.formattedBody;
+    const plainBody = replyBody ?? replyDraft?.body;
+
     let replyBodyJSX: ReactNode = replyDraft ? trimReplyFromBody(replyDraft.body) : null;
 
-    if (replyFormat === 'org.matrix.custom.html' && replyFormattedBody) {
-      const strippedHtml = trimReplyFromFormattedBody(replyFormattedBody)
+    if (htmlBody) {
+      const strippedHtml = trimReplyFromFormattedBody(htmlBody)
         .replace(/<br\s*\/?>/gi, ' ')
         .replace(/<\/p>\s*<p[^>]*>/gi, ' ')
         .replace(/<\/?p[^>]*>/gi, '')
         .replace(/(?:\r\n|\r|\n)/g, ' ');
       const parserOpts = getReactCustomHtmlParser(mx, roomId, {
         linkifyOpts: LINKIFY_OPTS,
+        useAuthentication,
         nicknames,
       });
       replyBodyJSX = parse(strippedHtml, parserOpts);
-    } else if (replyBody) {
-      const strippedBody = trimReplyFromBody(replyBody).replace(/(?:\r\n|\r|\n)/g, ' ');
-      replyBodyJSX = scaleSystemEmoji(trimReplyFromBody(strippedBody));
-    } else if (replyDraft) {
-      const strippedBody = trimReplyFromBody(replyDraft.body).replace(/(?:\r\n|\r|\n)/g, ' ');
-      replyBodyJSX = scaleSystemEmoji(trimReplyFromBody(strippedBody));
+    } else if (plainBody) {
+      const strippedBody = trimReplyFromBody(plainBody).replace(/(?:\r\n|\r|\n)/g, ' ');
+      replyBodyJSX = scaleSystemEmoji(strippedBody);
     }
 
     useEffect(() => {
