@@ -42,8 +42,6 @@ export function Experimental({ requestClose }: ExperimentalProps) {
             <br />
             <Box direction="Column" gap="700">
               <Sync />
-            </Box>
-            <Box direction="Column" gap="700">
               <LanguageSpecificPronouns />
             </Box>
           </PageContent>
