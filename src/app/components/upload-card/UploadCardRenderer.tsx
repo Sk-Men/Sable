@@ -227,12 +227,12 @@ export function UploadCardRenderer({
             <Tooltip
               style={{
                 maxHeight: toRem(105),
+                overflow: 'scroll',
               }}
             >
               <Text
                 size="T200"
                 style={{
-                  overflow: 'scroll',
                   height: '100%',
                   wordBreak: 'break-word',
                 }}
