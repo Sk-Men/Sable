@@ -464,23 +464,29 @@ export const useCommands = (mx: MatrixClient, room: Room): CommandRecord => {
         name: Command.MyRoomAvatar,
         description: 'Change profile picture in current room. Example /myroomavatar mxc://xyzabc',
         exe: async (payload) => {
-          if (payload.match(/^mxc:\/\/\S+$/)) {
-            const mEvent = room
-              .getLiveTimeline()
-              .getState(EventTimeline.FORWARDS)
-              ?.getStateEvents(StateEvent.RoomMember, mx.getSafeUserId());
-            const content = mEvent?.getContent();
-            if (!content) return;
-            await mx.sendStateEvent(
-              room.roomId,
-              StateEvent.RoomMember as any,
-              {
-                ...content,
-                avatar_url: payload,
-              },
-              mx.getSafeUserId()
-            );
+          let newAvatar: string | undefined = payload.trim();
+          if (newAvatar.length === 0) {
+            // no avatar, reset to global
+            newAvatar = profile.avatarUrl;
+          } else if (!newAvatar.match(/^mxc:\/\/\S+$/)) {
+            // bad mxc
+            return;
           }
+          const mEvent = room
+            .getLiveTimeline()
+            .getState(EventTimeline.FORWARDS)
+            ?.getStateEvents(StateEvent.RoomMember, mx.getSafeUserId());
+          const content = mEvent?.getContent();
+          if (!content) return;
+          await mx.sendStateEvent(
+            room.roomId,
+            StateEvent.RoomMember as any,
+            {
+              ...content,
+              avatar_url: newAvatar,
+            },
+            mx.getSafeUserId()
+          );
         },
       },
       [Command.ConvertToDm]: {

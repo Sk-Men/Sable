@@ -2,4 +2,4 @@
 sable: patch
 ---
 
-Executing /myroomnick without a new nickname now removes the nickname.
+Executing /myroomnick or /myroomavatar without a new nickname/avatar now removes the nickname/avatar.
