@@ -46,6 +46,17 @@ const resolveBuildHash = (): string | undefined => {
 const appVersion = packageJson.version;
 const buildHash = resolveBuildHash();
 
+const isReleaseTag = (() => {
+  const envVal = process.env.VITE_IS_RELEASE_TAG;
+  if (envVal !== undefined && envVal !== '') return envVal === 'true';
+  try {
+    const tag = execSync('git describe --exact-match --tags HEAD 2>/dev/null').toString().trim();
+    return tag.startsWith('sable/v');
+  } catch {
+    return false;
+  }
+})();
+
 const copyFiles = {
   targets: [
     {
@@ -112,6 +123,7 @@ export default defineConfig({
   define: {
     APP_VERSION: JSON.stringify(appVersion),
     BUILD_HASH: JSON.stringify(buildHash ?? ''),
+    IS_RELEASE_TAG: JSON.stringify(isReleaseTag),
   },
   resolve: {
     alias: {

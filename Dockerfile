@@ -4,7 +4,9 @@ FROM --platform=$BUILDPLATFORM node:24.13.1-alpine AS builder
 WORKDIR /src
 
 ARG VITE_BUILD_HASH
+ARG VITE_IS_RELEASE_TAG=false
 ENV VITE_BUILD_HASH=$VITE_BUILD_HASH
+ENV VITE_IS_RELEASE_TAG=$VITE_IS_RELEASE_TAG
 
 COPY .npmrc package.json package-lock.json /src/
 RUN npm ci --ignore-scripts
