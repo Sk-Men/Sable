@@ -16,6 +16,7 @@ import { notificationPermission, setFavicon } from '$utils/dom';
 import { useSetting } from '$state/hooks/settings';
 import { settingsAtom } from '$state/settings';
 import { nicknamesAtom } from '$state/nicknames';
+import { mDirectAtom } from '$state/mDirectList';
 import { allInvitesAtom } from '$state/room-list/inviteList';
 import { usePreviousValue } from '$hooks/usePreviousValue';
 import { useMatrixClient } from '$hooks/useMatrixClient';
@@ -217,6 +218,9 @@ function MessageNotifications() {
   const nicknames = useAtomValue(nicknamesAtom);
   const nicknamesRef = useRef(nicknames);
   nicknamesRef.current = nicknames;
+  const mDirects = useAtomValue(mDirectAtom);
+  const mDirectsRef = useRef(mDirects);
+  mDirectsRef.current = mDirects;
 
   const setPending = useSetAtom(pendingNotificationAtom);
   const setInAppBanner = useSetAtom(inAppBannerAtom);
@@ -283,9 +287,10 @@ function MessageNotifications() {
       if (!pushActions?.notify) return;
       const loudByRule = Boolean(pushActions.tweaks?.sound);
       const isHighlightByRule = Boolean(pushActions.tweaks?.highlight);
+      const isDM = mDirectsRef.current.has(room.roomId);
 
-      // If neither a loud nor a highlight rule matches, nothing to show.
-      if (!isHighlightByRule && !loudByRule) return;
+      // If neither a loud nor a highlight rule matches, and it's not a DM, nothing to show.
+      if (!isHighlightByRule && !loudByRule && !isDM) return;
 
       // Page hidden: SW (push) handles the OS notification. Nothing to do in-app.
       if (document.visibilityState !== 'visible') return;
@@ -299,7 +304,7 @@ function MessageNotifications() {
 
       // Page is visible — show the themed in-app notification banner for any
       // highlighted message (mention / keyword) or loud push rule.
-      if (mobileOrTablet() && (isHighlightByRule || loudByRule) && showNotifications) {
+      if (showNotifications && (isHighlightByRule || loudByRule || isDM)) {
         const isEncryptedRoom = !!getStateEvent(room, StateEvent.RoomEncryption);
         const avatarMxc =
           room.getAvatarFallbackMember()?.getMxcAvatarUrl() ?? room.getMxcAvatarUrl();

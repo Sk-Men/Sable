@@ -107,11 +107,10 @@ const defaultSettings: Settings = {
   legacyUsernameColor: false,
 
   // Push notifications (SW/Sygnal): default on for mobile, opt-in on desktop.
-  // In-app pill banner: always on — it's the primary foreground alert on mobile
-  // and a useful secondary alert on desktop.
+  // In-app pill banner: default on for mobile (primary foreground alert), opt-in on desktop.
   // System (OS) notifications: desktop-only; hidden and disabled on mobile.
   usePushNotifications: mobileOrTablet(),
-  useInAppNotifications: true,
+  useInAppNotifications: mobileOrTablet(),
   useSystemNotifications: !mobileOrTablet(),
   isNotificationSounds: true,
   showMessageContentInNotifications: false,
