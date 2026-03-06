@@ -75,6 +75,7 @@ import { useBlobCache } from '$hooks/useBlobCache';
 import { MessageAllReactionItem } from '$components/message/modals/MessageReactions';
 import { MessageReadReceiptItem } from '$components/message/modals/MessageReadRecipts';
 import { MessageSourceCodeItem } from '$components/message/modals/MessageSource';
+import { MessageForwardItem } from '$components/message/modals/MessageForward';
 import { MessageDeleteItem } from '$components/message/modals/MessageDelete';
 import { MessageReportItem } from '$components/message/modals/MessageReport';
 import { filterPronounsByLanguage } from '$utils/pronouns';
@@ -150,34 +151,6 @@ export const MessageCopyLinkItem = as<
     >
       <Text className={css.MessageMenuItemText} as="span" size="T300" truncate>
         Copy Link
-      </Text>
-    </MenuItem>
-  );
-});
-
-// MessageForwardItem is for forwarding a message to another room
-export const MessageForwardItem = as<
-  'button',
-  {
-    room: Room;
-    mEvent: MatrixEvent;
-    onClose?: () => void;
-  }
->(({ room, mEvent, onClose, ...props }, ref) => {
-  const mx = useMatrixClient();
-
-  // TODO: replace icon
-  return (
-    <MenuItem
-      size="300"
-      after={<Icon size="100" src={Icons.Pin} />}
-      radii="300"
-      onClick={handleForward}
-      {...props}
-      ref={ref}
-    >
-      <Text className={css.MessageMenuItemText} as="span" size="T300" truncate>
-        Forward Message
       </Text>
     </MenuItem>
   );
