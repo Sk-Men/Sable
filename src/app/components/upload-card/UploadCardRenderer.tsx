@@ -1,5 +1,5 @@
 import { ReactNode, useEffect, useState } from 'react';
-import { Box, Chip, Icon, IconButton, Icons, Text, color, config, toRem } from 'folds';
+import { Box, Chip, Icon, IconButton, Icons, Text, Tooltip, color, config, toRem } from 'folds';
 import { UploadStatus, UploadSuccess, useBindUploadAtom } from '$state/upload';
 import { useMatrixClient } from '$hooks/useMatrixClient';
 import { TUploadContent } from '$utils/matrix';
@@ -216,11 +216,30 @@ export function UploadCardRenderer({
           )}
           {isDescribed && (
             <DescriptionEditor
-              value={fileItem.formatted_body || fileItem.body || fileItem.file.name || ''}
-              onSave={(htmlBio) => {
-                setDesc(fileItem, htmlBio, htmlBio);
+              value={fileItem.formatted_body || fileItem.body}
+              onSave={(plainText, htmlContent) => {
+                setDesc(fileItem, plainText, htmlContent);
+                setIsDescribed(false);
               }}
             />
+          )}
+          {!isDescribed && fileItem.body && fileItem.body.length > 0 && (
+            <Tooltip
+              style={{
+                maxHeight: toRem(105),
+              }}
+            >
+              <Text
+                size="T200"
+                style={{
+                  overflow: 'scroll',
+                  height: '100%',
+                  wordBreak: 'break-word',
+                }}
+              >
+                {fileItem.body}
+              </Text>
+            </Tooltip>
           )}
         </>
       }

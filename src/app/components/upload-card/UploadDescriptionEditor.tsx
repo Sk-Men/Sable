@@ -39,14 +39,19 @@ import { EmojiBoard } from '$components/emoji-board';
 import { mobileOrTablet } from '$utils/user-agent';
 import * as css from './UploadDescriptionEditor.css';
 
-type BioEditorProps = {
+type DescriptionEditorProps = {
   value?: string | any;
   isSaving?: boolean;
   imagePackRooms?: any[];
-  onSave: (htmlContent: string) => void;
+  onSave: (plaintext: string, htmlContent: string) => void;
 };
 
-export function DescriptionEditor({ value, isSaving, imagePackRooms, onSave }: BioEditorProps) {
+export function DescriptionEditor({
+  value,
+  isSaving,
+  imagePackRooms,
+  onSave,
+}: DescriptionEditorProps) {
   const editor = useEditor();
   const [enterForNewline] = useSetting(settingsAtom, 'enterForNewline');
   const [isMarkdown] = useSetting(settingsAtom, 'isMarkdown');
@@ -54,7 +59,6 @@ export function DescriptionEditor({ value, isSaving, imagePackRooms, onSave }: B
 
   const [autocompleteQuery, setAutocompleteQuery] =
     useState<AutocompleteQuery<AutocompletePrefix>>();
-  const [hasChanged, setHasChanged] = useState(false);
 
   const prevValue = useRef(value);
   const initialized = useRef(false);
@@ -69,8 +73,7 @@ export function DescriptionEditor({ value, isSaving, imagePackRooms, onSave }: B
       })
     );
 
-    onSave(customHtml || plainText);
-    setHasChanged(false);
+    onSave(plainText, customHtml || plainText);
   }, [editor, isMarkdown, onSave]);
 
   useEffect(() => {
@@ -109,7 +112,6 @@ export function DescriptionEditor({ value, isSaving, imagePackRooms, onSave }: B
       Transforms.select(editor, Editor.start(editor, []));
 
       initialized.current = true;
-      setHasChanged(false);
     }
   }, [value, editor, isMarkdown]);
 
@@ -146,12 +148,15 @@ export function DescriptionEditor({ value, isSaving, imagePackRooms, onSave }: B
   const handleEmoticonSelect = (key: string, shortcode: string) => {
     editor.insertNode(createEmoticonElement(key, shortcode));
     moveCursor(editor);
-    setHasChanged(true);
   };
 
   return (
     <Box direction="Column" gap="100">
-      <Box className={css.BioEditorContainer} direction="Column" style={{ position: 'relative' }}>
+      <Box
+        className={css.DescriptionEditorContainer}
+        direction="Column"
+        style={{ position: 'relative' }}
+      >
         {autocompleteQuery?.prefix === AutocompletePrefix.Emoticon && (
           <EmoticonAutocomplete
             imagePackRooms={imagePackRooms || []}
@@ -176,19 +181,17 @@ export function DescriptionEditor({ value, isSaving, imagePackRooms, onSave }: B
                 gap="100"
               >
                 <Box gap="200" alignItems="Center">
-                  {hasChanged && (
-                    <Chip
-                      onClick={handleSave}
-                      variant="Primary"
-                      radii="Pill"
-                      outlined
-                      before={
-                        isSaving ? <Spinner variant="Primary" fill="Soft" size="100" /> : undefined
-                      }
-                    >
-                      <Text size="B300">{isSaving ? 'Saving' : 'Save'}</Text>
-                    </Chip>
-                  )}
+                  <Chip
+                    onClick={handleSave}
+                    variant="Primary"
+                    radii="Pill"
+                    outlined
+                    before={
+                      isSaving ? <Spinner variant="Primary" fill="Soft" size="100" /> : undefined
+                    }
+                  >
+                    <Text size="B300">{isSaving ? 'Saving' : 'Save'}</Text>
+                  </Chip>
                 </Box>
                 <Box gap="Inherit">
                   <IconButton
