@@ -110,10 +110,17 @@ export const BannerRoomName = style({
 });
 
 // Caps tall previews and fades the bottom edge when content overflows.
+// Desktop: 25vh, mobile (≤768px): 35vh.
 export const BannerBody = style({
   position: 'relative',
-  maxHeight: toRem(56),
+  maxHeight: '25vh',
   overflow: 'hidden',
+
+  '@media': {
+    '(max-width: 768px)': {
+      maxHeight: '35vh',
+    },
+  },
 
   selectors: {
     '&[data-overflow=true]::after': {

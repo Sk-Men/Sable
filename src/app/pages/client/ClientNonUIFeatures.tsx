@@ -2,6 +2,9 @@ import { useAtomValue, useSetAtom } from 'jotai';
 import { ReactNode, useCallback, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { PushProcessor, RoomEvent, RoomEventHandlerMap } from '$types/matrix-sdk';
+import parse from 'html-react-parser';
+import { getReactCustomHtmlParser, LINKIFY_OPTS } from '$plugins/react-custom-html-parser';
+import { sanitizeCustomHtml } from '$utils/sanitize';
 import { roomToUnreadAtom } from '$state/room/roomToUnread';
 import LogoSVG from '$public/res/svg/cinny.svg';
 import { NotificationBanner } from '$components/notification-banner';
@@ -251,6 +254,13 @@ function MessageNotifications() {
         (mEvent.getTs() < clientStartTimeRef.current - 60 * 1000 ||
           (!!room && room.hasUserReadEvent(mx.getSafeUserId(), mEvent.getId()!)));
 
+      // m.room.encrypted events haven't been decrypted yet; the SDK will
+      // re-emit the event after decryption with the real type and content.
+      // Without this guard we'd add the eventId to notifiedEventsRef here,
+      // causing the decrypted re-emission to be deduped — showing
+      // "Encrypted Message" instead of the actual content.
+      if (mEvent.getType() === 'm.room.encrypted') return;
+
       if (
         !room ||
         isHistoricalEvent ||
@@ -300,6 +310,7 @@ function MessageNotifications() {
           getMemberDisplayName(room, sender, nicknamesRef.current) ??
           getMxIdLocalPart(sender) ??
           sender;
+        const content = mEvent.getContent();
         const previewText = resolveNotificationPreviewText({
           content: mEvent.getContent(),
           eventType: mEvent.getType(),
@@ -307,6 +318,25 @@ function MessageNotifications() {
           showMessageContent,
           showEncryptedMessageContent,
         });
+
+        // Build a rich ReactNode body using the same HTML parser as the room
+        // timeline — this gives full mxc image transforms, mention pills,
+        // linkify, spoilers, code blocks, etc.
+        let bodyNode: ReactNode;
+        if (
+          showMessageContent &&
+          (!isEncryptedRoom || showEncryptedMessageContent) &&
+          content.format === 'org.matrix.custom.html' &&
+          content.formatted_body
+        ) {
+          const htmlParserOpts = getReactCustomHtmlParser(mx, room.roomId, {
+            linkifyOpts: LINKIFY_OPTS,
+            useAuthentication,
+            nicknames: nicknamesRef.current,
+          });
+          bodyNode = parse(sanitizeCustomHtml(content.formatted_body), htmlParserOpts) as ReactNode;
+        }
+
         const payload = buildRoomMessageNotification({
           roomName: room.name ?? 'Unknown',
           roomAvatar,
@@ -327,6 +357,7 @@ function MessageNotifications() {
           serverName,
           senderName: resolvedSenderName,
           body: previewText,
+          bodyNode,
           icon: roomAvatar,
           onClick: () => {
             window.focus();
