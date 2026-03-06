@@ -341,9 +341,11 @@ function MessageInternal(
   const { color: usernameColor, font: usernameFont } = useSableCosmetics(senderId, room);
 
   // Avatars
+  // Prefer the room-scoped member avatar (m.room.member) over the global profile
+  // avatar so per-room avatar overrides are respected in the timeline.
   const avatarUrl = useMemo(() => {
     if (collapse) return undefined;
-    const mxc = profile.avatarUrl || getMemberAvatarMxc(room, senderId);
+    const mxc = getMemberAvatarMxc(room, senderId) || profile.avatarUrl;
     return mxc ? mxcUrlToHttp(mx, mxc, useAuthentication, 48, 48, 'crop') : undefined;
   }, [collapse, profile.avatarUrl, senderId, mx, room, useAuthentication]);
 
