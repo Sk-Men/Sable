@@ -79,6 +79,8 @@ export const useUserProfile = (
   const mx = useMatrixClient();
   const [legacyUsernameColor] = useSetting(settingsAtom, 'legacyUsernameColor');
   const [renderGlobalColors] = useSetting(settingsAtom, 'renderGlobalNameColors');
+  const [renderRoomColors] = useSetting(settingsAtom, 'renderRoomColors');
+  const [renderRoomFonts] = useSetting(settingsAtom, 'renderRoomFonts');
 
   const userSelector = useMemo(() => selectAtom(profilesCacheAtom, (db) => db[userId]), [userId]);
 
@@ -137,15 +139,20 @@ export const useUserProfile = (
     let spaceFont;
     let spacePronouns;
 
-    if (room) {
+    if (room && (renderRoomColors || renderRoomFonts)) {
       const state = room.getLiveTimeline().getState(EventTimeline.FORWARDS);
 
-      const localEvent = state?.getStateEvents(StateEvent.RoomCosmeticsColor, userId);
-      localColor = (Array.isArray(localEvent) ? localEvent[0] : localEvent)?.getContent()?.color;
+      if (renderRoomColors) {
+        const localEvent = state?.getStateEvents(StateEvent.RoomCosmeticsColor, userId);
+        localColor = (Array.isArray(localEvent) ? localEvent[0] : localEvent)?.getContent()?.color;
+      }
 
-      const localFontEvent = state?.getStateEvents(StateEvent.RoomCosmeticsFont, userId);
-      localFont = (Array.isArray(localFontEvent) ? localFontEvent[0] : localFontEvent)?.getContent()
-        ?.font;
+      if (renderRoomFonts) {
+        const localFontEvent = state?.getStateEvents(StateEvent.RoomCosmeticsFont, userId);
+        localFont = (
+          Array.isArray(localFontEvent) ? localFontEvent[0] : localFontEvent
+        )?.getContent()?.font;
+      }
 
       const localPronounEvent = state?.getStateEvents(
         StateEvent.RoomCosmeticsPronouns as string,
@@ -160,13 +167,18 @@ export const useUserProfile = (
         const parentSpace = mx.getRoom(parents[0].getStateKey());
         const pState = parentSpace?.getLiveTimeline().getState(EventTimeline.FORWARDS);
 
-        const spaceEvent = pState?.getStateEvents(StateEvent.RoomCosmeticsColor, userId);
-        spaceColor = (Array.isArray(spaceEvent) ? spaceEvent[0] : spaceEvent)?.getContent()?.color;
+        if (renderRoomColors) {
+          const spaceEvent = pState?.getStateEvents(StateEvent.RoomCosmeticsColor, userId);
+          spaceColor = (Array.isArray(spaceEvent) ? spaceEvent[0] : spaceEvent)?.getContent()
+            ?.color;
+        }
 
-        const spaceFontEvent = pState?.getStateEvents(StateEvent.RoomCosmeticsFont, userId);
-        spaceFont = (
-          Array.isArray(spaceFontEvent) ? spaceFontEvent[0] : spaceFontEvent
-        )?.getContent()?.font;
+        if (renderRoomFonts) {
+          const spaceFontEvent = pState?.getStateEvents(StateEvent.RoomCosmeticsFont, userId);
+          spaceFont = (
+            Array.isArray(spaceFontEvent) ? spaceFontEvent[0] : spaceFontEvent
+          )?.getContent()?.font;
+        }
       }
     }
     const validGlobalVal = isValidHex(data?.nameColor);
@@ -203,5 +215,15 @@ export const useUserProfile = (
       resolvedPronouns,
       pronouns: resolvedPronouns,
     };
-  }, [cached, userId, room, mx, legacyUsernameColor, renderGlobalColors, initialProfile]);
+  }, [
+    cached,
+    userId,
+    room,
+    mx,
+    legacyUsernameColor,
+    renderGlobalColors,
+    initialProfile,
+    renderRoomColors,
+    renderRoomFonts,
+  ]);
 };

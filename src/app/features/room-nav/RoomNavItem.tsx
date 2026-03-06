@@ -424,7 +424,11 @@ export function RoomNavItem({
               )}
               {!optionsVisible && (unread || hasRoomUnread) && (
                 <UnreadBadgeCenter>
-                  <UnreadBadge highlight={!!unread && unread.highlight > 0} count={unreadCount} />
+                  <UnreadBadge
+                    highlight={!!unread && unread.highlight > 0}
+                    count={unreadCount}
+                    dm={direct}
+                  />
                 </UnreadBadgeCenter>
               )}
               {!optionsVisible && notificationMode !== RoomNotificationMode.Unset && (

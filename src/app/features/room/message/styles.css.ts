@@ -70,13 +70,3 @@ export const SendStatusRow = style({
   gap: config.space.S200,
   marginTop: config.space.S100,
 });
-
-export const SendStatusButton = style([
-  DefaultReset,
-  {
-    color: 'inherit',
-    cursor: 'pointer',
-    textDecoration: 'underline',
-    fontSize: toRem(12),
-  },
-]);

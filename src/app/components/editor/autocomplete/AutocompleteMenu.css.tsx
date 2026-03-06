@@ -1,5 +1,5 @@
 import { style } from '@vanilla-extract/css';
-import { DefaultReset, config } from 'folds';
+import { DefaultReset, color, config } from 'folds';
 
 export const AutocompleteMenuBase = style([
   DefaultReset,
@@ -32,4 +32,9 @@ export const AutocompleteMenu = style([
 export const AutocompleteMenuHeader = style([
   DefaultReset,
   { padding: `0 ${config.space.S300}`, flexShrink: 0 },
+]);
+
+export const AutocompleteNotice = style([
+  AutocompleteMenuHeader,
+  { color: color.SurfaceVariant.OnContainer },
 ]);

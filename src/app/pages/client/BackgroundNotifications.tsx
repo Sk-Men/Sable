@@ -9,8 +9,15 @@ import {
   SyncState,
   PushProcessor,
 } from '$types/matrix-sdk';
-import { useAtomValue, useSetAtom } from 'jotai';
-import { sessionsAtom, activeSessionIdAtom, Session, sessionsHighlightAtom } from '$state/sessions';
+import { useAtom, useAtomValue, useSetAtom } from 'jotai';
+import {
+  sessionsAtom,
+  activeSessionIdAtom,
+  Session,
+  pendingNotificationAtom,
+  backgroundUnreadCountsAtom,
+  inAppBannerAtom,
+} from '$state/sessions';
 import { useSetting } from '$state/hooks/settings';
 import { settingsAtom } from '$state/settings';
 import { getMxIdLocalPart, mxcUrlToHttp } from '$utils/matrix';
@@ -77,7 +84,7 @@ const waitForSync = (mx: MatrixClient): Promise<void> =>
 export function BackgroundNotifications() {
   const clientConfig = useClientConfig();
   const sessions = useAtomValue(sessionsAtom);
-  const activeSessionId = useAtomValue(activeSessionIdAtom);
+  const [activeSessionId, setActiveSessionId] = useAtom(activeSessionIdAtom);
   const [showNotifications] = useSetting(settingsAtom, 'useInAppNotifications');
   const [usePushNotifications] = useSetting(settingsAtom, 'usePushNotifications');
   const [notificationSound] = useSetting(settingsAtom, 'isNotificationSounds');
@@ -101,7 +108,14 @@ export function BackgroundNotifications() {
   showEncryptedMessageContentRef.current = showEncryptedMessageContent;
   const clientsRef = useRef<Map<string, MatrixClient>>(new Map());
   const notifiedEventsRef = useRef<Set<string>>(new Set());
-  const setHighlights = useSetAtom(sessionsHighlightAtom);
+  const setPending = useSetAtom(pendingNotificationAtom);
+  const setBackgroundUnreads = useSetAtom(backgroundUnreadCountsAtom);
+  const setInAppBanner = useSetAtom(inAppBannerAtom);
+  // Stable setter refs so async handleTimeline closures never go stale.
+  const setBackgroundUnreadsRef = useRef(setBackgroundUnreads);
+  setBackgroundUnreadsRef.current = setBackgroundUnreads;
+  const setInAppBannerRef = useRef(setInAppBanner);
+  setInAppBannerRef.current = setInAppBanner;
 
   const inactiveSessions = sessions.filter(
     (s) => s.userId !== (activeSessionId ?? sessions[0]?.userId)
@@ -122,6 +136,9 @@ export function BackgroundNotifications() {
      * Must include { type, room_id, event_id, user_id } so the SW notificationclick
      * handler can route the tap through HandleNotificationClick for account switching. */
     data?: unknown;
+    /** Optional callback invoked when the user clicks the notification (window.Notification
+     * fallback path only; the SW path routes via its own notificationclick handler). */
+    onClick?: () => void;
   }
 
   useEffect(() => {
@@ -151,14 +168,19 @@ export function BackgroundNotifications() {
         }
       }
       if ('Notification' in window && window.Notification.permission === 'granted') {
-        // eslint-disable-next-line no-new
-        new window.Notification(opts.title, {
+        const noti = new window.Notification(opts.title, {
           icon: opts.icon,
           badge: opts.badge,
           body: opts.body,
           silent: opts.silent ?? false,
           data: opts.data,
         });
+        if (opts.onClick) {
+          noti.onclick = () => {
+            opts.onClick?.();
+            noti.close();
+          };
+        }
       }
     }
 
@@ -167,8 +189,8 @@ export function BackgroundNotifications() {
         log.log('stopping background client for', userId);
         stopClient(mx);
         current.delete(userId);
-        // Clear the highlight badge when this session is no longer a background account.
-        setHighlights((prev) => {
+        // Clear the background unread badge when this session is no longer a background account.
+        setBackgroundUnreads((prev) => {
           const next = { ...prev };
           delete next[userId];
           return next;
@@ -226,6 +248,23 @@ export function BackgroundNotifications() {
               : LogoSVG;
 
             const loudByRule = Boolean(pushActions.tweaks?.sound);
+
+            // Track background unread count for every notifiable event (loud or silent).
+            const isHighlight = Boolean(pushActions.tweaks?.highlight);
+            setBackgroundUnreadsRef.current((prev) => {
+              const cur = prev[session.userId] ?? { total: 0, highlight: 0 };
+              return {
+                ...prev,
+                [session.userId]: {
+                  total: cur.total + 1,
+                  highlight: isHighlight ? cur.highlight + 1 : cur.highlight,
+                },
+              };
+            });
+
+            // Silent-rule events: unread badge updated above; no OS notification or sound.
+            if (!loudByRule && !isHighlight) return;
+
             const isEncryptedRoom = !!getStateEvent(room, StateEvent.RoomEncryption);
 
             notifiedEventsRef.current.add(dedupeId);
@@ -233,14 +272,6 @@ export function BackgroundNotifications() {
             if (notifiedEventsRef.current.size > 200) {
               const first = notifiedEventsRef.current.values().next().value;
               if (first) notifiedEventsRef.current.delete(first);
-            }
-
-            // Track highlight count for the account switcher badge.
-            if (pushActions.tweaks?.highlight) {
-              setHighlights((prev) => ({
-                ...prev,
-                [session.userId]: (prev[session.userId] ?? 0) + 1,
-              }));
             }
 
             // This component handles ONLY background (inactive) accounts.
@@ -275,14 +306,38 @@ export function BackgroundNotifications() {
               },
             });
 
-            sendNotification({
-              title: notificationPayload.title,
-              icon: notificationPayload.options.icon,
-              badge: notificationPayload.options.badge,
-              body: notificationPayload.options.body,
-              silent: notificationPayload.options.silent ?? undefined,
-              data: notificationPayload.options.data,
-            });
+            const notifOnClick = () => {
+              window.focus();
+              // Always switch to the background account – jotai ignores no-op updates
+              setActiveSessionId(session.userId);
+              setPending({ roomId: room.roomId, eventId, targetSessionId: session.userId });
+            };
+
+            if (document.visibilityState === 'visible') {
+              // App is in the foreground on a different account — show the themed in-app banner.
+              setInAppBannerRef.current({
+                id: dedupeId,
+                title: notificationPayload.title,
+                roomName: room.name ?? room.getCanonicalAlias() ?? undefined,
+                senderName,
+                body: notificationPayload.options.body,
+                icon: notificationPayload.options.icon,
+                onClick: notifOnClick,
+              });
+            } else if (loudByRule) {
+              // App is backgrounded — fire an OS notification only for loud (sound-tweak) rules.
+              // Highlight-only events are silently counted in the badge; OS noise is left to the
+              // user's own push rules for that account.
+              sendNotification({
+                title: notificationPayload.title,
+                icon: notificationPayload.options.icon,
+                badge: notificationPayload.options.badge,
+                body: notificationPayload.options.body,
+                silent: notificationPayload.options.silent ?? undefined,
+                data: notificationPayload.options.data,
+                onClick: notifOnClick,
+              });
+            }
           };
 
           mx.on(RoomEvent.Timeline, handleTimeline as unknown as (...args: unknown[]) => void);
@@ -296,7 +351,15 @@ export function BackgroundNotifications() {
       current.forEach((mx) => stopClient(mx));
       current.clear();
     };
-  }, [clientConfig.slidingSync, inactiveSessions, shouldRunBackgroundNotifications, setHighlights]);
+  }, [
+    clientConfig.slidingSync,
+    inactiveSessions,
+    shouldRunBackgroundNotifications,
+    setActiveSessionId,
+    setPending,
+    setBackgroundUnreads,
+    setInAppBanner,
+  ]);
 
   return null;
 }

@@ -1,4 +1,5 @@
-import { Box, Text, as } from 'folds';
+import { useState } from 'react';
+import { Box, Icon, Icons, Text, as } from 'folds';
 import classNames from 'classnames';
 import { MatrixClient, MatrixEvent, Room } from '$types/matrix-sdk';
 import { getHexcodeForEmoji, getShortcodeFor } from '$plugins/emoji';
@@ -16,34 +17,52 @@ export const Reaction = as<
     reaction: string;
     useAuthentication?: boolean;
   }
->(({ className, mx, count, reaction, useAuthentication, ...props }, ref) => (
-  <Box
-    as="button"
-    className={classNames(css.Reaction, className)}
-    alignItems="Center"
-    shrink="No"
-    gap="200"
-    {...props}
-    ref={ref}
-  >
-    <Text className={css.ReactionText} as="span" size="T400">
-      {reaction.startsWith('mxc://') ? (
-        <img
-          className={css.ReactionImg}
-          src={mxcUrlToHttp(mx, reaction, useAuthentication) ?? reaction}
-          alt={reaction}
-        />
-      ) : (
-        <Text as="span" size="Inherit" truncate>
-          {reaction}
-        </Text>
-      )}
-    </Text>
-    <Text as="span" size="T300">
-      {count}
-    </Text>
-  </Box>
-));
+>(({ className, mx, count, reaction, useAuthentication, ...props }, ref) => {
+  const [imgError, setImgError] = useState(false);
+
+  return (
+    <Box
+      as="button"
+      className={classNames(css.Reaction, className)}
+      alignItems="Center"
+      shrink="No"
+      gap="200"
+      {...props}
+      ref={ref}
+    >
+      <Text className={css.ReactionText} as="span" size="T400">
+        {reaction.startsWith('mxc://') ? (
+          (() => {
+            if (imgError)
+              return (
+                // Image loaded but fetch failed — show a small warning icon so the
+                // reaction button still renders correctly and the user can see
+                // something went wrong rather than a browser broken-image icon.
+                <span title="Failed to load emoji image" aria-label="Failed to load emoji image">
+                  <Icon size="100" src={Icons.Warning} style={{ opacity: 0.5 }} />
+                </span>
+              );
+            return (
+              <img
+                className={css.ReactionImg}
+                src={mxcUrlToHttp(mx, reaction, useAuthentication) ?? reaction}
+                alt={reaction}
+                onError={() => setImgError(true)}
+              />
+            );
+          })()
+        ) : (
+          <Text as="span" size="Inherit" truncate>
+            {reaction}
+          </Text>
+        )}
+      </Text>
+      <Text as="span" size="T300">
+        {count}
+      </Text>
+    </Box>
+  );
+});
 
 type ReactionTooltipMsgProps = {
   room: Room;
