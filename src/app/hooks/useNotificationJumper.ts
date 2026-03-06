@@ -7,13 +7,15 @@ import { mDirectAtom } from '../state/mDirectList';
 import { useSyncState } from './useSyncState';
 import { useMatrixClient } from './useMatrixClient';
 import { getCanonicalAliasOrRoomId } from '../utils/matrix';
-import { getDirectRoomPath, getHomeRoomPath } from '../pages/pathUtils';
+import { getDirectRoomPath, getHomeRoomPath, getSpaceRoomPath } from '../pages/pathUtils';
+import { roomToParentsAtom } from '../state/room/roomToParents';
 import { createLogger } from '../utils/debug';
 
 export function NotificationJumper() {
   const [pending, setPending] = useAtom(pendingNotificationAtom);
   const activeSessionId = useAtomValue(activeSessionIdAtom);
   const mDirects = useAtomValue(mDirectAtom);
+  const roomToParents = useAtomValue(roomToParentsAtom);
   const mx = useMatrixClient();
   const navigate = useNavigate();
   const log = createLogger('NotificationJumper');
@@ -57,7 +59,22 @@ export function NotificationJumper() {
       if (mDirects.has(pending.roomId)) {
         navigate(getDirectRoomPath(roomIdOrAlias, pending.eventId));
       } else {
-        navigate(getHomeRoomPath(roomIdOrAlias, pending.eventId));
+        // If the room lives inside a space, route through the space path so
+        // SpaceRouteRoomProvider can resolve it — HomeRouteRoomProvider only
+        // knows orphan rooms and would show JoinBeforeNavigate otherwise.
+        const parents = roomToParents.get(pending.roomId);
+        const firstParentId = parents && [...parents][0];
+        if (firstParentId) {
+          navigate(
+            getSpaceRoomPath(
+              getCanonicalAliasOrRoomId(mx, firstParentId),
+              roomIdOrAlias,
+              pending.eventId
+            )
+          );
+        } else {
+          navigate(getHomeRoomPath(roomIdOrAlias, pending.eventId));
+        }
       }
       setPending(null);
       // jumpingRef stays true until pending changes — see effect below.
@@ -68,7 +85,7 @@ export function NotificationJumper() {
         membership: room?.getMyMembership(),
       });
     }
-  }, [pending, activeSessionId, mx, mDirects, navigate, setPending, log]);
+  }, [pending, activeSessionId, mx, mDirects, roomToParents, navigate, setPending, log]);
 
   // Reset the guard only when pending is replaced (new notification or cleared).
   useEffect(() => {
