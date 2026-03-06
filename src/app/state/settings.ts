@@ -72,6 +72,7 @@ export interface Settings {
   hideMembershipInReadOnly: boolean;
   useRightBubbles: boolean;
   showUnreadCounts: boolean;
+  badgeCountDMsOnly: boolean;
   showPingCounts: boolean;
 }
 
@@ -129,6 +130,7 @@ const defaultSettings: Settings = {
   hideMembershipInReadOnly: true,
   useRightBubbles: false,
   showUnreadCounts: true,
+  badgeCountDMsOnly: false,
   showPingCounts: true,
 };
 
