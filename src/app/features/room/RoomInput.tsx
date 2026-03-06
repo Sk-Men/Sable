@@ -205,7 +205,6 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
 
     const [uploadBoard, setUploadBoard] = useState(true);
     const [selectedFiles, setSelectedFiles] = useAtom(roomIdToUploadItemsAtomFamily(roomId));
-    const [describedFile, setDescribedFile] = useState<TUploadContent | undefined>(undefined);
     const uploadFamilyObserverAtom = createUploadFamilyObserverAtom(
       roomUploadAtomFamily,
       selectedFiles.map((f) => f.file)
@@ -238,7 +237,6 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
               metadata: {
                 markedAsSpoiler: false,
               },
-              body: 'aaa',
             })
           );
         } else {
@@ -250,7 +248,6 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
               metadata: {
                 markedAsSpoiler: false,
               },
-              body: 'aaa',
             })
           );
         }
@@ -340,11 +337,15 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
       },
       [setSelectedFiles]
     );
-    const handleDescription = useCallback(
-      (fileItem: TUploadContent) => {
-        setDescribedFile(fileItem);
+    const setDesc = useCallback(
+      (fileItem: TUploadItem, body: string, formatted_body: string) => {
+        setSelectedFiles({
+          type: 'REPLACE',
+          item: fileItem,
+          replacement: { ...fileItem, body, formatted_body },
+        });
       },
-      [setDescribedFile]
+      [setSelectedFiles]
     );
     const handleRemoveUpload = useCallback(
       (upload: TUploadContent | TUploadContent[]) => {
@@ -368,19 +369,12 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
     };
 
     const handleSendUpload = async (uploads: UploadSuccess[]) => {
-      const plaintext = toPlainText(editor.children, isMarkdown).trim();
+      const plainText = toPlainText(editor.children, isMarkdown).trim();
+
       const contentsPromises = uploads.map(async (upload) => {
         const fileItem = selectedFiles.find((f) => f.file === upload.file);
         if (!fileItem) throw new Error('Broken upload');
 
-        if (fileItem.file === describedFile) {
-          fileItem.body = plaintext;
-          resetEditor(editor);
-          resetEditorHistory(editor);
-          setInputKey((prev) => prev + 1);
-          sendTypingStatus(false);
-          setDescribedFile(undefined);
-        }
         if (fileItem.file.type.startsWith('image')) {
           return getImageMsgContent(mx, fileItem, upload.mxc);
         }
@@ -396,7 +390,7 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
       const contents = fulfilledPromiseSettledResult(await Promise.allSettled(contentsPromises));
 
       if (contents.length > 0) {
-        const replyContent = plaintext.length === 0 ? getReplyContent(replyDraft) : undefined;
+        const replyContent = plainText?.length === 0 ? getReplyContent(replyDraft) : undefined;
         if (replyContent) contents[0]['m.relates_to'] = replyContent;
         setReplyDraft(undefined);
       }
@@ -414,7 +408,6 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
     const submit = useCallback(async () => {
       uploadBoardHandlers.current?.handleSend();
 
-      if (describedFile !== undefined) return;
       const commandName = getBeginCommand(editor);
       let plainText = toPlainText(editor.children, isMarkdown).trim();
       let customHtml = trimCustomHtml(
@@ -489,7 +482,6 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
         setReplyDraft(undefined);
         sendTypingStatus(false);
       };
-
       if (scheduledTime) {
         try {
           const delayMs = computeDelayMs(scheduledTime);
@@ -505,7 +497,6 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
           setEditingScheduledDelayId(null);
           setScheduledTime(null);
           resetInput();
-          setDescribedFile(undefined);
         } catch {
           // Network/server error — leave editor and scheduled state intact for retry
         }
@@ -516,7 +507,6 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
           invalidate();
           setEditingScheduledDelayId(null);
           resetInput();
-          setDescribedFile(undefined);
         } catch {
           // Cancel failed — leave state intact for retry
         }
@@ -527,22 +517,21 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
         });
       }
     }, [
+      editor,
+      isMarkdown,
       mx,
       roomId,
-      room,
-      editor,
       replyDraft,
-      sendTypingStatus,
-      setReplyDraft,
-      describedFile,
-      isMarkdown,
-      commands,
       scheduledTime,
-      setScheduledTime,
-      isEncrypted,
-      queryClient,
       editingScheduledDelayId,
+      commands,
+      sendTypingStatus,
+      queryClient,
+      setReplyDraft,
+      isEncrypted,
       setEditingScheduledDelayId,
+      setScheduledTime,
+      room,
     ]);
 
     const handleKeyDown: KeyboardEventHandler = useCallback(
@@ -682,7 +671,7 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
                         fileItem={fileItem}
                         setMetadata={handleFileMetadata}
                         onRemove={handleRemoveUpload}
-                        setDescription={handleDescription}
+                        setDesc={setDesc}
                       />
                     ))}
                 </UploadBoardContent>
