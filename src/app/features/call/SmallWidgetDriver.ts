@@ -295,16 +295,26 @@ export class SmallWidgetDriver extends WidgetDriver {
 
   /**
    * @experimental Part of MSC4140 & MSC4157
+   * ClientWidgetApi dispatches three specific actions; the base WidgetDriver.updateDelayedEvent
+   * is never called. Implementing all three prevents 'Failed to override function' errors and
+   * the resulting 'Connection lost' in Element Call's MembershipManager.
    */
-  public async updateDelayedEvent(
-    delayId: string,
-    action: UpdateDelayedEventAction
-  ): Promise<void> {
+  public async cancelScheduledDelayedEvent(delayId: string): Promise<void> {
     const client = this.mxClient;
-
     if (!client) throw new Error('Not in a room or not attached to a client');
+    await client._unstable_updateDelayedEvent(delayId, UpdateDelayedEventAction.Cancel);
+  }
 
-    await client._unstable_updateDelayedEvent(delayId, action);
+  public async restartScheduledDelayedEvent(delayId: string): Promise<void> {
+    const client = this.mxClient;
+    if (!client) throw new Error('Not in a room or not attached to a client');
+    await client._unstable_updateDelayedEvent(delayId, UpdateDelayedEventAction.Restart);
+  }
+
+  public async sendScheduledDelayedEvent(delayId: string): Promise<void> {
+    const client = this.mxClient;
+    if (!client) throw new Error('Not in a room or not attached to a client');
+    await client._unstable_updateDelayedEvent(delayId, UpdateDelayedEventAction.Send);
   }
 
   /**
