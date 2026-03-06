@@ -2,9 +2,25 @@
 
 import { useMatrixClient } from '$hooks/useMatrixClient';
 import { modalAtom, ModalType } from '$state/modal';
-import { Avatar, Box, Button, Dialog, Header, Icon, Icons, IconButton, MenuItem, Text, config } from 'folds';
-import { useSetAtom } from 'jotai';
+import {
+  Box,
+  Button,
+  Dialog,
+  Header,
+  Icon,
+  Icons,
+  IconButton,
+  MenuItem,
+  Text,
+  config,
+  Scroll,
+} from 'folds';
+import { useAtomValue, useSetAtom } from 'jotai';
 import { MatrixEvent, Room } from '$types/matrix-sdk';
+import { useMemo, useState } from 'react';
+import { allRoomsAtom } from '$state/room-list/roomList';
+import { useAllJoinedRoomsSet, useGetRoom } from '$hooks/useGetRoom';
+import { factoryRoomIdByActivity } from '$utils/sort';
 
 // Message forwarding component
 export function MessageForwardItem({
@@ -48,6 +64,53 @@ type MessageForwardInternalProps = {
 };
 
 export function MessageForwardInternal({ room, mEvent, onClose }: MessageForwardInternalProps) {
+  const mx = useMatrixClient();
+
+  const [isTargetSelected, setIsTargetSelected] = useState(false);
+  const [targetRoomId, setTargetRoomId] = useState<string | null>(null);
+
+  const allRooms = useAtomValue(allRoomsAtom);
+  const allJoinedRooms = useAllJoinedRoomsSet();
+  const getRoom = useGetRoom(allJoinedRooms);
+  // possible targets to forward the message to
+  const forwardTargets = useMemo(
+    () =>
+      allRooms
+        .filter((id) => id !== room.roomId)
+        .filter((id) => {
+          const target = getRoom(id);
+          return !!target && !target.isSpaceRoom();
+        })
+        .sort(factoryRoomIdByActivity(mx)),
+    [allRooms, room.roomId, getRoom, mx]
+  );
+
+  // actually forward the message to the selected room
+  const handleForwardClick = (event: React.MouseEvent<HTMLButtonElement | HTMLDivElement>) => {
+    const { roomId } = event.currentTarget.dataset;
+    if (!roomId) return;
+
+    const targetRoom = getRoom(roomId);
+    const eventId = mEvent.getId();
+    if (!targetRoom || !eventId) return;
+
+    type SendEventType = Parameters<typeof mx.sendEvent>[2];
+    type SendEventContent = Parameters<typeof mx.sendEvent>[3];
+
+    const eventType = mEvent.getType() as SendEventType;
+    const content = {
+      ...mEvent.getContent(),
+      'm.relates_to': {
+        'm.in_reply_to': {
+          event_id: eventId,
+        },
+      },
+    } as SendEventContent;
+
+    mx.sendEvent(targetRoom.roomId, null, eventType, content);
+    onClose();
+  };
+
   return (
     <Dialog variant="Surface">
       <Header
@@ -65,6 +128,37 @@ export function MessageForwardInternal({ room, mEvent, onClose }: MessageForward
           <Icon src={Icons.Cross} />
         </IconButton>
       </Header>
+      <Box direction="Column" style={{ height: '300px' }}>
+        <Scroll hideTrack>
+          <Box direction="Column" style={{ padding: config.space.S300 }}>
+            {forwardTargets.map((roomId) => {
+              const target = getRoom(roomId);
+              if (!target) return null;
+              return (
+                <MenuItem
+                  key={roomId}
+                  data-room-id={roomId}
+                  onClick={() => {
+                    setIsTargetSelected(true);
+                    setTargetRoomId(roomId);
+                  }}
+                  variant={targetRoomId === roomId ? 'Success' : 'Surface'}
+                  aria-pressed={targetRoomId === roomId}
+                  size="400"
+                  radii="400"
+                >
+                  <Text truncate>{target.name}</Text>
+                </MenuItem>
+              );
+            })}
+          </Box>
+        </Scroll>
+        {isTargetSelected && (
+          <Button style={{ margin: config.space.S300 }} onClick={handleForwardClick}>
+            <Text>Send</Text>
+          </Button>
+        )}
+      </Box>
     </Dialog>
   );
 }
