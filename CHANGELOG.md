@@ -1,5 +1,32 @@
 # Sable Client Changelog
 
+## 1.4.0 (2026-03-06)
+
+### Features
+
+* Add option to filter user pronouns based on the pronouns language
+* Added a "Badge Counts for DMs Only" setting: when enabled, unread count numbers only appear on Direct Message room badges; non-DM rooms and spaces show a plain dot instead of a number, even when Show Unread Counts is on.
+* Added the ability to add descriptions to uploaded files
+* Fixed in-app notification banners in encrypted rooms showing "Encrypted Message" instead of the actual content. Banners now also render rich text (mentions, inline images) using the same pipeline as the timeline renderer.
+* You can now remove your own reactions even if you don't have the permission to add new ones, as long as you are able to delete your own events (messages).
+* Add a method of quickly adding a new text reaction to the latest message, just like emote quick react, using the prefix `+#`
+* Added two toggles in Settings > Appearance > Identity for disabling rendering room/space fonts and colors.
+* Added an additional toggle, Show Unread Ping Counts, to override the Show Unread Counts allowing for only pings to have counts.
+
+### Fixes
+
+* Rename gcolor, gfont, and gpronoun commands to scolor, sfont, and spronoun respectively.
+* Improved emoji board performance by deferring image pack cache reads so the board opens instantly rather than blocking on the initial render.
+* Fix dm room nicknames applying to non-dm private rooms.
+* Hide delete modal after successfully deleting a message.
+* Fixed media authentication handling: removed unnecessary redirect following, added error fallback UI for failed media loads, and ensured authentication headers are applied consistently when rendering inline media in HTML message bodies.
+* Failed message retry and delete actions now use Chip buttons for visual consistency with the rest of the interface.
+* Adds a new message pill and background app highlighted unread count.
+* Mobile: changed scheduled send chevron to tap + hold
+* Reply quotes now automatically retry decryption for E2EE messages, display a distinct placeholder for replies from blocked users, and fix edge cases where reply event loading could silently fail.
+* Service worker push notifications now correctly deep-link to the right account and room on cold PWA launch. Notifications are automatically suppressed when the app window is already visible. The In-App (pill banner) and System (OS) notification settings are now independent: desktop shows both controls, mobile shows Push and In-App only. Tapping an in-app notification pill on mobile now opens the room timeline directly instead of routing through the space navigation panel.
+* Fixed several room timeline issues with sliding sync: corrected event rendering order, more accurate scroll-to-bottom detection, phantom unread count clearing when the timeline is already at the bottom, and fixed pagination spinner state.
+
 ## 1.3.3 - 3/4/2026
 
 - Fix unread counts and dot badges for muted rooms ([#118](https://github.com/7w1/sable/pull/118)) - [Evie Gauthier](https://github.com/Just-Insane)
