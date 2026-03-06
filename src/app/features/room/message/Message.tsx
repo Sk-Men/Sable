@@ -155,6 +155,35 @@ export const MessageCopyLinkItem = as<
   );
 });
 
+// MessageForwardItem is for forwarding a message to another room
+export const MessageForwardItem = as<
+  'button',
+  {
+    room: Room;
+    mEvent: MatrixEvent;
+    onClose?: () => void;
+  }
+>(({ room, mEvent, onClose, ...props }, ref) => {
+  const mx = useMatrixClient();
+
+  // TODO: replace icon
+  return (
+    <MenuItem
+      size="300"
+      after={<Icon size="100" src={Icons.Pin} />}
+      radii="300"
+      onClick={handleForward}
+      {...props}
+      ref={ref}
+    >
+      <Text className={css.MessageMenuItemText} as="span" size="T300" truncate>
+        Forward Message
+      </Text>
+    </MenuItem>
+  );
+});
+
+// message pinning
 export const MessagePinItem = as<
   'button',
   {
@@ -812,6 +841,7 @@ function MessageInternal(
                           <MessageSourceCodeItem room={room} mEvent={mEvent} />
                         )}
                         <MessageCopyLinkItem room={room} mEvent={mEvent} onClose={closeMenu} />
+                        <MessageForwardItem room={room} mEvent={mEvent} onClose={closeMenu} />
                         {canPinEvent && (
                           <MessagePinItem room={room} mEvent={mEvent} onClose={closeMenu} />
                         )}
@@ -1100,6 +1130,7 @@ export const Event = as<'div', EventProps>(
                               <MessageSourceCodeItem room={room} mEvent={mEvent} />
                             )}
                             <MessageCopyLinkItem room={room} mEvent={mEvent} onClose={closeMenu} />
+                            <MessageForwardItem room={room} mEvent={mEvent} onClose={closeMenu} />
                           </Box>
                           {((!mEvent.isRedacted() && canDelete && !stateEvent) ||
                             (mEvent.getSender() !== mx.getUserId() && !stateEvent)) && (
