@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import { Box, Text, IconButton, Icon, Icons, Scroll, Switch } from 'folds';
+import { Box, Text, IconButton, Icon, Icons, Scroll, Switch, Avatar } from 'folds';
 import { Page, PageContent, PageHeader } from '$components/page';
 import { SequenceCard } from '$components/sequence-card';
 import { SettingTile } from '$components/setting-tile';
@@ -11,6 +11,11 @@ import { useRoomCreators } from '$hooks/useRoomCreators';
 import { useRoomPermissions } from '$hooks/useRoomPermissions';
 import { createLogger } from '$utils/debug';
 import { SequenceCardStyle } from '$features/common-settings/styles.css';
+import { UserAvatar } from '$components/user-avatar';
+import { nameInitials } from '$utils/common';
+import { useMediaAuthentication } from '$hooks/useMediaAuthentication';
+import { useUserProfile } from '$hooks/useUserProfile';
+import { getMxIdLocalPart, mxcUrlToHttp } from '$utils/matrix';
 
 type CosmeticsProps = {
   requestClose: () => void;
@@ -20,6 +25,8 @@ const log = createLogger('Cosmetics');
 
 export function Cosmetics({ requestClose }: CosmeticsProps) {
   const mx = useMatrixClient();
+  const userId = mx.getUserId()!;
+  const profile = useUserProfile(userId);
   const room = useRoom();
   const creators = useRoomCreators(room);
   const powerLevels = usePowerLevels(room);
@@ -27,6 +34,13 @@ export function Cosmetics({ requestClose }: CosmeticsProps) {
 
   const permissions = useRoomPermissions(creators, powerLevels);
   const canEditPermissions = permissions.stateEvent(StateEvent.RoomPowerLevels, mx.getSafeUserId());
+
+  const useAuthentication = useMediaAuthentication();
+  const avatarUrl = profile.avatarUrl
+    ? (mxcUrlToHttp(mx, profile.avatarUrl, useAuthentication, 96, 96, 'crop') ?? undefined)
+    : undefined;
+
+  const defaultDisplayName = profile.displayName ?? getMxIdLocalPart(userId) ?? userId;
 
   const getLevel = (eventType: string) => (powerLevels as any).events?.[eventType] ?? 50;
 
@@ -80,7 +94,18 @@ export function Cosmetics({ requestClose }: CosmeticsProps) {
                 >
                   <SettingTile
                     title="Avatar"
-                    description="Placeholder. This is a work in progress still!"
+                    description="This...is still a placeholder"
+                    after={
+                      <Avatar size="500" radii="300">
+                        <UserAvatar
+                          userId={userId}
+                          src={avatarUrl}
+                          renderFallback={() => (
+                            <Text size="H4">{nameInitials(defaultDisplayName)}</Text>
+                          )}
+                        />
+                      </Avatar>
+                    }
                   />
                 </SequenceCard>
                 <SequenceCard
