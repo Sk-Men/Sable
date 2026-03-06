@@ -37,6 +37,7 @@ import {
 } from '$utils/notificationStyle';
 import { startClient, stopClient } from '$client/initMatrix';
 import { useClientConfig } from '$hooks/useClientConfig';
+import { mobileOrTablet } from '$utils/user-agent';
 
 const log = createLogger('BackgroundNotifications');
 const isClientReadyForNotifications = (state: SyncState | string | null): boolean =>
@@ -281,7 +282,7 @@ export function BackgroundNotifications() {
             if (document.visibilityState !== 'visible') return;
 
             // Respect in-app notification setting (read from ref to avoid stale closure)
-            if (!showNotificationsRef.current) return;
+            if (!mobileOrTablet() || !showNotificationsRef.current) return;
 
             const notificationPayload = buildRoomMessageNotification({
               roomName: room.name ?? room.getCanonicalAlias() ?? room.roomId,
