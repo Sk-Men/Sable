@@ -5,7 +5,6 @@ changelog = "CHANGELOG.md"
 extra_changelog_sections = [
     { name = "Documentation", types = ["docs"] },
     { name = "Notes", types = ["note"] },
-    { types = ["patch"], name = "Updates" },
 ]
 # assets = "marker for GitHub bot" // TODO: add this later once we have assets
 
