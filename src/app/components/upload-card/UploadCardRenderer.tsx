@@ -1,5 +1,5 @@
-import { ReactNode, useEffect } from 'react';
-import { Box, Chip, Icon, IconButton, Icons, Text, color, config, toRem } from 'folds';
+import { ReactNode, useEffect, useState } from 'react';
+import { Box, Chip, Icon, IconButton, Icons, Text, Tooltip, color, config, toRem } from 'folds';
 import { UploadStatus, UploadSuccess, useBindUploadAtom } from '$state/upload';
 import { useMatrixClient } from '$hooks/useMatrixClient';
 import { TUploadContent } from '$utils/matrix';
@@ -8,6 +8,7 @@ import { roomUploadAtomFamily, TUploadItem, TUploadMetadata } from '$state/room/
 import { useObjectURL } from '$hooks/useObjectURL';
 import { useMediaConfig } from '$hooks/useMediaConfig';
 import { UploadCard, UploadCardError, UploadCardProgress } from './UploadCard';
+import { DescriptionEditor } from './UploadDescriptionEditor';
 
 type PreviewImageProps = {
   fileItem: TUploadItem;
@@ -98,6 +99,7 @@ type UploadCardRendererProps = {
   isEncrypted?: boolean;
   fileItem: TUploadItem;
   setMetadata: (fileItem: TUploadItem, metadata: TUploadMetadata) => void;
+  setDesc: (fileItem: TUploadItem, body: string, formatted_body: string) => void;
   onRemove: (file: TUploadContent) => void;
   onComplete?: (upload: UploadSuccess) => void;
 };
@@ -105,6 +107,7 @@ export function UploadCardRenderer({
   isEncrypted,
   fileItem,
   setMetadata,
+  setDesc,
   onRemove,
   onComplete,
 }: UploadCardRendererProps) {
@@ -117,6 +120,8 @@ export function UploadCardRenderer({
   const { upload, startUpload, cancelUpload } = useBindUploadAtom(mx, uploadAtom, isEncrypted);
   const { file } = upload;
   const fileSizeExceeded = file.size >= allowSize;
+
+  const [isDescribed, setIsDescribed] = useState(false);
 
   if (upload.status === UploadStatus.Idle && !fileSizeExceeded) {
     startUpload();
@@ -136,7 +141,6 @@ export function UploadCardRenderer({
       onComplete?.(upload);
     }
   }, [upload, onComplete]);
-
   return (
     <UploadCard
       radii="300"
@@ -155,6 +159,18 @@ export function UploadCardRenderer({
               <Text size="B300">Retry</Text>
             </Chip>
           )}
+          <IconButton
+            onClick={() => {
+              setIsDescribed(!isDescribed);
+            }}
+            aria-label="Add Upload Description"
+            variant="SurfaceVariant"
+            radii="Pill"
+            size="300"
+          >
+            <Icon src={isDescribed ? Icons.ChevronBottom : Icons.ChevronTop} size="50" />
+          </IconButton>
+
           <IconButton
             onClick={removeUpload}
             aria-label="Cancel Upload"
@@ -197,6 +213,33 @@ export function UploadCardRenderer({
                 <b>{bytesToSize(file.size)}</b>.
               </Text>
             </UploadCardError>
+          )}
+          {isDescribed && (
+            <DescriptionEditor
+              value={fileItem.formatted_body || fileItem.body}
+              onSave={(plainText, htmlContent) => {
+                setDesc(fileItem, plainText, htmlContent);
+                setIsDescribed(false);
+              }}
+            />
+          )}
+          {!isDescribed && fileItem.body && fileItem.body.length > 0 && (
+            <Tooltip
+              style={{
+                maxHeight: toRem(105),
+                overflow: 'scroll',
+              }}
+            >
+              <Text
+                size="T200"
+                style={{
+                  height: '100%',
+                  wordBreak: 'break-word',
+                }}
+              >
+                {fileItem.body}
+              </Text>
+            </Tooltip>
           )}
         </>
       }

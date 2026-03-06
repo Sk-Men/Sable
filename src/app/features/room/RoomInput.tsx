@@ -354,7 +354,16 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
       },
       [setSelectedFiles]
     );
-
+    const setDesc = useCallback(
+      (fileItem: TUploadItem, body: string, formatted_body: string) => {
+        setSelectedFiles({
+          type: 'REPLACE',
+          item: fileItem,
+          replacement: { ...fileItem, body, formatted_body },
+        });
+      },
+      [setSelectedFiles]
+    );
     const handleRemoveUpload = useCallback(
       (upload: TUploadContent | TUploadContent[]) => {
         const uploads = Array.isArray(upload) ? upload : [upload];
@@ -377,7 +386,8 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
     };
 
     const handleSendUpload = async (uploads: UploadSuccess[]) => {
-      const plaintext = toPlainText(editor.children, isMarkdown).trim();
+      const plainText = toPlainText(editor.children, isMarkdown).trim();
+
       const contentsPromises = uploads.map(async (upload) => {
         const fileItem = selectedFiles.find((f) => f.file === upload.file);
         if (!fileItem) throw new Error('Broken upload');
@@ -397,7 +407,7 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
       const contents = fulfilledPromiseSettledResult(await Promise.allSettled(contentsPromises));
 
       if (contents.length > 0) {
-        const replyContent = plaintext.length === 0 ? getReplyContent(replyDraft) : undefined;
+        const replyContent = plainText?.length === 0 ? getReplyContent(replyDraft) : undefined;
         if (replyContent) contents[0]['m.relates_to'] = replyContent;
         setReplyDraft(undefined);
       }
@@ -530,7 +540,6 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
         setReplyDraft(undefined);
         sendTypingStatus(false);
       };
-
       if (scheduledTime) {
         try {
           const delayMs = computeDelayMs(scheduledTime);
@@ -707,6 +716,7 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
                         fileItem={fileItem}
                         setMetadata={handleFileMetadata}
                         onRemove={handleRemoveUpload}
+                        setDesc={setDesc}
                       />
                     ))}
                 </UploadBoardContent>
