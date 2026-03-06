@@ -26,6 +26,8 @@ import { usePowerLevelsContext } from '$hooks/usePowerLevels';
 import { useRoomName } from '$hooks/useRoomMeta';
 import { useAtomValue } from 'jotai';
 import { nicknamesAtom } from '$state/nicknames';
+import { settingsAtom } from '$state/settings';
+import { useSetting } from '$state/hooks/settings';
 import * as css from './CallView.css';
 import { CallViewUser } from './CallViewUser';
 
@@ -138,9 +140,24 @@ export function CallView({ room }: { room: Room }) {
     wait: 50,
     immediate: false,
   });
+
+  const [allowPipVideos] = useSetting(settingsAtom, 'allowPipVideos');
+
   useEffect(() => {
     const iframeElement = activeIframeDisplayRef?.current;
     const hostElement = iframeHostRef?.current;
+
+    if (allowPipVideos) {
+      const removeDisablePictureInPicture = (mutated: any) => {
+        mutated.forEach((event: any) => {
+          Array.from(event.target.getElementsByTagName('video')).forEach((video: any) => {
+            video.removeAttribute('disablepictureinpicture');
+          });
+        });
+      };
+      const pipObserver = new MutationObserver(removeDisablePictureInPicture);
+      pipObserver.observe(iframeElement?.contentDocument!, { subtree: true, childList: true });
+    }
 
     if (room.isCallRoom() || (callIsCurrentAndReady && iframeElement && hostElement)) {
       applyFixedPositioningToIframe();
@@ -172,6 +189,7 @@ export function CallView({ room }: { room: Room }) {
     debouncedApplyFixedPositioning,
     callIsCurrentAndReady,
     room,
+    allowPipVideos,
   ]);
 
   const handleJoinVCClick: MouseEventHandler<HTMLElement> = (evt) => {
