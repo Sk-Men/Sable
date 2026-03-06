@@ -1,3 +1,4 @@
+import { ReactNode } from 'react';
 import { atom } from 'jotai';
 import { createLogger } from '$utils/debug';
 import {
@@ -185,6 +186,11 @@ export type InAppBannerNotification = {
   /** Display name of the sender. */
   senderName?: string;
   body?: string;
+  /**
+   * Pre-rendered rich body with mxc/mention transforms (built in ClientNonUIFeatures).
+   * When present, takes precedence over the plain-text `body` fallback.
+   */
+  bodyNode?: ReactNode;
   /** URL of an avatar or room icon to display inside the banner. */
   icon?: string;
   onClick: () => void;

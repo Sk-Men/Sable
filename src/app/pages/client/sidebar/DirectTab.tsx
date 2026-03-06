@@ -111,6 +111,7 @@ export function DirectTab() {
           <UnreadBadge
             highlight={directUnread.highlight > 0}
             count={directUnread.highlight > 0 ? directUnread.highlight : directUnread.total}
+            dm
           />
         </SidebarItemBadge>
       )}

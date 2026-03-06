@@ -814,18 +814,22 @@ export function Sync() {
         style={{ opacity: serverSlidingEnabled ? 1 : 0.5 }}
       >
         <SettingTile
-          title="Use Sliding Sync (Experimental)"
+          title="Use Sliding Sync"
           description={
             serverSlidingEnabled ? (
               <>
                 Enable Sliding Sync for this current login/session. Requires server support and
-                admin configuration. May cause issues, use with caution.{' '}
+                admin configuration.{' '}
                 <a
                   href="https://github.com/matrix-org/matrix-spec-proposals/blob/erikj/sss/proposals/4186-simplified-sliding-sync.md"
                   target="_blank"
                   rel="noreferrer"
                 >
-                  More info
+                  More info/Documentation
+                </a>
+                .{' '}
+                <a href="https://github.com/7w1/sable/issues/146" target="_blank" rel="noreferrer">
+                  Known issues (Sable GitHub)
                 </a>
                 .
               </>

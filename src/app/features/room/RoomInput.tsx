@@ -219,6 +219,8 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
       selectedFiles.map((f) => f.file)
     );
     const uploadBoardHandlers = useRef<UploadBoardImperativeHandlers>();
+    const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const isLongPress = useRef(false);
 
     const imagePackRooms: Room[] = useImagePackRooms(roomId, roomToParents);
 
@@ -298,25 +300,30 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
       format: replyFormat,
     } = replyEvent?.getContent() ?? {};
 
+    // Prefer the live event content; fall back to what was snapshotted in the
+    // draft when the user hit Reply (the event may not be in SDK state if it
+    // was redacted or evicted, but the draft always carries the original body).
+    const htmlBody =
+      replyFormat === 'org.matrix.custom.html' ? replyFormattedBody : replyDraft?.formattedBody;
+    const plainBody = replyBody ?? replyDraft?.body;
+
     let replyBodyJSX: ReactNode = replyDraft ? trimReplyFromBody(replyDraft.body) : null;
 
-    if (replyFormat === 'org.matrix.custom.html' && replyFormattedBody) {
-      const strippedHtml = trimReplyFromFormattedBody(replyFormattedBody)
+    if (htmlBody) {
+      const strippedHtml = trimReplyFromFormattedBody(htmlBody)
         .replace(/<br\s*\/?>/gi, ' ')
         .replace(/<\/p>\s*<p[^>]*>/gi, ' ')
         .replace(/<\/?p[^>]*>/gi, '')
         .replace(/(?:\r\n|\r|\n)/g, ' ');
       const parserOpts = getReactCustomHtmlParser(mx, roomId, {
         linkifyOpts: LINKIFY_OPTS,
+        useAuthentication,
         nicknames,
       });
       replyBodyJSX = parse(strippedHtml, parserOpts);
-    } else if (replyBody) {
-      const strippedBody = trimReplyFromBody(replyBody).replace(/(?:\r\n|\r|\n)/g, ' ');
-      replyBodyJSX = scaleSystemEmoji(trimReplyFromBody(strippedBody));
-    } else if (replyDraft) {
-      const strippedBody = trimReplyFromBody(replyDraft.body).replace(/(?:\r\n|\r|\n)/g, ' ');
-      replyBodyJSX = scaleSystemEmoji(trimReplyFromBody(strippedBody));
+    } else if (plainBody) {
+      const strippedBody = trimReplyFromBody(plainBody).replace(/(?:\r\n|\r|\n)/g, ' ');
+      replyBodyJSX = scaleSystemEmoji(strippedBody);
     }
 
     useEffect(() => {
@@ -347,7 +354,16 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
       },
       [setSelectedFiles]
     );
-
+    const setDesc = useCallback(
+      (fileItem: TUploadItem, body: string, formatted_body: string) => {
+        setSelectedFiles({
+          type: 'REPLACE',
+          item: fileItem,
+          replacement: { ...fileItem, body, formatted_body },
+        });
+      },
+      [setSelectedFiles]
+    );
     const handleRemoveUpload = useCallback(
       (upload: TUploadContent | TUploadContent[]) => {
         const uploads = Array.isArray(upload) ? upload : [upload];
@@ -370,7 +386,8 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
     };
 
     const handleSendUpload = async (uploads: UploadSuccess[]) => {
-      const plaintext = toPlainText(editor.children, isMarkdown).trim();
+      const plainText = toPlainText(editor.children, isMarkdown).trim();
+
       const contentsPromises = uploads.map(async (upload) => {
         const fileItem = selectedFiles.find((f) => f.file === upload.file);
         if (!fileItem) throw new Error('Broken upload');
@@ -390,7 +407,7 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
       const contents = fulfilledPromiseSettledResult(await Promise.allSettled(contentsPromises));
 
       if (contents.length > 0) {
-        const replyContent = plaintext.length === 0 ? getReplyContent(replyDraft) : undefined;
+        const replyContent = plainText?.length === 0 ? getReplyContent(replyDraft) : undefined;
         if (replyContent) contents[0]['m.relates_to'] = replyContent;
         setReplyDraft(undefined);
       }
@@ -523,7 +540,6 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
         setReplyDraft(undefined);
         sendTypingStatus(false);
       };
-
       if (scheduledTime) {
         try {
           const delayMs = computeDelayMs(scheduledTime);
@@ -700,6 +716,7 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
                         fileItem={fileItem}
                         setMetadata={handleFileMetadata}
                         onRemove={handleRemoveUpload}
+                        setDesc={setDesc}
                       />
                     ))}
                 </UploadBoardContent>
@@ -994,8 +1011,35 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
               />
               <Box display="Flex" alignItems="Center">
                 <IconButton
-                  onClick={submit}
+                  onClick={() => {
+                    if (isLongPress.current) {
+                      isLongPress.current = false;
+                      return;
+                    }
+                    submit();
+                  }}
                   onMouseDown={(e: MouseEvent) => e.preventDefault()}
+                  onPointerDown={() => {
+                    isLongPress.current = false;
+                    if (mobileOrTablet() && delayedEventsSupported) {
+                      longPressTimer.current = setTimeout(() => {
+                        isLongPress.current = true;
+                        setShowSchedulePicker(true);
+                      }, 1000);
+                    }
+                  }}
+                  onPointerUp={() => {
+                    if (longPressTimer.current !== null) {
+                      clearTimeout(longPressTimer.current);
+                      longPressTimer.current = null;
+                    }
+                  }}
+                  onPointerCancel={() => {
+                    if (longPressTimer.current !== null) {
+                      clearTimeout(longPressTimer.current);
+                      longPressTimer.current = null;
+                    }
+                  }}
                   variant={scheduledTime ? 'Primary' : 'SurfaceVariant'}
                   size="300"
                   radii="0"
@@ -1003,7 +1047,7 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
                 >
                   <Icon src={scheduledTime ? Icons.Clock : Icons.Send} />
                 </IconButton>
-                {delayedEventsSupported && (
+                {delayedEventsSupported && !mobileOrTablet() && (
                   <IconButton
                     onClick={(evt: MouseEvent<HTMLButtonElement>) => {
                       setScheduleMenuAnchor(evt.currentTarget.getBoundingClientRect());

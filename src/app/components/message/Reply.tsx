@@ -1,6 +1,7 @@
-import { Box, Icon, Icons, Text, as, color, toRem } from 'folds';
+import { Box, Chip, Icon, Icons, Text, as, color, toRem } from 'folds';
 import { EventTimelineSet, Room } from '$types/matrix-sdk';
 import { MouseEventHandler, ReactNode, useCallback, useMemo } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import classNames from 'classnames';
 import parse from 'html-react-parser';
 import { useAtomValue } from 'jotai';
@@ -14,9 +15,16 @@ import {
 } from '$plugins/react-custom-html-parser';
 import { useRoomEvent } from '$hooks/useRoomEvent';
 import { useSableCosmetics } from '$hooks/useSableCosmetics';
+import { useMediaAuthentication } from '$hooks/useMediaAuthentication';
+import { useIgnoredUsers } from '$hooks/useIgnoredUsers';
 import { nicknamesAtom } from '$state/nicknames';
 import { useMatrixClient } from '$hooks/useMatrixClient';
-import { MessageBadEncryptedContent, MessageDeletedContent, MessageFailedContent } from './content';
+import {
+  MessageBadEncryptedContent,
+  MessageBlockedContent,
+  MessageDeletedContent,
+  MessageFailedContent,
+} from './content';
 import * as css from './Reply.css';
 import { LinePlaceholder } from './placeholder';
 
@@ -74,14 +82,19 @@ export const Reply = as<'div', ReplyProps>(
       [timelineSet, replyEventId]
     );
     const replyEvent = useRoomEvent(room, replyEventId, getFromLocalTimeline);
+    const queryClient = useQueryClient();
 
     const mx = useMatrixClient();
 
     const { body, formatted_body: formattedBody, format } = replyEvent?.getContent() ?? {};
     const sender = replyEvent?.getSender();
 
+    const ignoredUsers = useIgnoredUsers();
+    const isBlockedSender = !!sender && ignoredUsers.includes(sender);
+
     const { color: usernameColor, font: usernameFont } = useSableCosmetics(sender ?? '', room);
     const nicknames = useAtomValue(nicknamesAtom);
+    const useAuthentication = useMediaAuthentication();
 
     const fallbackBody = replyEvent?.isRedacted() ? (
       <MessageDeletedContent />
@@ -90,6 +103,18 @@ export const Reply = as<'div', ReplyProps>(
     );
 
     const badEncryption = replyEvent?.getContent().msgtype === 'm.bad.encrypted';
+
+    // An encrypted event that hasn't been decrypted yet (keys pending) has an
+    // empty result from getClearContent().  Treat it as still-loading rather
+    // than a failure so the UI shows a placeholder instead of MessageFailedContent
+    // until the MatrixEventEvent.Decrypted callback fires.
+    const isPendingDecrypt =
+      replyEvent !== undefined &&
+      replyEvent !== null &&
+      replyEvent.isEncrypted() &&
+      !replyEvent.isDecryptionFailure() &&
+      !replyEvent.getClearContent();
+
     let bodyJSX: ReactNode = fallbackBody;
 
     if (format === 'org.matrix.custom.html' && formattedBody) {
@@ -100,6 +125,7 @@ export const Reply = as<'div', ReplyProps>(
         .replace(/(?:\r\n|\r|\n)/g, ' ');
       const parserOpts = getReactCustomHtmlParser(mx, room.roomId, {
         linkifyOpts: LINKIFY_OPTS,
+        useAuthentication,
         nicknames,
       });
       bodyJSX = parse(strippedHtml, parserOpts) as JSX.Element;
@@ -124,11 +150,15 @@ export const Reply = as<'div', ReplyProps>(
             )
           }
           data-event-id={replyEventId}
-          onClick={onClick}
+          onClick={replyEvent !== null && !isBlockedSender ? onClick : undefined}
         >
-          {replyEvent !== undefined ? (
+          {replyEvent !== undefined && !isPendingDecrypt ? (
             <Text size="T300" truncate>
-              {badEncryption ? <MessageBadEncryptedContent /> : bodyJSX}
+              {(() => {
+                if (isBlockedSender) return <MessageBlockedContent />;
+                if (badEncryption) return <MessageBadEncryptedContent />;
+                return bodyJSX;
+              })()}
             </Text>
           ) : (
             <LinePlaceholder
@@ -140,6 +170,17 @@ export const Reply = as<'div', ReplyProps>(
             />
           )}
         </ReplyLayout>
+        {replyEvent === null && (
+          <Chip
+            variant="Critical"
+            radii="Pill"
+            before={<Icon size="50" src={Icons.Reload} />}
+            onClick={(evt) => {
+              evt.stopPropagation();
+              queryClient.invalidateQueries({ queryKey: [room.roomId, replyEventId] });
+            }}
+          />
+        )}
       </Box>
     );
   }

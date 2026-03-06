@@ -49,6 +49,7 @@ export const createPushNotifications = (
       silent,
       data,
     };
+    console.debug('[SW showNotification] title:', title, '| data:', JSON.stringify(data, null, 2));
     await self.registration.showNotification(title, notifOptions as NotificationOptions);
   };
 
