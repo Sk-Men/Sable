@@ -14,6 +14,7 @@ import { useMatrixClient } from '$hooks/useMatrixClient';
 import { useClientConfig } from '$hooks/useClientConfig';
 import { SequenceCardStyle } from '$features/settings/styles.css';
 import { pushSubscriptionAtom } from '$state/pushSubscription';
+import { mobileOrTablet } from '$utils/user-agent';
 import {
   requestBrowserNotificationPermission,
   enablePushNotifications,
@@ -165,6 +166,10 @@ function WebPushNotificationSetting() {
 
 export function SystemNotification() {
   const [showInAppNotifs, setShowInAppNotifs] = useSetting(settingsAtom, 'useInAppNotifications');
+  const [showSystemNotifs, setShowSystemNotifs] = useSetting(
+    settingsAtom,
+    'useSystemNotifications'
+  );
   const [isNotificationSounds, setIsNotificationSounds] = useSetting(
     settingsAtom,
     'isNotificationSounds'
@@ -177,6 +182,10 @@ export function SystemNotification() {
     settingsAtom,
     'showMessageContentInEncryptedNotifications'
   );
+  const [clearNotificationsOnRead, setClearNotificationsOnRead] = useSetting(
+    settingsAtom,
+    'clearNotificationsOnRead'
+  );
 
   return (
     <Box direction="Column" gap="100">
@@ -187,20 +196,36 @@ export function SystemNotification() {
         direction="Column"
         gap="400"
       >
-        <WebPushNotificationSetting />
-      </SequenceCard>
-      <SequenceCard
-        className={SequenceCardStyle}
-        variant="SurfaceVariant"
-        direction="Column"
-        gap="400"
-      >
         <SettingTile
           title="In-App Notifications"
-          description="Show a notification when a message arrives while the app is open (but not focused on the room)."
+          description="Show a notification banner inside the app when a message arrives."
           after={<Switch value={showInAppNotifs} onChange={setShowInAppNotifs} />}
         />
       </SequenceCard>
+      {mobileOrTablet() && (
+        <SequenceCard
+          className={SequenceCardStyle}
+          variant="SurfaceVariant"
+          direction="Column"
+          gap="400"
+        >
+          <WebPushNotificationSetting />
+        </SequenceCard>
+      )}
+      {!mobileOrTablet() && (
+        <SequenceCard
+          className={SequenceCardStyle}
+          variant="SurfaceVariant"
+          direction="Column"
+          gap="400"
+        >
+          <SettingTile
+            title="System Notifications"
+            description="Show an OS-level notification banner when a message arrives while the app is open. On mobile, the in-app banner is used instead."
+            after={<Switch value={showSystemNotifs} onChange={setShowSystemNotifs} />}
+          />
+        </SequenceCard>
+      )}
       <SequenceCard
         className={SequenceCardStyle}
         variant="SurfaceVariant"
@@ -229,6 +254,18 @@ export function SystemNotification() {
               disabled={!showMessageContent}
             />
           }
+        />
+      </SequenceCard>
+      <SequenceCard
+        className={SequenceCardStyle}
+        variant="SurfaceVariant"
+        direction="Column"
+        gap="400"
+      >
+        <SettingTile
+          title="Clear Notifications When Read Elsewhere"
+          description="Automatically dismiss notifications on this device when you read messages on another device."
+          after={<Switch value={clearNotificationsOnRead} onChange={setClearNotificationsOnRead} />}
         />
       </SequenceCard>
       <SequenceCard
