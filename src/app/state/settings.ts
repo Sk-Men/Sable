@@ -1,4 +1,5 @@
 import { atom } from 'jotai';
+import { mobileOrTablet } from '$utils/user-agent';
 
 const STORAGE_KEY = 'settings';
 export type DateFormat = 'D MMM YYYY' | 'DD/MM/YYYY' | 'MM/DD/YYYY' | 'YYYY/MM/DD' | '';
@@ -45,9 +46,11 @@ export interface Settings {
 
   usePushNotifications: boolean;
   useInAppNotifications: boolean;
+  useSystemNotifications: boolean;
   isNotificationSounds: boolean;
   showMessageContentInNotifications: boolean;
   showMessageContentInEncryptedNotifications: boolean;
+  clearNotificationsOnRead: boolean;
 
   hour24Clock: boolean;
   dateFormatString: string;
@@ -102,11 +105,17 @@ const defaultSettings: Settings = {
   showHiddenEvents: false,
   legacyUsernameColor: false,
 
-  usePushNotifications: false,
+  // Push notifications (SW/Sygnal): default on for mobile, opt-in on desktop.
+  // In-app pill banner: always on — it's the primary foreground alert on mobile
+  // and a useful secondary alert on desktop.
+  // System (OS) notifications: desktop-only; hidden and disabled on mobile.
+  usePushNotifications: mobileOrTablet(),
   useInAppNotifications: true,
+  useSystemNotifications: !mobileOrTablet(),
   isNotificationSounds: true,
   showMessageContentInNotifications: false,
   showMessageContentInEncryptedNotifications: false,
+  clearNotificationsOnRead: false,
 
   hour24Clock: false,
   dateFormatString: 'D MMM YYYY',
