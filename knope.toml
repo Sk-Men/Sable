@@ -50,6 +50,6 @@ skip_labels = ["internal"]
 
 [release_notes]
 change_templates = [
-    "* $summary by $commit_author_name ($commit_hash)",
+    "* $summary - $commit_author_name ($commit_hash)",
     "* $summary",
 ]
