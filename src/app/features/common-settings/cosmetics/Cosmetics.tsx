@@ -71,83 +71,6 @@ export function Cosmetics({ requestClose }: CosmeticsProps) {
           <PageContent>
             <Box direction="Column" gap="700">
               <Box direction="Column" gap="100">
-                <Text size="L400">Settings</Text>
-
-                <SequenceCard
-                  className={SequenceCardStyle}
-                  variant="SurfaceVariant"
-                  direction="Column"
-                  gap="400"
-                >
-                  <SettingTile
-                    title={isSpace ? 'Space-Wide Colors' : 'Room Colors'}
-                    description={
-                      isSpace
-                        ? 'Allow everyone to use /scolor in this space.'
-                        : 'Allow everyone to use /color in this room.'
-                    }
-                    after={
-                      <Switch
-                        variant="Primary"
-                        value={getLevel(StateEvent.RoomCosmeticsColor) === 0}
-                        onChange={(enabled) => handleToggle(StateEvent.RoomCosmeticsColor, enabled)}
-                        disabled={!canEditPermissions}
-                      />
-                    }
-                  />
-                </SequenceCard>
-
-                <SequenceCard
-                  className={SequenceCardStyle}
-                  variant="SurfaceVariant"
-                  direction="Column"
-                  gap="400"
-                >
-                  <SettingTile
-                    title={isSpace ? 'Space-Wide Fonts' : 'Room Fonts'}
-                    description={
-                      isSpace
-                        ? 'Allow everyone to use /sfont in this space.'
-                        : 'Allow everyone to use /font in this room.'
-                    }
-                    after={
-                      <Switch
-                        variant="Primary"
-                        value={getLevel(StateEvent.RoomCosmeticsFont) === 0}
-                        onChange={(enabled) => handleToggle(StateEvent.RoomCosmeticsFont, enabled)}
-                        disabled={!canEditPermissions}
-                      />
-                    }
-                  />
-                </SequenceCard>
-
-                <SequenceCard
-                  className={SequenceCardStyle}
-                  variant="SurfaceVariant"
-                  direction="Column"
-                  gap="400"
-                >
-                  <SettingTile
-                    title={isSpace ? 'Space-Wide Pronouns' : 'Room Pronouns'}
-                    description={
-                      isSpace
-                        ? 'Allow everyone to use /spronoun in this space.'
-                        : 'Allow everyone to use /pronoun in this room.'
-                    }
-                    after={
-                      <Switch
-                        variant="Primary"
-                        value={getLevel(StateEvent.RoomCosmeticsPronouns) === 0}
-                        onChange={(enabled) =>
-                          handleToggle(StateEvent.RoomCosmeticsPronouns, enabled)
-                        }
-                        disabled={!canEditPermissions}
-                      />
-                    }
-                  />
-                </SequenceCard>
-              </Box>
-              <Box direction="Column" gap="100">
                 <Text size="L400">Profile</Text>
                 <SequenceCard
                   className={SequenceCardStyle}
@@ -179,7 +102,7 @@ export function Cosmetics({ requestClose }: CosmeticsProps) {
                 >
                   <SettingTile
                     title="Color"
-                    description='Placeholder. This is a work in progress still!'
+                    description="Placeholder. This is a work in progress still!"
                   />
                 </SequenceCard>
                 <SequenceCard
@@ -205,9 +128,8 @@ export function Cosmetics({ requestClose }: CosmeticsProps) {
                   />
                 </SequenceCard>
               </Box>
-              {/* }
               <Box direction="Column" gap="100">
-                <Text size="L400">Commands</Text>
+                <Text size="L400">Settings</Text>
                 <SequenceCard
                   className={SequenceCardStyle}
                   variant="SurfaceVariant"
@@ -215,8 +137,16 @@ export function Cosmetics({ requestClose }: CosmeticsProps) {
                   gap="400"
                 >
                   <SettingTile
-                    title="/color [hex]"
-                    description="Set room-specific name color. (e.g. /color #ff00ff)"
+                    title={isSpace ? 'Space-Wide Colors' : 'Room Colors'}
+                    description={`Allow everyone to set a color that applies in ${isSpace ? "all the space's rooms" : 'this room'}.`}
+                    after={
+                      <Switch
+                        variant="Primary"
+                        value={getLevel(StateEvent.RoomCosmeticsColor) === 0}
+                        onChange={(enabled) => handleToggle(StateEvent.RoomCosmeticsColor, enabled)}
+                        disabled={!canEditPermissions}
+                      />
+                    }
                   />
                 </SequenceCard>
                 <SequenceCard
@@ -226,8 +156,16 @@ export function Cosmetics({ requestClose }: CosmeticsProps) {
                   gap="400"
                 >
                   <SettingTile
-                    title="/font [name]"
-                    description="Set room-specific name font. (e.g. /font monospace)"
+                    title={isSpace ? 'Space-Wide Fonts' : 'Room Fonts'}
+                    description={`Allow everyone to set a font that applies in ${isSpace ? "all the space's rooms" : 'this room'}.`}
+                    after={
+                      <Switch
+                        variant="Primary"
+                        value={getLevel(StateEvent.RoomCosmeticsFont) === 0}
+                        onChange={(enabled) => handleToggle(StateEvent.RoomCosmeticsFont, enabled)}
+                        disabled={!canEditPermissions}
+                      />
+                    }
                   />
                 </SequenceCard>
                 <SequenceCard
@@ -237,23 +175,21 @@ export function Cosmetics({ requestClose }: CosmeticsProps) {
                   gap="400"
                 >
                   <SettingTile
-                    title="/pronoun [pronouns]"
-                    description='Set room-specific pronoun set. (e.g. /pronoun "they\them, it\its")'
-                  />
-                </SequenceCard>
-                <SequenceCard
-                  className={SequenceCardStyle}
-                  variant="SurfaceVariant"
-                  direction="Column"
-                  gap="400"
-                >
-                  <SettingTile
-                    title="/scolor | /sfont | /spronoun"
-                    description="Apply colors/fonts/pronouns to the entire space."
+                    title={isSpace ? 'Space-Wide Pronouns' : 'Room Pronouns'}
+                    description={`Allow everyone to set pronouns that apply in ${isSpace ? "all the space's rooms" : 'this room'}.`}
+                    after={
+                      <Switch
+                        variant="Primary"
+                        value={getLevel(StateEvent.RoomCosmeticsPronouns) === 0}
+                        onChange={(enabled) =>
+                          handleToggle(StateEvent.RoomCosmeticsPronouns, enabled)
+                        }
+                        disabled={!canEditPermissions}
+                      />
+                    }
                   />
                 </SequenceCard>
               </Box>
-              { */}
             </Box>
           </PageContent>
         </Scroll>
