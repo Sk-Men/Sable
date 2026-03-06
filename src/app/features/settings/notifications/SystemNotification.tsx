@@ -190,18 +190,20 @@ export function SystemNotification() {
   return (
     <Box direction="Column" gap="100">
       <Text size="L400">System & Notifications</Text>
-      <SequenceCard
-        className={SequenceCardStyle}
-        variant="SurfaceVariant"
-        direction="Column"
-        gap="400"
-      >
-        <SettingTile
-          title="In-App Notifications"
-          description="Show a notification banner inside the app when a message arrives."
-          after={<Switch value={showInAppNotifs} onChange={setShowInAppNotifs} />}
-        />
-      </SequenceCard>
+      {mobileOrTablet() && (
+        <SequenceCard
+          className={SequenceCardStyle}
+          variant="SurfaceVariant"
+          direction="Column"
+          gap="400"
+        >
+          <SettingTile
+            title="Mobile In-App Notifications"
+            description="Show a notification banner inside the app when a message arrives."
+            after={<Switch value={showInAppNotifs} onChange={setShowInAppNotifs} />}
+          />
+        </SequenceCard>
+      )}
       {mobileOrTablet() && (
         <SequenceCard
           className={SequenceCardStyle}
