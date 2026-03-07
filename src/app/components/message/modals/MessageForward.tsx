@@ -16,7 +16,7 @@ import {
   Scroll,
 } from 'folds';
 import { useAtomValue, useSetAtom } from 'jotai';
-import { IContent, MatrixEvent, Room } from '$types/matrix-sdk';
+import { MatrixEvent, Room } from '$types/matrix-sdk';
 import { useEffect, useMemo, useState } from 'react';
 import { allRoomsAtom } from '$state/room-list/roomList';
 import { useAllJoinedRoomsSet, useGetRoom } from '$hooks/useGetRoom';
@@ -87,7 +87,7 @@ export function MessageForwardInternal({ room, mEvent, onClose }: MessageForward
         .filter((id) => id !== room.roomId)
         .filter((id) => {
           const target = getRoom(id);
-          return !!target && !target.isSpaceRoom();
+          return !!target && !target.isSpaceRoom() && target.maySendMessage();
         })
         .sort(factoryRoomIdByActivity(mx)),
     [allRooms, room.roomId, getRoom, mx]
