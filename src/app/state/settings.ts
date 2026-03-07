@@ -78,6 +78,7 @@ export interface Settings {
   showUnreadCounts: boolean;
   badgeCountDMsOnly: boolean;
   showPingCounts: boolean;
+  hideReads: boolean;
 }
 
 const defaultSettings: Settings = {
@@ -142,6 +143,7 @@ const defaultSettings: Settings = {
   showUnreadCounts: true,
   badgeCountDMsOnly: false,
   showPingCounts: true,
+  hideReads: false,
 };
 
 export const getSettings = () => {

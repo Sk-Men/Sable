@@ -560,7 +560,7 @@ export function RoomTimeline({
 }: RoomTimelineProps) {
   const mx = useMatrixClient();
   const useAuthentication = useMediaAuthentication();
-  const [hideActivity] = useSetting(settingsAtom, 'hideActivity');
+  const [hideReads] = useSetting(settingsAtom, 'hideReads');
   const [messageLayout] = useSetting(settingsAtom, 'messageLayout');
   const [messageSpacing] = useSetting(settingsAtom, 'messageSpacing');
   const [hideMembershipEvents] = useSetting(settingsAtom, 'hideMembershipEvents');
@@ -754,7 +754,7 @@ export function RoomTimeline({
             // Check if the document is in focus (user is actively viewing the app),
             // and either there are no unread messages or the latest message is from the current user.
             // If either condition is met, trigger the markAsRead function to send a read receipt.
-            requestAnimationFrame(() => markAsRead(mx, mEvt.getRoomId()!, hideActivity));
+            requestAnimationFrame(() => markAsRead(mx, mEvt.getRoomId()!, hideReads));
           }
 
           if (!document.hasFocus() && !unreadInfo) {
@@ -780,7 +780,7 @@ export function RoomTimeline({
           setUnreadInfo(getRoomUnreadInfo(room));
         }
       },
-      [mx, room, unreadInfo, hideActivity]
+      [mx, room, unreadInfo, hideReads]
     )
   );
 
@@ -884,15 +884,15 @@ export function RoomTimeline({
   const tryAutoMarkAsRead = useCallback(() => {
     const readUptoEventId = readUptoEventIdRef.current;
     if (!readUptoEventId) {
-      requestAnimationFrame(() => markAsRead(mx, room.roomId, hideActivity));
+      requestAnimationFrame(() => markAsRead(mx, room.roomId, hideReads));
       return;
     }
     const evtTimeline = getEventTimeline(room, readUptoEventId);
     const latestTimeline = evtTimeline && getFirstLinkedTimeline(evtTimeline, Direction.Forward);
     if (latestTimeline === room.getLiveTimeline()) {
-      requestAnimationFrame(() => markAsRead(mx, room.roomId, hideActivity));
+      requestAnimationFrame(() => markAsRead(mx, room.roomId, hideReads));
     }
-  }, [mx, room, hideActivity]);
+  }, [mx, room, hideReads]);
 
   const debounceSetAtBottom = useDebounce(
     useCallback((entry: IntersectionObserverEntry) => {
@@ -1119,7 +1119,7 @@ export function RoomTimeline({
   };
 
   const handleMarkAsRead = () => {
-    markAsRead(mx, room.roomId, hideActivity);
+    markAsRead(mx, room.roomId, hideReads);
   };
 
   const handleOpenReply: MouseEventHandler = useCallback(
@@ -1363,7 +1363,7 @@ export function RoomTimeline({
                 />
               )
             }
-            hideReadReceipts={hideActivity}
+            hideReadReceipts={hideReads}
             showDeveloperTools={showDeveloperTools}
             memberPowerTag={getMemberPowerTag(senderId)}
             hour24Clock={hour24Clock}
@@ -1450,7 +1450,7 @@ export function RoomTimeline({
                 />
               )
             }
-            hideReadReceipts={hideActivity}
+            hideReadReceipts={hideReads}
             showDeveloperTools={showDeveloperTools}
             memberPowerTag={getMemberPowerTag(mEvent.getSender() ?? '')}
             hour24Clock={hour24Clock}
@@ -1572,7 +1572,7 @@ export function RoomTimeline({
                 />
               )
             }
-            hideReadReceipts={hideActivity}
+            hideReadReceipts={hideReads}
             showDeveloperTools={showDeveloperTools}
             memberPowerTag={getMemberPowerTag(mEvent.getSender() ?? '')}
             hour24Clock={hour24Clock}
@@ -1624,7 +1624,7 @@ export function RoomTimeline({
             highlight={highlighted}
             messageSpacing={messageSpacing}
             canDelete={canRedact || mEvent.getSender() === mx.getUserId()}
-            hideReadReceipts={hideActivity}
+            hideReadReceipts={hideReads}
             showDeveloperTools={showDeveloperTools}
           >
             <EventContent
@@ -1667,7 +1667,7 @@ export function RoomTimeline({
             highlight={highlighted}
             messageSpacing={messageSpacing}
             canDelete={canRedact || mEvent.getSender() === mx.getUserId()}
-            hideReadReceipts={hideActivity}
+            hideReadReceipts={hideReads}
             showDeveloperTools={showDeveloperTools}
           >
             <EventContent
@@ -1711,7 +1711,7 @@ export function RoomTimeline({
             highlight={highlighted}
             messageSpacing={messageSpacing}
             canDelete={canRedact || mEvent.getSender() === mx.getUserId()}
-            hideReadReceipts={hideActivity}
+            hideReadReceipts={hideReads}
             showDeveloperTools={showDeveloperTools}
           >
             <EventContent
@@ -1755,7 +1755,7 @@ export function RoomTimeline({
             highlight={highlighted}
             messageSpacing={messageSpacing}
             canDelete={canRedact || mEvent.getSender() === mx.getUserId()}
-            hideReadReceipts={hideActivity}
+            hideReadReceipts={hideReads}
             showDeveloperTools={showDeveloperTools}
           >
             <EventContent
@@ -1801,7 +1801,7 @@ export function RoomTimeline({
           highlight={highlighted}
           messageSpacing={messageSpacing}
           canDelete={canRedact || mEvent.getSender() === mx.getUserId()}
-          hideReadReceipts={hideActivity}
+          hideReadReceipts={hideReads}
           showDeveloperTools={showDeveloperTools}
         >
           <EventContent
@@ -1852,7 +1852,7 @@ export function RoomTimeline({
           highlight={highlighted}
           messageSpacing={messageSpacing}
           canDelete={canRedact || mEvent.getSender() === mx.getUserId()}
-          hideReadReceipts={hideActivity}
+          hideReadReceipts={hideReads}
           showDeveloperTools={showDeveloperTools}
         >
           <EventContent
