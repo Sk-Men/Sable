@@ -8,6 +8,8 @@ import { makeNavToActivePathAtom } from '$state/navToActivePath';
 import { NavToActivePathProvider } from '$state/hooks/navToActivePath';
 import { makeOpenedSidebarFolderAtom } from '$state/openedSidebarFolder';
 import { OpenedSidebarFolderProvider } from '$state/hooks/openedSidebarFolder';
+import { makeCallPreferencesAtom } from '$state/callPreferences';
+import { CallPreferencesProvider } from '$state/hooks/callPreferences';
 
 type ClientInitStorageAtomProps = {
   children: ReactNode;

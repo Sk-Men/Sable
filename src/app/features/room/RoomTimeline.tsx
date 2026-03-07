@@ -1849,7 +1849,8 @@ export function RoomTimeline({
             highlight={highlighted}
             messageSpacing={messageSpacing}
             canDelete={canRedact || mEvent.getSender() === mx.getUserId()}
-            hideReadReceipts={hideActivity}
+            hideReadReceipts={hideReads}
+            onReplyClick={handleReplyClick}
             showDeveloperTools={showDeveloperTools}
           >
             <EventContent
