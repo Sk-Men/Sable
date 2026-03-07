@@ -16,7 +16,7 @@ import {
   Scroll,
 } from 'folds';
 import { useAtomValue, useSetAtom } from 'jotai';
-import { MatrixEvent, Room } from '$types/matrix-sdk';
+import { JoinRule, MatrixEvent, Room } from '$types/matrix-sdk';
 import { useEffect, useMemo, useState } from 'react';
 import { allRoomsAtom } from '$state/room-list/roomList';
 import { useAllJoinedRoomsSet, useGetRoom } from '$hooks/useGetRoom';
@@ -67,8 +67,8 @@ type ForwardMeta = {
   v: 1;
   is_forwarded: true;
   original_timestamp: number;
-  original_room_id?: string;
-  original_event_id?: string;
+  original_room_id?: string | null;
+  original_event_id?: string | null;
   // to mark that event_id and room_id are not present
   original_event_hidden: boolean;
 };
@@ -80,6 +80,10 @@ export function MessageForwardInternal({ room, mEvent, onClose }: MessageForward
   const [isForwardSuccess, setIsForwardSuccess] = useState(false);
   const [isForwardError, setIsForwardError] = useState(false);
   const [targetRoomId, setTargetRoomId] = useState<string | null>(null);
+
+  // detect if it's a public room or not
+  const joinRule = room.getJoinRule() ?? JoinRule.Invite;
+  const isPrivate = joinRule !== (JoinRule.Public || JoinRule.Knock);
 
   const allRooms = useAtomValue(allRoomsAtom);
   const allJoinedRooms = useAllJoinedRoomsSet();
@@ -120,22 +124,40 @@ export function MessageForwardInternal({ room, mEvent, onClose }: MessageForward
     const eventType = mEvent.getType() as SendEventType;
     // using reference relation to indicate that this is a forwarded message,
     // which allows clients to display it as such
-    // maybe not the best idea to include the original room id as that could leak information about the user's room list
-    const content = {
-      ...mEvent.getContent(),
-      'm.relates_to': {
-        rel_type: 'm.reference',
-        event_id: eventId,
-      },
-      'moe.sable.message.forward': {
-        v: 1,
-        is_forwarded: true,
-        original_timestamp: mEvent.getTs(),
-        original_room_id: room.roomId,
-        original_event_id: eventId,
-        original_event_hidden: false,
-      } satisfies ForwardMeta,
-    };
+
+    let content;
+    // handle privacy stuff
+    if (isPrivate) {
+      // if the message is from a private room, we should strip any media or mentions to avoid leaking information to the target room
+      // we can still include the original message content in the body of the message, so we'll just use a fallback text/plain content with the original message body
+      content = {
+        ...mEvent.getContent(),
+        'moe.sable.message.forward': {
+          v: 1,
+          is_forwarded: true,
+          original_timestamp: mEvent.getTs(),
+          original_room_id: null,
+          original_event_id: null,
+          original_event_hidden: true,
+        } satisfies ForwardMeta,
+      };
+    } else {
+      content = {
+        ...mEvent.getContent(),
+        'm.relates_to': {
+          rel_type: 'm.reference',
+          event_id: eventId,
+        },
+        'moe.sable.message.forward': {
+          v: 1,
+          is_forwarded: true,
+          original_timestamp: mEvent.getTs(),
+          original_room_id: room.roomId,
+          original_event_id: eventId,
+          original_event_hidden: false,
+        } satisfies ForwardMeta,
+      };
+    }
 
     try {
       mx.sendEvent(targetRoom.roomId, null, eventType, content as unknown as SendEventContent).then(
