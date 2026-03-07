@@ -21,6 +21,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { allRoomsAtom } from '$state/room-list/roomList';
 import { useAllJoinedRoomsSet, useGetRoom } from '$hooks/useGetRoom';
 import { factoryRoomIdByActivity } from '$utils/sort';
+import { set } from 'immer/dist/internal.js';
 
 // Message forwarding component
 export function MessageForwardItem({
@@ -75,6 +76,7 @@ export function MessageForwardInternal({ room, mEvent, onClose }: MessageForward
 
   const [isTargetSelected, setIsTargetSelected] = useState(false);
   const [isForwardSuccess, setIsForwardSuccess] = useState(false);
+  const [isForwardError, setIsForwardError] = useState(false);
   const [targetRoomId, setTargetRoomId] = useState<string | null>(null);
 
   const allRooms = useAtomValue(allRoomsAtom);
@@ -132,15 +134,13 @@ export function MessageForwardInternal({ room, mEvent, onClose }: MessageForward
     };
 
     try {
-      mx.sendEvent(targetRoom.roomId, null, eventType, content as unknown as SendEventContent)
-        .then(() => setIsForwardSuccess(true))
-        .catch((err) => {
-          console.error('Failed to forward message', err);
-        });
-    } catch (err) {
-      console.error('Failed to forward message', err);
+      mx.sendEvent(targetRoom.roomId, null, eventType, content as unknown as SendEventContent).then(
+        () => setIsForwardSuccess(true)
+      );
+    } catch {
+      setIsForwardSuccess(false);
+      setIsForwardError(true);
     }
-    onClose();
   };
 
   return (
@@ -185,10 +185,15 @@ export function MessageForwardInternal({ room, mEvent, onClose }: MessageForward
             })}
           </Box>
         </Scroll>
-        {isTargetSelected && (
+        {isTargetSelected && targetRoomId && (
           <Button style={{ margin: config.space.S300 }} onClick={handleForwardClick}>
             <Text>Forward to {getRoom(targetRoomId)?.name}</Text>
           </Button>
+        )}
+        {isForwardError && (
+          <Text size="T300" color="Critical600" style={{ margin: config.space.S300 }}>
+            Failed to forward message. Please try again.
+          </Text>
         )}
       </Box>
     </Dialog>
