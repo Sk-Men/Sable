@@ -271,7 +271,7 @@ export function RoomNavItem({
   const { hoverProps } = useHover({ onHoverChange: setHover });
   const { focusWithinProps } = useFocusWithin({ onFocusWithinChange: setHover });
   const [menuAnchor, setMenuAnchor] = useState<RectCords>();
-  
+
   const unread = useRoomUnread(room.roomId, roomToUnreadAtom);
   const hasRoomUnread = useRoomHasUnread(room);
   const typingMember = useRoomTypingMember(room.roomId).filter(
@@ -318,7 +318,10 @@ export function RoomNavItem({
     if (room.isCallRoom()) {
       if (!isMobile) {
         if (!isActiveCall && !callEmbed) {
-          startCall(room, new CallControlState(callPref.microphone, callPref.video, callPref.sound));
+          startCall(
+            room,
+            new CallControlState(callPref.microphone, callPref.video, callPref.sound)
+          );
         } else {
           navigateRoom(room.roomId);
         }
@@ -343,7 +346,7 @@ export function RoomNavItem({
   if (unread) {
     unreadCount = unread.highlight > 0 ? unread.highlight : unread.total;
   }
-  
+
   const ariaLabel = [
     roomName,
     room.isCallRoom()
@@ -520,7 +523,7 @@ export function RoomNavItem({
           </NavItemOptions>
         )}
       </NavItem>
-      
+
       {room.isCallRoom() && (
         <Box direction="Column" style={{ paddingLeft: config.space.S200 }}>
           {callMembers.map((callMembership) => (

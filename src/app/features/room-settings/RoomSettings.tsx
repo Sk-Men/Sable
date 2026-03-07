@@ -147,12 +147,15 @@ export function RoomSettings({ initialPage, requestClose }: RoomSettingsProps) {
                         variant="Background"
                         radii="400"
                         aria-pressed={activePage === item.page}
-                        before={<Icon src={item.icon} size="100" filled={activePage === item.page} />}
+                        before={
+                          <Icon src={item.icon} size="100" filled={activePage === item.page} />
+                        }
                         onClick={() => setActivePage(item.page)}
                       >
                         <Text
                           style={{
-                            fontWeight: activePage === item.page ? config.fontWeight.W600 : undefined,
+                            fontWeight:
+                              activePage === item.page ? config.fontWeight.W600 : undefined,
                           }}
                           size="T300"
                           truncate

@@ -20,7 +20,7 @@
     "knip": "knip",
     "knope": "knope",
     "document-change": "knope document-change",
-    "postinstall": "node scripts/install-knope.js"\
+    "postinstall": "node scripts/install-knope.js"
   },
   "keywords": [],
   "author": "7w1",
