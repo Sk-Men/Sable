@@ -15,6 +15,7 @@ import {
   MatrixClient,
   MatrixEvent,
   MatrixEventEvent,
+  Room,
   RoomStateEvent,
 } from '$types/matrix-sdk';
 import {
@@ -32,6 +33,25 @@ import { CinnyWidget } from './CinnyWidget';
 import { SmallWidgetDriver } from './SmallWidgetDriver';
 
 const log = createLogger('SmallWidget');
+
+/**
+ * Returns the appropriate EC `intent` and `callIntent` URL params for a room.
+ * - Voice rooms (`isCallRoom()`): `join_existing` intent, `audio` callType (persistent channel).
+ * - DM rooms (≤2 joined members): `start_call` intent, `video` callType (1:1 video call).
+ * - Group rooms: `start_call` intent, `audio` callType.
+ */
+export function getCallIntentParams(room: Room | null | undefined): {
+  intent: 'join_existing' | 'start_call';
+  callIntentParam: 'audio' | 'video';
+} {
+  const isVoiceRoom = room?.isCallRoom() ?? false;
+  // Require room to be non-null: unknown/missing room should not be treated as a DM.
+  const isDmRoom = room != null && !isVoiceRoom && room.currentState.getJoinedMemberCount() <= 2;
+  return {
+    intent: isVoiceRoom ? 'join_existing' : 'start_call',
+    callIntentParam: isDmRoom ? 'video' : 'audio',
+  };
+}
 
 /**
  * Generates the URL for the Element Call widget.

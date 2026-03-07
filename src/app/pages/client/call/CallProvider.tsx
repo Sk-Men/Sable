@@ -35,8 +35,8 @@ interface CallContextState {
   registerActiveClientWidgetApi: (
     roomId: string | null,
     clientWidgetApi: ClientWidgetApi | null,
-    clientWidget: SmallWidget,
-    activeClientIframeRef: HTMLIFrameElement
+    clientWidget: SmallWidget | null,
+    activeClientIframeRef: HTMLIFrameElement | null
   ) => void;
   sendWidgetAction: <T extends IWidgetApiRequestData = IWidgetApiRequestData>(
     action: WidgetApiToWidgetAction | string,
@@ -46,6 +46,7 @@ interface CallContextState {
   isVideoEnabled: boolean;
   isChatOpen: boolean;
   isActiveCallReady: boolean;
+  resetActiveCallReady: () => void;
   toggleAudio: () => Promise<void>;
   toggleVideo: () => Promise<void>;
   toggleChat: () => Promise<void>;
@@ -280,6 +281,10 @@ export function CallProvider({ children }: CallProviderProps) {
     sendWidgetAction,
   ]);
 
+  const resetActiveCallReady = useCallback(() => {
+    setIsActiveCallReady(false);
+  }, []);
+
   const toggleChat = useCallback(async () => {
     const newState = !isChatOpen;
     setIsChatOpenState(newState);
@@ -300,6 +305,7 @@ export function CallProvider({ children }: CallProviderProps) {
       isAudioEnabled,
       isVideoEnabled,
       isActiveCallReady,
+      resetActiveCallReady,
       toggleAudio,
       toggleVideo,
       toggleChat,
@@ -318,6 +324,7 @@ export function CallProvider({ children }: CallProviderProps) {
       isAudioEnabled,
       isVideoEnabled,
       isActiveCallReady,
+      resetActiveCallReady,
       toggleAudio,
       toggleVideo,
       toggleChat,
