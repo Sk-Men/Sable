@@ -1,5 +1,5 @@
-import { useCallback } from 'react';
-import { Box, Text, IconButton, Icon, Icons, Scroll, Switch, Avatar } from 'folds';
+import { ChangeEventHandler, FormEventHandler, useCallback, useEffect, useState } from 'react';
+import { Box, Text, IconButton, Icon, Icons, Scroll, Switch, Avatar, Input, config, Button, Spinner } from 'folds';
 import { Page, PageContent, PageHeader } from '$components/page';
 import { SequenceCard } from '$components/sequence-card';
 import { SettingTile } from '$components/setting-tile';
@@ -16,13 +16,103 @@ import { nameInitials } from '$utils/common';
 import { useMediaAuthentication } from '$hooks/useMediaAuthentication';
 import { useUserProfile } from '$hooks/useUserProfile';
 import { getMxIdLocalPart, mxcUrlToHttp } from '$utils/matrix';
+import { AsyncStatus, useAsyncCallback } from '$hooks/useAsyncCallback';
+import { Room } from '$types/matrix-sdk';
+import { Command, useCommands } from '$hooks/useCommands';
+
+const log = createLogger('Cosmetics');
+
+type CosmeticsSettingProps = {
+  userId: string;
+  room: Room;
+};
+export function CosmeticsNickname({ userId, room }: CosmeticsSettingProps) {
+  const mx = useMatrixClient();
+
+  const defaultDisplayName = room.getMember(userId)!.rawDisplayName;
+  const [displayName, setDisplayName] = useState<string>(defaultDisplayName);
+
+  const myRoomNick = useCommands(mx, room)[Command.MyRoomNick];
+  const [changeState, changeDisplayName] = useAsyncCallback((name: string) => myRoomNick.exe(name));
+  const changingDisplayName = changeState.status === AsyncStatus.Loading;
+
+  useEffect(() => {
+    setDisplayName(defaultDisplayName);
+  }, [defaultDisplayName]);
+
+  const handleChange: ChangeEventHandler<HTMLInputElement> = (evt) => {
+    const name = evt.currentTarget.value;
+    setDisplayName(name);
+  };
+
+  const handleReset = () => {
+    setDisplayName(defaultDisplayName);
+  };
+
+  const handleSubmit: FormEventHandler<HTMLFormElement> = (evt) => {
+    evt.preventDefault();
+    if (changingDisplayName) return;
+
+    const target = evt.target as HTMLFormElement | undefined;
+    const displayNameInput = target?.displayNameInput as HTMLInputElement | undefined;
+    const name = displayNameInput?.value;
+    if (!name) return;
+
+    changeDisplayName(name);
+  };
+
+  const hasChanges = displayName !== defaultDisplayName;
+  return (
+    <SettingTile title="Room Display Name">
+      <Box direction="Column" grow="Yes" gap="100">
+        <Box as="form" onSubmit={handleSubmit} gap="200">
+          <Box grow="Yes" direction="Column">
+            <Input
+              required
+              name="displayNameInput"
+              value={displayName}
+              onChange={handleChange}
+              variant="Secondary"
+              radii="300"
+              style={{ paddingRight: config.space.S200 }}
+              readOnly={changingDisplayName}
+              after={
+                hasChanges &&
+                !changingDisplayName && (
+                  <IconButton
+                    type="reset"
+                    onClick={handleReset}
+                    size="300"
+                    radii="300"
+                    variant="Secondary"
+                  >
+                    <Icon src={Icons.Cross} size="100" />
+                  </IconButton>
+                )
+              }
+            />
+          </Box>
+          <Button
+            size="400"
+            variant={hasChanges ? 'Success' : 'Secondary'}
+            fill={hasChanges ? 'Solid' : 'Soft'}
+            outlined
+            radii="300"
+            disabled={!hasChanges || changingDisplayName}
+            type="submit"
+          >
+            {changingDisplayName && <Spinner variant="Success" fill="Solid" size="300" />}
+            <Text size="B400">Save</Text>
+          </Button>
+        </Box>
+      </Box>
+    </SettingTile>
+  );
+}
 
 type CosmeticsProps = {
   requestClose: () => void;
 };
-
-const log = createLogger('Cosmetics');
-
 export function Cosmetics({ requestClose }: CosmeticsProps) {
   const mx = useMatrixClient();
   const userId = mx.getUserId()!;
@@ -114,10 +204,7 @@ export function Cosmetics({ requestClose }: CosmeticsProps) {
                   direction="Column"
                   gap="400"
                 >
-                  <SettingTile
-                    title="Nickname"
-                    description="Placeholder. This is a work in progress still!"
-                  />
+                  <CosmeticsNickname userId={userId} room={room} />
                 </SequenceCard>
                 <SequenceCard
                   className={SequenceCardStyle}
