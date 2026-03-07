@@ -753,6 +753,8 @@ function Messages() {
     'hideMembershipInReadOnly'
   );
 
+  const [messageLayout] = useSetting(settingsAtom, 'messageLayout');
+  const [rightBubbles, setRightBubbles] = useSetting(settingsAtom, 'useRightBubbles');
   return (
     <Box direction="Column" gap="100">
       <Text size="L400">Messages</Text>
@@ -768,6 +770,15 @@ function Messages() {
           after={<EmojiSelectorThresholdInput />}
         />
       </SequenceCard>
+      {messageLayout === MessageLayout.Bubble && (
+        <SequenceCard className={SequenceCardStyle} variant="SurfaceVariant" direction="Column">
+          <SettingTile
+            title="Right Aligned Bubbles"
+            description="While using bubble layout, have your bubbles right aligned."
+            after={<Switch variant="Primary" value={rightBubbles} onChange={setRightBubbles} />}
+          />
+        </SequenceCard>
+      )}
       <SequenceCard className={SequenceCardStyle} variant="SurfaceVariant" direction="Column">
         <SettingTile
           title="Hide Membership Change"
