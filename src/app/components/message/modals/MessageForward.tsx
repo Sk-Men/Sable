@@ -21,7 +21,6 @@ import { useEffect, useMemo, useState } from 'react';
 import { allRoomsAtom } from '$state/room-list/roomList';
 import { useAllJoinedRoomsSet, useGetRoom } from '$hooks/useGetRoom';
 import { factoryRoomIdByActivity } from '$utils/sort';
-import { set } from 'immer/dist/internal.js';
 
 // Message forwarding component
 export function MessageForwardItem({
