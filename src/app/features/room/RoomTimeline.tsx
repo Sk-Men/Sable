@@ -1372,7 +1372,7 @@ export function RoomTimeline({
                 />
               )
             }
-            hideReadReceipts={hideActivity}
+            hideReadReceipts={hideReads}
             showDeveloperTools={showDeveloperTools}
             memberPowerTag={getMemberPowerTag(senderId)}
             hour24Clock={hour24Clock}
@@ -1459,7 +1459,7 @@ export function RoomTimeline({
                 />
               )
             }
-            hideReadReceipts={hideActivity}
+            hideReadReceipts={hideReads}
             showDeveloperTools={showDeveloperTools}
             memberPowerTag={getMemberPowerTag(mEvent.getSender() ?? '')}
             hour24Clock={hour24Clock}
@@ -1581,7 +1581,7 @@ export function RoomTimeline({
                 />
               )
             }
-            hideReadReceipts={hideActivity}
+            hideReadReceipts={hideReads}
             showDeveloperTools={showDeveloperTools}
             memberPowerTag={getMemberPowerTag(mEvent.getSender() ?? '')}
             hour24Clock={hour24Clock}
@@ -1634,7 +1634,7 @@ export function RoomTimeline({
             messageSpacing={messageSpacing}
             canDelete={canRedact || mEvent.getSender() === mx.getUserId()}
             onReplyClick={handleReplyClick}
-            hideReadReceipts={hideActivity}
+            hideReadReceipts={hideReads}
             showDeveloperTools={showDeveloperTools}
           >
             <EventContent
@@ -1678,7 +1678,7 @@ export function RoomTimeline({
             messageSpacing={messageSpacing}
             canDelete={canRedact || mEvent.getSender() === mx.getUserId()}
             onReplyClick={handleReplyClick}
-            hideReadReceipts={hideActivity}
+            hideReadReceipts={hideReads}
             showDeveloperTools={showDeveloperTools}
           >
             <EventContent
@@ -1723,7 +1723,7 @@ export function RoomTimeline({
             messageSpacing={messageSpacing}
             canDelete={canRedact || mEvent.getSender() === mx.getUserId()}
             onReplyClick={handleReplyClick}
-            hideReadReceipts={hideActivity}
+            hideReadReceipts={hideReads}
             showDeveloperTools={showDeveloperTools}
           >
             <EventContent
@@ -1768,7 +1768,7 @@ export function RoomTimeline({
             messageSpacing={messageSpacing}
             canDelete={canRedact || mEvent.getSender() === mx.getUserId()}
             onReplyClick={handleReplyClick}
-            hideReadReceipts={hideActivity}
+            hideReadReceipts={hideReads}
             showDeveloperTools={showDeveloperTools}
           >
             <EventContent
@@ -1815,7 +1815,7 @@ export function RoomTimeline({
           messageSpacing={messageSpacing}
           canDelete={canRedact || mEvent.getSender() === mx.getUserId()}
           onReplyClick={handleReplyClick}
-          hideReadReceipts={hideActivity}
+          hideReadReceipts={hideReads}
           showDeveloperTools={showDeveloperTools}
         >
           <EventContent
@@ -1867,7 +1867,7 @@ export function RoomTimeline({
           messageSpacing={messageSpacing}
           canDelete={canRedact || mEvent.getSender() === mx.getUserId()}
           onReplyClick={handleReplyClick}
-          hideReadReceipts={hideActivity}
+          hideReadReceipts={hideReads}
           showDeveloperTools={showDeveloperTools}
         >
           <EventContent
