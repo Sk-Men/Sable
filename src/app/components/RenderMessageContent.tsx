@@ -2,7 +2,7 @@ import { memo, useMemo, useCallback } from 'react';
 import { MsgType } from '$types/matrix-sdk';
 import { testMatrixTo } from '$plugins/matrix-to';
 import { useSetting } from '$state/hooks/settings';
-import { settingsAtom } from '$state/settings';
+import { settingsAtom, CaptionPosition } from '$state/settings';
 import { HTMLReactParserOptions } from 'html-react-parser';
 import { Opts } from 'linkifyjs';
 import { config } from 'folds';
@@ -74,6 +74,7 @@ function RenderMessageContentInternal({
   const content = useMemo(() => getContent<any>(), [getContent]);
 
   const [autoplayGifs] = useSetting(settingsAtom, 'autoplayGifs');
+  const [captionPosition] = useSetting(settingsAtom, 'captionPosition');
 
   const renderBody = useCallback(
     (props: any) => (
@@ -128,6 +129,7 @@ function RenderMessageContentInternal({
 
   const renderFile = () => (
     <>
+      {captionPosition === CaptionPosition.Above && renderCaption()}
       <MFile
         content={content}
         renderFileContent={({ body, mimeType, info, encInfo, url }) => (
@@ -158,7 +160,7 @@ function RenderMessageContentInternal({
         )}
         outlined={outlineAttachment}
       />
-      {renderCaption()}
+      {captionPosition === CaptionPosition.Below && renderCaption()}
     </>
   );
 
@@ -206,6 +208,7 @@ function RenderMessageContentInternal({
 
     return (
       <>
+        {captionPosition === CaptionPosition.Above && renderCaption()}
         <MImage
           content={content}
           renderImageContent={(imageProps) => (
@@ -227,7 +230,7 @@ function RenderMessageContentInternal({
           )}
           outlined={outlineAttachment}
         />
-        {renderCaption()}
+        {captionPosition === CaptionPosition.Below && renderCaption()}
       </>
     );
   }
@@ -235,6 +238,7 @@ function RenderMessageContentInternal({
   if (msgType === MsgType.Video) {
     return (
       <>
+        {captionPosition === CaptionPosition.Above && renderCaption()}
         <MVideo
           content={content}
           renderAsFile={renderFile}
@@ -260,7 +264,7 @@ function RenderMessageContentInternal({
           )}
           outlined={outlineAttachment}
         />
-        {renderCaption()}
+        {captionPosition === CaptionPosition.Below && renderCaption()}
       </>
     );
   }
@@ -268,6 +272,7 @@ function RenderMessageContentInternal({
   if (msgType === MsgType.Audio) {
     return (
       <>
+        {captionPosition === CaptionPosition.Above && renderCaption()}
         <MAudio
           content={content}
           renderAsFile={renderFile}
@@ -276,7 +281,7 @@ function RenderMessageContentInternal({
           )}
           outlined={outlineAttachment}
         />
-        {renderCaption()}
+        {captionPosition === CaptionPosition.Below && renderCaption()}
       </>
     );
   }

@@ -15,6 +15,12 @@ export enum RightSwipeAction {
   Reply = 'reply',
 }
 
+export enum CaptionPosition {
+  Above = 'above',
+  Inline = 'inline',
+  Hidden = 'hidden',
+  Below = 'below',
+}
 export type JumboEmojiSize = 'none' | 'extraSmall' | 'small' | 'normal' | 'large' | 'extraLarge';
 
 export interface Settings {
@@ -69,6 +75,7 @@ export interface Settings {
   filterPronounsLanguages?: string[];
   renderRoomColors: boolean;
   renderRoomFonts: boolean;
+  captionPosition: CaptionPosition;
 
   // Sable features!
   mobileGestures: boolean;
@@ -143,6 +150,7 @@ const defaultSettings: Settings = {
   renderGlobalNameColors: true,
   renderRoomColors: true,
   renderRoomFonts: true,
+  captionPosition: CaptionPosition.Below,
 
   // Sable features!
   mobileGestures: true,

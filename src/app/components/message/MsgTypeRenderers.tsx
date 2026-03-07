@@ -238,7 +238,7 @@ export function MImage({ content, renderImageContent, outlined }: MImageProps) {
         }}
       >
         {renderImageContent({
-          body: content.body || 'Image',
+          body: content.filename || 'Image',
           info: imgInfo,
           mimeType: imgInfo?.mimetype,
           url: mxcUrl,
