@@ -23,6 +23,7 @@ import { getFallbackSession, MATRIX_SESSIONS_KEY, Sessions } from '$state/sessio
 import { getLocalStorageItem } from '$state/utils/atomWithLocalStorage';
 import { NotificationJumper } from '$hooks/useNotificationJumper';
 import { SearchModalRenderer } from '$features/search';
+import { GlobalKeyboardShortcuts } from '$components/GlobalKeyboardShortcuts';
 import { AuthLayout, Login, Register, ResetPassword } from './auth';
 import {
   DIRECT_PATH,
@@ -170,6 +171,22 @@ export const createRouter = (clientConfig: ClientConfig, screenSize: ScreenSize)
                       <CreateSpaceModalRenderer />
                       <RoomSettingsRenderer />
                       <SpaceSettingsRenderer />
+                      <GlobalKeyboardShortcuts />
+                      {/* Screen reader live region — populated by announce() in utils/announce.ts */}
+                      <div
+                        id="sable-announcements"
+                        role="status"
+                        aria-live="polite"
+                        aria-atomic="true"
+                        style={{
+                          position: 'absolute',
+                          width: '1px',
+                          height: '1px',
+                          overflow: 'hidden',
+                          clip: 'rect(0,0,0,0)',
+                          whiteSpace: 'nowrap',
+                        }}
+                      />
                       <ReceiveSelfDeviceVerification />
                       <AutoRestoreBackupOnVerification />
                     </ClientNonUIFeatures>
