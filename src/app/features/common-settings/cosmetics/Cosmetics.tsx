@@ -27,7 +27,7 @@ import { SequenceCardStyle } from '$features/common-settings/styles.css';
 import { UserAvatar } from '$components/user-avatar';
 import { nameInitials } from '$utils/common';
 import { useMediaAuthentication } from '$hooks/useMediaAuthentication';
-import { useUserProfile } from '$hooks/useUserProfile';
+import { UserProfile, useUserProfile } from '$hooks/useUserProfile';
 import { getMxIdLocalPart, mxcUrlToHttp } from '$utils/matrix';
 import { AsyncStatus, useAsyncCallback } from '$hooks/useAsyncCallback';
 import { Room } from '$types/matrix-sdk';
@@ -36,14 +36,16 @@ import { Command, useCommands } from '$hooks/useCommands';
 const log = createLogger('Cosmetics');
 
 type CosmeticsSettingProps = {
+  profile: UserProfile;
   userId: string;
   room: Room;
 };
-export function CosmeticsNickname({ userId, room }: CosmeticsSettingProps) {
+export function CosmeticsNickname({ profile, userId, room }: CosmeticsSettingProps) {
   const mx = useMatrixClient();
 
   const defaultDisplayName = room.getMember(userId)!.rawDisplayName;
   const [displayName, setDisplayName] = useState<string>(defaultDisplayName);
+  const hasChanges = displayName !== defaultDisplayName;
 
   const myRoomNick = useCommands(mx, room)[Command.MyRoomNick];
   const [changeState, changeDisplayName] = useAsyncCallback((name: string) => myRoomNick.exe(name));
@@ -59,7 +61,11 @@ export function CosmeticsNickname({ userId, room }: CosmeticsSettingProps) {
   };
 
   const handleReset = () => {
-    setDisplayName(defaultDisplayName);
+    if (hasChanges) {
+      setDisplayName(defaultDisplayName);
+    } else {
+      setDisplayName(profile.displayName ?? getMxIdLocalPart(userId) ?? userId);
+    }
   };
 
   const handleSubmit: FormEventHandler<HTMLFormElement> = (evt) => {
@@ -74,7 +80,6 @@ export function CosmeticsNickname({ userId, room }: CosmeticsSettingProps) {
     changeDisplayName(name);
   };
 
-  const hasChanges = displayName !== defaultDisplayName;
   return (
     <SettingTile title="Room Display Name">
       <Box direction="Column" grow="Yes" gap="100">
@@ -90,7 +95,7 @@ export function CosmeticsNickname({ userId, room }: CosmeticsSettingProps) {
               style={{ paddingRight: config.space.S200 }}
               readOnly={changingDisplayName}
               after={
-                hasChanges &&
+                displayName !== (profile.displayName ?? getMxIdLocalPart(userId) ?? userId) &&
                 !changingDisplayName && (
                   <IconButton
                     type="reset"
@@ -220,7 +225,7 @@ export function Cosmetics({ requestClose }: CosmeticsProps) {
                     direction="Column"
                     gap="400"
                   >
-                    <CosmeticsNickname userId={userId} room={room} />
+                    <CosmeticsNickname profile={profile} userId={userId} room={room} />
                   </SequenceCard>
                 )}
                 <SequenceCard
