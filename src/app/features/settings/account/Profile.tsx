@@ -47,13 +47,13 @@ import { useCapabilities } from '$hooks/useCapabilities';
 import { profilesCacheAtom } from '$state/userRoomProfile';
 import { SequenceCardStyle } from '$features/settings/styles.css';
 import { useUserPresence } from '$hooks/useUserPresence';
+import { useSetting } from '$state/hooks/settings';
+import { settingsAtom } from '$state/settings';
 import { TimezoneEditor } from './TimezoneEditor';
 import { PronounEditor } from './PronounEditor';
 import { BioEditor } from './BioEditor';
 import { NameColorEditor } from './NameColorEditor';
 import { StatusEditor } from './StatusEditor';
-import { useSetting } from '$state/hooks/settings';
-import { settingsAtom } from '$state/settings';
 
 type PronounSet = {
   summary: string;
@@ -644,11 +644,11 @@ function AnimalCosmetics({ profile, userId }: AnimalCosmeticsProps) {
   const setGlobalProfiles = useSetAtom(profilesCacheAtom);
   const [renderAnimals, setRenderAnimals] = useSetting(settingsAtom, 'renderAnimals');
 
-  const isCat = profile.isCat === true;
-  const hasCats = profile.hasCats === true;
+  const isCat = profile.isCat || profile.extended?.['kitty.meow.is_cat'] === true;
+  const hasCats = profile.hasCats || profile.extended?.['kitty.meow.has_cats'] === true;
 
   const handleSaveField = useCallback(
-    async (key: string, value: any) => {
+    async (key: string, value: boolean) => {
       await mx.setExtendedProfileProperty?.(key, value);
       setGlobalProfiles((prev) => {
         const newCache = { ...prev };
