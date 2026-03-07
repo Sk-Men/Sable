@@ -970,6 +970,10 @@ export type EventProps = {
   mEvent: MatrixEvent;
   highlight: boolean;
   canDelete?: boolean;
+  onReplyClick: (
+    ev: Parameters<MouseEventHandler<HTMLButtonElement>>[0],
+    startThread?: boolean
+  ) => void;
   messageSpacing: MessageSpacing;
   hideReadReceipts?: boolean;
   showDeveloperTools?: boolean;
@@ -982,6 +986,7 @@ export const Event = as<'div', EventProps>(
       mEvent,
       highlight,
       canDelete,
+      onReplyClick,
       messageSpacing,
       hideReadReceipts,
       showDeveloperTools,
@@ -1119,6 +1124,15 @@ export const Event = as<'div', EventProps>(
                       </FocusTrap>
                     }
                   >
+                    <IconButton
+                      onClick={onReplyClick}
+                      data-event-id={mEvent.getId()}
+                      variant="SurfaceVariant"
+                      size="300"
+                      radii="300"
+                    >
+                      <Icon src={Icons.ReplyArrow} size="100" />
+                    </IconButton>
                     <IconButton
                       variant="SurfaceVariant"
                       size="300"
