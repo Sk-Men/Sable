@@ -198,6 +198,18 @@ export class SmallWidget extends EventEmitter {
       return this.messaging?.transport.reply(ev.detail, { events });
     });
 
+    // Acknowledge these so we don't get annoying errors
+    for (const action of [
+      'io.element.spotlight_layout',
+      'io.element.tile_layout',
+      'io.element.device_mute',
+    ]) {
+      this.messaging.on(`action:${action}`, (ev: CustomEvent) => {
+        ev.preventDefault();
+        this.messaging?.transport.reply(ev.detail, {});
+      });
+    }
+
     this.client.on(ClientEvent.Event, this.onEvent);
     this.client.on(MatrixEventEvent.Decrypted, this.onEventDecrypted);
     this.client.on(RoomStateEvent.Events, this.onStateUpdate);
