@@ -16,7 +16,7 @@ import {
   Scroll,
 } from 'folds';
 import { useAtomValue, useSetAtom } from 'jotai';
-import { MatrixEvent, Room } from '$types/matrix-sdk';
+import { IContent, MatrixEvent, Room } from '$types/matrix-sdk';
 import { useEffect, useMemo, useState } from 'react';
 import { allRoomsAtom } from '$state/room-list/roomList';
 import { useAllJoinedRoomsSet, useGetRoom } from '$hooks/useGetRoom';
@@ -61,6 +61,13 @@ type MessageForwardInternalProps = {
   room: Room;
   mEvent: MatrixEvent;
   onClose: () => void;
+};
+
+type ForwardMeta = {
+  v: 1;
+  is_forwarded: true;
+  original_timestamp: number;
+  original_room_id: string;
 };
 
 export function MessageForwardInternal({ room, mEvent, onClose }: MessageForwardInternalProps) {
@@ -109,19 +116,30 @@ export function MessageForwardInternal({ room, mEvent, onClose }: MessageForward
     const eventType = mEvent.getType() as SendEventType;
     // using reference relation to indicate that this is a forwarded message,
     // which allows clients to display it as such
+    // maybe not the best idea to include the original room id as that could leak information about the user's room list
     const content = {
       ...mEvent.getContent(),
       'm.relates_to': {
         rel_type: 'm.reference',
         event_id: eventId,
       },
-    } as SendEventContent;
+      'moe.sable.message.forward': {
+        v: 1,
+        is_forwarded: true,
+        original_timestamp: mEvent.getTs(),
+        original_room_id: room.roomId,
+      } satisfies ForwardMeta,
+    };
 
-    mx.sendEvent(targetRoom.roomId, null, eventType, content)
-      .then(() => setIsForwardSuccess(true))
-      .catch((err) => {
-        console.error('Failed to forward message', err);
-      });
+    try {
+      mx.sendEvent(targetRoom.roomId, null, eventType, content as unknown as SendEventContent)
+        .then(() => setIsForwardSuccess(true))
+        .catch((err) => {
+          console.error('Failed to forward message', err);
+        });
+    } catch (err) {
+      console.error('Failed to forward message', err);
+    }
     onClose();
   };
 
