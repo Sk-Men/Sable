@@ -80,6 +80,9 @@ export interface Settings {
   showPingCounts: boolean;
   hideReads: boolean;
   emojiSuggestThreshold: number;
+
+  // furry stuff
+  renderAnimals: boolean;
 }
 
 const defaultSettings: Settings = {
@@ -146,6 +149,9 @@ const defaultSettings: Settings = {
   showPingCounts: true,
   hideReads: false,
   emojiSuggestThreshold: 2,
+
+  // furry stuff
+  renderAnimals: true,
 };
 
 export const getSettings = () => {

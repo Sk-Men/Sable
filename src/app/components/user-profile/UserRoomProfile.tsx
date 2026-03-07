@@ -31,8 +31,9 @@ import {
 } from '$plugins/react-custom-html-parser';
 import { useSpoilerClickHandler } from '$hooks/useSpoilerClickHandler';
 import { RenderBody } from '$components/message';
-import { getSettings } from '$state/settings';
+import { getSettings, settingsAtom } from '$state/settings';
 import { filterPronounsByLanguage } from '$utils/pronouns';
+import { useSetting } from '$state/hooks/settings';
 import { CreatorChip } from './CreatorChip';
 import { UserInviteAlert, UserBanAlert, UserModeration, UserKickAlert } from './UserModeration';
 import { PowerChip } from './PowerChip';
@@ -50,6 +51,8 @@ const KNOWN_KEYS = [
   'moe.sable.app.name_color',
   'avatar_url',
   'displayname',
+  'kitty.meow.has_cats',
+  'kitty.meow.is_cat',
 ];
 
 type UserExtendedSectionProps = {
@@ -68,6 +71,18 @@ function UserExtendedSection({
     return stringified.length > len ? `${stringified.slice(0, len)}...` : stringified;
   };
   const [showMore, setShowMore] = useState(false);
+
+  const [renderAnimals] = useSetting(settingsAtom, 'renderAnimals');
+  const isCat = profile.isCat === true;
+  const hasCats = profile.hasCats === true;
+
+  const catStatusText = useMemo(() => {
+    if (!renderAnimals) return null;
+    if (isCat && hasCats) return 'Cat with cats—needs pets & love!';
+    if (isCat) return 'Is a cat—give pets & love!';
+    if (hasCats) return 'Has cats—send love!';
+    return null;
+  }, [renderAnimals, isCat, hasCats]);
 
   const renderValue = (val: any) => {
     if (val === null || val === undefined) return 'n/a';
@@ -149,6 +164,14 @@ function UserExtendedSection({
               <Icon size="50" src={Icons.Clock} style={{ opacity: 0.5 }} />
               <Text size="T200" priority="400">
                 {localTime} ({profile.timezone})
+              </Text>
+            </Box>
+          )}
+          {catStatusText && (
+            <Box alignItems="Center" gap="100">
+              <Icon size="50" src={Icons.Heart} style={{ opacity: 0.5 }} />
+              <Text size="T200" priority="400">
+                {catStatusText}
               </Text>
             </Box>
           )}
