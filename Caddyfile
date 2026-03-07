@@ -1,3 +1,9 @@
+{
+	servers {
+		protocols h1 h2c
+	}
+}
+
 :80 {
 	root * /app
 
