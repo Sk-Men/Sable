@@ -22,7 +22,7 @@ export interface Settings {
   useSystemTheme: boolean;
   lightThemeId?: string;
   darkThemeId?: string;
-  monochromeMode?: boolean;
+  saturationLevel?: number;
   uniformIcons: boolean;
   isMarkdown: boolean;
   editorToolbar: boolean;
@@ -43,6 +43,7 @@ export interface Settings {
   encUrlPreview: boolean;
   showHiddenEvents: boolean;
   legacyUsernameColor: boolean;
+  allowPipVideos: boolean;
 
   usePushNotifications: boolean;
   useInAppNotifications: boolean;
@@ -77,6 +78,16 @@ export interface Settings {
   showUnreadCounts: boolean;
   badgeCountDMsOnly: boolean;
   showPingCounts: boolean;
+  hideReads: boolean;
+  emojiSuggestThreshold: number;
+  underlineLinks: boolean;
+  reducedMotion: boolean;
+  autoplayGifs: boolean;
+  autoplayStickers: boolean;
+  autoplayEmojis: boolean;
+
+  // furry stuff
+  renderAnimals: boolean;
 }
 
 const defaultSettings: Settings = {
@@ -84,7 +95,7 @@ const defaultSettings: Settings = {
   useSystemTheme: true,
   lightThemeId: undefined,
   darkThemeId: undefined,
-  monochromeMode: false,
+  saturationLevel: 100,
   uniformIcons: false,
   isMarkdown: true,
   editorToolbar: false,
@@ -105,13 +116,13 @@ const defaultSettings: Settings = {
   encUrlPreview: false,
   showHiddenEvents: false,
   legacyUsernameColor: false,
+  allowPipVideos: false,
 
   // Push notifications (SW/Sygnal): default on for mobile, opt-in on desktop.
-  // In-app pill banner: always on — it's the primary foreground alert on mobile
-  // and a useful secondary alert on desktop.
+  // In-app pill banner: default on for mobile (primary foreground alert), opt-in on desktop.
   // System (OS) notifications: desktop-only; hidden and disabled on mobile.
   usePushNotifications: mobileOrTablet(),
-  useInAppNotifications: true,
+  useInAppNotifications: mobileOrTablet(),
   useSystemNotifications: !mobileOrTablet(),
   isNotificationSounds: true,
   showMessageContentInNotifications: false,
@@ -141,14 +152,35 @@ const defaultSettings: Settings = {
   showUnreadCounts: true,
   badgeCountDMsOnly: false,
   showPingCounts: true,
+  hideReads: false,
+  emojiSuggestThreshold: 2,
+  underlineLinks: false,
+  reducedMotion: false,
+  autoplayGifs: true,
+  autoplayStickers: true,
+  autoplayEmojis: true,
+
+  // furry stuff
+  renderAnimals: true,
 };
 
 export const getSettings = () => {
   const settings = localStorage.getItem(STORAGE_KEY);
   if (settings === null) return defaultSettings;
+
+  // migration for old keys
+  // monochrome -> saturation
+  const parsed = JSON.parse(settings);
+  if (parsed.monochromeMode === true && parsed.saturationLevel === undefined) {
+    parsed.saturationLevel = 0;
+  } else if (parsed.monochromeMode === false && parsed.saturationLevel === undefined) {
+    parsed.saturationLevel = 100;
+  }
+  delete parsed.monochromeMode;
+
   return {
     ...defaultSettings,
-    ...(JSON.parse(settings) as Settings),
+    ...(parsed as Settings),
   };
 };
 

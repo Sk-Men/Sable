@@ -4,7 +4,9 @@ FROM --platform=$BUILDPLATFORM node:24.13.1-alpine AS builder
 WORKDIR /src
 
 ARG VITE_BUILD_HASH
+ARG VITE_IS_RELEASE_TAG=false
 ENV VITE_BUILD_HASH=$VITE_BUILD_HASH
+ENV VITE_IS_RELEASE_TAG=$VITE_IS_RELEASE_TAG
 
 COPY .npmrc package.json package-lock.json /src/
 RUN npm ci --ignore-scripts
@@ -12,12 +14,15 @@ COPY . /src/
 ENV NODE_OPTIONS=--max_old_space_size=4096
 RUN npm run build
 
+## Dist
+FROM scratch AS site-dist
+COPY --from=builder /src/dist /
 
 ## App
 FROM nginx:1.29.5-alpine
 
-COPY --from=builder /src/dist /app
-COPY --from=builder /src/docker-nginx.conf /etc/nginx/conf.d/default.conf
+COPY --from=site-dist / /app
+COPY docker-nginx.conf /etc/nginx/conf.d/default.conf
 
 RUN rm -rf /usr/share/nginx/html \
-  && ln -s /app /usr/share/nginx/html
+    && ln -s /app /usr/share/nginx/html

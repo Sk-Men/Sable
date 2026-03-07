@@ -14,6 +14,8 @@ import { mxcUrlToHttp } from '$utils/matrix';
 import { useMediaAuthentication } from '$hooks/useMediaAuthentication';
 import { ImageUsage, PackImageReader } from '$plugins/custom-emoji';
 import { getEmoticonSearchStr } from '$plugins/utils';
+import { useSetting } from '$state/hooks/settings';
+import { settingsAtom } from '$state/settings';
 import { createEmoticonElement, moveCursor, replaceWithElement } from '$components/editor/utils';
 import { AutocompleteMenu } from './AutocompleteMenu';
 import { AutocompleteQuery } from './autocompleteQuery';
@@ -53,6 +55,8 @@ export function EmoticonAutocomplete({
   const imagePacks = useRelevantImagePacks(ImageUsage.Emoticon, imagePackRooms);
   const recentEmoji = useRecentEmoji(mx, 20);
 
+  const [emojiThreshold] = useSetting(settingsAtom, 'emojiSuggestThreshold');
+
   const searchList = useMemo(() => {
     const list: Array<EmoticonSearchItem> = [];
     return list.concat(
@@ -69,9 +73,12 @@ export function EmoticonAutocomplete({
   const autoCompleteEmoticon = result ? result.items.slice(0, 20) : recentEmoji;
 
   useEffect(() => {
-    if (query.text) search(query.text);
-    else resetSearch();
-  }, [query.text, search, resetSearch]);
+    if (query.text && query.text.length >= emojiThreshold) {
+      search(query.text);
+    } else {
+      resetSearch();
+    }
+  }, [query.text, search, resetSearch, emojiThreshold]);
 
   const handleAutocomplete: EmoticonCompleteHandler =
     onEmoticonSelected ??

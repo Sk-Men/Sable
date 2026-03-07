@@ -61,7 +61,6 @@ import {
 import { UseStateProvider } from '$components/UseStateProvider';
 import { JoinAddressPrompt } from '$components/join-address-prompt';
 import { RoomSearchParams } from '$pages/paths';
-import { CallNavStatus } from '$features/room-nav/RoomCallNavStatus';
 import { useHomeRooms } from './useHomeRooms';
 
 type HomeMenuProps = {
@@ -69,13 +68,13 @@ type HomeMenuProps = {
 };
 const HomeMenu = forwardRef<HTMLDivElement, HomeMenuProps>(({ requestClose }, ref) => {
   const orphanRooms = useHomeRooms();
-  const [hideActivity] = useSetting(settingsAtom, 'hideActivity');
+  const [hideReads] = useSetting(settingsAtom, 'hideReads');
   const unread = useRoomsUnread(orphanRooms, roomToUnreadAtom);
   const mx = useMatrixClient();
 
   const handleMarkAsRead = () => {
     if (!unread) return;
-    orphanRooms.forEach((rId) => markAsRead(mx, rId, hideActivity));
+    orphanRooms.forEach((rId) => markAsRead(mx, rId, hideReads));
     requestClose();
   };
 
@@ -359,7 +358,6 @@ export function Home() {
           </Box>
         </PageNavContent>
       )}
-      <CallNavStatus />
     </PageNav>
   );
 }

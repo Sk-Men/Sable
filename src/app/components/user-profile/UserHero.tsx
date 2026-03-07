@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import {
   Avatar,
   Box,
@@ -27,6 +27,7 @@ import { useBlobCache } from '$hooks/useBlobCache';
 import { ImageViewer } from '$components/image-viewer';
 import { AvatarPresence, PresenceBadge } from '$components/presence';
 import { UserAvatar } from '$components/user-avatar';
+import { ClientSideHoverFreeze } from '$components/ClientSideHoverFreeze';
 import * as css from './styles.css';
 
 type UserHeroProps = {
@@ -34,8 +35,9 @@ type UserHeroProps = {
   avatarUrl?: string;
   bannerUrl?: string;
   presence?: UserPresence;
+  autoplayGifs?: boolean;
 };
-export function UserHero({ userId, avatarUrl, bannerUrl, presence }: UserHeroProps) {
+export function UserHero({ userId, avatarUrl, bannerUrl, presence, autoplayGifs }: UserHeroProps) {
   const [viewAvatar, setViewAvatar] = useState<string>();
   const [isFullStatus, setIsFullStatus] = useState(false);
 
@@ -44,6 +46,25 @@ export function UserHero({ userId, avatarUrl, bannerUrl, presence }: UserHeroPro
 
   const coverUrl = cachedBannerUrl || cachedAvatarUrl;
   const isFallbackCover = !cachedBannerUrl && !!cachedAvatarUrl;
+
+  const isAnimated = useMemo(() => {
+    if (!coverUrl) return false;
+    const url = coverUrl.toLowerCase();
+    const isStatic = url.endsWith('.jpg') || url.endsWith('.jpeg') || url.endsWith('.png');
+
+    return !isStatic || url.includes('gif') || url.includes('webp');
+  }, [coverUrl]);
+
+  const bannerClasses = classNames(css.UserHeroCover, isFallbackCover && css.UserHeroCoverFallback);
+
+  const renderCoverImage = () => (
+    <img
+      className={classNames(css.UserHeroCover, isFallbackCover && css.UserHeroCoverFallback)}
+      src={coverUrl}
+      alt={`${userId} cover`}
+      draggable="false"
+    />
+  );
 
   const status = presence?.status;
   const isExpandable = (status?.length ?? 0) > 70;
@@ -57,12 +78,15 @@ export function UserHero({ userId, avatarUrl, bannerUrl, presence }: UserHeroPro
         }}
       >
         {coverUrl && (
-          <img
-            className={classNames(css.UserHeroCover, isFallbackCover && css.UserHeroCoverFallback)}
-            src={coverUrl}
-            alt={`${userId} cover`}
-            draggable="false"
-          />
+          <>
+            {isAnimated && !autoplayGifs ? (
+              <ClientSideHoverFreeze src={coverUrl} className={bannerClasses}>
+                {renderCoverImage()}
+              </ClientSideHoverFreeze>
+            ) : (
+              renderCoverImage()
+            )}
+          </>
         )}
       </div>
       <Box direction="Row" className={css.UserHeroAvatarStatusContainer}>

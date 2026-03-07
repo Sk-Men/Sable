@@ -10,7 +10,10 @@ import {
 import { mxcUrlToHttp } from '$utils/matrix';
 import { useMediaAuthentication } from '$hooks/useMediaAuthentication';
 import * as css from './UrlPreviewCard.css';
-import { UrlPreview, UrlPreviewContent, UrlPreviewDescription, UrlPreviewImg } from './UrlPreview';
+import { UrlPreview, UrlPreviewContent, UrlPreviewDescription } from './UrlPreview';
+import { AudioContent, ImageContent, VideoContent } from '../message';
+import { Image, MediaControl, Video } from '../media';
+import { ImageViewer } from '../image-viewer';
 
 const linkStyles = { color: color.Success.Main };
 
@@ -49,23 +52,77 @@ export const UrlPreviewCard = as<'div', { url: string; ts: number; mediaType?: s
       );
 
       return (
-        <>
-          {imgUrl && (
-            <UrlPreviewImg
-              src={imgUrl}
-              alt="Media"
+        <Box
+          grow="Yes"
+          direction={prev['og:video'] ? 'ColumnReverse' : 'Row'}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            overflow: 'hidden',
+            width: '100%',
+          }}
+        >
+          {(prev['og:video'] && (
+            <VideoContent
               style={{
-                width: 'auto',
-                height: 'auto',
-                maxWidth: '100%',
-                maxHeight: '100px',
-                borderRadius: '8px',
-                objectFit: 'contain',
-                display: 'block',
+                aspectRatio:
+                  ((prev['og:video:width'] as number) ?? 1) /
+                  ((prev['og:video:height'] as number) ?? 1),
               }}
+              body={prev['og:title']}
+              info={{}}
+              url={prev['og:video'] as string}
+              mimeType={(prev['og:video:type'] as string) ?? ''}
+              renderVideo={(vidProps) => <Video style={{ objectFit: 'contain' }} {...vidProps} />}
+              renderThumbnail={() => <Image src={imgUrl ?? undefined} />}
             />
-          )}
-          <UrlPreviewContent>
+          )) ||
+            (prev['og:image'] && (
+              <Box style={{ flexShrink: 0, height: '100px' }}>
+                {' '}
+                <ImageContent
+                  style={{
+                    height: '100%',
+                    aspectRatio: (prev['og:image:width'] ?? 1) / (prev['og:image:height'] ?? 1),
+                    position: 'relative',
+                    width: 'auto',
+                  }}
+                  autoPlay
+                  body={prev['og:title']}
+                  url={prev['og:image']}
+                  renderViewer={(p) => <ImageViewer {...p} />}
+                  renderImage={(p) => (
+                    <Image
+                      {...p}
+                      style={{
+                        height: '100%',
+                        width: 'auto',
+                        objectFit: 'contain',
+                      }}
+                    />
+                  )}
+                />
+              </Box>
+            )) ||
+            (prev['og:audio'] && (
+              <Box className={css.UrlPreviewAudio} style={{ flexShrink: 0 }}>
+                <AudioContent
+                  url={(prev['og:audio'] as string) ?? ''}
+                  mimeType={(prev['og:audio:type'] as string) ?? ''}
+                  info={{}}
+                  renderMediaControl={(p) => <MediaControl {...p} />}
+                />
+              </Box>
+            ))}
+          <UrlPreviewContent
+            style={{
+              flex: 1,
+              minWidth: 0,
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'center',
+            }}
+          >
             <Text
               style={linkStyles}
               truncate
@@ -90,7 +147,7 @@ export const UrlPreviewCard = as<'div', { url: string; ts: number; mediaType?: s
               </Text>
             )}
           </UrlPreviewContent>
-        </>
+        </Box>
       );
     };
 

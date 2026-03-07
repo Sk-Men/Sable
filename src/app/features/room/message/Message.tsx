@@ -341,9 +341,11 @@ function MessageInternal(
   const { color: usernameColor, font: usernameFont } = useSableCosmetics(senderId, room);
 
   // Avatars
+  // Prefer the room-scoped member avatar (m.room.member) over the global profile
+  // avatar so per-room avatar overrides are respected in the timeline.
   const avatarUrl = useMemo(() => {
     if (collapse) return undefined;
-    const mxc = profile.avatarUrl || getMemberAvatarMxc(room, senderId);
+    const mxc = getMemberAvatarMxc(room, senderId) || profile.avatarUrl;
     return mxc ? mxcUrlToHttp(mx, mxc, useAuthentication, 48, 48, 'crop') : undefined;
   }, [collapse, profile.avatarUrl, senderId, mx, room, useAuthentication]);
 
@@ -968,6 +970,10 @@ export type EventProps = {
   mEvent: MatrixEvent;
   highlight: boolean;
   canDelete?: boolean;
+  onReplyClick: (
+    ev: Parameters<MouseEventHandler<HTMLButtonElement>>[0],
+    startThread?: boolean
+  ) => void;
   messageSpacing: MessageSpacing;
   hideReadReceipts?: boolean;
   showDeveloperTools?: boolean;
@@ -980,6 +986,7 @@ export const Event = as<'div', EventProps>(
       mEvent,
       highlight,
       canDelete,
+      onReplyClick,
       messageSpacing,
       hideReadReceipts,
       showDeveloperTools,
@@ -1117,6 +1124,15 @@ export const Event = as<'div', EventProps>(
                       </FocusTrap>
                     }
                   >
+                    <IconButton
+                      onClick={onReplyClick}
+                      data-event-id={mEvent.getId()}
+                      variant="SurfaceVariant"
+                      size="300"
+                      radii="300"
+                    >
+                      <Icon src={Icons.ReplyArrow} size="100" />
+                    </IconButton>
                     <IconButton
                       variant="SurfaceVariant"
                       size="300"

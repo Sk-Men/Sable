@@ -2,6 +2,7 @@
 
 declare const APP_VERSION: string;
 declare const BUILD_HASH: string;
+declare const IS_RELEASE_TAG: boolean;
 
 declare module 'browser-encrypt-attachment' {
   export interface EncryptedAttachmentInfo {

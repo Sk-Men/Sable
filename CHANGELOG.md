@@ -26,6 +26,9 @@
 * Reply quotes now automatically retry decryption for E2EE messages, display a distinct placeholder for replies from blocked users, and fix edge cases where reply event loading could silently fail.
 * Service worker push notifications now correctly deep-link to the right account and room on cold PWA launch. Notifications are automatically suppressed when the app window is already visible. The In-App (pill banner) and System (OS) notification settings are now independent: desktop shows both controls, mobile shows Push and In-App only. Tapping an in-app notification pill on mobile now opens the room timeline directly instead of routing through the space navigation panel.
 * Fixed several room timeline issues with sliding sync: corrected event rendering order, more accurate scroll-to-bottom detection, phantom unread count clearing when the timeline is already at the bottom, and fixed pagination spinner state.
+* In-app notification banners now appear for DMs by default, even without a mention or keyword match.
+* Notification banner on desktop now defaults to off, consistent with push notification defaults.
+* Fixed space room navigation when tapping an in-app notification banner for a room inside a space.
 
 ## 1.3.3 - 3/4/2026
 

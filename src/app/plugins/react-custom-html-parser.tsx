@@ -36,6 +36,7 @@ import { findAndReplace } from '$utils/findAndReplace';
 import { onEnterOrSpace } from '$utils/keyboard';
 import { copyToClipboard } from '$utils/dom';
 import { useTimeoutToggle } from '$hooks/useTimeoutToggle';
+import { ClientSideHoverFreeze } from '$components/ClientSideHoverFreeze';
 import {
   parseMatrixToRoom,
   parseMatrixToRoomEvent,
@@ -341,6 +342,7 @@ export const getReactCustomHtmlParser = (
     handleMentionClick?: ReactEventHandler<HTMLElement>;
     useAuthentication?: boolean;
     nicknames?: Nicknames;
+    autoplayEmojis?: boolean;
   }
 ): HTMLReactParserOptions => {
   const opts: HTMLReactParserOptions = {
@@ -548,24 +550,38 @@ export const getReactCustomHtmlParser = (
             const siblingCount = domNode.parent?.children.length ?? 0;
 
             // seperate style for bundled emojis
+            // seperate style for bundled emojis
             if (siblingCount > 5) {
               return (
                 <span className={css.EmoticonBase}>
                   <span className={css.Emoticon()}>
-                    <FallbackImg
-                      {...props}
-                      src={htmlSrc}
-                      className={css.EmoticonImg}
-                      style={{ verticalAlign: 'middle' }}
-                      fallback={
-                        <span
-                          title={`Failed to load: ${props.alt || props.title || ''}`}
-                          className={css.EmoticonBase}
-                        >
-                          {props.alt || props.title ? `:${props.alt || props.title}:` : '?'}
-                        </span>
-                      }
-                    />
+                    {!params.autoplayEmojis ? (
+                      <ClientSideHoverFreeze src={htmlSrc}>
+                        <FallbackImg
+                          {...props}
+                          src={htmlSrc}
+                          className={css.EmoticonImg}
+                          style={{ verticalAlign: 'middle' }}
+                          fallback={
+                            <span className={css.EmoticonBase}>
+                              {props.alt || props.title || '?'}
+                            </span>
+                          }
+                        />
+                      </ClientSideHoverFreeze>
+                    ) : (
+                      <FallbackImg
+                        {...props}
+                        src={htmlSrc}
+                        className={css.EmoticonImg}
+                        style={{ verticalAlign: 'middle' }}
+                        fallback={
+                          <span className={css.EmoticonBase}>
+                            {props.alt || props.title || '?'}
+                          </span>
+                        }
+                      />
+                    )}
                   </span>
                 </span>
               );
@@ -575,19 +591,29 @@ export const getReactCustomHtmlParser = (
             return (
               <span className={css.EmoticonBase}>
                 <span className={css.Emoticon()}>
-                  <FallbackImg
-                    {...props}
-                    src={htmlSrc}
-                    className={css.EmoticonImg}
-                    fallback={
-                      <span
-                        title={`Failed to load: ${props.alt || props.title || ''}`}
-                        className={css.EmoticonBase}
-                      >
-                        {props.alt || props.title ? `:${props.alt || props.title}:` : '?'}
-                      </span>
-                    }
-                  />
+                  {!params.autoplayEmojis ? (
+                    <ClientSideHoverFreeze src={htmlSrc}>
+                      <FallbackImg
+                        {...props}
+                        src={htmlSrc}
+                        className={css.EmoticonImg}
+                        fallback={
+                          <span className={css.EmoticonBase}>
+                            {props.alt || props.title || '?'}
+                          </span>
+                        }
+                      />
+                    </ClientSideHoverFreeze>
+                  ) : (
+                    <FallbackImg
+                      {...props}
+                      src={htmlSrc}
+                      className={css.EmoticonImg}
+                      fallback={
+                        <span className={css.EmoticonBase}>{props.alt || props.title || '?'}</span>
+                      }
+                    />
+                  )}
                 </span>
               </span>
             );
