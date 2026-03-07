@@ -81,6 +81,7 @@ export interface Settings {
   hideReads: boolean;
   emojiSuggestThreshold: number;
   underlineLinks: boolean;
+  reducedMotion: boolean;
 
   // furry stuff
   renderAnimals: boolean;
@@ -151,6 +152,7 @@ const defaultSettings: Settings = {
   hideReads: false,
   emojiSuggestThreshold: 2,
   underlineLinks: false,
+  reducedMotion: false,
 
   // furry stuff
   renderAnimals: true,

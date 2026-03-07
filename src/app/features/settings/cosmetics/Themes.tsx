@@ -246,6 +246,7 @@ function ThemeSettings() {
   const [systemTheme, setSystemTheme] = useSetting(settingsAtom, 'useSystemTheme');
   const [saturation, setSaturation] = useSetting(settingsAtom, 'saturationLevel');
   const [underlineLinks, setUnderlineLinks] = useSetting(settingsAtom, 'underlineLinks');
+  const [reducedMotion, setReducedMotion] = useSetting(settingsAtom, 'reducedMotion');
 
   return (
     <Box direction="Column" gap="100">
@@ -303,6 +304,13 @@ function ThemeSettings() {
           title="Underline Links"
           description="Always show underlines on links in chat."
           after={<Switch variant="Primary" value={underlineLinks} onChange={setUnderlineLinks} />}
+        />
+      </SequenceCard>
+      <SequenceCard className={SequenceCardStyle} variant="SurfaceVariant" direction="Column">
+        <SettingTile
+          title="Reduced Motion"
+          description="Stops animations and sliding UI elements."
+          after={<Switch variant="Primary" value={reducedMotion} onChange={setReducedMotion} />}
         />
       </SequenceCard>
     </Box>

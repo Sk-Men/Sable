@@ -32,6 +32,7 @@ export function AuthRouteThemeManager({ children }: { children: ReactNode }) {
   const activeTheme = useActiveTheme();
   const [saturation] = useSetting(settingsAtom, 'saturationLevel');
   const [underlineLinks] = useSetting(settingsAtom, 'underlineLinks');
+  const [reducedMotion] = useSetting(settingsAtom, 'reducedMotion');
 
   useEffect(() => {
     document.body.className = '';
@@ -44,6 +45,12 @@ export function AuthRouteThemeManager({ children }: { children: ReactNode }) {
       document.body.classList.remove('force-underline-links');
     }
 
+    if (reducedMotion) {
+      document.body.classList.add('reduced-motion');
+    } else {
+      document.body.classList.remove('reduced-motion');
+    }
+
     if (saturation === 0) {
       document.body.style.filter = 'grayscale(1)';
     } else if (saturation && saturation < 100) {
@@ -51,7 +58,7 @@ export function AuthRouteThemeManager({ children }: { children: ReactNode }) {
     } else {
       document.body.style.filter = '';
     }
-  }, [activeTheme, saturation, underlineLinks]);
+  }, [activeTheme, saturation, underlineLinks, reducedMotion]);
 
   return <ThemeContextProvider value={activeTheme}>{children}</ThemeContextProvider>;
 }

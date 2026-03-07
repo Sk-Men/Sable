@@ -571,6 +571,7 @@ export function RoomTimeline({
   const showUrlPreview = room.hasEncryptionStateEvent() ? encUrlPreview : urlPreview;
   const [showHiddenEvents] = useSetting(settingsAtom, 'showHiddenEvents');
   const [showDeveloperTools] = useSetting(settingsAtom, 'developerTools');
+  const [reducedMotion] = useSetting(settingsAtom, 'reducedMotion');
 
   const [hour24Clock] = useSetting(settingsAtom, 'hour24Clock');
   const [dateFormatString] = useSetting(settingsAtom, 'dateFormatString');
@@ -814,7 +815,7 @@ export function RoomTimeline({
 
       if (typeof absoluteIndex === 'number') {
         const scrolled = scrollToItem(absoluteIndex, {
-          behavior: 'smooth',
+          behavior: reducedMotion ? 'instant' : 'smooth',
           align: 'center',
           stopInView: true,
         });
@@ -828,7 +829,7 @@ export function RoomTimeline({
         loadEventTimeline(evtId);
       }
     },
-    [room, timeline, scrollToItem, loadEventTimeline]
+    [room, timeline, scrollToItem, loadEventTimeline, reducedMotion]
   );
 
   useLiveTimelineRefresh(
@@ -1067,7 +1068,7 @@ export function RoomTimeline({
     if (scrollToBottomCount > 0) {
       const scrollEl = scrollRef.current;
       if (scrollEl) {
-        const behavior = scrollToBottomRef.current.smooth ? 'smooth' : 'instant';
+        const behavior = scrollToBottomRef.current.smooth && !reducedMotion ? 'smooth' : 'instant';
         scrollToBottom(scrollEl, behavior);
         // On Android WebView, layout may still settle after the initial scroll.
         // Fire a second instant scroll after a short delay to guarantee we
@@ -1078,7 +1079,7 @@ export function RoomTimeline({
         }
       }
     }
-  }, [scrollToBottomCount]);
+  }, [scrollToBottomCount, reducedMotion]);
 
   // Remove unreadInfo on mark as read
   useEffect(() => {
