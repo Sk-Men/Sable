@@ -31,11 +31,18 @@ export function UnAuthRouteThemeManager() {
 export function AuthRouteThemeManager({ children }: { children: ReactNode }) {
   const activeTheme = useActiveTheme();
   const [saturation] = useSetting(settingsAtom, 'saturationLevel');
+  const [underlineLinks] = useSetting(settingsAtom, 'underlineLinks');
 
   useEffect(() => {
     document.body.className = '';
     document.body.classList.add(configClass, varsClass);
     document.body.classList.add(...activeTheme.classNames);
+
+    if (underlineLinks) {
+      document.body.classList.add('force-underline-links');
+    } else {
+      document.body.classList.remove('force-underline-links');
+    }
 
     if (saturation === 0) {
       document.body.style.filter = 'grayscale(1)';
@@ -44,7 +51,7 @@ export function AuthRouteThemeManager({ children }: { children: ReactNode }) {
     } else {
       document.body.style.filter = '';
     }
-  }, [activeTheme, saturation]);
+  }, [activeTheme, saturation, underlineLinks]);
 
   return <ThemeContextProvider value={activeTheme}>{children}</ThemeContextProvider>;
 }
