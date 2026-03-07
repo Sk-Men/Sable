@@ -24,6 +24,8 @@ import { useAllJoinedRoomsSet, useGetRoom } from '$hooks/useGetRoom';
 import { factoryRoomIdByActivity } from '$utils/sort';
 import * as css from '$features/room/message/styles.css';
 import { sanitizeCustomHtml } from '$utils/sanitize';
+import { getStateEvents } from '$utils/room';
+import { StateEvent } from '$types/matrix/room';
 
 // Message forwarding component
 export const MessageForwardItem = as<'button', MessageForwardItemProps>(
@@ -95,7 +97,24 @@ export function MessageForwardInternal({ room, mEvent, onClose }: MessageForward
 
   // detect if it's a public room or not
   const joinRule = room.getJoinRule() ?? JoinRule.Invite;
-  const isPrivate = joinRule !== (JoinRule.Public || JoinRule.Knock);
+
+  const parentSpaceIds = getStateEvents(room, StateEvent.SpaceParent)
+    .map((e) => e.getStateKey())
+    .filter((id): id is string => Boolean(id));
+
+  const isInPublicSpace = parentSpaceIds.some((spaceId) => {
+    const space = mx.getRoom(spaceId);
+    return Boolean(space?.isSpaceRoom()) && space?.getJoinRule() === JoinRule.Public;
+  });
+
+  // A room is private if its join rule is Invite (or other non-public/non-knock/non-restricted),
+  // or it's Restricted but NOT inside a public space.
+  const isPrivate =
+    joinRule === JoinRule.Invite ||
+    (joinRule === JoinRule.Restricted && !isInPublicSpace) ||
+    (joinRule !== JoinRule.Public &&
+      joinRule !== JoinRule.Knock &&
+      joinRule !== JoinRule.Restricted);
 
   const allRooms = useAtomValue(allRoomsAtom);
   const allJoinedRooms = useAllJoinedRoomsSet();
