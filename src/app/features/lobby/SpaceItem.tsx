@@ -33,10 +33,10 @@ import { useOpenCreateRoomModal } from '$state/hooks/createRoomModal';
 import { useOpenCreateSpaceModal } from '$state/hooks/createSpaceModal';
 import { CreateRoomType } from '$components/create-room/types';
 import { AddExistingModal } from '$features/add-existing';
+import { BetaNoticeBadge } from '$components/BetaNoticeBadge';
 import { useDraggableItem } from './DnD';
 import * as styleCss from './style.css';
 import * as css from './SpaceItem.css';
-import { BetaNoticeBadge } from '$components/BetaNoticeBadge';
 
 function SpaceProfileLoading() {
   return (

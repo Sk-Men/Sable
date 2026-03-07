@@ -77,10 +77,10 @@ import { AccountDataEvent } from '$types/matrix/accountData';
 import { DirectInvitePrompt } from '$components/direct-invite-prompt';
 import { AsyncStatus, useAsyncCallback } from '$hooks/useAsyncCallback';
 import { mDirectAtom } from '$state/mDirectList';
-import { JumpToTime } from './jump-to-time';
-import { RoomPinMenu } from './room-pin-menu';
 import { callChatAtom } from '$state/callEmbed';
 import { RoomSettingsPage } from '$state/roomSettings';
+import { JumpToTime } from './jump-to-time';
+import { RoomPinMenu } from './room-pin-menu';
 import * as css from './RoomViewHeader.css';
 
 const log = createLogger('RoomViewHeader');

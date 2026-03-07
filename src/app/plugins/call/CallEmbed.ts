@@ -41,7 +41,7 @@ export class CallEmbed {
 
   private readonly container: HTMLElement;
 
-  private readUpToMap: { [roomId: string]: string } = {}; // room ID to event ID
+  private readUpToMap: Record<string, string> = {}; // room ID to event ID
 
   private eventsToFeed = new WeakSet<MatrixEvent>();
 

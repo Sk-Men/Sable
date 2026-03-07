@@ -13,11 +13,11 @@ import { useMatrixClient } from '$hooks/useMatrixClient';
 import { useRoomMembers } from '$hooks/useRoomMembers';
 import { CallView } from '$features/call/CallView';
 import { WidgetsDrawer } from '$features/widgets/WidgetsDrawer';
+import { useAtomValue } from 'jotai';
+import { callChatAtom } from '$state/callEmbed';
 import { RoomViewHeader } from './RoomViewHeader';
 import { MembersDrawer } from './MembersDrawer';
 import { RoomView } from './RoomView';
-import { useAtomValue } from 'jotai';
-import { callChatAtom } from '$state/callEmbed';
 import { CallChatView } from './CallChatView';
 
 export function Room() {

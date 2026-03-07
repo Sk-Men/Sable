@@ -1,5 +1,5 @@
 import { MouseEventHandler, forwardRef, useState, MouseEvent, useEffect } from 'react';
-import { EventType, Room, RoomEvent as RoomEventEnum } from '$types/matrix-sdk';
+import { Room, RoomEvent as RoomEventEnum } from '$types/matrix-sdk';
 import {
   Avatar,
   Box,
@@ -59,7 +59,6 @@ import { ScreenSize, useScreenSizeContext } from '$hooks/useScreenSize';
 import { useRoomName } from '$hooks/useRoomMeta';
 import { nicknamesAtom } from '$state/nicknames';
 import { useRoomNavigate } from '$hooks/useRoomNavigate';
-import { RoomNavUser } from './RoomNavUser';
 
 // Upstream Call Hooks
 import { useCallMembers, useCallSession } from '$hooks/useCall';
@@ -67,6 +66,7 @@ import { useCallEmbed, useCallStart } from '$hooks/useCallEmbed';
 import { callChatAtom } from '$state/callEmbed';
 import { useCallPreferencesAtom } from '$state/hooks/callPreferences';
 import { CallControlState } from '$plugins/call/CallControlState';
+import { RoomNavUser } from './RoomNavUser';
 
 /**
  * Reactively checks whether a room has unread messages, even if the

@@ -24,6 +24,7 @@ import { getLocalStorageItem } from '$state/utils/atomWithLocalStorage';
 import { NotificationJumper } from '$hooks/useNotificationJumper';
 import { SearchModalRenderer } from '$features/search';
 import { GlobalKeyboardShortcuts } from '$components/GlobalKeyboardShortcuts';
+import { CallEmbedProvider } from '$components/CallEmbedProvider';
 import { AuthLayout, Login, Register, ResetPassword } from './auth';
 import {
   DIRECT_PATH,
@@ -73,7 +74,6 @@ import { HomeCreateRoom } from './client/home/CreateRoom';
 import { Create } from './client/create';
 import { ToRoomEvent } from './client/ToRoomEvent';
 import { CallStatusRenderer } from './CallStatusRenderer';
-import { CallEmbedProvider } from '$components/CallEmbedProvider';
 
 /**
  * Returns true if there is at least one stored session.

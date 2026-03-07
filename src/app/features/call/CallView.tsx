@@ -3,13 +3,13 @@ import { Badge, Box, color, Header, Scroll, Text, toRem } from 'folds';
 import { EventType } from '$types/matrix-sdk';
 import { useCallEmbed, useCallJoined, useSyncCallEmbedPlacement } from '$hooks/useCallEmbed';
 import { ContainerColor } from '$styles/ContainerColor.css';
-import { PrescreenControls } from './PrescreenControls';
 import { usePowerLevelsContext } from '$hooks/usePowerLevels';
 import { useRoom } from '$hooks/useRoom';
 import { useRoomCreators } from '$hooks/useRoomCreators';
 import { useRoomPermissions } from '$hooks/useRoomPermissions';
 import { useMatrixClient } from '$hooks/useMatrixClient';
 import { useCallMembers, useCallSession } from '$hooks/useCall';
+import { PrescreenControls } from './PrescreenControls';
 import { CallMemberRenderer } from './CallMemberCard';
 import * as css from './styles.css';
 
@@ -18,7 +18,7 @@ function JoinMessage({ hasParticipant }: { hasParticipant?: boolean }) {
 
   return (
     <Text style={{ margin: 'auto' }} size="L400" align="Center">
-      Voice chat’s empty — Be the first to hop in!
+      Voice chat&apos;s empty — Be the first to hop in!
     </Text>
   );
 }
@@ -26,7 +26,7 @@ function JoinMessage({ hasParticipant }: { hasParticipant?: boolean }) {
 function NoPermissionMessage() {
   return (
     <Text style={{ margin: 'auto' }} size="L400" align="Center">
-      You don't have permission to join!
+      You don&apos;t have permission to join!
     </Text>
   );
 }

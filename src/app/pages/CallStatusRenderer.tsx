@@ -1,4 +1,3 @@
-import React from 'react';
 import { useCallEmbed } from '../hooks/useCallEmbed';
 import { CallStatus } from '../features/call-status';
 

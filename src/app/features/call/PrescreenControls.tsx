@@ -1,4 +1,3 @@
-import React from 'react';
 import { Box, Button, Icon, Icons, Spinner, Text } from 'folds';
 import { SequenceCard } from '../../components/sequence-card';
 import * as css from './styles.css';

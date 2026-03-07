@@ -2,7 +2,7 @@ import { useCallback, useRef, useState } from 'react';
 import { useAtomValue } from 'jotai';
 import { Transforms } from 'slate';
 import { Box, Text, config, toRem } from 'folds';
-import { EventType, Room } from '$types/matrix-sdk';
+import { EventType } from '$types/matrix-sdk';
 import { ReactEditor } from 'slate-react';
 import { isKeyHotkey } from 'is-hotkey';
 import { useStateEvent } from '$hooks/useStateEvent';
@@ -26,6 +26,7 @@ import { RoomSettingsPage } from '$state/roomSettings';
 import { GlobalModalManager } from '$components/message/modals/GlobalModalManager';
 import { useDelayedEventsSupport } from '$hooks/useDelayedEventsSupport';
 import { delayedEventsSupportedAtom } from '$state/scheduledMessages';
+import { useRoom } from '$hooks/useRoom';
 import { RoomViewFollowing, RoomViewFollowingPlaceholder } from './RoomViewFollowing';
 import { RoomInput } from './RoomInput';
 import { RoomTombstone } from './RoomTombstone';
@@ -33,7 +34,6 @@ import { RoomViewTyping } from './RoomViewTyping';
 import { RoomTimeline } from './RoomTimeline';
 import { RoomInputPlaceholder } from './RoomInputPlaceholder';
 import { ScheduledMessagesList } from './schedule-send';
-import { useRoom } from '$hooks/useRoom';
 
 const FN_KEYS_REGEX = /^F\d+$/;
 const shouldFocusMessageField = (evt: KeyboardEvent): boolean => {

@@ -1,5 +1,5 @@
 import { Box, Chip, Icon, IconButton, Icons, Text, Tooltip, TooltipProvider } from 'folds';
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { StatusDivider } from './components';
 import { CallEmbed, useCallControlState } from '../../plugins/call';
 
