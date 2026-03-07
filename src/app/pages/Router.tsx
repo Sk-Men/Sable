@@ -71,9 +71,9 @@ import { AuthRouteThemeManager, UnAuthRouteThemeManager } from './ThemeManager';
 import { ClientRoomsNotificationPreferences } from './client/ClientRoomsNotificationPreferences';
 import { HomeCreateRoom } from './client/home/CreateRoom';
 import { Create } from './client/create';
-import { CallProvider } from './client/call/CallProvider';
-import { PersistentCallContainer } from './client/call/PersistentCallContainer';
 import { ToRoomEvent } from './client/ToRoomEvent';
+import { CallStatusRenderer } from './CallStatusRenderer';
+import { CallEmbedProvider } from '$components/CallEmbedProvider';
 
 /**
  * Returns true if there is at least one stored session.
@@ -152,7 +152,7 @@ export const createRouter = (clientConfig: ClientConfig, screenSize: ScreenSize)
                   <ClientBindAtoms>
                     <ClientNonUIFeatures>
                       <NotificationJumper />
-                      <CallProvider>
+                      <CallEmbedProvider>
                         <ClientLayout
                           nav={
                             <MobileFriendlyClientNav>
@@ -160,11 +160,10 @@ export const createRouter = (clientConfig: ClientConfig, screenSize: ScreenSize)
                             </MobileFriendlyClientNav>
                           }
                         >
-                          <PersistentCallContainer>
-                            <Outlet />
-                          </PersistentCallContainer>
+                          <Outlet />
                         </ClientLayout>
-                      </CallProvider>
+                        <CallStatusRenderer />
+                      </CallEmbedProvider>
                       <SearchModalRenderer />
                       <UserRoomProfileRenderer />
                       <CreateRoomModalRenderer />

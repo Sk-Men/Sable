@@ -24,12 +24,16 @@ export function ClientInitStorageAtom({ children }: ClientInitStorageAtomProps) 
 
   const openedSidebarFolderAtom = useMemo(() => makeOpenedSidebarFolderAtom(userId), [userId]);
 
+  const callPreferencesAtom = useMemo(() => makeCallPreferencesAtom(userId), [userId]);
+
   return (
     <ClosedNavCategoriesProvider value={closedNavCategoriesAtom}>
       <ClosedLobbyCategoriesProvider value={closedLobbyCategoriesAtom}>
         <NavToActivePathProvider value={navToActivePathAtom}>
           <OpenedSidebarFolderProvider value={openedSidebarFolderAtom}>
-            {children}
+            <CallPreferencesProvider value={callPreferencesAtom}>
+              {children}
+            </CallPreferencesProvider>
           </OpenedSidebarFolderProvider>
         </NavToActivePathProvider>
       </ClosedLobbyCategoriesProvider>

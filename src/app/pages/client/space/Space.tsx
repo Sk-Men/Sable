@@ -19,8 +19,9 @@ import {
   toRem,
 } from 'folds';
 import { useVirtualizer } from '@tanstack/react-virtual';
-import { JoinRule, Room, RoomJoinRulesEventContent } from '$types/matrix-sdk';
 import FocusTrap from 'focus-trap-react';
+import { useNavigate } from 'react-router-dom';
+import { JoinRule, Room, RoomJoinRulesEventContent } from '$types/matrix-sdk';
 import { useMatrixClient } from '$hooks/useMatrixClient';
 import { mDirectAtom } from '$state/mDirectList';
 import { NavCategory, NavCategoryHeader, NavItem, NavItemContent, NavLink } from '$components/nav';
@@ -69,15 +70,15 @@ import { BreakWord } from '$styles/Text.css';
 import { InviteUserPrompt } from '$components/invite-user-prompt';
 import { CallNavStatus } from '$features/room-nav/RoomCallNavStatus';
 import { mobileOrTablet } from '$utils/user-agent';
-import { useNavigate } from 'react-router-dom';
 import { lastVisitedRoomIdAtom } from '$state/room/lastRoom';
 import { SwipeableOverlayWrapper } from '$components/SwipeableOverlayWrapper';
-import { useCallState } from '$pages/client/call/CallProvider';
+import { useCallEmbed } from '$hooks/useCallEmbed';
 
 type SpaceMenuProps = {
   room: Room;
   requestClose: () => void;
 };
+
 const SpaceMenu = forwardRef<HTMLDivElement, SpaceMenuProps>(({ room, requestClose }, ref) => {
   const mx = useMatrixClient();
   const [hideReads] = useSetting(settingsAtom, 'hideReads');
@@ -379,7 +380,7 @@ export function Space() {
   const selectedRoomId = useSelectedRoom();
   const lobbySelected = useSpaceLobbySelected(spaceIdOrAlias);
   const searchSelected = useSpaceSearchSelected(spaceIdOrAlias);
-  const { isActiveCallReady, activeCallRoomId } = useCallState();
+  const callEmbed = useCallEmbed();
 
   const [closedCategories, setClosedCategories] = useAtom(useClosedNavCategoriesAtom());
 
@@ -404,19 +405,10 @@ export function Space() {
         const unread = roomToUnread.get(roomId);
         const hasUnread = !!unread && (unread.total > 0 || unread.highlight > 0);
         const showRoomAnyway =
-          hasUnread ||
-          roomId === selectedRoomId ||
-          (isActiveCallReady && activeCallRoomId === roomId);
+          hasUnread || roomId === selectedRoomId || callEmbed?.roomId === roomId;
         return !showRoomAnyway;
       },
-      [
-        space.roomId,
-        closedCategories,
-        roomToUnread,
-        selectedRoomId,
-        activeCallRoomId,
-        isActiveCallReady,
-      ]
+      [space.roomId, closedCategories, roomToUnread, selectedRoomId, callEmbed]
     ),
     useCallback(
       (sId) => closedCategories.has(makeNavCategoryId(space.roomId, sId)),

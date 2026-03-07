@@ -12,11 +12,13 @@ import { markAsRead } from '$utils/notifications';
 import { useMatrixClient } from '$hooks/useMatrixClient';
 import { useRoomMembers } from '$hooks/useRoomMembers';
 import { CallView } from '$features/call/CallView';
-import { useCallState } from '$pages/client/call/CallProvider';
 import { WidgetsDrawer } from '$features/widgets/WidgetsDrawer';
 import { RoomViewHeader } from './RoomViewHeader';
 import { MembersDrawer } from './MembersDrawer';
 import { RoomView } from './RoomView';
+import { useAtomValue } from 'jotai';
+import { callChatAtom } from '$state/callEmbed';
+import { CallChatView } from './CallChatView';
 
 export function Room() {
   const { eventId } = useParams();
@@ -29,7 +31,7 @@ export function Room() {
   const screenSize = useScreenSizeContext();
   const powerLevels = usePowerLevels(room);
   const members = useRoomMembers(mx, room.roomId);
-  const { isChatOpen } = useCallState();
+  const chat = useAtomValue(callChatAtom);
 
   useKeyDown(
     window,
@@ -43,20 +45,37 @@ export function Room() {
     )
   );
 
+  const callView = room.isCallRoom();
+
   return (
     <PowerLevelsContextProvider value={powerLevels}>
       <Box grow="Yes">
-        <Box grow="Yes" direction="Column">
-          <RoomViewHeader />
-          <Box grow="Yes">
-            <CallView room={room} />
-            {room.isCallRoom() && screenSize === ScreenSize.Desktop && isChatOpen && (
+        {callView && (screenSize === ScreenSize.Desktop || !chat) && (
+          <Box grow="Yes" direction="Column">
+            <RoomViewHeader callView />
+            <Box grow="Yes">
+              <CallView />
+            </Box>
+          </Box>
+        )}
+        {!callView && (
+          <Box grow="Yes" direction="Column">
+            <RoomViewHeader />
+            <Box grow="Yes">
+              <RoomView eventId={eventId} />
+            </Box>
+          </Box>
+        )}
+
+        {callView && chat && (
+          <>
+            {screenSize === ScreenSize.Desktop && (
               <Line variant="Background" direction="Vertical" size="300" />
             )}
-            {(!room.isCallRoom() || isChatOpen) && <RoomView room={room} eventId={eventId} />}
-          </Box>
-        </Box>
-        {screenSize === ScreenSize.Desktop && isDrawer && (
+            <CallChatView />
+          </>
+        )}
+        {!callView && screenSize === ScreenSize.Desktop && isDrawer && (
           <>
             <Line variant="Background" direction="Vertical" size="300" />
             <MembersDrawer key={room.roomId} room={room} members={members} />

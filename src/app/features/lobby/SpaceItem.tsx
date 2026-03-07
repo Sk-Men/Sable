@@ -36,6 +36,7 @@ import { AddExistingModal } from '$features/add-existing';
 import { useDraggableItem } from './DnD';
 import * as styleCss from './style.css';
 import * as css from './SpaceItem.css';
+import { BetaNoticeBadge } from '$components/BetaNoticeBadge';
 
 function SpaceProfileLoading() {
   return (
@@ -283,7 +284,17 @@ function AddRoomButton({ item }: { item: HierarchyItem }) {
               fill="None"
               onClick={() => handleCreateRoom(CreateRoomType.TextRoom)}
             >
-              <Text size="T300">New Room</Text>
+              <Text size="T300">Chat Room</Text>
+            </MenuItem>
+            <MenuItem
+              size="300"
+              radii="300"
+              variant="Primary"
+              fill="None"
+              onClick={() => handleCreateRoom(CreateRoomType.VoiceRoom)}
+              after={<BetaNoticeBadge />}
+            >
+              <Text size="T300">Voice Room</Text>
             </MenuItem>
             <MenuItem
               size="300"
