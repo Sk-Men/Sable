@@ -2,7 +2,7 @@ import { useCallback, useRef, useState } from 'react';
 import { useAtomValue } from 'jotai';
 import { Transforms } from 'slate';
 import { Box, Text, config, toRem } from 'folds';
-import { EventType, Room } from '$types/matrix-sdk';
+import { EventType } from '$types/matrix-sdk';
 import { ReactEditor } from 'slate-react';
 import { isKeyHotkey } from 'is-hotkey';
 import { useStateEvent } from '$hooks/useStateEvent';
@@ -26,6 +26,7 @@ import { RoomSettingsPage } from '$state/roomSettings';
 import { GlobalModalManager } from '$components/message/modals/GlobalModalManager';
 import { useDelayedEventsSupport } from '$hooks/useDelayedEventsSupport';
 import { delayedEventsSupportedAtom } from '$state/scheduledMessages';
+import { useRoom } from '$hooks/useRoom';
 import { RoomViewFollowing, RoomViewFollowingPlaceholder } from './RoomViewFollowing';
 import { RoomInput } from './RoomInput';
 import { RoomTombstone } from './RoomTombstone';
@@ -65,13 +66,14 @@ const shouldFocusMessageField = (evt: KeyboardEvent): boolean => {
   return true;
 };
 
-export function RoomView({ room, eventId }: { room: Room; eventId?: string }) {
+export function RoomView({ eventId }: { eventId?: string }) {
   const roomInputRef = useRef<HTMLDivElement>(null);
   const roomViewRef = useRef<HTMLDivElement>(null);
 
   const [hideReads] = useSetting(settingsAtom, 'hideReads');
   const screenSize = useScreenSizeContext();
 
+  const room = useRoom();
   const { roomId } = room;
   const editor = useEditor();
 

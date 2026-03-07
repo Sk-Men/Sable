@@ -1,29 +1,32 @@
 import { Avatar, Box, Icon, Icons, Text } from 'folds';
 import { MouseEventHandler } from 'react';
+import { useAtomValue } from 'jotai';
 import { Room, CallMembership } from '$types/matrix-sdk';
 import { NavButton, NavItem, NavItemContent } from '$components/nav';
 import { UserAvatar } from '$components/user-avatar';
 import { useMatrixClient } from '$hooks/useMatrixClient';
-import { useCallState } from '$pages/client/call/CallProvider';
 import { getMxIdLocalPart } from '$utils/matrix';
 import { getMemberAvatarMxc, getMemberDisplayName } from '$utils/room';
 import { useMediaAuthentication } from '$hooks/useMediaAuthentication';
 import { useOpenUserRoomProfile } from '$state/hooks/userRoomProfile';
 import { useSpaceOptionally } from '$hooks/useSpace';
-import { useAtomValue } from 'jotai';
 import { nicknamesAtom } from '$state/nicknames';
+import { useCallEmbed } from '$hooks/useCallEmbed';
 
 type RoomNavUserProps = {
   room: Room;
   callMembership: CallMembership;
 };
+
 export function RoomNavUser({ room, callMembership }: RoomNavUserProps) {
   const mx = useMatrixClient();
   const useAuthentication = useMediaAuthentication();
   const openProfile = useOpenUserRoomProfile();
   const space = useSpaceOptionally();
-  const { isActiveCallReady, activeCallRoomId } = useCallState();
-  const isActiveCall = isActiveCallReady && activeCallRoomId === room.roomId;
+
+  const callEmbed = useCallEmbed();
+  const isActiveCall = callEmbed?.roomId === room.roomId;
+
   const userId = callMembership.sender ?? '';
   const avatarMxcUrl = getMemberAvatarMxc(room, userId);
   const avatarUrl = avatarMxcUrl
