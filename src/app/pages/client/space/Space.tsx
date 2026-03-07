@@ -68,7 +68,6 @@ import { ContainerColor } from '$styles/ContainerColor.css';
 import { AsyncStatus, useAsyncCallback } from '$hooks/useAsyncCallback';
 import { BreakWord } from '$styles/Text.css';
 import { InviteUserPrompt } from '$components/invite-user-prompt';
-import { CallNavStatus } from '$features/room-nav/RoomCallNavStatus';
 import { mobileOrTablet } from '$utils/user-agent';
 import { lastVisitedRoomIdAtom } from '$state/room/lastRoom';
 import { SwipeableOverlayWrapper } from '$components/SwipeableOverlayWrapper';
@@ -546,7 +545,6 @@ export function Space() {
             </NavCategory>
           </Box>
         </PageNavContent>
-        <CallNavStatus />
       </SwipeableOverlayWrapper>
     </PageNav>
   );
