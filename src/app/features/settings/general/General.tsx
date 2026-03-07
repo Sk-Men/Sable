@@ -1,6 +1,7 @@
 import {
   ChangeEventHandler,
   FormEventHandler,
+  KeyboardEventHandler,
   MouseEventHandler,
   useEffect,
   useState,
@@ -22,6 +23,7 @@ import {
   Scroll,
   Switch,
   Text,
+  toRem,
 } from 'folds';
 import FocusTrap from 'focus-trap-react';
 import { useAtomValue, useSetAtom } from 'jotai';
@@ -46,6 +48,7 @@ import { SequenceCardStyle } from '$features/settings/styles.css';
 import { sessionsAtom, activeSessionIdAtom } from '$state/sessions';
 import { useClientConfig } from '$hooks/useClientConfig';
 import { resolveSlidingEnabled } from '$client/initMatrix';
+import { isKeyHotkey } from 'is-hotkey';
 
 type DateHintProps = {
   hasChanges: boolean;
@@ -689,6 +692,49 @@ function Gestures({ isMobile }: { isMobile: boolean }) {
   );
 }
 
+function EmojiSelectorThresholdInput() {
+  const [emojiThreshold, setEmojiThreshold] = useSetting(settingsAtom, 'emojiSuggestThreshold');
+  const [inputValue, setInputValue] = useState(emojiThreshold.toString());
+
+  const handleChange: ChangeEventHandler<HTMLInputElement> = (evt) => {
+    const val = evt.target.value;
+    setInputValue(val);
+
+    const parsed = parseInt(val, 10);
+    if (!Number.isNaN(parsed) && parsed >= 1 && parsed <= 10) {
+      setEmojiThreshold(parsed);
+    }
+  };
+
+  const handleKeyDown: KeyboardEventHandler<HTMLInputElement> = (evt) => {
+    if (isKeyHotkey('escape', evt)) {
+      evt.stopPropagation();
+      setInputValue(emojiThreshold.toString());
+      (evt.target as HTMLInputElement).blur();
+    }
+
+    if (isKeyHotkey('enter', evt)) {
+      (evt.target as HTMLInputElement).blur();
+    }
+  };
+
+  return (
+    <Input
+      style={{ width: toRem(80) }}
+      variant={parseInt(inputValue, 10) === emojiThreshold ? 'Secondary' : 'Success'}
+      size="300"
+      radii="300"
+      type="number"
+      min="1"
+      max="10"
+      value={inputValue}
+      onChange={handleChange}
+      onKeyDown={handleKeyDown}
+      outlined
+    />
+  );
+}
+
 function Messages() {
   const [hideMembershipEvents, setHideMembershipEvents] = useSetting(
     settingsAtom,
@@ -715,6 +761,12 @@ function Messages() {
       </SequenceCard>
       <SequenceCard className={SequenceCardStyle} variant="SurfaceVariant" direction="Column">
         <SettingTile title="Message Spacing" after={<SelectMessageSpacing />} />
+      </SequenceCard>
+      <SequenceCard className={SequenceCardStyle} variant="SurfaceVariant" direction="Column">
+        <SettingTile
+          title="Emoji Selector Character Threshold"
+          after={<EmojiSelectorThresholdInput />}
+        />
       </SequenceCard>
       <SequenceCard className={SequenceCardStyle} variant="SurfaceVariant" direction="Column">
         <SettingTile
