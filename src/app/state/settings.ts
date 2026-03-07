@@ -22,7 +22,7 @@ export interface Settings {
   useSystemTheme: boolean;
   lightThemeId?: string;
   darkThemeId?: string;
-  monochromeMode?: boolean;
+  saturationLevel?: number;
   uniformIcons: boolean;
   isMarkdown: boolean;
   editorToolbar: boolean;
@@ -80,6 +80,11 @@ export interface Settings {
   showPingCounts: boolean;
   hideReads: boolean;
   emojiSuggestThreshold: number;
+  underlineLinks: boolean;
+  reducedMotion: boolean;
+  autoplayGifs: boolean;
+  autoplayStickers: boolean;
+  autoplayEmojis: boolean;
 
   // furry stuff
   renderAnimals: boolean;
@@ -90,7 +95,7 @@ const defaultSettings: Settings = {
   useSystemTheme: true,
   lightThemeId: undefined,
   darkThemeId: undefined,
-  monochromeMode: false,
+  saturationLevel: 100,
   uniformIcons: false,
   isMarkdown: true,
   editorToolbar: false,
@@ -149,6 +154,11 @@ const defaultSettings: Settings = {
   showPingCounts: true,
   hideReads: false,
   emojiSuggestThreshold: 2,
+  underlineLinks: false,
+  reducedMotion: false,
+  autoplayGifs: true,
+  autoplayStickers: true,
+  autoplayEmojis: true,
 
   // furry stuff
   renderAnimals: true,
@@ -157,9 +167,20 @@ const defaultSettings: Settings = {
 export const getSettings = () => {
   const settings = localStorage.getItem(STORAGE_KEY);
   if (settings === null) return defaultSettings;
+
+  // migration for old keys
+  // monochrome -> saturation
+  const parsed = JSON.parse(settings);
+  if (parsed.monochromeMode === true && parsed.saturationLevel === undefined) {
+    parsed.saturationLevel = 0;
+  } else if (parsed.monochromeMode === false && parsed.saturationLevel === undefined) {
+    parsed.saturationLevel = 100;
+  }
+  delete parsed.monochromeMode;
+
   return {
     ...defaultSettings,
-    ...(JSON.parse(settings) as Settings),
+    ...(parsed as Settings),
   };
 };
 

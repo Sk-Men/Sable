@@ -1,6 +1,8 @@
 import { memo, useMemo, useCallback } from 'react';
 import { MsgType } from '$types/matrix-sdk';
 import { testMatrixTo } from '$plugins/matrix-to';
+import { useSetting } from '$state/hooks/settings';
+import { settingsAtom } from '$state/settings';
 import { HTMLReactParserOptions } from 'html-react-parser';
 import { Opts } from 'linkifyjs';
 import { config } from 'folds';
@@ -30,6 +32,7 @@ import { Image, MediaControl, Video } from './media';
 import { ImageViewer } from './image-viewer';
 import { PdfViewer } from './Pdf-viewer';
 import { TextViewer } from './text-viewer';
+import { ClientSideHoverFreeze } from './ClientSideHoverFreeze';
 
 type RenderMessageContentProps = {
   displayName: string;
@@ -69,6 +72,8 @@ function RenderMessageContentInternal({
   outlineAttachment,
 }: RenderMessageContentProps) {
   const content = useMemo(() => getContent<any>(), [getContent]);
+
+  const [autoplayGifs] = useSetting(settingsAtom, 'autoplayGifs');
 
   const renderBody = useCallback(
     (props: any) => (
@@ -192,6 +197,13 @@ function RenderMessageContentInternal({
   }
 
   if (msgType === MsgType.Image) {
+    const isGif =
+      content.info?.mimetype === 'image/gif' ||
+      content.info?.mimetype === 'image/webp' ||
+      content.body?.toLowerCase().endsWith('.gif') ||
+      content.body?.toLowerCase().endsWith('.webp') ||
+      (typeof content.url === 'string' && content.url.toLowerCase().includes('gif'));
+
     return (
       <>
         <MImage
@@ -200,7 +212,16 @@ function RenderMessageContentInternal({
             <ImageContent
               {...imageProps}
               autoPlay={mediaAutoLoad}
-              renderImage={(p) => <Image {...p} loading="lazy" />}
+              renderImage={(p) => {
+                if (isGif && !autoplayGifs && p.src) {
+                  return (
+                    <ClientSideHoverFreeze src={p.src}>
+                      <Image {...p} loading="lazy" />
+                    </ClientSideHoverFreeze>
+                  );
+                }
+                return <Image {...p} loading="lazy" />;
+              }}
               renderViewer={(p) => <ImageViewer {...p} />}
             />
           )}

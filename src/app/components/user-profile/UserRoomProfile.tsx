@@ -259,6 +259,8 @@ export function UserRoomProfile({ userId, initialProfile }: UserRoomProfileProps
   const ignoredUsers = useIgnoredUsers();
   const ignored = ignoredUsers.includes(userId);
 
+  const [autoplayGifs] = useSetting(settingsAtom, 'autoplayGifs');
+
   const room = useRoom();
   const powerLevels = usePowerLevels(room);
   const creators = useRoomCreators(room);
@@ -348,6 +350,7 @@ export function UserRoomProfile({ userId, initialProfile }: UserRoomProfileProps
         avatarUrl={avatarUrl}
         bannerUrl={bannerHttpUrl ?? undefined}
         presence={presence && presence.lastActiveTs !== 0 ? presence : undefined}
+        autoplayGifs={autoplayGifs}
       />
       <Box direction="Column" gap="300" style={{ padding: config.space.S400 }}>
         <Box direction="Column" gap="200">
