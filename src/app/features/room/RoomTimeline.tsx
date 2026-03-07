@@ -664,7 +664,16 @@ export function RoomTimeline({
         nicknames,
         autoplayEmojis,
       }),
-    [mx, room, linkifyOpts, spoilerClickHandler, mentionClickHandler, useAuthentication, nicknames]
+    [
+      mx,
+      room,
+      linkifyOpts,
+      autoplayEmojis,
+      spoilerClickHandler,
+      mentionClickHandler,
+      useAuthentication,
+      nicknames,
+    ]
   );
   const parseMemberEvent = useMemberEventParser();
 

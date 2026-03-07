@@ -36,6 +36,7 @@ import { findAndReplace } from '$utils/findAndReplace';
 import { onEnterOrSpace } from '$utils/keyboard';
 import { copyToClipboard } from '$utils/dom';
 import { useTimeoutToggle } from '$hooks/useTimeoutToggle';
+import { ClientSideHoverFreeze } from '$components/ClientSideHoverFreeze';
 import {
   parseMatrixToRoom,
   parseMatrixToRoomEvent,
@@ -43,7 +44,6 @@ import {
   testMatrixTo,
 } from './matrix-to';
 import { getHexcodeForEmoji, getShortcodeFor } from './emoji';
-import { ClientSideHoverFreeze } from '$components/ClientSideHoverFreeze';
 
 const ReactPrism = lazy(() => import('./react-prism/ReactPrism'));
 
