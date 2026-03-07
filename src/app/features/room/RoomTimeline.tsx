@@ -1230,7 +1230,7 @@ export function RoomTimeline({
         }
       }
     },
-    [room, setReplyDraft, editor, activeReplyId]
+    [room, setReplyDraft, activeReplyId]
   );
 
   const handleReplyClick: MouseEventHandler<HTMLButtonElement> = useCallback(
