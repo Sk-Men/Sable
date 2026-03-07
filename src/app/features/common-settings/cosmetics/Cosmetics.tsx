@@ -1,5 +1,18 @@
 import { ChangeEventHandler, FormEventHandler, useCallback, useEffect, useState } from 'react';
-import { Box, Text, IconButton, Icon, Icons, Scroll, Switch, Avatar, Input, config, Button, Spinner } from 'folds';
+import {
+  Box,
+  Text,
+  IconButton,
+  Icon,
+  Icons,
+  Scroll,
+  Switch,
+  Avatar,
+  Input,
+  config,
+  Button,
+  Spinner,
+} from 'folds';
 import { Page, PageContent, PageHeader } from '$components/page';
 import { SequenceCard } from '$components/sequence-card';
 import { SettingTile } from '$components/setting-tile';
@@ -176,36 +189,40 @@ export function Cosmetics({ requestClose }: CosmeticsProps) {
             <Box direction="Column" gap="700">
               <Box direction="Column" gap="100">
                 <Text size="L400">Profile</Text>
-                <SequenceCard
-                  className={SequenceCardStyle}
-                  variant="SurfaceVariant"
-                  direction="Column"
-                  gap="400"
-                >
-                  <SettingTile
-                    title="Avatar"
-                    description="This...is still a placeholder"
-                    after={
-                      <Avatar size="500" radii="300">
-                        <UserAvatar
-                          userId={userId}
-                          src={avatarUrl}
-                          renderFallback={() => (
-                            <Text size="H4">{nameInitials(defaultDisplayName)}</Text>
-                          )}
-                        />
-                      </Avatar>
-                    }
-                  />
-                </SequenceCard>
-                <SequenceCard
-                  className={SequenceCardStyle}
-                  variant="SurfaceVariant"
-                  direction="Column"
-                  gap="400"
-                >
-                  <CosmeticsNickname userId={userId} room={room} />
-                </SequenceCard>
+                {!isSpace && (
+                  <SequenceCard
+                    className={SequenceCardStyle}
+                    variant="SurfaceVariant"
+                    direction="Column"
+                    gap="400"
+                  >
+                    <SettingTile
+                      title="Avatar"
+                      description="This...is still a placeholder"
+                      after={
+                        <Avatar size="500" radii="300">
+                          <UserAvatar
+                            userId={userId}
+                            src={avatarUrl}
+                            renderFallback={() => (
+                              <Text size="H4">{nameInitials(defaultDisplayName)}</Text>
+                            )}
+                          />
+                        </Avatar>
+                      }
+                    />
+                  </SequenceCard>
+                )}
+                {!isSpace && (
+                  <SequenceCard
+                    className={SequenceCardStyle}
+                    variant="SurfaceVariant"
+                    direction="Column"
+                    gap="400"
+                  >
+                    <CosmeticsNickname userId={userId} room={room} />
+                  </SequenceCard>
+                )}
                 <SequenceCard
                   className={SequenceCardStyle}
                   variant="SurfaceVariant"
