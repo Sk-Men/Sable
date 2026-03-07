@@ -21,10 +21,9 @@ export function FeatureCheck({ children }: { children: ReactNode }) {
               <Text size="T300" priority="400">
                 This application needs a feature called IndexedDB to save your session data on your
                 device. It looks like your browser either doesn&apos;t support IndexedDB or it
-                isn&apos;t working properly right now. Please make sure your browser supports
-                IndexedDB and that it&apos;s enabled. If your browser does support IndexedDB, try
-                restarting your browser or checking your browser settings to ensure it&apos;s
-                working correctly.
+                isn&apos;t working properly right now. Make sure your browser supports IndexedDB and
+                that it&apos;s enabled. Please also check if you have enough free disk space, as
+                IndexedDB may not work properly if your device is running low on storage.
               </Text>
               <Text size="T200">
                 <a
