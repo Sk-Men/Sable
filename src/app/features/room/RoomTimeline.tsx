@@ -1210,18 +1210,27 @@ export function RoomTimeline({
         ? { 'm.relates_to': { rel_type: 'm.thread', event_id: replyId } }
         : replyEvt.getWireContent();
       const senderId = replyEvt.getSender();
-      if (senderId && typeof body === 'string') {
-        setReplyDraft({
-          userId: senderId,
-          eventId: replyId,
-          body,
-          formattedBody,
-          relation,
-        });
-        setTimeout(() => ReactEditor.focus(editor), 100);
+      if (senderId) {
+        if (typeof body === 'string') {
+          setReplyDraft({
+            userId: senderId,
+            eventId: replyId,
+            body,
+            formattedBody,
+            relation,
+          });
+        } else {
+          setReplyDraft({
+            userId: senderId,
+            eventId: replyId,
+            body: '',
+            formattedBody: '',
+            relation,
+          });
+        }
       }
     },
-    [room, setReplyDraft, editor, activeReplyId]
+    [room, setReplyDraft, activeReplyId]
   );
 
   const handleReplyClick: MouseEventHandler<HTMLButtonElement> = useCallback(
@@ -1624,6 +1633,7 @@ export function RoomTimeline({
             highlight={highlighted}
             messageSpacing={messageSpacing}
             canDelete={canRedact || mEvent.getSender() === mx.getUserId()}
+            onReplyClick={handleReplyClick}
             hideReadReceipts={hideReads}
             showDeveloperTools={showDeveloperTools}
           >
@@ -1667,6 +1677,7 @@ export function RoomTimeline({
             highlight={highlighted}
             messageSpacing={messageSpacing}
             canDelete={canRedact || mEvent.getSender() === mx.getUserId()}
+            onReplyClick={handleReplyClick}
             hideReadReceipts={hideReads}
             showDeveloperTools={showDeveloperTools}
           >
@@ -1711,6 +1722,7 @@ export function RoomTimeline({
             highlight={highlighted}
             messageSpacing={messageSpacing}
             canDelete={canRedact || mEvent.getSender() === mx.getUserId()}
+            onReplyClick={handleReplyClick}
             hideReadReceipts={hideReads}
             showDeveloperTools={showDeveloperTools}
           >
@@ -1755,6 +1767,7 @@ export function RoomTimeline({
             highlight={highlighted}
             messageSpacing={messageSpacing}
             canDelete={canRedact || mEvent.getSender() === mx.getUserId()}
+            onReplyClick={handleReplyClick}
             hideReadReceipts={hideReads}
             showDeveloperTools={showDeveloperTools}
           >
@@ -1801,6 +1814,7 @@ export function RoomTimeline({
           highlight={highlighted}
           messageSpacing={messageSpacing}
           canDelete={canRedact || mEvent.getSender() === mx.getUserId()}
+          onReplyClick={handleReplyClick}
           hideReadReceipts={hideReads}
           showDeveloperTools={showDeveloperTools}
         >
@@ -1852,6 +1866,7 @@ export function RoomTimeline({
           highlight={highlighted}
           messageSpacing={messageSpacing}
           canDelete={canRedact || mEvent.getSender() === mx.getUserId()}
+          onReplyClick={handleReplyClick}
           hideReadReceipts={hideReads}
           showDeveloperTools={showDeveloperTools}
         >
