@@ -203,7 +203,7 @@ export type ForwardedMessageProps = {
   isForwarded: boolean;
   originalRoomId: string;
   originalEventId: string;
-  originalEventHidden: boolean;
+  originalEventPrivate: boolean;
 };
 
 export type MessageProps = {
@@ -519,8 +519,8 @@ function MessageInternal(
         <Chip as="div" variant="SurfaceVariant" radii="Pill">
           <Text size="T200" priority="300">
             Forwarded{' '}
-            {messageForwardedProps.originalEventHidden ? 'private message' : 'from another room'}{' '}
-            {!messageForwardedProps.originalEventHidden && (
+            {messageForwardedProps.originalEventPrivate ? 'private message' : 'from another room'}{' '}
+            {!messageForwardedProps.originalEventPrivate && (
               <a
                 href={getMatrixToRoomEvent(
                   messageForwardedProps.originalRoomId,
