@@ -539,7 +539,7 @@ function MessageInternal(
               compact={messageLayout === MessageLayout.Compact}
               hour24Clock={hour24Clock}
               dateFormatString={dateFormatString}
-              style={{ marginLeft: config.space.S100 }}
+              style={{ marginLeft: config.space.S100, justifyContent: 'flex-end' }}
             />
           </Text>
         </Chip>

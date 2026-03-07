@@ -14,6 +14,7 @@ import {
   Text,
   config,
   Scroll,
+  as,
 } from 'folds';
 import { useAtomValue, useSetAtom } from 'jotai';
 import { JoinRule, MatrixEvent, Room } from '$types/matrix-sdk';
@@ -21,41 +22,52 @@ import { useEffect, useMemo, useState } from 'react';
 import { allRoomsAtom } from '$state/room-list/roomList';
 import { useAllJoinedRoomsSet, useGetRoom } from '$hooks/useGetRoom';
 import { factoryRoomIdByActivity } from '$utils/sort';
+import * as css from '$features/room/message/styles.css';
+import { sanitizeCustomHtml } from '$utils/sanitize';
 
 // Message forwarding component
-export function MessageForwardItem({
-  room,
-  mEvent,
-  onClose,
-}: {
-  room: Room;
-  mEvent: MatrixEvent;
-  onClose: () => void;
-}) {
-  const setModal = useSetAtom(modalAtom);
+export const MessageForwardItem = as<'button', MessageForwardItemProps>(
+  ({ room, mEvent, onClose, ...props }: MessageForwardItemProps) => {
+    const setModal = useSetAtom(modalAtom);
 
-  const handleClick = () => {
-    setModal({
-      type: ModalType.Forward,
-      room,
-      mEvent,
-    });
-    onClose();
-  };
+    const handleClick = () => {
+      setModal({
+        type: ModalType.Forward,
+        room,
+        mEvent,
+      });
+      onClose?.();
+    };
 
-  return (
-    <MenuItem
-      size="300"
-      after={<Icon size="100" src={Icons.ReplyArrow} />}
-      radii="300"
-      onClick={handleClick}
-    >
-      <Text as="span" size="T300" truncate>
-        Forward
-      </Text>
-    </MenuItem>
-  );
-}
+    return (
+      <MenuItem
+        size="300"
+        after={<Icon size="100" src={Icons.ArrowRight} />}
+        radii="300"
+        {...props}
+        onClick={handleClick}
+      >
+        <Text className={css.MessageMenuItemText} as="span" size="T300" truncate>
+          Forward
+        </Text>
+      </MenuItem>
+    );
+  }
+);
+
+export const unwrapForwardedContent = (content: string) => {
+  // unwrap the content of a forwarded message if it was wrapped in a blockquote with the data-forward-marker attribute
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(content, 'text/html');
+  const forwardMarker = doc.querySelector('[data-forward-marker]');
+  if (forwardMarker) {
+    const blockquote = forwardMarker.querySelector('blockquote');
+    if (blockquote) {
+      return blockquote.innerHTML;
+    }
+  }
+  return content;
+};
 
 type MessageForwardInternalProps = {
   room: Room;
@@ -125,6 +137,23 @@ export function MessageForwardInternal({ room, mEvent, onClose }: MessageForward
     // using reference relation to indicate that this is a forwarded message,
     // which allows clients to display it as such
 
+    const bodyModifText = `(Forwarded message from ${isPrivate ? 'a private room' : (getRoom(room.roomId)?.name ?? 'a room')} - originally sent at ${new Date(mEvent.getTs()).toLocaleString()} )`;
+    let newBodyPlain = '';
+    let newBodyHtml = '';
+    // transform if msgtype is m.text
+    if (mEvent.getContent().msgtype === 'm.text') {
+      const original = mEvent.getContent().body;
+      newBodyPlain = `${bodyModifText}\n\n${original
+        .split('\n')
+        .map((l: string) => `> ${l}`)
+        .join('\n')}`;
+      const safeHtml = sanitizeCustomHtml(original).replace(/\n/g, '<br>');
+      newBodyHtml =
+        `<div class="forwarded" data-forward-marker>` +
+        `<p>${sanitizeCustomHtml(bodyModifText)}</p>` +
+        `<blockquote>${safeHtml}</blockquote>` +
+        `</div>`;
+    }
     let content;
     // handle privacy stuff
     if (isPrivate) {
@@ -132,6 +161,9 @@ export function MessageForwardInternal({ room, mEvent, onClose }: MessageForward
       // we can still include the original message content in the body of the message, so we'll just use a fallback text/plain content with the original message body
       content = {
         ...mEvent.getContent(),
+        body: newBodyPlain,
+        format: 'org.matrix.custom.html',
+        formatted_body: newBodyHtml,
         'moe.sable.message.forward': {
           v: 1,
           is_forwarded: true,
@@ -142,6 +174,9 @@ export function MessageForwardInternal({ room, mEvent, onClose }: MessageForward
     } else {
       content = {
         ...mEvent.getContent(),
+        body: newBodyPlain,
+        format: 'org.matrix.custom.html',
+        formatted_body: newBodyHtml,
         'm.relates_to': {
           rel_type: 'm.reference',
           event_id: eventId,
@@ -223,3 +258,9 @@ export function MessageForwardInternal({ room, mEvent, onClose }: MessageForward
     </Dialog>
   );
 }
+
+type MessageForwardItemProps = {
+  room: Room;
+  mEvent: MatrixEvent;
+  onClose?: () => void;
+};
