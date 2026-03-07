@@ -61,7 +61,6 @@ import {
 import { UseStateProvider } from '$components/UseStateProvider';
 import { JoinAddressPrompt } from '$components/join-address-prompt';
 import { RoomSearchParams } from '$pages/paths';
-import { CallNavStatus } from '$features/room-nav/RoomCallNavStatus';
 import { useHomeRooms } from './useHomeRooms';
 
 type HomeMenuProps = {
@@ -359,7 +358,6 @@ export function Home() {
           </Box>
         </PageNavContent>
       )}
-      <CallNavStatus />
     </PageNav>
   );
 }
