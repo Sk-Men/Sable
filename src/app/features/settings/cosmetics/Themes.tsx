@@ -244,7 +244,7 @@ function SystemThemePreferences() {
 
 function ThemeSettings() {
   const [systemTheme, setSystemTheme] = useSetting(settingsAtom, 'useSystemTheme');
-  const [monochromeMode, setMonochromeMode] = useSetting(settingsAtom, 'monochromeMode');
+  const [saturation, setSaturation] = useSetting(settingsAtom, 'saturationLevel');
 
   return (
     <Box direction="Column" gap="100">
@@ -274,8 +274,27 @@ function ThemeSettings() {
 
       <SequenceCard className={SequenceCardStyle} variant="SurfaceVariant" direction="Column">
         <SettingTile
-          title="Monochrome Mode"
-          after={<Switch variant="Primary" value={monochromeMode} onChange={setMonochromeMode} />}
+          title="Saturation"
+          description={`${saturation}%`}
+          after={
+            <input
+              type="range"
+              min="0"
+              max="100"
+              step="1"
+              value={saturation}
+              onChange={(e) => setSaturation(parseInt(e.target.value, 10))}
+              style={{
+                width: toRem(160),
+                cursor: 'pointer',
+                appearance: 'none',
+                height: toRem(6),
+                borderRadius: config.radii.Pill,
+                backgroundColor: 'var(--sable-surface-container-line)',
+                accentColor: 'var(--sable-primary-main)',
+              }}
+            />
+          }
         />
       </SequenceCard>
     </Box>
