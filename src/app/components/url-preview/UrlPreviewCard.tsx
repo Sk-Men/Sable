@@ -52,7 +52,16 @@ export const UrlPreviewCard = as<'div', { url: string; ts: number; mediaType?: s
       );
 
       return (
-        <Box grow="Yes" direction="ColumnReverse" gap="0">
+        <Box
+          grow="Yes"
+          direction={prev['og:video'] ? 'ColumnReverse' : 'Row'}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            overflow: 'hidden',
+            width: '100%',
+          }}
+        >
           {(prev['og:video'] && (
             <VideoContent
               style={{
@@ -69,19 +78,34 @@ export const UrlPreviewCard = as<'div', { url: string; ts: number; mediaType?: s
             />
           )) ||
             (prev['og:image'] && (
-              <ImageContent
-                style={{
-                  aspectRatio: (prev['og:image:width'] ?? 1) / (prev['og:image:height'] ?? 1),
-                }}
-                autoPlay
-                body={prev['og:title']}
-                url={prev['og:image']}
-                renderViewer={(p) => <ImageViewer {...p} />}
-                renderImage={(p) => <Image style={{ objectFit: 'contain' }} {...p} />}
-              />
+              <Box style={{ flexShrink: 0, height: '100px' }}>
+                {' '}
+                <ImageContent
+                  style={{
+                    height: '100%',
+                    aspectRatio: (prev['og:image:width'] ?? 1) / (prev['og:image:height'] ?? 1),
+                    position: 'relative',
+                    width: 'auto',
+                  }}
+                  autoPlay
+                  body={prev['og:title']}
+                  url={prev['og:image']}
+                  renderViewer={(p) => <ImageViewer {...p} />}
+                  renderImage={(p) => (
+                    <Image
+                      {...p}
+                      style={{
+                        height: '100%',
+                        width: 'auto',
+                        objectFit: 'contain',
+                      }}
+                    />
+                  )}
+                />
+              </Box>
             )) ||
             (prev['og:audio'] && (
-              <Box className={css.UrlPreviewAudio}>
+              <Box className={css.UrlPreviewAudio} style={{ flexShrink: 0 }}>
                 <AudioContent
                   url={(prev['og:audio'] as string) ?? ''}
                   mimeType={(prev['og:audio:type'] as string) ?? ''}
@@ -90,7 +114,15 @@ export const UrlPreviewCard = as<'div', { url: string; ts: number; mediaType?: s
                 />
               </Box>
             ))}
-          <UrlPreviewContent>
+          <UrlPreviewContent
+            style={{
+              flex: 1,
+              minWidth: 0,
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'center',
+            }}
+          >
             <Text
               style={linkStyles}
               truncate
