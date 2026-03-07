@@ -118,7 +118,12 @@ export function PersistentCallContainer({ children }: PersistentCallContainerPro
             'm.call',
             newUrl,
             false,
-            getWidgetData(mx, roomIdToSet, {}, { skipLobby: true, intent: effectiveIntent, callIntent: callIntentParam }),
+            getWidgetData(
+              mx,
+              roomIdToSet,
+              {},
+              { skipLobby: true, intent: effectiveIntent, callIntent: callIntentParam }
+            ),
             roomIdToSet
           );
 
@@ -181,13 +186,27 @@ export function PersistentCallContainer({ children }: PersistentCallContainerPro
       }
     }
     return undefined;
-  }, [isActiveCallReady, activeCallRoomId, mx, registerActiveClientWidgetApi, resetActiveCallReady, hangUp]);
+  }, [
+    isActiveCallReady,
+    activeCallRoomId,
+    mx,
+    registerActiveClientWidgetApi,
+    resetActiveCallReady,
+    hangUp,
+  ]);
 
   useEffect(() => {
     if (activeCallRoomId) {
       const intentOverride = postLobbyIntentRef.current ?? undefined;
       postLobbyIntentRef.current = null;
-      setupWidget(callWidgetApiRef, callSmallWidgetRef, callIframeRef, true, theme.kind, intentOverride);
+      setupWidget(
+        callWidgetApiRef,
+        callSmallWidgetRef,
+        callIframeRef,
+        true,
+        theme.kind,
+        intentOverride
+      );
     }
   }, [
     theme,
