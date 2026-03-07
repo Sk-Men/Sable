@@ -79,6 +79,10 @@ export interface Settings {
   badgeCountDMsOnly: boolean;
   showPingCounts: boolean;
   hideReads: boolean;
+  emojiSuggestThreshold: number;
+
+  // furry stuff
+  renderAnimals: boolean;
 }
 
 const defaultSettings: Settings = {
@@ -144,6 +148,10 @@ const defaultSettings: Settings = {
   badgeCountDMsOnly: false,
   showPingCounts: true,
   hideReads: false,
+  emojiSuggestThreshold: 2,
+
+  // furry stuff
+  renderAnimals: true,
 };
 
 export const getSettings = () => {

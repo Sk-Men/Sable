@@ -1153,6 +1153,8 @@ export function RoomTimeline({
         delete cleanExtended['moe.sable.app.name_color'];
         delete cleanExtended.avatar_url;
         delete cleanExtended.displayname;
+        delete cleanExtended['kitty.meow.has_cats'];
+        delete cleanExtended['kitty.meow.is_cat'];
       }
 
       openUserRoomProfile(
