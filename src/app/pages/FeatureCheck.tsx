@@ -11,7 +11,7 @@ export function FeatureCheck({ children }: { children: ReactNode }) {
     checkIDBSupport();
   }, [checkIDBSupport]);
 
-  if (idbSupportState.status === AsyncStatus.Success && idbSupportState.data === false) {
+  if (idbSupportState.status === AsyncStatus.Success && idbSupportState.data === true) {
     return (
       <SplashScreen>
         <Box grow="Yes" alignItems="Center" justifyContent="Center">
@@ -19,11 +19,10 @@ export function FeatureCheck({ children }: { children: ReactNode }) {
             <Box style={{ padding: config.space.S400 }} direction="Column" gap="400">
               <Text>Missing Browser Feature</Text>
               <Text size="T300" priority="400">
-                This application needs a feature called IndexedDB to save your session data on your
-                device. It looks like your browser either doesn&apos;t support IndexedDB or it
-                isn&apos;t working properly right now. Make sure your browser supports IndexedDB and
-                that it&apos;s enabled. Please also check if you have enough free disk space, as
-                IndexedDB may not work properly if your device is running low on storage.
+                This app needs IndexedDB to save sessions, but your browser doesn&apos;t support it
+                or it&apos;s disabled. Please ensure IndexedDB is enabled, restart your browser,
+                check settings/extensions or privacy mode, free up disk space, or try updating/using
+                another browser.
               </Text>
               <Text size="T200">
                 <a
