@@ -35,7 +35,7 @@ export function PersistentCallContainer({ children }: PersistentCallContainerPro
   const callIframeRef = useRef<HTMLIFrameElement | null>(null);
   const callWidgetApiRef = useRef<ClientWidgetApi | null>(null);
   const callSmallWidgetRef = useRef<SmallWidget | null>(null);
-  // After a non-voice room lobby join, reload EC with join_existing for proper in-call view.
+  // After any lobby join, reload EC with join_existing for proper in-call view.
   const hasReloadedAfterLobbyRef = useRef(false);
   const postLobbyIntentRef = useRef<'join_existing' | null>(null);
 
@@ -146,10 +146,11 @@ export function PersistentCallContainer({ children }: PersistentCallContainerPro
     ]
   );
 
-  // After a non-voice room lobby join, poll until EC's call member state event has propagated
-  // to the room, then reload EC with intent=join_existing + skipLobby=true so it auto-joins
-  // the existing session and shows the full in-call grid. Hangs up if the session never
-  // appears (e.g. EC failed to send its state event) to avoid leaving the user stuck.
+  // After any lobby join, poll until EC's call member state event has propagated to the room,
+  // then reload EC with intent=join_existing + skipLobby=true so it auto-joins the existing
+  // session and shows the full in-call grid. Hangs up if the session never appears.
+  // Applies to all room types: DM/group (start_call) and voice rooms (join_existing) both
+  // hit the same timing issue where the in-call grid is not shown after the first join.
   useEffect(() => {
     if (!activeCallRoomId) {
       hasReloadedAfterLobbyRef.current = false;
@@ -157,8 +158,7 @@ export function PersistentCallContainer({ children }: PersistentCallContainerPro
     }
     if (isActiveCallReady && !hasReloadedAfterLobbyRef.current) {
       const room = mx?.getRoom(activeCallRoomId);
-      // Voice rooms already use join_existing and work correctly; skip reload for them.
-      if (room && !room.isCallRoom()) {
+      if (room) {
         hasReloadedAfterLobbyRef.current = true;
         const POLL_INTERVAL_MS = 200;
         const TIMEOUT_MS = 10000;
