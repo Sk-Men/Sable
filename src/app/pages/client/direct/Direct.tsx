@@ -50,7 +50,6 @@ import {
   useRoomsNotificationPreferencesContext,
 } from '$hooks/useRoomsNotificationPreferences';
 import { useDirectCreateSelected } from '$hooks/router/useDirectSelected';
-import { CallNavStatus } from '$features/room-nav/RoomCallNavStatus';
 import { useDirectRooms } from './useDirectRooms';
 
 type DirectMenuProps = {
@@ -280,7 +279,6 @@ export function Direct() {
           </Box>
         </PageNavContent>
       )}
-      <CallNavStatus />
     </PageNav>
   );
 }
