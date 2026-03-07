@@ -19,8 +19,10 @@ export function FeatureCheck({ children }: { children: ReactNode }) {
             <Box style={{ padding: config.space.S400 }} direction="Column" gap="400">
               <Text>Missing Browser Feature</Text>
               <Text size="T300" priority="400">
-                No IndexedDB support found. This application requires IndexedDB to store session
-                data locally. Please make sure your browser support IndexedDB and have it enabled.
+                This app needs IndexedDB to save sessions, but your browser doesn&apos;t support it
+                or it&apos;s disabled. Please ensure IndexedDB is enabled, restart your browser,
+                check settings/extensions or privacy mode, free up disk space, or try updating/using
+                another browser.
               </Text>
               <Text size="T200">
                 <a
