@@ -26,8 +26,6 @@ import * as css from '$features/room/message/styles.css';
 import { sanitizeCustomHtml } from '$utils/sanitize';
 import { getStateEvents } from '$utils/room';
 import { StateEvent } from '$types/matrix/room';
-import { getViaServers } from '$plugins/via-servers';
-import { getMatrixToRoomEvent } from '$plugins/matrix-to';
 
 // Message forwarding component
 export const MessageForwardItem = as<'button', MessageForwardItemProps>(
