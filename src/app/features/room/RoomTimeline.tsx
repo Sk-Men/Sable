@@ -130,7 +130,7 @@ import { useRoomPermissions } from '$hooks/useRoomPermissions';
 import { useGetMemberPowerTag } from '$hooks/useMemberPowerTag';
 import { profilesCacheAtom } from '$state/userRoomProfile';
 import * as css from './RoomTimeline.css';
-import { EncryptedContent, Event, Message, Reactions } from './message';
+import { EncryptedContent, Event, ForwardedMessageProps, Message, Reactions } from './message';
 
 const TimelineFloat = as<'div', css.TimelineFloatVariants>(
   ({ position, className, ...props }, ref) => (
@@ -1311,6 +1311,21 @@ export function RoomTimeline({
         const senderDisplayName =
           getMemberDisplayName(room, senderId, nicknames) ?? getMxIdLocalPart(senderId) ?? senderId;
 
+        // determine if message is forwarded by checking for the presence of the 'moe.sable.message.forward' key in the event content
+        const forwardContent = safeContent['moe.sable.message.forward'] as
+          | { original_timestamp?: unknown }
+          | undefined;
+
+        const messageForwardedProps: ForwardedMessageProps | undefined = forwardContent
+          ? {
+              isForwarded: true,
+              originalTimestamp:
+                typeof forwardContent.original_timestamp === 'number'
+                  ? forwardContent.original_timestamp
+                  : mEvent.getTs(),
+            }
+          : undefined;
+
         return (
           <Message
             key={mEvent.getId()}
@@ -1334,6 +1349,7 @@ export function RoomTimeline({
             onReactionToggle={handleReactionToggle}
             senderId={senderId}
             senderDisplayName={senderDisplayName}
+            messageForwardedProps={messageForwardedProps}
             sendStatus={mEvent.getAssociatedStatus()}
             onResend={handleResend}
             onDeleteFailedSend={handleDeleteFailedSend}

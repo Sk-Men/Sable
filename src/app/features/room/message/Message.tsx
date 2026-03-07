@@ -197,6 +197,11 @@ export const MessagePinItem = as<
   );
 });
 
+export type ForwardedMessageProps = {
+  originalTimestamp: number;
+  isForwarded: boolean;
+};
+
 export type MessageProps = {
   room: Room;
   mEvent: MatrixEvent;
@@ -232,6 +237,7 @@ export type MessageProps = {
   sendStatus?: EventStatus | null;
   onResend?: (event: MatrixEvent) => void;
   onDeleteFailedSend?: (event: MatrixEvent) => void;
+  messageForwardedProps?: ForwardedMessageProps;
 };
 
 function useMobileDoubleTap(callback: () => void, delay = 300) {
@@ -331,6 +337,7 @@ function MessageInternal(
     sendStatus,
     onResend,
     onDeleteFailedSend,
+    messageForwardedProps,
     ...props
   }: MessageProps & { className?: string; children?: ReactNode },
   ref: any
@@ -502,6 +509,20 @@ function MessageInternal(
         [css.MessageFailed]: isFailedSend,
       })}
     >
+      {messageForwardedProps?.isForwarded && (
+        <Chip variant="SurfaceVariant" radii="Pill">
+          <Text size="T200" priority="300">
+            Forwarded
+            <Time
+              ts={messageForwardedProps?.originalTimestamp ?? 0}
+              compact={messageLayout === MessageLayout.Compact}
+              hour24Clock={hour24Clock}
+              dateFormatString={dateFormatString}
+              style={{ marginLeft: config.space.S100 }}
+            />
+          </Text>
+        </Chip>
+      )}
       {reply}
       {edit && onEditId ? (
         <MessageEditor
