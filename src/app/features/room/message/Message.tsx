@@ -79,6 +79,7 @@ import { MessageForwardItem } from '$components/message/modals/MessageForward';
 import { MessageDeleteItem } from '$components/message/modals/MessageDelete';
 import { MessageReportItem } from '$components/message/modals/MessageReport';
 import { filterPronounsByLanguage } from '$utils/pronouns';
+import { useMentionClickHandler } from '$hooks/useMentionClickHandler';
 import { MessageEditor } from './MessageEditor';
 import * as css from './styles.css';
 
@@ -200,6 +201,9 @@ export const MessagePinItem = as<
 export type ForwardedMessageProps = {
   originalTimestamp: number;
   isForwarded: boolean;
+  originalRoomId: string;
+  originalEventId: string;
+  originalEventHidden: boolean;
 };
 
 export type MessageProps = {
@@ -478,6 +482,8 @@ function MessageInternal(
   const isFailedSend = sendStatus === EventStatus.NOT_SENT;
   const canResend = isFailedSend && senderId === mx.getUserId() && !!onResend;
   const canDeleteFailedSend = isFailedSend && senderId === mx.getUserId() && !!onDeleteFailedSend;
+  // handle clicks on mentions in the message body (e.g. jump to original message from a forwarded message notice)
+  const mentionClickHandler = useMentionClickHandler(room.roomId);
 
   const handleResendClick: MouseEventHandler<HTMLButtonElement> = useCallback(
     (evt) => {
@@ -510,9 +516,24 @@ function MessageInternal(
       })}
     >
       {messageForwardedProps?.isForwarded && (
-        <Chip variant="SurfaceVariant" radii="Pill">
+        <Chip as="div" variant="SurfaceVariant" radii="Pill">
           <Text size="T200" priority="300">
-            Forwarded
+            Forwarded{' '}
+            {messageForwardedProps.originalEventHidden ? 'private message' : 'from another room'}{' '}
+            {!messageForwardedProps.originalEventHidden && (
+              <a
+                href={getMatrixToRoomEvent(
+                  messageForwardedProps.originalRoomId,
+                  messageForwardedProps.originalEventId
+                )}
+                rel="noreferrer noopener"
+                data-mention-id={messageForwardedProps.originalRoomId}
+                data-mention-event-id={messageForwardedProps.originalEventId}
+                onClick={mentionClickHandler}
+              >
+                jump to original
+              </a>
+            )}
             <Time
               ts={messageForwardedProps?.originalTimestamp ?? 0}
               compact={messageLayout === MessageLayout.Compact}

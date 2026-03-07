@@ -67,7 +67,10 @@ type ForwardMeta = {
   v: 1;
   is_forwarded: true;
   original_timestamp: number;
-  original_room_id: string;
+  original_room_id?: string;
+  original_event_id?: string;
+  // to mark that event_id and room_id are not present
+  original_event_hidden: boolean;
 };
 
 export function MessageForwardInternal({ room, mEvent, onClose }: MessageForwardInternalProps) {
@@ -129,6 +132,8 @@ export function MessageForwardInternal({ room, mEvent, onClose }: MessageForward
         is_forwarded: true,
         original_timestamp: mEvent.getTs(),
         original_room_id: room.roomId,
+        original_event_id: eventId,
+        original_event_hidden: false,
       } satisfies ForwardMeta,
     };
 

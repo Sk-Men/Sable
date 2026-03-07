@@ -1313,7 +1313,12 @@ export function RoomTimeline({
 
         // determine if message is forwarded by checking for the presence of the 'moe.sable.message.forward' key in the event content
         const forwardContent = safeContent['moe.sable.message.forward'] as
-          | { original_timestamp?: unknown }
+          | {
+              original_event_hidden: boolean;
+              original_timestamp?: unknown;
+              original_room_id?: string;
+              original_event_id?: string;
+            }
           | undefined;
 
         const messageForwardedProps: ForwardedMessageProps | undefined = forwardContent
@@ -1323,6 +1328,9 @@ export function RoomTimeline({
                 typeof forwardContent.original_timestamp === 'number'
                   ? forwardContent.original_timestamp
                   : mEvent.getTs(),
+              originalRoomId: forwardContent.original_room_id ?? room.roomId,
+              originalEventId: forwardContent.original_event_id ?? '',
+              originalEventHidden: forwardContent.original_event_hidden ?? false,
             }
           : undefined;
 
