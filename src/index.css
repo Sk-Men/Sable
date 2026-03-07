@@ -221,3 +221,14 @@ body.reduced-motion div[class*='RoomTimeline_messageList'],
 body.reduced-motion div[class*='RoomTimeline_messageList'] > * {
   scroll-behavior: auto !important;
 }
+
+body.reduced-motion span[class*='layout_AvatarBase']:hover,
+body.reduced-motion span[class*='layout_AvatarBase']:hover *,
+body.reduced-motion button[class*='styles_MessageAvatar']:hover,
+body.reduced-motion button[class*='styles_MessageAvatar']:hover * {
+  transform: none !important;
+  scale: 1 !important;
+  translate: none !important;
+  animation: none !important;
+  margin: 0 !important;
+}
