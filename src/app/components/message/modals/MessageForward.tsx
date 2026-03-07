@@ -26,6 +26,8 @@ import * as css from '$features/room/message/styles.css';
 import { sanitizeCustomHtml } from '$utils/sanitize';
 import { getStateEvents } from '$utils/room';
 import { StateEvent } from '$types/matrix/room';
+import { getViaServers } from '$plugins/via-servers';
+import { getMatrixToRoomEvent } from '$plugins/matrix-to';
 
 // Message forwarding component
 export const MessageForwardItem = as<'button', MessageForwardItemProps>(
@@ -156,7 +158,7 @@ export function MessageForwardInternal({ room, mEvent, onClose }: MessageForward
     // using reference relation to indicate that this is a forwarded message,
     // which allows clients to display it as such
 
-    const bodyModifText = `(Forwarded message from ${isPrivate ? 'a private room' : (getRoom(room.roomId)?.name ?? 'a room')} - originally sent at ${new Date(mEvent.getTs()).toLocaleString()} )`;
+    const bodyModifText = `(Forwarded message from ${isPrivate ? 'a private room' : (getRoom(room.roomId)?.name ?? 'a room')})`;
     let newBodyPlain = '';
     let newBodyHtml = '';
     // transform if msgtype is m.text
