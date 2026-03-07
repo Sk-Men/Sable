@@ -129,6 +129,7 @@ import { useRoomCreators } from '$hooks/useRoomCreators';
 import { useRoomPermissions } from '$hooks/useRoomPermissions';
 import { useGetMemberPowerTag } from '$hooks/useMemberPowerTag';
 import { profilesCacheAtom } from '$state/userRoomProfile';
+import { ClientSideHoverFreeze } from '$components/ClientSideHoverFreeze';
 import * as css from './RoomTimeline.css';
 import { EncryptedContent, Event, Message, Reactions } from './message';
 
@@ -576,6 +577,9 @@ export function RoomTimeline({
   const [hour24Clock] = useSetting(settingsAtom, 'hour24Clock');
   const [dateFormatString] = useSetting(settingsAtom, 'dateFormatString');
 
+  const [autoplayStickers] = useSetting(settingsAtom, 'autoplayStickers');
+  const [autoplayEmojis] = useSetting(settingsAtom, 'autoplayEmojis');
+
   const ignoredUsersList = useIgnoredUsers();
   const ignoredUsersSet = useMemo(() => new Set(ignoredUsersList), [ignoredUsersList]);
   const nicknames = useAtomValue(nicknamesAtom);
@@ -658,6 +662,7 @@ export function RoomTimeline({
         handleSpoilerClick: spoilerClickHandler,
         handleMentionClick: mentionClickHandler,
         nicknames,
+        autoplayEmojis,
       }),
     [mx, room, linkifyOpts, spoilerClickHandler, mentionClickHandler, useAuthentication, nicknames]
   );
@@ -1479,7 +1484,16 @@ export function RoomTimeline({
                         <ImageContent
                           {...props}
                           autoPlay={mediaAutoLoad}
-                          renderImage={(p) => <Image {...p} loading="lazy" />}
+                          renderImage={(p) => {
+                            if (!autoplayStickers && p.src) {
+                              return (
+                                <ClientSideHoverFreeze src={p.src}>
+                                  <Image {...p} loading="lazy" />
+                                </ClientSideHoverFreeze>
+                              );
+                            }
+                            return <Image {...p} loading="lazy" />;
+                          }}
                           renderViewer={(p) => <ImageViewer {...p} />}
                         />
                       )}
@@ -1599,7 +1613,16 @@ export function RoomTimeline({
                   <ImageContent
                     {...props}
                     autoPlay={mediaAutoLoad}
-                    renderImage={(p) => <Image {...p} loading="lazy" />}
+                    renderImage={(p) => {
+                      if (!autoplayStickers && p.src) {
+                        return (
+                          <ClientSideHoverFreeze src={p.src}>
+                            <Image {...p} loading="lazy" />
+                          </ClientSideHoverFreeze>
+                        );
+                      }
+                      return <Image {...p} loading="lazy" />;
+                    }}
                     renderViewer={(p) => <ImageViewer {...p} />}
                   />
                 )}

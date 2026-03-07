@@ -82,6 +82,9 @@ export interface Settings {
   emojiSuggestThreshold: number;
   underlineLinks: boolean;
   reducedMotion: boolean;
+  autoplayGifs: boolean;
+  autoplayStickers: boolean;
+  autoplayEmojis: boolean;
 
   // furry stuff
   renderAnimals: boolean;
@@ -153,6 +156,9 @@ const defaultSettings: Settings = {
   emojiSuggestThreshold: 2,
   underlineLinks: false,
   reducedMotion: false,
+  autoplayGifs: true,
+  autoplayStickers: true,
+  autoplayEmojis: true,
 
   // furry stuff
   renderAnimals: true,

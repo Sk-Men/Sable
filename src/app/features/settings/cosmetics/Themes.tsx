@@ -247,6 +247,9 @@ function ThemeSettings() {
   const [saturation, setSaturation] = useSetting(settingsAtom, 'saturationLevel');
   const [underlineLinks, setUnderlineLinks] = useSetting(settingsAtom, 'underlineLinks');
   const [reducedMotion, setReducedMotion] = useSetting(settingsAtom, 'reducedMotion');
+  const [autoplayGifs, setAutoplayGifs] = useSetting(settingsAtom, 'autoplayGifs');
+  const [autoplayStickers, setAutoplayStickers] = useSetting(settingsAtom, 'autoplayStickers');
+  const [autoplayEmojis, setAutoplayEmojis] = useSetting(settingsAtom, 'autoplayEmojis');
 
   return (
     <Box direction="Column" gap="100">
@@ -311,6 +314,29 @@ function ThemeSettings() {
           title="Reduced Motion"
           description="Stops animations and sliding UI elements."
           after={<Switch variant="Primary" value={reducedMotion} onChange={setReducedMotion} />}
+        />
+      </SequenceCard>
+      <SequenceCard className={SequenceCardStyle} variant="SurfaceVariant" direction="Column">
+        <SettingTile
+          title="Autoplay GIFs"
+          description="Automatically play animated image uploads and links."
+          after={<Switch variant="Primary" value={autoplayGifs} onChange={setAutoplayGifs} />}
+        />
+      </SequenceCard>
+      <SequenceCard className={SequenceCardStyle} variant="SurfaceVariant" direction="Column">
+        <SettingTile
+          title="Autoplay Stickers"
+          description="Automatically play animated stickers."
+          after={
+            <Switch variant="Primary" value={autoplayStickers} onChange={setAutoplayStickers} />
+          }
+        />
+      </SequenceCard>
+      <SequenceCard className={SequenceCardStyle} variant="SurfaceVariant" direction="Column">
+        <SettingTile
+          title="Autoplay Emojis"
+          description="Automatically play animated custom emojis."
+          after={<Switch variant="Primary" value={autoplayEmojis} onChange={setAutoplayEmojis} />}
         />
       </SequenceCard>
     </Box>
