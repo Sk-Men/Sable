@@ -404,6 +404,7 @@ function Editor({ isMobile }: { isMobile: boolean }) {
   const [enterForNewline, setEnterForNewline] = useSetting(settingsAtom, 'enterForNewline');
   const [isMarkdown, setIsMarkdown] = useSetting(settingsAtom, 'isMarkdown');
   const [hideActivity, setHideActivity] = useSetting(settingsAtom, 'hideActivity');
+  const [hideReads, setHideReads] = useSetting(settingsAtom, 'hideReads');
 
   return (
     <Box direction="Column" gap="100">
@@ -435,9 +436,16 @@ function Editor({ isMobile }: { isMobile: boolean }) {
       </SequenceCard>
       <SequenceCard className={SequenceCardStyle} variant="SurfaceVariant" direction="Column">
         <SettingTile
-          title="Hide Typing & Read Receipts"
-          description="Turn off both typing status and read receipts to keep your activity private."
+          title="Hide Typing Indicators"
+          description="Turn off typing status."
           after={<Switch variant="Primary" value={hideActivity} onChange={setHideActivity} />}
+        />
+      </SequenceCard>
+      <SequenceCard className={SequenceCardStyle} variant="SurfaceVariant" direction="Column">
+        <SettingTile
+          title="Hide Read Receipts"
+          description="Turn off read receipts."
+          after={<Switch variant="Primary" value={hideReads} onChange={setHideReads} />}
         />
       </SequenceCard>
     </Box>
