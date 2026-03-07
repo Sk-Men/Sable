@@ -69,7 +69,7 @@ export function RoomView({ room, eventId }: { room: Room; eventId?: string }) {
   const roomInputRef = useRef<HTMLDivElement>(null);
   const roomViewRef = useRef<HTMLDivElement>(null);
 
-  const [hideActivity] = useSetting(settingsAtom, 'hideActivity');
+  const [hideReads] = useSetting(settingsAtom, 'hideReads');
   const screenSize = useScreenSizeContext();
 
   const { roomId } = room;
@@ -184,7 +184,7 @@ export function RoomView({ room, eventId }: { room: Room; eventId?: string }) {
                   </>
                 )}
               </div>
-              {hideActivity ? <RoomViewFollowingPlaceholder /> : <RoomViewFollowing room={room} />}
+              {hideReads ? <RoomViewFollowingPlaceholder /> : <RoomViewFollowing room={room} />}
             </Box>
           </SwipeableChatWrapper>
         </Page>

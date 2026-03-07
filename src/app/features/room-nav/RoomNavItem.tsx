@@ -93,7 +93,7 @@ type RoomNavItemMenuProps = {
 const RoomNavItemMenu = forwardRef<HTMLDivElement, RoomNavItemMenuProps>(
   ({ room, requestClose, notificationMode }, ref) => {
     const mx = useMatrixClient();
-    const [hideActivity] = useSetting(settingsAtom, 'hideActivity');
+    const [hideReads] = useSetting(settingsAtom, 'hideReads');
     const unread = useRoomUnread(room.roomId, roomToUnreadAtom);
     const powerLevels = usePowerLevels(room);
     const creators = useRoomCreators(room);
@@ -106,7 +106,7 @@ const RoomNavItemMenu = forwardRef<HTMLDivElement, RoomNavItemMenuProps>(
     const [invitePrompt, setInvitePrompt] = useState(false);
 
     const handleMarkAsRead = () => {
-      markAsRead(mx, room.roomId, hideActivity);
+      markAsRead(mx, room.roomId, hideReads);
       requestClose();
     };
 
