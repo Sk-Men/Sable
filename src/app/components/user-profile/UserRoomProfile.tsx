@@ -108,7 +108,7 @@ function UserExtendedSection({
       return new Intl.DateTimeFormat([], {
         hour: 'numeric',
         minute: '2-digit',
-        timeZone: profile.timezone,
+        timeZone: profile.timezone.replace(/^["']|["']$/g, ''),
       }).format(new Date());
     } catch {
       return null;
@@ -159,11 +159,11 @@ function UserExtendedSection({
               </Text>
             </Box>
           )}
-          {localTime && (
+          {localTime && profile.timezone && (
             <Box alignItems="Center" gap="100">
               <Icon size="50" src={Icons.Clock} style={{ opacity: 0.5 }} />
               <Text size="T200" priority="400">
-                {localTime} ({profile.timezone})
+                {localTime} ({profile.timezone.replace(/^["']|["']$/g, '')})
               </Text>
             </Box>
           )}
