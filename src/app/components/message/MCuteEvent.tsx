@@ -33,7 +33,7 @@ export function MCuteEvent({ content, type, mentionedUserIds }: MCuteEventProps)
       break;
     case CuteEventType.Kiss:
       // in here for future expansion
-      // would need some kind of filtering to prevent abuse (e.g. someone sending a kiss event with a random user ID to harass them)
+      // would need some kind of filtering to prevent abuse (e.g. someone sending a kiss event to a random user to harass them)
       // cuteText = `kisses ${mentionedUserIds?.[0] || 'you'}`;
       cuteText =
         'currently disabled kiss event, in light of potential abuse, may be added in the future with proper filtering';
