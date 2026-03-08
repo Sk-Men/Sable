@@ -33,6 +33,7 @@ import { ImageViewer } from './image-viewer';
 import { PdfViewer } from './Pdf-viewer';
 import { TextViewer } from './text-viewer';
 import { ClientSideHoverFreeze } from './ClientSideHoverFreeze';
+import { CuteEventType, MCuteEvent } from './message/MCuteEvent';
 
 type RenderMessageContentProps = {
   displayName: string;
@@ -348,6 +349,23 @@ function RenderMessageContentInternal({
   if (msgType === MsgType.Location) return <MLocation content={content} />;
   if (msgType === 'm.bad.encrypted') return <MBadEncrypted />;
 
+  // cute events
+  if (msgType === 'im.fluffychat.cute_event')
+    return (
+      <MCuteEvent
+        content={content}
+        type={content?.cute_type}
+        mentionedUserIds={content?.['m.mentions']?.user_ids}
+      />
+    );
+  if (msgType === 'fyi.cisnt.headpat')
+    return (
+      <MCuteEvent
+        content={content}
+        type={CuteEventType.Headpat}
+        mentionedUserIds={content?.['m.mentions']?.user_ids}
+      />
+    );
   return <UnsupportedContent />;
 }
 
