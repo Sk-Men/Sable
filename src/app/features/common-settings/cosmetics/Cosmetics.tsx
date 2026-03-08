@@ -30,20 +30,51 @@ import { useMediaAuthentication } from '$hooks/useMediaAuthentication';
 import { UserProfile, useUserProfile } from '$hooks/useUserProfile';
 import { getMxIdLocalPart, mxcUrlToHttp } from '$utils/matrix';
 import { AsyncStatus, useAsyncCallback } from '$hooks/useAsyncCallback';
-import { Room } from '$types/matrix-sdk';
+import { Room, RoomMember } from '$types/matrix-sdk';
 import { Command, useCommands } from '$hooks/useCommands';
 
 const log = createLogger('Cosmetics');
 
 type CosmeticsSettingProps = {
   profile: UserProfile;
+  member: RoomMember;
   userId: string;
   room: Room;
 };
-export function CosmeticsNickname({ profile, userId, room }: CosmeticsSettingProps) {
+export function CosmeticsAvatar({ profile, member, userId, room }: CosmeticsSettingProps) {
   const mx = useMatrixClient();
 
-  const defaultDisplayName = room.getMember(userId)!.rawDisplayName;
+  const useAuthentication = useMediaAuthentication();
+  /* const avatarUrl = profile.avatarUrl
+    ? (mxcUrlToHttp(mx, profile.avatarUrl, useAuthentication, 96, 96, 'crop') ?? undefined)
+    : undefined; */
+  const avatarMxc = member.getMxcAvatarUrl();
+  const avatarUrl =
+    avatarMxc && (mxcUrlToHttp(mx, avatarMxc, useAuthentication, 96, 96, 'crop') ?? undefined);
+
+  return (
+    <SettingTile
+      title="Avatar"
+      description="This...is still a placeholder"
+      after={
+        <Avatar size="500" radii="300">
+          <UserAvatar
+            userId={userId}
+            src={avatarUrl}
+            renderFallback={() => (
+              <Text size="H4">{nameInitials(room.getMember(userId)!.rawDisplayName)}</Text>
+            )}
+          />
+        </Avatar>
+      }
+    />
+  );
+}
+
+export function CosmeticsNickname({ profile, member, userId, room }: CosmeticsSettingProps) {
+  const mx = useMatrixClient();
+
+  const defaultDisplayName = member.rawDisplayName;
   const [displayName, setDisplayName] = useState<string>(defaultDisplayName);
   const hasChanges = displayName !== defaultDisplayName;
 
@@ -135,18 +166,12 @@ export function Cosmetics({ requestClose }: CosmeticsProps) {
   const profile = useUserProfile(userId);
   const room = useRoom();
   const creators = useRoomCreators(room);
+  const member = room.getMember(userId)!;
   const powerLevels = usePowerLevels(room);
   const isSpace = room.isSpaceRoom();
 
   const permissions = useRoomPermissions(creators, powerLevels);
   const canEditPermissions = permissions.stateEvent(StateEvent.RoomPowerLevels, mx.getSafeUserId());
-
-  const useAuthentication = useMediaAuthentication();
-  const avatarUrl = profile.avatarUrl
-    ? (mxcUrlToHttp(mx, profile.avatarUrl, useAuthentication, 96, 96, 'crop') ?? undefined)
-    : undefined;
-
-  const defaultDisplayName = profile.displayName ?? getMxIdLocalPart(userId) ?? userId;
 
   const getLevel = (eventType: string) => (powerLevels as any).events?.[eventType] ?? 50;
 
@@ -199,20 +224,11 @@ export function Cosmetics({ requestClose }: CosmeticsProps) {
                     direction="Column"
                     gap="400"
                   >
-                    <SettingTile
-                      title="Avatar"
-                      description="This...is still a placeholder"
-                      after={
-                        <Avatar size="500" radii="300">
-                          <UserAvatar
-                            userId={userId}
-                            src={avatarUrl}
-                            renderFallback={() => (
-                              <Text size="H4">{nameInitials(defaultDisplayName)}</Text>
-                            )}
-                          />
-                        </Avatar>
-                      }
+                    <CosmeticsAvatar
+                      profile={profile}
+                      member={member}
+                      userId={userId}
+                      room={room}
                     />
                   </SequenceCard>
                 )}
@@ -223,7 +239,12 @@ export function Cosmetics({ requestClose }: CosmeticsProps) {
                     direction="Column"
                     gap="400"
                   >
-                    <CosmeticsNickname profile={profile} userId={userId} room={room} />
+                    <CosmeticsNickname
+                      profile={profile}
+                      member={member}
+                      userId={userId}
+                      room={room}
+                    />
                   </SequenceCard>
                 )}
                 <SequenceCard
