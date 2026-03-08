@@ -19,10 +19,7 @@ FROM scratch AS site-dist
 COPY --from=builder /src/dist /
 
 ## App
-FROM nginx:1.29.5-alpine
+FROM caddy:2-alpine
 
 COPY --from=site-dist / /app
-COPY docker-nginx.conf /etc/nginx/conf.d/default.conf
-
-RUN rm -rf /usr/share/nginx/html \
-    && ln -s /app /usr/share/nginx/html
+COPY Caddyfile /etc/caddy/Caddyfile

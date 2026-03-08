@@ -2,10 +2,10 @@ import { memo, useMemo, useCallback } from 'react';
 import { MsgType } from '$types/matrix-sdk';
 import { testMatrixTo } from '$plugins/matrix-to';
 import { useSetting } from '$state/hooks/settings';
-import { settingsAtom } from '$state/settings';
+import { settingsAtom, CaptionPosition } from '$state/settings';
 import { HTMLReactParserOptions } from 'html-react-parser';
 import { Opts } from 'linkifyjs';
-import { config } from 'folds';
+import { Box, config } from 'folds';
 import {
   AudioContent,
   DownloadFile,
@@ -74,6 +74,13 @@ function RenderMessageContentInternal({
   const content = useMemo(() => getContent<any>(), [getContent]);
 
   const [autoplayGifs] = useSetting(settingsAtom, 'autoplayGifs');
+  const [captionPosition] = useSetting(settingsAtom, 'captionPosition');
+  const captionPositionMap = {
+    [CaptionPosition.Above]: 'column-reverse',
+    [CaptionPosition.Below]: 'column',
+    [CaptionPosition.Inline]: 'row',
+    [CaptionPosition.Hidden]: 'row',
+  } satisfies Record<CaptionPosition, React.CSSProperties['flexDirection']>;
 
   const renderBody = useCallback(
     (props: any) => (
@@ -112,54 +119,89 @@ function RenderMessageContentInternal({
   );
 
   const renderCaption = () => {
+    if (captionPosition === CaptionPosition.Hidden) return null;
     if (content.filename && content.filename !== content.body) {
+      if (captionPosition !== CaptionPosition.Inline)
+        return (
+          <MText
+            style={CAPTION_STYLE}
+            edited={edited}
+            content={content}
+            renderBody={renderBody}
+            renderUrlsPreview={urlPreview ? renderUrlsPreview : undefined}
+          />
+        );
       return (
-        <MText
-          style={CAPTION_STYLE}
-          edited={edited}
-          content={content}
-          renderBody={renderBody}
-          renderUrlsPreview={urlPreview ? renderUrlsPreview : undefined}
-        />
+        <Box
+          style={{
+            padding: config.space.S200,
+            wordBreak: 'break-word',
+            maxWidth: '100%',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'center',
+            flexShrink: 1,
+          }}
+        >
+          <MText
+            edited={edited}
+            content={content}
+            renderBody={renderBody}
+            renderUrlsPreview={urlPreview ? renderUrlsPreview : undefined}
+          />
+        </Box>
       );
     }
     return null;
   };
 
   const renderFile = () => (
-    <>
-      <MFile
-        content={content}
-        renderFileContent={({ body, mimeType, info, encInfo, url }) => (
-          <FileContent
-            body={body}
-            mimeType={mimeType}
-            renderAsPdfFile={() => (
-              <ReadPdfFile
+    <div
+      style={{
+        display: 'flex',
+        flexDirection: captionPositionMap[captionPosition],
+      }}
+    >
+      <div>
+        <MFile
+          content={content}
+          renderFileContent={({ body, mimeType, info, encInfo, url }) => (
+            <FileContent
+              body={body}
+              mimeType={mimeType}
+              renderAsPdfFile={() => (
+                <ReadPdfFile
+                  body={body}
+                  mimeType={mimeType}
+                  url={url}
+                  encInfo={encInfo}
+                  renderViewer={(p) => <PdfViewer {...p} />}
+                />
+              )}
+              renderAsTextFile={() => (
+                <ReadTextFile
+                  body={body}
+                  mimeType={mimeType}
+                  url={url}
+                  encInfo={encInfo}
+                  renderViewer={(p) => <TextViewer {...p} />}
+                />
+              )}
+            >
+              <DownloadFile
                 body={body}
                 mimeType={mimeType}
                 url={url}
                 encInfo={encInfo}
-                renderViewer={(p) => <PdfViewer {...p} />}
+                info={info}
               />
-            )}
-            renderAsTextFile={() => (
-              <ReadTextFile
-                body={body}
-                mimeType={mimeType}
-                url={url}
-                encInfo={encInfo}
-                renderViewer={(p) => <TextViewer {...p} />}
-              />
-            )}
-          >
-            <DownloadFile body={body} mimeType={mimeType} url={url} encInfo={encInfo} info={info} />
-          </FileContent>
-        )}
-        outlined={outlineAttachment}
-      />
+            </FileContent>
+          )}
+          outlined={outlineAttachment}
+        />
+      </div>
       {renderCaption()}
-    </>
+    </div>
   );
 
   if (msgType === MsgType.Text) {
@@ -205,79 +247,100 @@ function RenderMessageContentInternal({
       (typeof content.url === 'string' && content.url.toLowerCase().includes('gif'));
 
     return (
-      <>
-        <MImage
-          content={content}
-          renderImageContent={(imageProps) => (
-            <ImageContent
-              {...imageProps}
-              autoPlay={mediaAutoLoad}
-              renderImage={(p) => {
-                if (isGif && !autoplayGifs && p.src) {
-                  return (
-                    <ClientSideHoverFreeze src={p.src}>
-                      <Image {...p} loading="lazy" />
-                    </ClientSideHoverFreeze>
-                  );
-                }
-                return <Image {...p} loading="lazy" />;
-              }}
-              renderViewer={(p) => <ImageViewer {...p} />}
-            />
-          )}
-          outlined={outlineAttachment}
-        />
+      <div
+        style={{
+          display: 'flex',
+          flexDirection: captionPositionMap[captionPosition],
+        }}
+      >
+        <div>
+          <MImage
+            content={content}
+            renderImageContent={(imageProps) => (
+              <ImageContent
+                {...imageProps}
+                autoPlay={mediaAutoLoad}
+                renderImage={(p) => {
+                  if (isGif && !autoplayGifs && p.src) {
+                    return (
+                      <ClientSideHoverFreeze src={p.src}>
+                        <Image {...p} loading="lazy" />
+                      </ClientSideHoverFreeze>
+                    );
+                  }
+                  return <Image {...p} loading="lazy" />;
+                }}
+                renderViewer={(p) => <ImageViewer {...p} />}
+              />
+            )}
+            outlined={outlineAttachment}
+          />
+        </div>
         {renderCaption()}
-      </>
+      </div>
     );
   }
 
   if (msgType === MsgType.Video) {
     return (
-      <>
-        <MVideo
-          content={content}
-          renderAsFile={renderFile}
-          renderVideoContent={({ body, info, ...videoProps }) => (
-            <VideoContent
-              body={body}
-              info={info}
-              {...videoProps}
-              renderThumbnail={
-                mediaAutoLoad
-                  ? () => (
-                      <ThumbnailContent
-                        info={info}
-                        renderImage={(src) => (
-                          <Image alt={body} title={body} src={src} loading="lazy" />
-                        )}
-                      />
-                    )
-                  : undefined
-              }
-              renderVideo={(p) => <Video {...p} />}
-            />
-          )}
-          outlined={outlineAttachment}
-        />
+      <div
+        style={{
+          display: 'flex',
+          flexDirection: captionPositionMap[captionPosition],
+        }}
+      >
+        <div>
+          <MVideo
+            content={content}
+            renderAsFile={renderFile}
+            renderVideoContent={({ body, info, ...videoProps }) => (
+              <VideoContent
+                body={body}
+                info={info}
+                {...videoProps}
+                renderThumbnail={
+                  mediaAutoLoad
+                    ? () => (
+                        <ThumbnailContent
+                          info={info}
+                          renderImage={(src) => (
+                            <Image alt={body} title={body} src={src} loading="lazy" />
+                          )}
+                        />
+                      )
+                    : undefined
+                }
+                renderVideo={(p) => <Video {...p} />}
+              />
+            )}
+            outlined={outlineAttachment}
+          />
+        </div>
         {renderCaption()}
-      </>
+      </div>
     );
   }
 
   if (msgType === MsgType.Audio) {
     return (
-      <>
-        <MAudio
-          content={content}
-          renderAsFile={renderFile}
-          renderAudioContent={(audioProps) => (
-            <AudioContent {...audioProps} renderMediaControl={(p) => <MediaControl {...p} />} />
-          )}
-          outlined={outlineAttachment}
-        />
+      <div
+        style={{
+          display: 'flex',
+          flexDirection: captionPositionMap[captionPosition],
+        }}
+      >
+        <div>
+          <MAudio
+            content={content}
+            renderAsFile={renderFile}
+            renderAudioContent={(audioProps) => (
+              <AudioContent {...audioProps} renderMediaControl={(p) => <MediaControl {...p} />} />
+            )}
+            outlined={outlineAttachment}
+          />
+        </div>
         {renderCaption()}
-      </>
+      </div>
     );
   }
 
