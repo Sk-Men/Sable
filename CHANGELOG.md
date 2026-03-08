@@ -1,5 +1,51 @@
 # Sable Client Changelog
 
+## 1.5.2 (2026-03-08)
+
+### Fixes
+
+* Add `/hug`, `/cuddle`, `/wave`, `/headpat`, and `/poke` slash commands.
+* Swap Caddy port to 8080 + fixes for MDAD setups.
+* Adjust media sizing and URL preview layout
+* Fix picture in picture setting not effecting element-call
+* Fixed an issue where the app would fail to load after completing SSO login (e.g., logging in with matrix.org). Users are now correctly redirected to the app after SSO authentication completes.
+
+## 1.5.1 (2026-03-08)
+
+### Fixes
+
+* Fix recent emojis ignoring letter threshold.
+* Disable in-app banners on desktop.
+
+## 1.5.0 (2026-03-08)
+
+### Features
+
+* Merge Voice Call updates from upstream.
+* Allow for replying to state events.
+* Add message forwarding with metadata
+* Add setting to enable picture-in-picture in element-call
+* Add support for audio and video in URL previews if homeserver provides it.
+* Added a new setting "Emoji Selector Character Threshold" to set the number of characters to type before the suggestions pop up.
+* Add keyboard navigation shortcuts for unread rooms (Alt+N, Alt+Shift+Up/Down), ARIA form label associations for screen reader accessibility, and a keyboard shortcuts settings page.
+* Added setting to always underline links.
+* Added settings for disabling autoplay of gifs (& banners), stickers, and emojis.
+* Added reduced motion setting. Let us know if any elements were missed!
+* Replaced the monochrome mode with a saturation slider for more control.
+* Added settings to Account that let you set if you are a cat or have cats, or not display other peoples cat status.
+
+### Fixes
+
+* change indexdb warning phrasing to include low disk space as possible reason
+* Fix Element Call video/audio calls in DM and non-voice rooms: after joining through the lobby, the in-call grid now displays correctly instead of showing only the control bar.
+* Disable autocorrect and spellcheck on the login page.
+* Fix Tuwunel quotes often breaking timezones
+* Improved the UI of file descriptions
+* Timeline message avatars now use the room-specific avatar and display name instead of the user's global profile, when set via `/myroomavatar` or `/myroomnick`.
+* In-app notification banners now appear for DMs by default; desktop banner setting defaults to off; fixed space room navigation from banner tap.
+* Executing /myroomnick or /myroomavatar without a new nickname/avatar now removes the nickname/avatar.
+* Split typing and read status settings, allowing toggling off one and not the other.
+
 ## 1.4.0 (2026-03-06)
 
 ### Features

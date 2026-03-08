@@ -31,6 +31,7 @@ import {
   MessageUnsupportedContent,
 } from './content';
 import { MessageTextBody } from './layout';
+import { unwrapForwardedContent } from './modals/MessageForward';
 
 export function MBadEncrypted() {
   return (
@@ -86,6 +87,10 @@ export function MText({ edited, content, renderBody, renderUrlsPreview, style }:
     typeof content.formatted_body === 'string' ? content.formatted_body : undefined;
 
   const trimmedBody = useMemo(() => trimReplyFromBody(body), [body]);
+  const unwrappedForwardedContent = useMemo(
+    () => unwrapForwardedContent(customBody ?? body),
+    [customBody, body]
+  );
 
   const safeCustomBody = useMemo(() => {
     if (!customBody) return undefined;
@@ -96,6 +101,10 @@ export function MText({ edited, content, renderBody, renderUrlsPreview, style }:
     return customBody;
   }, [customBody]);
 
+  const isForwarded = useMemo(() => {
+    const forwardMeta = content['moe.sable.message.forward'];
+    return typeof forwardMeta === 'object';
+  }, [content]);
   const isJumbo = useMemo(() => {
     if (!trimmedBody || trimmedBody.length >= 500) return false;
     if (!JUMBO_EMOJI_REG.test(trimmedBody)) return false;
@@ -112,6 +121,19 @@ export function MText({ edited, content, renderBody, renderUrlsPreview, style }:
 
   const urlsMatch = renderUrlsPreview && trimmedBody.match(URL_REG);
   const urls = urlsMatch ? [...new Set(urlsMatch)] : undefined;
+
+  if (isForwarded && unwrappedForwardedContent) {
+    return (
+      <MessageTextBody preWrap={typeof unwrappedForwardedContent !== 'string'} style={style}>
+        {renderBody({
+          body: trimmedBody,
+          customBody: unwrappedForwardedContent,
+        })}
+        {edited && <MessageEditedContent />}
+        {renderUrlsPreview && urls && urls.length > 0 && renderUrlsPreview(urls)}
+      </MessageTextBody>
+    );
+  }
 
   return (
     <>
@@ -228,17 +250,30 @@ export function MImage({ content, renderImageContent, outlined }: MImageProps) {
   if (typeof mxcUrl !== 'string') {
     return <BrokenContent />;
   }
-  const height = scaleYDimension(imgInfo?.w || 400, 400, imgInfo?.h || 400);
+  const MAX_SIZE = 400;
+  const imgW = imgInfo?.w ?? MAX_SIZE;
+  const imgH = imgInfo?.h ?? MAX_SIZE;
+  const aspectRatio = imgInfo?.w && imgInfo?.h ? `${imgW} / ${imgH}` : undefined;
+  // this garbage is for portrait images, we cap the width so the card doesn't exceed the bounds of the image
+  const displayWidth = imgH > imgW ? Math.round(MAX_SIZE * (imgW / imgH)) : MAX_SIZE;
 
   return (
-    <Attachment outlined={outlined}>
+    <Attachment
+      style={{
+        flexGrow: 1,
+        flexShrink: 0,
+        width: toRem(displayWidth),
+      }}
+      outlined={outlined}
+    >
       <AttachmentBox
         style={{
-          height: toRem(height < 48 ? 48 : height),
+          aspectRatio,
+          maxHeight: toRem(MAX_SIZE),
         }}
       >
         {renderImageContent({
-          body: content.body || 'Image',
+          body: content.filename || 'Image',
           info: imgInfo,
           mimeType: imgInfo?.mimetype,
           url: mxcUrl,
@@ -278,12 +313,18 @@ export function MVideo({ content, renderAsFile, renderVideoContent, outlined }: 
     return <BrokenContent />;
   }
 
-  const height = scaleYDimension(videoInfo.w || 400, 400, videoInfo.h || 400);
+  const height = Math.min(scaleYDimension(videoInfo.w || 400, 400, videoInfo.h || 400), 400);
 
   const filename = content.filename ?? content.body ?? 'Video';
 
   return (
-    <Attachment outlined={outlined}>
+    <Attachment
+      style={{
+        flexGrow: 1,
+        flexShrink: 0,
+      }}
+      outlined={outlined}
+    >
       <AttachmentHeader>
         <FileHeader
           body={filename}

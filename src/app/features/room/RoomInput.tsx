@@ -717,6 +717,7 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
                         setMetadata={handleFileMetadata}
                         onRemove={handleRemoveUpload}
                         setDesc={setDesc}
+                        roomId={roomId}
                       />
                     ))}
                 </UploadBoardContent>

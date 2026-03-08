@@ -1,0 +1,18 @@
+{
+	servers {
+		protocols h1 h2c
+	}
+}
+
+:8080 {
+	root * /app
+
+	# Enable on-the-fly compression for things not pre-compressed
+	encode zstd gzip
+
+	file_server {
+		precompressed br
+	}
+
+	try_files {path} /index.html
+}

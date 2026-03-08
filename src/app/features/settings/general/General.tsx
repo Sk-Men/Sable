@@ -35,6 +35,7 @@ import {
   MessageLayout,
   MessageSpacing,
   RightSwipeAction,
+  CaptionPosition,
   settingsAtom,
 } from '$state/settings';
 import { SettingTile } from '$components/setting-tile';
@@ -42,6 +43,7 @@ import { KeySymbol } from '$utils/key-symbol';
 import { isMacOS, mobileOrTablet } from '$utils/user-agent';
 import { stopPropagation } from '$utils/keyboard';
 import { useMessageLayoutItems } from '$hooks/useMessageLayout';
+import { useCaptionPositionItems } from '$hooks/useCaptionPosition';
 import { useMessageSpacingItems } from '$hooks/useMessageSpacing';
 import { useDateFormatItems } from '$hooks/useDateFormat';
 import { SequenceCardStyle } from '$features/settings/styles.css';
@@ -523,6 +525,74 @@ function SelectMessageLayout() {
     </>
   );
 }
+function SelectCaptionPosition() {
+  const [menuCords, setMenuCords] = useState<RectCords>();
+  const [captionPosition, setCaptionPosition] = useSetting(settingsAtom, 'captionPosition');
+  const captionPositionItems = useCaptionPositionItems();
+
+  const handleMenu: MouseEventHandler<HTMLButtonElement> = (evt) => {
+    setMenuCords(evt.currentTarget.getBoundingClientRect());
+  };
+
+  const handleSelect = (position: CaptionPosition) => {
+    setCaptionPosition(position);
+    setMenuCords(undefined);
+  };
+
+  return (
+    <>
+      <Button
+        size="300"
+        variant="Secondary"
+        outlined
+        fill="Soft"
+        radii="300"
+        after={<Icon size="300" src={Icons.ChevronBottom} />}
+        onClick={handleMenu}
+      >
+        <Text size="T300">
+          {captionPositionItems.find((i) => i.layout === captionPosition)?.name ?? captionPosition}
+        </Text>
+      </Button>
+      <PopOut
+        anchor={menuCords}
+        offset={5}
+        position="Bottom"
+        align="End"
+        content={
+          <FocusTrap
+            focusTrapOptions={{
+              initialFocus: false,
+              onDeactivate: () => setMenuCords(undefined),
+              clickOutsideDeactivates: true,
+              isKeyForward: (evt: KeyboardEvent) =>
+                evt.key === 'ArrowDown' || evt.key === 'ArrowRight',
+              isKeyBackward: (evt: KeyboardEvent) =>
+                evt.key === 'ArrowUp' || evt.key === 'ArrowLeft',
+              escapeDeactivates: stopPropagation,
+            }}
+          >
+            <Menu>
+              <Box direction="Column" gap="100" style={{ padding: config.space.S100 }}>
+                {captionPositionItems.map((item) => (
+                  <MenuItem
+                    key={item.layout}
+                    size="300"
+                    variant={captionPosition === item.layout ? 'Primary' : 'Surface'}
+                    radii="300"
+                    onClick={() => handleSelect(item.layout)}
+                  >
+                    <Text size="T300">{item.name}</Text>
+                  </MenuItem>
+                ))}
+              </Box>
+            </Menu>
+          </FocusTrap>
+        }
+      />
+    </>
+  );
+}
 
 function SelectMessageSpacing() {
   const [menuCords, setMenuCords] = useState<RectCords>();
@@ -753,6 +823,8 @@ function Messages() {
     'hideMembershipInReadOnly'
   );
 
+  const [messageLayout] = useSetting(settingsAtom, 'messageLayout');
+  const [rightBubbles, setRightBubbles] = useSetting(settingsAtom, 'useRightBubbles');
   return (
     <Box direction="Column" gap="100">
       <Text size="L400">Messages</Text>
@@ -763,11 +835,23 @@ function Messages() {
         <SettingTile title="Message Spacing" after={<SelectMessageSpacing />} />
       </SequenceCard>
       <SequenceCard className={SequenceCardStyle} variant="SurfaceVariant" direction="Column">
+        <SettingTile title="File description placement" after={<SelectCaptionPosition />} />
+      </SequenceCard>
+      <SequenceCard className={SequenceCardStyle} variant="SurfaceVariant" direction="Column">
         <SettingTile
           title="Emoji Selector Character Threshold"
           after={<EmojiSelectorThresholdInput />}
         />
       </SequenceCard>
+      {messageLayout === MessageLayout.Bubble && (
+        <SequenceCard className={SequenceCardStyle} variant="SurfaceVariant" direction="Column">
+          <SettingTile
+            title="Right Aligned Bubbles"
+            description="While using bubble layout, have your bubbles right aligned."
+            after={<Switch variant="Primary" value={rightBubbles} onChange={setRightBubbles} />}
+          />
+        </SequenceCard>
+      )}
       <SequenceCard className={SequenceCardStyle} variant="SurfaceVariant" direction="Column">
         <SettingTile
           title="Hide Membership Change"

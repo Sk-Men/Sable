@@ -132,7 +132,7 @@ import { useGetMemberPowerTag } from '$hooks/useMemberPowerTag';
 import { profilesCacheAtom } from '$state/userRoomProfile';
 import { ClientSideHoverFreeze } from '$components/ClientSideHoverFreeze';
 import * as css from './RoomTimeline.css';
-import { EncryptedContent, Event, Message, Reactions } from './message';
+import { EncryptedContent, Event, ForwardedMessageProps, Message, Reactions } from './message';
 
 const TimelineFloat = as<'div', css.TimelineFloatVariants>(
   ({ position, className, ...props }, ref) => (
@@ -1338,6 +1338,29 @@ export function RoomTimeline({
         const senderDisplayName =
           getMemberDisplayName(room, senderId, nicknames) ?? getMxIdLocalPart(senderId) ?? senderId;
 
+        // determine if message is forwarded by checking for the presence of the 'moe.sable.message.forward' key in the event content
+        const forwardContent = safeContent['moe.sable.message.forward'] as
+          | {
+              original_timestamp?: unknown;
+              original_room_id?: string;
+              original_event_id?: string;
+              original_event_private?: boolean;
+            }
+          | undefined;
+
+        const messageForwardedProps: ForwardedMessageProps | undefined = forwardContent
+          ? {
+              isForwarded: true,
+              originalTimestamp:
+                typeof forwardContent.original_timestamp === 'number'
+                  ? forwardContent.original_timestamp
+                  : mEvent.getTs(),
+              originalRoomId: forwardContent.original_room_id ?? room.roomId,
+              originalEventId: forwardContent.original_event_id ?? '',
+              originalEventPrivate: forwardContent.original_event_private ?? false,
+            }
+          : undefined;
+
         return (
           <Message
             key={mEvent.getId()}
@@ -1361,6 +1384,7 @@ export function RoomTimeline({
             onReactionToggle={handleReactionToggle}
             senderId={senderId}
             senderDisplayName={senderDisplayName}
+            messageForwardedProps={messageForwardedProps}
             sendStatus={mEvent.getAssociatedStatus()}
             onResend={handleResend}
             onDeleteFailedSend={handleDeleteFailedSend}

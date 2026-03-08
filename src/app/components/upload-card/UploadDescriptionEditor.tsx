@@ -44,6 +44,7 @@ type DescriptionEditorProps = {
   isSaving?: boolean;
   imagePackRooms?: any[];
   onSave: (plaintext: string, htmlContent: string) => void;
+  onCancel: () => void;
 };
 
 export function DescriptionEditor({
@@ -51,6 +52,7 @@ export function DescriptionEditor({
   isSaving,
   imagePackRooms,
   onSave,
+  onCancel,
 }: DescriptionEditorProps) {
   const editor = useEditor();
   const [enterForNewline] = useSetting(settingsAtom, 'enterForNewline');
@@ -129,6 +131,7 @@ export function DescriptionEditor({
     (evt) => {
       if (isKeyHotkey('escape', evt)) {
         evt.preventDefault();
+        onCancel();
         return;
       }
       const prevWordRange = getPrevWorldRange(editor);
@@ -137,7 +140,7 @@ export function DescriptionEditor({
         : undefined;
       setAutocompleteQuery(query);
     },
-    [editor]
+    [editor, onCancel]
   );
 
   const handleCloseAutocomplete = useCallback(() => {
@@ -180,18 +183,33 @@ export function DescriptionEditor({
                 justifyContent="SpaceBetween"
                 gap="100"
               >
-                <Box gap="200" alignItems="Center">
-                  <Chip
-                    onClick={handleSave}
-                    variant="Primary"
-                    radii="Pill"
-                    outlined
-                    before={
-                      isSaving ? <Spinner variant="Primary" fill="Soft" size="100" /> : undefined
-                    }
-                  >
-                    <Text size="B300">{isSaving ? 'Saving' : 'Save'}</Text>
-                  </Chip>
+                <Box gap="200">
+                  <Box gap="200" alignItems="Center">
+                    <Chip
+                      onClick={handleSave}
+                      variant="Primary"
+                      radii="Pill"
+                      outlined
+                      before={
+                        isSaving ? <Spinner variant="Primary" fill="Soft" size="100" /> : undefined
+                      }
+                    >
+                      <Text size="B300">{isSaving ? 'Saving' : 'Save'}</Text>
+                    </Chip>
+                  </Box>
+                  <Box gap="200" alignItems="Center">
+                    <Chip
+                      onClick={onCancel}
+                      variant="Warning"
+                      radii="Pill"
+                      outlined
+                      before={
+                        isSaving ? <Spinner variant="Primary" fill="Soft" size="100" /> : undefined
+                      }
+                    >
+                      <Text size="B300">Cancel</Text>
+                    </Chip>
+                  </Box>
                 </Box>
                 <Box gap="Inherit">
                   <IconButton
