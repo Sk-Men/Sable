@@ -75,9 +75,8 @@ export function CosmeticsNickname({ profile, userId, room }: CosmeticsSettingPro
     const target = evt.target as HTMLFormElement | undefined;
     const displayNameInput = target?.displayNameInput as HTMLInputElement | undefined;
     const name = displayNameInput?.value;
-    if (!name) return;
 
-    changeDisplayName(name);
+    changeDisplayName(name ?? '');
   };
 
   return (
@@ -86,7 +85,6 @@ export function CosmeticsNickname({ profile, userId, room }: CosmeticsSettingPro
         <Box as="form" onSubmit={handleSubmit} gap="200">
           <Box grow="Yes" direction="Column">
             <Input
-              required
               name="displayNameInput"
               value={displayName}
               onChange={handleChange}
