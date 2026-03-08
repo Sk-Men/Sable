@@ -31,7 +31,6 @@ import { useSetting } from '$state/hooks/settings';
 import { settingsAtom } from '$state/settings';
 import { createRoomEncryptionState } from '$components/create-room';
 import { parsePronounsInput } from '$utils/pronouns';
-import { escapeHTML } from '$utils/transformation';
 import { useRoomNavigate } from './useRoomNavigate';
 import { enrichWidgetUrl } from './useRoomWidgets';
 import { useUserProfile } from './useUserProfile';
@@ -245,6 +244,9 @@ export enum Command {
   // Cute Events
   Hug = 'hug',
   Cuddle = 'cuddle',
+  // our own cute events, not part of FluffyChat or other clients
+  Wave = 'wave',
+  Poke = 'poke',
 }
 
 export type CommandContent = {
@@ -1312,8 +1314,6 @@ export const useCommands = (mx: MatrixClient, room: Room): CommandRecord => {
             },
             cute_type: 'hug',
             body: `🤗`,
-            format: 'org.matrix.custom.html',
-            formatted_body: `<em>hugs ${escapeHTML(target) ?? 'you'}</em>`,
           } as any);
         },
       },
@@ -1329,8 +1329,36 @@ export const useCommands = (mx: MatrixClient, room: Room): CommandRecord => {
               user_ids: target ? [target] : [],
             },
             body: `😊`,
-            format: 'org.matrix.custom.html',
-            formatted_body: `<em>cuddles ${escapeHTML(target) ?? 'you'}</em>`,
+          } as any);
+        },
+      },
+      [Command.Wave]: {
+        name: Command.Wave,
+        description: 'Send a wave to someone. Example: /wave [@user:example.org]',
+        exe: async (payload) => {
+          const target = payload.trim();
+          await mx.sendMessage(room.roomId, {
+            msgtype: 'im.fluffychat.cute_event',
+            cute_type: 'wave',
+            'm.mentions': {
+              user_ids: target ? [target] : [],
+            },
+            body: `👋`,
+          } as any);
+        },
+      },
+      [Command.Poke]: {
+        name: Command.Poke,
+        description: 'Send a poke to someone. Example: /poke [@user:example.org]',
+        exe: async (payload) => {
+          const target = payload.trim();
+          await mx.sendMessage(room.roomId, {
+            msgtype: 'im.fluffychat.cute_event',
+            cute_type: 'poke',
+            'm.mentions': {
+              user_ids: target ? [target] : [],
+            },
+            body: `🫵`,
           } as any);
         },
       },
