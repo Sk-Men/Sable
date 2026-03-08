@@ -103,7 +103,6 @@ import {
   useIntersectionObserver,
 } from '$hooks/useIntersectionObserver';
 import { markAsRead } from '$utils/notifications';
-import { useDebounce } from '$hooks/useDebounce';
 import { getResizeObserverEntry, useResizeObserver } from '$hooks/useResizeObserver';
 import { inSameDay, minuteDifference, timeDayMonthYear, today, yesterday } from '$utils/time';
 import { createMentionElement, isEmptyEditor, moveCursor } from '$components/editor';
@@ -917,33 +916,26 @@ export function RoomTimeline({
     }
   }, [mx, room, hideReads]);
 
-  const debounceSetAtBottom = useDebounce(
-    useCallback(
-      (entry: IntersectionObserverEntry) => {
-        if (!entry.isIntersecting) setAtBottom(false);
-      },
-      [setAtBottom]
-    ),
-    { wait: 1000 }
-  );
-
   useIntersectionObserver(
     useCallback(
       (entries) => {
         const target = atBottomAnchorRef.current;
         if (!target) return;
         const targetEntry = getIntersectionObserverEntry(target, entries);
-        if (targetEntry) debounceSetAtBottom(targetEntry);
-        if (targetEntry?.isIntersecting) {
-          // Track scroll position independently of atLiveEndRef so that atBottom
-          // is always accurate. tryAutoMarkAsRead still requires atLiveEndRef.
+        if (!targetEntry) return;
+
+        if (targetEntry.isIntersecting) {
+          // User has reached the bottom
           setAtBottom(true);
           if (atLiveEndRef.current && document.hasFocus()) {
             tryAutoMarkAsRead();
           }
+        } else {
+          // User has intentionally scrolled up.
+          setAtBottom(false);
         }
       },
-      [debounceSetAtBottom, tryAutoMarkAsRead, setAtBottom]
+      [tryAutoMarkAsRead, setAtBottom]
     ),
     useCallback(
       () => ({
