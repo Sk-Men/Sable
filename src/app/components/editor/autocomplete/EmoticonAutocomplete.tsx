@@ -70,7 +70,12 @@ export function EmoticonAutocomplete({
     getEmoticonSearchStr,
     SEARCH_OPTIONS
   );
-  const autoCompleteEmoticon = result ? result.items.slice(0, 20) : recentEmoji;
+  const autoCompleteEmoticon = useMemo(() => {
+    if (query.text.length < emojiThreshold) {
+      return [];
+    }
+    return result ? result.items.slice(0, 20) : recentEmoji;
+  }, [query.text.length, emojiThreshold, result, recentEmoji]);
 
   useEffect(() => {
     if (query.text && query.text.length >= emojiThreshold) {
