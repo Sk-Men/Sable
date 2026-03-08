@@ -172,7 +172,6 @@ function IdentityCosmetics() {
   const [renderRoomColors, setRenderRoomColors] = useSetting(settingsAtom, 'renderRoomColors');
   const [renderRoomFonts, setRenderRoomFonts] = useSetting(settingsAtom, 'renderRoomFonts');
   const [uniformIcons, setUniformIcons] = useSetting(settingsAtom, 'uniformIcons');
-  const [rightBubbles, setRightBubbles] = useSetting(settingsAtom, 'useRightBubbles');
 
   return (
     <Box direction="Column" gap="100">
@@ -229,11 +228,21 @@ function IdentityCosmetics() {
           after={<Switch variant="Primary" value={uniformIcons} onChange={setUniformIcons} />}
         />
       </SequenceCard>
+    </Box>
+  );
+}
+
+function VideoCosmetics() {
+  const [allowPipVideos, setPipVideos] = useSetting(settingsAtom, 'allowPipVideos');
+
+  return (
+    <Box direction="Column" gap="100">
+      <Text size="L400">Video</Text>
       <SequenceCard className={SequenceCardStyle} variant="SurfaceVariant" direction="Column">
         <SettingTile
-          title="Right Aligned Bubbles"
-          description="When using bubble layout, have your bubbles right aligned."
-          after={<Switch variant="Primary" value={rightBubbles} onChange={setRightBubbles} />}
+          title="Picture in Picture Videos"
+          description="If your browser has it enabled, allows you to pop out the videos in the video call interface. Does not apply retroactively to current joined voice rooms."
+          after={<Switch variant="Primary" value={allowPipVideos} onChange={setPipVideos} />}
         />
       </SequenceCard>
     </Box>
@@ -269,6 +278,7 @@ export function Cosmetics({ requestClose }: CosmeticsProps) {
               <IdentityCosmetics />
               <JumboEmoji />
               <Privacy />
+              <VideoCosmetics />
             </Box>
           </PageContent>
         </Scroll>

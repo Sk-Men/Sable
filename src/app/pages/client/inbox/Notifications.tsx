@@ -207,7 +207,7 @@ type RoomNotificationsGroupProps = {
   notifications: INotification[];
   mediaAutoLoad?: boolean;
   urlPreview?: boolean;
-  hideActivity: boolean;
+  hideReads: boolean;
   onOpen: (roomId: string, eventId: string) => void;
   legacyUsernameColor?: boolean;
   hour24Clock: boolean;
@@ -218,7 +218,7 @@ function RoomNotificationsGroupComp({
   notifications,
   mediaAutoLoad,
   urlPreview,
-  hideActivity,
+  hideReads,
   onOpen,
   legacyUsernameColor,
   hour24Clock,
@@ -414,7 +414,7 @@ function RoomNotificationsGroupComp({
     onOpen(room.roomId, eventId);
   };
   const handleMarkAsRead = () => {
-    markAsRead(mx, room.roomId, hideActivity);
+    markAsRead(mx, room.roomId, hideReads);
   };
 
   return (
@@ -427,7 +427,12 @@ function RoomNotificationsGroupComp({
               src={getRoomAvatarUrl(mx, room, 96, useAuthentication)}
               alt={room.name}
               renderFallback={() => (
-                <RoomIcon size="50" joinRule={room.getJoinRule() ?? JoinRule.Restricted} filled />
+                <RoomIcon
+                  size="50"
+                  roomType={room.getType()}
+                  joinRule={room.getJoinRule() ?? JoinRule.Restricted}
+                  filled
+                />
               )}
             />
           </Avatar>
@@ -565,7 +570,7 @@ const FAST_REFRESH_MS = 2500;
 
 export function Notifications() {
   const mx = useMatrixClient();
-  const [hideActivity] = useSetting(settingsAtom, 'hideActivity');
+  const [hideReads] = useSetting(settingsAtom, 'hideReads');
   const [mediaAutoLoad] = useSetting(settingsAtom, 'mediaAutoLoad');
   const [urlPreview] = useSetting(settingsAtom, 'urlPreview');
   const [legacyUsernameColor] = useSetting(settingsAtom, 'legacyUsernameColor');
@@ -720,7 +725,7 @@ export function Notifications() {
                           notifications={group.notifications}
                           mediaAutoLoad={mediaAutoLoad}
                           urlPreview={urlPreview}
-                          hideActivity={hideActivity}
+                          hideReads={hideReads}
                           onOpen={navigateRoom}
                           legacyUsernameColor={
                             legacyUsernameColor || mDirects.has(groupRoom.roomId)

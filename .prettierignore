@@ -4,3 +4,5 @@ package.json
 package-lock.json
 LICENSE
 README.md
+CHANGELOG.md
+./changeset

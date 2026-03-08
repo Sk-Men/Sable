@@ -3,6 +3,7 @@ import {
   ComponentPropsWithoutRef,
   lazy,
   ReactEventHandler,
+  ReactNode,
   Suspense,
   useMemo,
   useState,
@@ -35,6 +36,7 @@ import { findAndReplace } from '$utils/findAndReplace';
 import { onEnterOrSpace } from '$utils/keyboard';
 import { copyToClipboard } from '$utils/dom';
 import { useTimeoutToggle } from '$hooks/useTimeoutToggle';
+import { ClientSideHoverFreeze } from '$components/ClientSideHoverFreeze';
 import {
   parseMatrixToRoom,
   parseMatrixToRoomEvent,
@@ -316,6 +318,20 @@ export function CodeBlock({
   );
 }
 
+/**
+ * Thin wrapper around <img> that gracefully swaps in a fallback node when the
+ * image fails to load (e.g. federation down, mxc URL unavailable).  Avoids the
+ * silent browser broken-image icon showing up in message bodies.
+ */
+function FallbackImg({
+  fallback,
+  ...props
+}: ComponentPropsWithoutRef<'img'> & { fallback: ReactNode }) {
+  const [failed, setFailed] = useState(false);
+  if (failed) return <>{fallback}</>;
+  return <img {...props} onError={() => setFailed(true)} />;
+}
+
 export const getReactCustomHtmlParser = (
   mx: MatrixClient,
   roomId: string | undefined,
@@ -326,6 +342,7 @@ export const getReactCustomHtmlParser = (
     handleMentionClick?: ReactEventHandler<HTMLElement>;
     useAuthentication?: boolean;
     nicknames?: Nicknames;
+    autoplayEmojis?: boolean;
   }
 ): HTMLReactParserOptions => {
   const opts: HTMLReactParserOptions = {
@@ -501,8 +518,15 @@ export const getReactCustomHtmlParser = (
         }
 
         if (name === 'img') {
+          // Guard: img without a src survives sanitisation (fix for crash #1731)
+          // but we can't convert it — skip rendering rather than passing
+          // undefined into mxcUrlToHttp where it would throw.
+          if (!props.src) return null;
+
           const htmlSrc = mxcUrlToHttp(mx, props.src, params.useAuthentication) ?? undefined;
 
+          // Non-mxc images were already converted to <a> links by the sanitiser,
+          // but handle the edge case defensively here too.
           if (htmlSrc && !props.src.startsWith('mxc://')) {
             return (
               <a href={htmlSrc} target="_blank" rel="noreferrer noopener">
@@ -511,20 +535,53 @@ export const getReactCustomHtmlParser = (
             );
           }
 
-          if (htmlSrc && 'data-mx-emoticon' in props) {
+          if ('data-mx-emoticon' in props) {
+            // When the mxc URL can't be resolved (e.g. federation unavailable),
+            // fall back to rendering the shortcode text so the message stays readable.
+            if (!htmlSrc) {
+              const label = props.alt || props.title || '';
+              return (
+                <span title={label} className={css.EmoticonBase}>
+                  {label ? `:${label}:` : ''}
+                </span>
+              );
+            }
+
             const siblingCount = domNode.parent?.children.length ?? 0;
 
+            // seperate style for bundled emojis
             // seperate style for bundled emojis
             if (siblingCount > 5) {
               return (
                 <span className={css.EmoticonBase}>
                   <span className={css.Emoticon()}>
-                    <img
-                      {...props}
-                      src={htmlSrc}
-                      className={css.EmoticonImg}
-                      style={{ verticalAlign: 'middle' }}
-                    />
+                    {!params.autoplayEmojis ? (
+                      <ClientSideHoverFreeze src={htmlSrc}>
+                        <FallbackImg
+                          {...props}
+                          src={htmlSrc}
+                          className={css.EmoticonImg}
+                          style={{ verticalAlign: 'middle' }}
+                          fallback={
+                            <span className={css.EmoticonBase}>
+                              {props.alt || props.title || '?'}
+                            </span>
+                          }
+                        />
+                      </ClientSideHoverFreeze>
+                    ) : (
+                      <FallbackImg
+                        {...props}
+                        src={htmlSrc}
+                        className={css.EmoticonImg}
+                        style={{ verticalAlign: 'middle' }}
+                        fallback={
+                          <span className={css.EmoticonBase}>
+                            {props.alt || props.title || '?'}
+                          </span>
+                        }
+                      />
+                    )}
                   </span>
                 </span>
               );
@@ -534,13 +591,47 @@ export const getReactCustomHtmlParser = (
             return (
               <span className={css.EmoticonBase}>
                 <span className={css.Emoticon()}>
-                  <img {...props} src={htmlSrc} className={css.EmoticonImg} />
+                  {!params.autoplayEmojis ? (
+                    <ClientSideHoverFreeze src={htmlSrc}>
+                      <FallbackImg
+                        {...props}
+                        src={htmlSrc}
+                        className={css.EmoticonImg}
+                        fallback={
+                          <span className={css.EmoticonBase}>
+                            {props.alt || props.title || '?'}
+                          </span>
+                        }
+                      />
+                    </ClientSideHoverFreeze>
+                  ) : (
+                    <FallbackImg
+                      {...props}
+                      src={htmlSrc}
+                      className={css.EmoticonImg}
+                      fallback={
+                        <span className={css.EmoticonBase}>{props.alt || props.title || '?'}</span>
+                      }
+                    />
+                  )}
                 </span>
               </span>
             );
           }
 
-          if (htmlSrc) return <img {...props} className={css.Img} src={htmlSrc} />;
+          if (htmlSrc)
+            return (
+              <FallbackImg
+                {...props}
+                className={css.Img}
+                src={htmlSrc}
+                fallback={
+                  <span title={`Failed to load media${props.alt ? `: ${props.alt}` : ''}`}>
+                    {props.alt || '[media]'}
+                  </span>
+                }
+              />
+            );
         }
       }
 

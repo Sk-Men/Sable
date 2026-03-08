@@ -1,6 +1,7 @@
 import { Box, Text, Icon, Icons, config, IconSrc } from 'folds';
 import { SequenceCard } from '$components/sequence-card';
 import { SettingTile } from '$components/setting-tile';
+import { BetaNoticeBadge } from '$components/BetaNoticeBadge';
 import { CreateRoomType } from './types';
 
 type CreateRoomTypeSelectorProps = {
@@ -32,10 +33,14 @@ export function CreateRoomTypeSelector({
           before={<Icon size="400" src={getIcon(CreateRoomType.TextRoom)} />}
           after={value === CreateRoomType.TextRoom && <Icon src={Icons.Check} />}
         >
-          <Text size="H6">Text</Text>
-          <Text size="T300" priority="300">
-            Send text messages, videos and GIFs.
-          </Text>
+          <Box gap="200" alignItems="Baseline">
+            <Text size="H6" style={{ flexShrink: 0 }}>
+              Chat Room
+            </Text>
+            <Text size="T300" priority="300" truncate>
+              - Messages, photos, and videos.
+            </Text>
+          </Box>
         </SettingTile>
       </SequenceCard>
       <SequenceCard
@@ -53,10 +58,15 @@ export function CreateRoomTypeSelector({
           before={<Icon size="400" src={getIcon(CreateRoomType.VoiceRoom)} />}
           after={value === CreateRoomType.VoiceRoom && <Icon src={Icons.Check} />}
         >
-          <Text size="H6">Voice</Text>
-          <Text size="T300" priority="300">
-            A room optimized for voice calls.
-          </Text>
+          <Box gap="200" alignItems="Baseline">
+            <Text size="H6" style={{ flexShrink: 0 }}>
+              Voice Room
+            </Text>
+            <Text size="T300" priority="300" truncate>
+              - Live audio and video conversations.
+            </Text>
+            <BetaNoticeBadge />
+          </Box>
         </SettingTile>
       </SequenceCard>
     </Box>

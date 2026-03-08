@@ -33,6 +33,7 @@ import { createRoomEncryptionState } from '$components/create-room';
 import { parsePronounsInput } from '$utils/pronouns';
 import { useRoomNavigate } from './useRoomNavigate';
 import { enrichWidgetUrl } from './useRoomWidgets';
+import { useUserProfile } from './useUserProfile';
 
 export const SHRUG = '¯\\_(ツ)_/¯';
 export const TABLEFLIP = '(╯°□°)╯︵ ┻━┻';
@@ -253,6 +254,7 @@ export type CommandRecord = Record<Command, CommandContent>;
 export const useCommands = (mx: MatrixClient, room: Room): CommandRecord => {
   const { navigateRoom } = useRoomNavigate();
   const [developerTools] = useSetting(settingsAtom, 'developerTools');
+  const profile = useUserProfile(mx.getSafeUserId());
 
   const commands: CommandRecord = useMemo(
     () => ({
@@ -439,8 +441,8 @@ export const useCommands = (mx: MatrixClient, room: Room): CommandRecord => {
         name: Command.MyRoomNick,
         description: 'Change nick in current room.',
         exe: async (payload) => {
-          const nick = payload.trim();
-          if (nick === '') return;
+          let nick: string | null = payload.trim();
+          if (nick === '') nick = profile.displayName ?? null;
           const mEvent = room
             .getLiveTimeline()
             .getState(EventTimeline.FORWARDS)
@@ -462,23 +464,29 @@ export const useCommands = (mx: MatrixClient, room: Room): CommandRecord => {
         name: Command.MyRoomAvatar,
         description: 'Change profile picture in current room. Example /myroomavatar mxc://xyzabc',
         exe: async (payload) => {
-          if (payload.match(/^mxc:\/\/\S+$/)) {
-            const mEvent = room
-              .getLiveTimeline()
-              .getState(EventTimeline.FORWARDS)
-              ?.getStateEvents(StateEvent.RoomMember, mx.getSafeUserId());
-            const content = mEvent?.getContent();
-            if (!content) return;
-            await mx.sendStateEvent(
-              room.roomId,
-              StateEvent.RoomMember as any,
-              {
-                ...content,
-                avatar_url: payload,
-              },
-              mx.getSafeUserId()
-            );
+          let newAvatar: string | undefined = payload.trim();
+          if (newAvatar.length === 0) {
+            // no avatar, reset to global
+            newAvatar = profile.avatarUrl;
+          } else if (!newAvatar.match(/^mxc:\/\/\S+$/)) {
+            // bad mxc
+            return;
           }
+          const mEvent = room
+            .getLiveTimeline()
+            .getState(EventTimeline.FORWARDS)
+            ?.getStateEvents(StateEvent.RoomMember, mx.getSafeUserId());
+          const content = mEvent?.getContent();
+          if (!content) return;
+          await mx.sendStateEvent(
+            room.roomId,
+            StateEvent.RoomMember as any,
+            {
+              ...content,
+              avatar_url: newAvatar,
+            },
+            mx.getSafeUserId()
+          );
         },
       },
       [Command.ConvertToDm]: {
@@ -1288,7 +1296,7 @@ export const useCommands = (mx: MatrixClient, room: Room): CommandRecord => {
         },
       },
     }),
-    [mx, room, navigateRoom, developerTools]
+    [mx, navigateRoom, room, profile.displayName, profile.avatarUrl, developerTools]
   );
 
   return commands;

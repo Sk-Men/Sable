@@ -19,8 +19,9 @@ import {
   toRem,
 } from 'folds';
 import { useVirtualizer } from '@tanstack/react-virtual';
-import { JoinRule, Room, RoomJoinRulesEventContent } from '$types/matrix-sdk';
 import FocusTrap from 'focus-trap-react';
+import { useNavigate } from 'react-router-dom';
+import { JoinRule, Room, RoomJoinRulesEventContent } from '$types/matrix-sdk';
 import { useMatrixClient } from '$hooks/useMatrixClient';
 import { mDirectAtom } from '$state/mDirectList';
 import { NavCategory, NavCategoryHeader, NavItem, NavItemContent, NavLink } from '$components/nav';
@@ -67,20 +68,19 @@ import { ContainerColor } from '$styles/ContainerColor.css';
 import { AsyncStatus, useAsyncCallback } from '$hooks/useAsyncCallback';
 import { BreakWord } from '$styles/Text.css';
 import { InviteUserPrompt } from '$components/invite-user-prompt';
-import { CallNavStatus } from '$features/room-nav/RoomCallNavStatus';
 import { mobileOrTablet } from '$utils/user-agent';
-import { useNavigate } from 'react-router-dom';
 import { lastVisitedRoomIdAtom } from '$state/room/lastRoom';
 import { SwipeableOverlayWrapper } from '$components/SwipeableOverlayWrapper';
-import { useCallState } from '$pages/client/call/CallProvider';
+import { useCallEmbed } from '$hooks/useCallEmbed';
 
 type SpaceMenuProps = {
   room: Room;
   requestClose: () => void;
 };
+
 const SpaceMenu = forwardRef<HTMLDivElement, SpaceMenuProps>(({ room, requestClose }, ref) => {
   const mx = useMatrixClient();
-  const [hideActivity] = useSetting(settingsAtom, 'hideActivity');
+  const [hideReads] = useSetting(settingsAtom, 'hideReads');
   const [developerTools] = useSetting(settingsAtom, 'developerTools');
   const roomToParents = useAtomValue(roomToParentsAtom);
   const powerLevels = usePowerLevels(room);
@@ -101,7 +101,7 @@ const SpaceMenu = forwardRef<HTMLDivElement, SpaceMenuProps>(({ room, requestClo
   const unread = useRoomsUnread(allChild, roomToUnreadAtom);
 
   const handleMarkAsRead = () => {
-    allChild.forEach((childRoomId) => markAsRead(mx, childRoomId, hideActivity));
+    allChild.forEach((childRoomId) => markAsRead(mx, childRoomId, hideReads));
     requestClose();
   };
 
@@ -379,7 +379,7 @@ export function Space() {
   const selectedRoomId = useSelectedRoom();
   const lobbySelected = useSpaceLobbySelected(spaceIdOrAlias);
   const searchSelected = useSpaceSearchSelected(spaceIdOrAlias);
-  const { isActiveCallReady, activeCallRoomId } = useCallState();
+  const callEmbed = useCallEmbed();
 
   const [closedCategories, setClosedCategories] = useAtom(useClosedNavCategoriesAtom());
 
@@ -404,19 +404,10 @@ export function Space() {
         const unread = roomToUnread.get(roomId);
         const hasUnread = !!unread && (unread.total > 0 || unread.highlight > 0);
         const showRoomAnyway =
-          hasUnread ||
-          roomId === selectedRoomId ||
-          (isActiveCallReady && activeCallRoomId === roomId);
+          hasUnread || roomId === selectedRoomId || callEmbed?.roomId === roomId;
         return !showRoomAnyway;
       },
-      [
-        space.roomId,
-        closedCategories,
-        roomToUnread,
-        selectedRoomId,
-        activeCallRoomId,
-        isActiveCallReady,
-      ]
+      [space.roomId, closedCategories, roomToUnread, selectedRoomId, callEmbed]
     ),
     useCallback(
       (sId) => closedCategories.has(makeNavCategoryId(space.roomId, sId)),
@@ -554,7 +545,6 @@ export function Space() {
             </NavCategory>
           </Box>
         </PageNavContent>
-        <CallNavStatus />
       </SwipeableOverlayWrapper>
     </PageNav>
   );

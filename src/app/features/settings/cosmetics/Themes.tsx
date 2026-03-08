@@ -244,7 +244,12 @@ function SystemThemePreferences() {
 
 function ThemeSettings() {
   const [systemTheme, setSystemTheme] = useSetting(settingsAtom, 'useSystemTheme');
-  const [monochromeMode, setMonochromeMode] = useSetting(settingsAtom, 'monochromeMode');
+  const [saturation, setSaturation] = useSetting(settingsAtom, 'saturationLevel');
+  const [underlineLinks, setUnderlineLinks] = useSetting(settingsAtom, 'underlineLinks');
+  const [reducedMotion, setReducedMotion] = useSetting(settingsAtom, 'reducedMotion');
+  const [autoplayGifs, setAutoplayGifs] = useSetting(settingsAtom, 'autoplayGifs');
+  const [autoplayStickers, setAutoplayStickers] = useSetting(settingsAtom, 'autoplayStickers');
+  const [autoplayEmojis, setAutoplayEmojis] = useSetting(settingsAtom, 'autoplayEmojis');
 
   return (
     <Box direction="Column" gap="100">
@@ -274,8 +279,64 @@ function ThemeSettings() {
 
       <SequenceCard className={SequenceCardStyle} variant="SurfaceVariant" direction="Column">
         <SettingTile
-          title="Monochrome Mode"
-          after={<Switch variant="Primary" value={monochromeMode} onChange={setMonochromeMode} />}
+          title="Saturation"
+          description={`${saturation}%`}
+          after={
+            <input
+              type="range"
+              min="0"
+              max="100"
+              step="1"
+              value={saturation}
+              onChange={(e) => setSaturation(parseInt(e.target.value, 10))}
+              style={{
+                width: toRem(160),
+                cursor: 'pointer',
+                appearance: 'none',
+                height: toRem(6),
+                borderRadius: config.radii.Pill,
+                backgroundColor: 'var(--sable-surface-container-line)',
+                accentColor: 'var(--sable-primary-main)',
+              }}
+            />
+          }
+        />
+      </SequenceCard>
+      <SequenceCard className={SequenceCardStyle} variant="SurfaceVariant" direction="Column">
+        <SettingTile
+          title="Underline Links"
+          description="Always show underlines on links in chat."
+          after={<Switch variant="Primary" value={underlineLinks} onChange={setUnderlineLinks} />}
+        />
+      </SequenceCard>
+      <SequenceCard className={SequenceCardStyle} variant="SurfaceVariant" direction="Column">
+        <SettingTile
+          title="Reduced Motion"
+          description="Stops animations and sliding UI elements."
+          after={<Switch variant="Primary" value={reducedMotion} onChange={setReducedMotion} />}
+        />
+      </SequenceCard>
+      <SequenceCard className={SequenceCardStyle} variant="SurfaceVariant" direction="Column">
+        <SettingTile
+          title="Autoplay GIFs"
+          description="Automatically play animated image uploads and links."
+          after={<Switch variant="Primary" value={autoplayGifs} onChange={setAutoplayGifs} />}
+        />
+      </SequenceCard>
+      <SequenceCard className={SequenceCardStyle} variant="SurfaceVariant" direction="Column">
+        <SettingTile
+          title="Autoplay Stickers"
+          description="Automatically play animated stickers."
+          after={
+            <Switch variant="Primary" value={autoplayStickers} onChange={setAutoplayStickers} />
+          }
+        />
+      </SequenceCard>
+      <SequenceCard className={SequenceCardStyle} variant="SurfaceVariant" direction="Column">
+        <SettingTile
+          title="Autoplay Emojis"
+          description="Automatically play animated custom emojis."
+          after={<Switch variant="Primary" value={autoplayEmojis} onChange={setAutoplayEmojis} />}
         />
       </SequenceCard>
     </Box>
@@ -328,6 +389,7 @@ function PageZoomInput() {
 export function Appearance() {
   const [twitterEmoji, setTwitterEmoji] = useSetting(settingsAtom, 'twitterEmoji');
   const [showUnreadCounts, setShowUnreadCounts] = useSetting(settingsAtom, 'showUnreadCounts');
+  const [badgeCountDMsOnly, setBadgeCountDMsOnly] = useSetting(settingsAtom, 'badgeCountDMsOnly');
   const [showPingCounts, setShowPingCounts] = useSetting(settingsAtom, 'showPingCounts');
 
   return (
@@ -354,6 +416,15 @@ export function Appearance() {
             description="Display the number of unread messages on room and sidebar badges."
             after={
               <Switch variant="Primary" value={showUnreadCounts} onChange={setShowUnreadCounts} />
+            }
+          />
+        </SequenceCard>
+        <SequenceCard className={SequenceCardStyle} variant="SurfaceVariant" direction="Column">
+          <SettingTile
+            title="Badge Counts for DMs Only"
+            description="Only show unread counts on Direct Message badges. Non-DM rooms and spaces show a plain dot instead."
+            after={
+              <Switch variant="Primary" value={badgeCountDMsOnly} onChange={setBadgeCountDMsOnly} />
             }
           />
         </SequenceCard>

@@ -1,5 +1,5 @@
 import { useAtom } from 'jotai';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { ReactNode, useCallback, useEffect, useRef, useState } from 'react';
 import { Box, Icon, IconButton, Icons, Text } from 'folds';
 import { inAppBannerAtom, InAppBannerNotification } from '$state/sessions';
 import * as css from './NotificationBanner.css';
@@ -21,6 +21,26 @@ function BodyText({ text, hovered }: { text: string; hovered: boolean }) {
     <div ref={ref} className={css.BannerBody} data-overflow={overflow} data-hovered={hovered}>
       <Text size="T200" priority="300">
         {text}
+      </Text>
+    </div>
+  );
+}
+
+// Same as BodyText but renders a pre-built ReactNode (rich HTML with mxc/mention transforms).
+function BodyNode({ node, hovered }: { node: ReactNode; hovered: boolean }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [overflow, setOverflow] = useState(false);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    setOverflow(el.scrollHeight > el.clientHeight);
+  }, [node]);
+
+  return (
+    <div ref={ref} className={css.BannerBody} data-overflow={overflow} data-hovered={hovered}>
+      <Text size="T200" priority="300">
+        {node}
       </Text>
     </div>
   );
@@ -115,7 +135,11 @@ function BannerItem({ notification, onDismiss }: BannerItemProps) {
             </span>
           )}
         </Text>
-        {notification.body && <BodyText text={notification.body} hovered={paused} />}
+        {notification.bodyNode ? (
+          <BodyNode node={notification.bodyNode} hovered={paused} />
+        ) : (
+          notification.body && <BodyText text={notification.body} hovered={paused} />
+        )}
       </div>
       <Box shrink="No">
         <IconButton

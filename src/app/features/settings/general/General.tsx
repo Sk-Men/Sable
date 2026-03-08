@@ -1,6 +1,7 @@
 import {
   ChangeEventHandler,
   FormEventHandler,
+  KeyboardEventHandler,
   MouseEventHandler,
   useEffect,
   useState,
@@ -22,6 +23,7 @@ import {
   Scroll,
   Switch,
   Text,
+  toRem,
 } from 'folds';
 import FocusTrap from 'focus-trap-react';
 import { useAtomValue, useSetAtom } from 'jotai';
@@ -33,6 +35,7 @@ import {
   MessageLayout,
   MessageSpacing,
   RightSwipeAction,
+  CaptionPosition,
   settingsAtom,
 } from '$state/settings';
 import { SettingTile } from '$components/setting-tile';
@@ -40,12 +43,14 @@ import { KeySymbol } from '$utils/key-symbol';
 import { isMacOS, mobileOrTablet } from '$utils/user-agent';
 import { stopPropagation } from '$utils/keyboard';
 import { useMessageLayoutItems } from '$hooks/useMessageLayout';
+import { useCaptionPositionItems } from '$hooks/useCaptionPosition';
 import { useMessageSpacingItems } from '$hooks/useMessageSpacing';
 import { useDateFormatItems } from '$hooks/useDateFormat';
 import { SequenceCardStyle } from '$features/settings/styles.css';
 import { sessionsAtom, activeSessionIdAtom } from '$state/sessions';
 import { useClientConfig } from '$hooks/useClientConfig';
 import { resolveSlidingEnabled } from '$client/initMatrix';
+import { isKeyHotkey } from 'is-hotkey';
 
 type DateHintProps = {
   hasChanges: boolean;
@@ -404,6 +409,7 @@ function Editor({ isMobile }: { isMobile: boolean }) {
   const [enterForNewline, setEnterForNewline] = useSetting(settingsAtom, 'enterForNewline');
   const [isMarkdown, setIsMarkdown] = useSetting(settingsAtom, 'isMarkdown');
   const [hideActivity, setHideActivity] = useSetting(settingsAtom, 'hideActivity');
+  const [hideReads, setHideReads] = useSetting(settingsAtom, 'hideReads');
 
   return (
     <Box direction="Column" gap="100">
@@ -435,9 +441,16 @@ function Editor({ isMobile }: { isMobile: boolean }) {
       </SequenceCard>
       <SequenceCard className={SequenceCardStyle} variant="SurfaceVariant" direction="Column">
         <SettingTile
-          title="Hide Typing & Read Receipts"
-          description="Turn off both typing status and read receipts to keep your activity private."
+          title="Hide Typing Indicators"
+          description="Turn off typing status."
           after={<Switch variant="Primary" value={hideActivity} onChange={setHideActivity} />}
+        />
+      </SequenceCard>
+      <SequenceCard className={SequenceCardStyle} variant="SurfaceVariant" direction="Column">
+        <SettingTile
+          title="Hide Read Receipts"
+          description="Turn off read receipts."
+          after={<Switch variant="Primary" value={hideReads} onChange={setHideReads} />}
         />
       </SequenceCard>
     </Box>
@@ -498,6 +511,74 @@ function SelectMessageLayout() {
                     key={item.layout}
                     size="300"
                     variant={messageLayout === item.layout ? 'Primary' : 'Surface'}
+                    radii="300"
+                    onClick={() => handleSelect(item.layout)}
+                  >
+                    <Text size="T300">{item.name}</Text>
+                  </MenuItem>
+                ))}
+              </Box>
+            </Menu>
+          </FocusTrap>
+        }
+      />
+    </>
+  );
+}
+function SelectCaptionPosition() {
+  const [menuCords, setMenuCords] = useState<RectCords>();
+  const [captionPosition, setCaptionPosition] = useSetting(settingsAtom, 'captionPosition');
+  const captionPositionItems = useCaptionPositionItems();
+
+  const handleMenu: MouseEventHandler<HTMLButtonElement> = (evt) => {
+    setMenuCords(evt.currentTarget.getBoundingClientRect());
+  };
+
+  const handleSelect = (position: CaptionPosition) => {
+    setCaptionPosition(position);
+    setMenuCords(undefined);
+  };
+
+  return (
+    <>
+      <Button
+        size="300"
+        variant="Secondary"
+        outlined
+        fill="Soft"
+        radii="300"
+        after={<Icon size="300" src={Icons.ChevronBottom} />}
+        onClick={handleMenu}
+      >
+        <Text size="T300">
+          {captionPositionItems.find((i) => i.layout === captionPosition)?.name ?? captionPosition}
+        </Text>
+      </Button>
+      <PopOut
+        anchor={menuCords}
+        offset={5}
+        position="Bottom"
+        align="End"
+        content={
+          <FocusTrap
+            focusTrapOptions={{
+              initialFocus: false,
+              onDeactivate: () => setMenuCords(undefined),
+              clickOutsideDeactivates: true,
+              isKeyForward: (evt: KeyboardEvent) =>
+                evt.key === 'ArrowDown' || evt.key === 'ArrowRight',
+              isKeyBackward: (evt: KeyboardEvent) =>
+                evt.key === 'ArrowUp' || evt.key === 'ArrowLeft',
+              escapeDeactivates: stopPropagation,
+            }}
+          >
+            <Menu>
+              <Box direction="Column" gap="100" style={{ padding: config.space.S100 }}>
+                {captionPositionItems.map((item) => (
+                  <MenuItem
+                    key={item.layout}
+                    size="300"
+                    variant={captionPosition === item.layout ? 'Primary' : 'Surface'}
                     radii="300"
                     onClick={() => handleSelect(item.layout)}
                   >
@@ -681,6 +762,49 @@ function Gestures({ isMobile }: { isMobile: boolean }) {
   );
 }
 
+function EmojiSelectorThresholdInput() {
+  const [emojiThreshold, setEmojiThreshold] = useSetting(settingsAtom, 'emojiSuggestThreshold');
+  const [inputValue, setInputValue] = useState(emojiThreshold.toString());
+
+  const handleChange: ChangeEventHandler<HTMLInputElement> = (evt) => {
+    const val = evt.target.value;
+    setInputValue(val);
+
+    const parsed = parseInt(val, 10);
+    if (!Number.isNaN(parsed) && parsed >= 1 && parsed <= 10) {
+      setEmojiThreshold(parsed);
+    }
+  };
+
+  const handleKeyDown: KeyboardEventHandler<HTMLInputElement> = (evt) => {
+    if (isKeyHotkey('escape', evt)) {
+      evt.stopPropagation();
+      setInputValue(emojiThreshold.toString());
+      (evt.target as HTMLInputElement).blur();
+    }
+
+    if (isKeyHotkey('enter', evt)) {
+      (evt.target as HTMLInputElement).blur();
+    }
+  };
+
+  return (
+    <Input
+      style={{ width: toRem(80) }}
+      variant={parseInt(inputValue, 10) === emojiThreshold ? 'Secondary' : 'Success'}
+      size="300"
+      radii="300"
+      type="number"
+      min="1"
+      max="10"
+      value={inputValue}
+      onChange={handleChange}
+      onKeyDown={handleKeyDown}
+      outlined
+    />
+  );
+}
+
 function Messages() {
   const [hideMembershipEvents, setHideMembershipEvents] = useSetting(
     settingsAtom,
@@ -699,6 +823,8 @@ function Messages() {
     'hideMembershipInReadOnly'
   );
 
+  const [messageLayout] = useSetting(settingsAtom, 'messageLayout');
+  const [rightBubbles, setRightBubbles] = useSetting(settingsAtom, 'useRightBubbles');
   return (
     <Box direction="Column" gap="100">
       <Text size="L400">Messages</Text>
@@ -708,6 +834,24 @@ function Messages() {
       <SequenceCard className={SequenceCardStyle} variant="SurfaceVariant" direction="Column">
         <SettingTile title="Message Spacing" after={<SelectMessageSpacing />} />
       </SequenceCard>
+      <SequenceCard className={SequenceCardStyle} variant="SurfaceVariant" direction="Column">
+        <SettingTile title="File description placement" after={<SelectCaptionPosition />} />
+      </SequenceCard>
+      <SequenceCard className={SequenceCardStyle} variant="SurfaceVariant" direction="Column">
+        <SettingTile
+          title="Emoji Selector Character Threshold"
+          after={<EmojiSelectorThresholdInput />}
+        />
+      </SequenceCard>
+      {messageLayout === MessageLayout.Bubble && (
+        <SequenceCard className={SequenceCardStyle} variant="SurfaceVariant" direction="Column">
+          <SettingTile
+            title="Right Aligned Bubbles"
+            description="While using bubble layout, have your bubbles right aligned."
+            after={<Switch variant="Primary" value={rightBubbles} onChange={setRightBubbles} />}
+          />
+        </SequenceCard>
+      )}
       <SequenceCard className={SequenceCardStyle} variant="SurfaceVariant" direction="Column">
         <SettingTile
           title="Hide Membership Change"
@@ -814,18 +958,22 @@ export function Sync() {
         style={{ opacity: serverSlidingEnabled ? 1 : 0.5 }}
       >
         <SettingTile
-          title="Use Sliding Sync (Experimental)"
+          title="Use Sliding Sync"
           description={
             serverSlidingEnabled ? (
               <>
                 Enable Sliding Sync for this current login/session. Requires server support and
-                admin configuration. May cause issues, use with caution.{' '}
+                admin configuration.{' '}
                 <a
                   href="https://github.com/matrix-org/matrix-spec-proposals/blob/erikj/sss/proposals/4186-simplified-sliding-sync.md"
                   target="_blank"
                   rel="noreferrer"
                 >
-                  More info
+                  More info/Documentation
+                </a>
+                .{' '}
+                <a href="https://github.com/7w1/sable/issues/146" target="_blank" rel="noreferrer">
+                  Known issues (Sable GitHub)
                 </a>
                 .
               </>

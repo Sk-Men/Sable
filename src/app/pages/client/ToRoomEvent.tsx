@@ -1,35 +1,34 @@
 import { useEffect } from 'react';
-import { useParams, useSearchParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { useSetAtom } from 'jotai';
 import { activeSessionIdAtom, pendingNotificationAtom } from '$state/sessions';
 
-// ToRoomEvent handles the /to/:room_id/:event_id route used by the SW when it
-// opens a new window for a push notification (killed-app case) OR by client.navigate()
-// on iOS where postMessage is unreliable after focus().
+// ToRoomEvent handles /to/:user_id/:room_id/:event_id? — the canonical deep-link
+// URL used by the service worker's notificationclick handler.
 //
-// It does NOT navigate itself. Instead it writes to pendingNotificationAtom so
-// that NotificationJumper handles the actual navigation once the correct client
-// is synced. This survives the ClientRoot account-switch reload that happens when
-// setActiveSessionId() changes the active session: ToRoomEvent unmounts as soon
-// as ClientRoot calls navigate(getHomePath()), but the atom value persists and
-// NotificationJumper picks it up once the new client is ready.
+// The :user_id segment lets the SW embed the target Matrix user ID directly in
+// the URL (e.g. %40alice%3Aserver.tld) so the correct account is always
+// activated before navigation, even on a cold launch where the app restarts
+// from scratch after the PWA was killed by the OS.
+//
+// This component does NOT navigate itself — it writes to pendingNotificationAtom
+// so NotificationJumper can navigate once the Matrix client has finished its
+// initial sync. The atom survives the ClientRoot reload that happens when
+// setActiveSessionId() triggers an account switch.
 export function ToRoomEvent() {
-  const { room_id: roomId, event_id: eventId } = useParams();
-  const [searchParams] = useSearchParams();
-  const targetUserId = searchParams.get('uid') ?? undefined;
+  const { user_id: userId, room_id: roomId, event_id: eventId } = useParams();
   const setActiveSessionId = useSetAtom(activeSessionIdAtom);
   const setPending = useSetAtom(pendingNotificationAtom);
 
   useEffect(() => {
     if (!roomId) return;
-    const rid = roomId; // narrowed to string
-    if (targetUserId) setActiveSessionId(targetUserId);
-    setPending({ roomId: rid, eventId, targetSessionId: targetUserId });
-    // Push a clean entry onto history so the back button doesn't return to /to/…
-    if (window.history.length <= 2) {
-      window.history.pushState({}, '', '/');
-    }
-  }, [roomId, eventId, targetUserId, setActiveSessionId, setPending]);
+    // Switch to the target account first so the notification jumper navigates
+    // under the correct session.
+    if (userId) setActiveSessionId(userId);
+    setPending({ roomId, eventId, targetSessionId: userId });
+    // Replace /to/… in history so the back button doesn't return to this route.
+    window.history.replaceState({}, '', '/');
+  }, [userId, roomId, eventId, setActiveSessionId, setPending]);
 
   return null;
 }

@@ -86,7 +86,10 @@ export const INBOX_NOTIFICATIONS_PATH = `/inbox/${NOTIFICATIONS_PATH_SEGMENT}`;
 export const INBOX_INVITES_PATH = `/inbox/${INVITES_PATH_SEGMENT}`;
 
 export const TO_PATH = '/to';
-export const TO_ROOM_EVENT_PATH = `${TO_PATH}/:room_id/:event_id?`;
+// Deep-link route used by push notification click-back URLs.
+// Format: /to/:user_id/:room_id/:event_id?
+// e.g.  /to/%40alice%3Aserver/%21room%3Aserver/%24event%3Aserver
+export const TO_ROOM_EVENT_PATH = `${TO_PATH}/:user_id/:room_id/:event_id?`;
 
 export const SPACE_SETTINGS_PATH = '/space-settings/';
 

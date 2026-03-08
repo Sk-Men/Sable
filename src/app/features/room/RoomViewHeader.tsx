@@ -1,5 +1,6 @@
 import { MouseEventHandler, forwardRef, useCallback, useEffect, useState } from 'react';
 import FocusTrap from 'focus-trap-react';
+import { useAtom, useAtomValue } from 'jotai';
 import {
   Box,
   Avatar,
@@ -70,14 +71,14 @@ import { useRoomNavigate } from '$hooks/useRoomNavigate';
 import { useRoomCreators } from '$hooks/useRoomCreators';
 import { useRoomPermissions } from '$hooks/useRoomPermissions';
 import { InviteUserPrompt } from '$components/invite-user-prompt';
-import { useCallState } from '$pages/client/call/CallProvider';
 import { ContainerColor } from '$styles/ContainerColor.css';
 import { useRoomWidgets } from '$hooks/useRoomWidgets';
 import { AccountDataEvent } from '$types/matrix/accountData';
 import { DirectInvitePrompt } from '$components/direct-invite-prompt';
 import { AsyncStatus, useAsyncCallback } from '$hooks/useAsyncCallback';
-import { useAtomValue } from 'jotai';
 import { mDirectAtom } from '$state/mDirectList';
+import { callChatAtom } from '$state/callEmbed';
+import { RoomSettingsPage } from '$state/roomSettings';
 import { JumpToTime } from './jump-to-time';
 import { RoomPinMenu } from './room-pin-menu';
 import * as css from './RoomViewHeader.css';
@@ -106,7 +107,7 @@ type RoomMenuProps = {
 };
 const RoomMenu = forwardRef<HTMLDivElement, RoomMenuProps>(({ room, requestClose }, ref) => {
   const mx = useMatrixClient();
-  const [hideActivity] = useSetting(settingsAtom, 'hideActivity');
+  const [hideReads] = useSetting(settingsAtom, 'hideReads');
   const unread = useRoomUnread(room.roomId, roomToUnreadAtom);
   const powerLevels = usePowerLevelsContext();
   const creators = useRoomCreators(room);
@@ -123,7 +124,7 @@ const RoomMenu = forwardRef<HTMLDivElement, RoomMenuProps>(({ room, requestClose
   const [directInvitePrompt, setDirectInvitePrompt] = useState(false);
 
   const handleMarkAsRead = () => {
-    markAsRead(mx, room.roomId, hideActivity);
+    markAsRead(mx, room.roomId, hideReads);
     requestClose();
   };
 
@@ -329,7 +330,7 @@ const RoomMenu = forwardRef<HTMLDivElement, RoomMenuProps>(({ room, requestClose
 });
 RoomMenu.displayName = 'RoomMenu';
 
-export function RoomViewHeader() {
+export function RoomViewHeader({ callView }: { callView?: boolean }) {
   const navigate = useNavigate();
   const mx = useMatrixClient();
   const useAuthentication = useMediaAuthentication();
@@ -340,7 +341,8 @@ export function RoomViewHeader() {
   const [pinMenuAnchor, setPinMenuAnchor] = useState<RectCords>();
   const direct = useIsDirectRoom();
 
-  const { isChatOpen, toggleChat } = useCallState();
+  const [chat, setChat] = useAtom(callChatAtom);
+
   const encryptionEvent = useStateEvent(room, StateEvent.RoomEncryption);
   const encryptedRoom = !!encryptionEvent;
   const avatarMxc = useRoomAvatar(room, direct);
@@ -433,6 +435,16 @@ export function RoomViewHeader() {
     });
   };
 
+  const openSettings = useOpenRoomSettings();
+  const parentSpace = useSpaceOptionally();
+  const handleMemberToggle = () => {
+    if (callView) {
+      openSettings(room.roomId, parentSpace?.roomId, RoomSettingsPage.MembersPage);
+      return;
+    }
+    setPeopleDrawer(!peopleDrawer);
+  };
+
   return (
     <PageHeader
       className={ContainerColor({ variant: 'Surface' })}
@@ -508,7 +520,7 @@ export function RoomViewHeader() {
         </Box>
 
         <Box shrink="No">
-          {(!room.isCallRoom() || isChatOpen) && (
+          {(!room.isCallRoom() || chat) && (
             <>
               {!encryptedRoom && (
                 <TooltipProvider
@@ -630,7 +642,6 @@ export function RoomViewHeader() {
               )}
             </TooltipProvider>
           )}
-
           {screenSize === ScreenSize.Desktop && (
             <TooltipProvider
               position="Bottom"
@@ -642,24 +653,20 @@ export function RoomViewHeader() {
               }
             >
               {(triggerRef) => (
-                <IconButton
-                  fill="None"
-                  ref={triggerRef}
-                  onClick={() => setPeopleDrawer((drawer) => !drawer)}
-                >
+                <IconButton fill="None" ref={triggerRef} onClick={handleMemberToggle}>
                   <Icon size="400" src={Icons.User} filled={peopleDrawer} />
                 </IconButton>
               )}
             </TooltipProvider>
           )}
 
-          {room.isCallRoom() && !direct && (
+          {callView && (
             <TooltipProvider
               position="Bottom"
               offset={4}
               tooltip={
                 <Tooltip>
-                  <Text>{isChatOpen ? 'Hide Chat' : 'Show Chat'}</Text>
+                  <Text>{chat ? 'Hide Chat' : 'Show Chat'}</Text>
                 </Tooltip>
               }
             >
@@ -668,10 +675,10 @@ export function RoomViewHeader() {
                   fill="None"
                   ref={triggerRef}
                   onClick={() => {
-                    toggleChat();
+                    setChat(!chat);
                   }}
                 >
-                  <Icon size="400" src={Icons.Message} filled={isChatOpen} />
+                  <Icon size="400" src={Icons.Message} filled={chat} />
                 </IconButton>
               )}
             </TooltipProvider>

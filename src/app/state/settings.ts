@@ -1,4 +1,5 @@
 import { atom } from 'jotai';
+import { mobileOrTablet } from '$utils/user-agent';
 
 const STORAGE_KEY = 'settings';
 export type DateFormat = 'D MMM YYYY' | 'DD/MM/YYYY' | 'MM/DD/YYYY' | 'YYYY/MM/DD' | '';
@@ -14,6 +15,12 @@ export enum RightSwipeAction {
   Reply = 'reply',
 }
 
+export enum CaptionPosition {
+  Above = 'above',
+  Inline = 'inline',
+  Hidden = 'hidden',
+  Below = 'below',
+}
 export type JumboEmojiSize = 'none' | 'extraSmall' | 'small' | 'normal' | 'large' | 'extraLarge';
 
 export interface Settings {
@@ -21,7 +28,7 @@ export interface Settings {
   useSystemTheme: boolean;
   lightThemeId?: string;
   darkThemeId?: string;
-  monochromeMode?: boolean;
+  saturationLevel?: number;
   uniformIcons: boolean;
   isMarkdown: boolean;
   editorToolbar: boolean;
@@ -42,12 +49,15 @@ export interface Settings {
   encUrlPreview: boolean;
   showHiddenEvents: boolean;
   legacyUsernameColor: boolean;
+  allowPipVideos: boolean;
 
   usePushNotifications: boolean;
   useInAppNotifications: boolean;
+  useSystemNotifications: boolean;
   isNotificationSounds: boolean;
   showMessageContentInNotifications: boolean;
   showMessageContentInEncryptedNotifications: boolean;
+  clearNotificationsOnRead: boolean;
 
   hour24Clock: boolean;
   dateFormatString: string;
@@ -65,6 +75,7 @@ export interface Settings {
   filterPronounsLanguages?: string[];
   renderRoomColors: boolean;
   renderRoomFonts: boolean;
+  captionPosition: CaptionPosition;
 
   // Sable features!
   mobileGestures: boolean;
@@ -72,7 +83,18 @@ export interface Settings {
   hideMembershipInReadOnly: boolean;
   useRightBubbles: boolean;
   showUnreadCounts: boolean;
+  badgeCountDMsOnly: boolean;
   showPingCounts: boolean;
+  hideReads: boolean;
+  emojiSuggestThreshold: number;
+  underlineLinks: boolean;
+  reducedMotion: boolean;
+  autoplayGifs: boolean;
+  autoplayStickers: boolean;
+  autoplayEmojis: boolean;
+
+  // furry stuff
+  renderAnimals: boolean;
 }
 
 const defaultSettings: Settings = {
@@ -80,7 +102,7 @@ const defaultSettings: Settings = {
   useSystemTheme: true,
   lightThemeId: undefined,
   darkThemeId: undefined,
-  monochromeMode: false,
+  saturationLevel: 100,
   uniformIcons: false,
   isMarkdown: true,
   editorToolbar: false,
@@ -101,12 +123,18 @@ const defaultSettings: Settings = {
   encUrlPreview: false,
   showHiddenEvents: false,
   legacyUsernameColor: false,
+  allowPipVideos: false,
 
-  usePushNotifications: false,
-  useInAppNotifications: true,
+  // Push notifications (SW/Sygnal): default on for mobile, opt-in on desktop.
+  // In-app pill banner: default on for mobile (primary foreground alert), opt-in on desktop.
+  // System (OS) notifications: desktop-only; hidden and disabled on mobile.
+  usePushNotifications: mobileOrTablet(),
+  useInAppNotifications: mobileOrTablet(),
+  useSystemNotifications: !mobileOrTablet(),
   isNotificationSounds: true,
   showMessageContentInNotifications: false,
   showMessageContentInEncryptedNotifications: false,
+  clearNotificationsOnRead: false,
 
   hour24Clock: false,
   dateFormatString: 'D MMM YYYY',
@@ -122,6 +150,7 @@ const defaultSettings: Settings = {
   renderGlobalNameColors: true,
   renderRoomColors: true,
   renderRoomFonts: true,
+  captionPosition: CaptionPosition.Below,
 
   // Sable features!
   mobileGestures: true,
@@ -129,15 +158,37 @@ const defaultSettings: Settings = {
   hideMembershipInReadOnly: true,
   useRightBubbles: false,
   showUnreadCounts: true,
+  badgeCountDMsOnly: false,
   showPingCounts: true,
+  hideReads: false,
+  emojiSuggestThreshold: 2,
+  underlineLinks: false,
+  reducedMotion: false,
+  autoplayGifs: true,
+  autoplayStickers: true,
+  autoplayEmojis: true,
+
+  // furry stuff
+  renderAnimals: true,
 };
 
 export const getSettings = () => {
   const settings = localStorage.getItem(STORAGE_KEY);
   if (settings === null) return defaultSettings;
+
+  // migration for old keys
+  // monochrome -> saturation
+  const parsed = JSON.parse(settings);
+  if (parsed.monochromeMode === true && parsed.saturationLevel === undefined) {
+    parsed.saturationLevel = 0;
+  } else if (parsed.monochromeMode === false && parsed.saturationLevel === undefined) {
+    parsed.saturationLevel = 100;
+  }
+  delete parsed.monochromeMode;
+
   return {
     ...defaultSettings,
-    ...(JSON.parse(settings) as Settings),
+    ...(parsed as Settings),
   };
 };
 

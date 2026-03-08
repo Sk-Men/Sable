@@ -6,6 +6,7 @@ import { modalAtom, ModalType } from '$state/modal';
 import { MessageReportInternal } from './MessageReport';
 import { MessageDeleteInternal } from './MessageDelete';
 import { MessageSourceInternal } from './MessageSource';
+import { MessageForwardInternal } from './MessageForward';
 import { MessageAllReactionInternal } from './MessageReactions';
 import { MessageReadReceiptInternal } from './MessageReadRecipts';
 
@@ -37,6 +38,12 @@ export function GlobalModalManager() {
             {modal.type === ModalType.Delete && (
               <Box>
                 <MessageDeleteInternal room={modal.room} mEvent={modal.mEvent} onClose={close} />
+              </Box>
+            )}
+
+            {modal.type === ModalType.Forward && (
+              <Box>
+                <MessageForwardInternal room={modal.room} mEvent={modal.mEvent} onClose={close} />
               </Box>
             )}
 

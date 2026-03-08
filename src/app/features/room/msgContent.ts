@@ -59,6 +59,8 @@ export const getImageMsgContent = async (
     msgtype: MsgType.Image,
     filename: file.name,
     body: file.name,
+    format: 'org.matrix.custom.html',
+    formatted_body: file.name,
     [MATRIX_SPOILER_PROPERTY_NAME]: metadata.markedAsSpoiler,
   };
   if (imgEl) {
@@ -77,6 +79,11 @@ export const getImageMsgContent = async (
   } else {
     content.url = mxc;
   }
+  if (item.body && item.body.length > 0) content.body = item.body;
+  if (item.formatted_body && item.formatted_body.length > 0) {
+    content.format = 'org.matrix.custom.html';
+    content.formatted_body = item.formatted_body;
+  }
   return content;
 };
 
@@ -94,6 +101,8 @@ export const getVideoMsgContent = async (
     msgtype: MsgType.Video,
     filename: file.name,
     body: file.name,
+    format: 'org.matrix.custom.html',
+    formatted_body: file.name,
     [MATRIX_SPOILER_PROPERTY_NAME]: metadata.markedAsSpoiler,
   };
   if (videoEl) {
@@ -126,6 +135,11 @@ export const getVideoMsgContent = async (
   } else {
     content.url = mxc;
   }
+  if (item.body && item.body.length > 0) content.body = item.body;
+  if (item.formatted_body && item.formatted_body.length > 0) {
+    content.format = 'org.matrix.custom.html';
+    content.formatted_body = item.formatted_body;
+  }
   return content;
 };
 
@@ -135,6 +149,8 @@ export const getAudioMsgContent = (item: TUploadItem, mxc: string): IContent => 
     msgtype: MsgType.Audio,
     filename: file.name,
     body: file.name,
+    format: 'org.matrix.custom.html',
+    formatted_body: file.name,
     info: {
       mimetype: file.type,
       size: file.size,
@@ -148,6 +164,11 @@ export const getAudioMsgContent = (item: TUploadItem, mxc: string): IContent => 
   } else {
     content.url = mxc;
   }
+  if (item.body && item.body.length > 0) content.body = item.body;
+  if (item.formatted_body && item.formatted_body.length > 0) {
+    content.format = 'org.matrix.custom.html';
+    content.formatted_body = item.formatted_body;
+  }
   return content;
 };
 
@@ -155,8 +176,10 @@ export const getFileMsgContent = (item: TUploadItem, mxc: string): IContent => {
   const { file, encInfo } = item;
   const content: IContent = {
     msgtype: MsgType.File,
-    body: file.name,
     filename: file.name,
+    body: file.name,
+    format: 'org.matrix.custom.html',
+    formatted_body: file.name,
     info: {
       mimetype: file.type,
       size: file.size,
@@ -169,6 +192,11 @@ export const getFileMsgContent = (item: TUploadItem, mxc: string): IContent => {
     };
   } else {
     content.url = mxc;
+  }
+  if (item.body && item.body.length > 0) content.body = item.body;
+  if (item.formatted_body && item.formatted_body.length > 0) {
+    content.format = 'org.matrix.custom.html';
+    content.formatted_body = item.formatted_body;
   }
   return content;
 };
