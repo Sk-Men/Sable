@@ -304,7 +304,8 @@ function MessageNotifications() {
 
       // Page is visible — show the themed in-app notification banner for any
       // highlighted message (mention / keyword) or loud push rule.
-      if (showNotifications && (isHighlightByRule || loudByRule || isDM)) {
+      // okay fast patch because that showNotifications setting atom is not getting set correctly or something
+      if (mobileOrTablet() && showNotifications && (isHighlightByRule || loudByRule || isDM)) {
         const isEncryptedRoom = !!getStateEvent(room, StateEvent.RoomEncryption);
         const avatarMxc =
           room.getAvatarFallbackMember()?.getMxcAvatarUrl() ?? room.getMxcAvatarUrl();
