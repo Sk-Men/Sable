@@ -52,7 +52,6 @@ export function MessageEditHistoryInternal({
     if (!edits) return [mEvent];
     return [mEvent, ...edits];
   };
-  // console.log(getEvents().map((m) => m.event.content));
 
   return <EventHistory room={room} mEvents={getEvents()} requestClose={onClose} />;
 }

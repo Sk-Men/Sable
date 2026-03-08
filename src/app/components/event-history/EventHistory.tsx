@@ -23,6 +23,9 @@ import { getMouseEventCords } from '$utils/dom';
 import { useAtomValue } from 'jotai';
 import { nicknamesAtom } from '$state/nicknames';
 import { UserAvatar } from '$components/user-avatar';
+import { Time } from '$components/message';
+import { useSetting } from '$state/hooks/settings';
+import { settingsAtom } from '$state/settings';
 import * as css from './EventHistory.css';
 
 export type EventHistoryProps = {
@@ -41,6 +44,16 @@ export const EventHistory = as<'div', EventHistoryProps>(
     const getName = (userId: string) =>
       getMemberDisplayName(room, userId, nicknames) ?? getMxIdLocalPart(userId) ?? userId;
 
+    const readerId = mEvents[0].event.sender ?? '';
+    const name = getName(readerId ?? '');
+    const avatarMxcUrl = room.getMember(readerId ?? '')?.getMxcAvatarUrl();
+    const avatarUrl = avatarMxcUrl
+      ? mx.mxcUrlToHttp(avatarMxcUrl, 100, 100, 'crop', undefined, false, useAuthentication)
+      : undefined;
+
+    const [hour24Clock] = useSetting(settingsAtom, 'hour24Clock');
+    const [dateFormatString] = useSetting(settingsAtom, 'dateFormatString');
+
     return (
       <Box
         className={classNames(css.EventHistory, className)}
@@ -56,53 +69,61 @@ export const EventHistory = as<'div', EventHistoryProps>(
             <Icon src={Icons.Cross} />
           </IconButton>
         </Header>
+        <Header>
+          <MenuItem
+            key={readerId}
+            style={{
+              display: 'flex',
+              justifyContent: 'center',
+              padding: `0 ${config.space.S200}`,
+            }}
+            radii="400"
+            onClick={(event) => {
+              openProfile(
+                room.roomId,
+                space?.roomId,
+                readerId,
+                getMouseEventCords(event.nativeEvent),
+                'Bottom'
+              );
+            }}
+            before={
+              <Avatar size="300">
+                <UserAvatar
+                  userId={readerId ?? ''}
+                  src={avatarUrl ?? undefined}
+                  alt={name}
+                  renderFallback={() => <Icon size="50" src={Icons.User} filled />}
+                />
+              </Avatar>
+            }
+          >
+            <Text size="T400">{name}</Text>
+          </MenuItem>
+        </Header>
         <Box grow="Yes">
-          <Scroll visibility="Hover" hideTrack size="300">
+          <Scroll visibility="Hover">
             <Box className={css.Content} direction="Column">
               {mEvents.map((mEvent) => {
                 if (!mEvent.event.sender) return <div />;
-                const readerId = mEvent.event.sender;
-                const name = getName(readerId);
-                const avatarMxcUrl = room.getMember(readerId)?.getMxcAvatarUrl();
-                const avatarUrl = avatarMxcUrl
-                  ? mx.mxcUrlToHttp(
-                      avatarMxcUrl,
-                      100,
-                      100,
-                      'crop',
-                      undefined,
-                      false,
-                      useAuthentication
-                    )
-                  : undefined;
 
                 return (
                   <MenuItem
                     key={readerId}
                     style={{ padding: `0 ${config.space.S200}` }}
                     radii="400"
-                    onClick={(event) => {
-                      openProfile(
-                        room.roomId,
-                        space?.roomId,
-                        readerId,
-                        getMouseEventCords(event.nativeEvent),
-                        'Bottom'
-                      );
-                    }}
                     before={
-                      <Avatar size="200">
-                        <UserAvatar
-                          userId={readerId}
-                          src={avatarUrl ?? undefined}
-                          alt={name}
-                          renderFallback={() => <Icon size="50" src={Icons.User} filled />}
-                        />
-                      </Avatar>
+                      <Time
+                        ts={mEvent.getTs()}
+                        hour24Clock={hour24Clock}
+                        dateFormatString={dateFormatString}
+                      />
                     }
                   >
-                    <Text size="T400" truncate>
-                      {name}·{mEvent.event?.content?.body ?? ''}
+                    <Text size="T400">
+                      {mEvent?.event?.content?.['m.new_content']?.body ??
+                        mEvent.event?.content?.body ??
+                        ''}
                     </Text>
                   </MenuItem>
                 );
