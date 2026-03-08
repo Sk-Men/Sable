@@ -247,6 +247,7 @@ export enum Command {
   // our own cute events, not part of FluffyChat or other clients
   Wave = 'wave',
   Poke = 'poke',
+  Headpat = 'headpat',
 }
 
 export type CommandContent = {
@@ -1359,6 +1360,22 @@ export const useCommands = (mx: MatrixClient, room: Room): CommandRecord => {
               user_ids: target ? [target] : [],
             },
             body: `🫵`,
+          } as any);
+        },
+      },
+      [Command.Headpat]: {
+        name: Command.Headpat,
+        description: 'Send a headpat to someone. Example: /headpat [@user:example.org]',
+        // not really like any of the other cute events, but it was too good not to include
+        // using a custom msgtype to avoid confusion with the other existing cute events
+        exe: async (payload) => {
+          const target = payload.trim();
+          await mx.sendMessage(room.roomId, {
+            msgtype: 'fyi.cisnt.headpat',
+            'm.mentions': {
+              user_ids: target ? [target] : [],
+            },
+            body: `*pat pat*`,
           } as any);
         },
       },

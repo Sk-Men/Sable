@@ -2,11 +2,12 @@
 
 import { MessageTextBody } from './layout';
 
-enum CuteEventType {
+export enum CuteEventType {
   Hug = 'hug',
   Cuddle = 'cuddle',
   Wave = 'wave',
   Poke = 'poke',
+  Headpat = 'headpat',
   // currently unused, but could be added in the future if there's demand for it
   Kiss = 'kiss',
 }
@@ -43,6 +44,9 @@ export function MCuteEvent({ content, type, mentionedUserIds }: MCuteEventProps)
       break;
     case CuteEventType.Poke:
       cuteText = `pokes ${mentionedUserIds?.[0] || 'you'}`;
+      break;
+    case CuteEventType.Headpat:
+      cuteText = `gives headpats to ${mentionedUserIds?.[0] || 'you'}`;
       break;
     default:
       cuteText = `sends ${mentionedUserIds?.[0] || 'you'} a cute event`;

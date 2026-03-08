@@ -33,7 +33,7 @@ import { ImageViewer } from './image-viewer';
 import { PdfViewer } from './Pdf-viewer';
 import { TextViewer } from './text-viewer';
 import { ClientSideHoverFreeze } from './ClientSideHoverFreeze';
-import { MCuteEvent } from './message/MCuteEvent';
+import { CuteEventType, MCuteEvent } from './message/MCuteEvent';
 
 type RenderMessageContentProps = {
   displayName: string;
@@ -355,6 +355,14 @@ function RenderMessageContentInternal({
       <MCuteEvent
         content={content}
         type={content?.cute_type}
+        mentionedUserIds={content?.['m.mentions']?.user_ids}
+      />
+    );
+  if (msgType === 'fyi.cisnt.headpat')
+    return (
+      <MCuteEvent
+        content={content}
+        type={CuteEventType.Headpat}
         mentionedUserIds={content?.['m.mentions']?.user_ids}
       />
     );

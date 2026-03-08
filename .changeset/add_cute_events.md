@@ -2,4 +2,4 @@
 sable: minor
 ---
 
-Add `/hug`, `/cuddle`, `/wave`, and `/poke` slash commands.
+Add `/hug`, `/cuddle`, `/wave`, `/headpat`, and `/poke` slash commands.
