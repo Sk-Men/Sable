@@ -1,5 +1,12 @@
 # Sable Client Changelog
 
+## 1.5.1 (2026-03-08)
+
+### Fixes
+
+* Fix recent emojis ignoring letter threshold.
+* Disable in-app banners on desktop.
+
 ## 1.5.0 (2026-03-08)
 
 ### Features
