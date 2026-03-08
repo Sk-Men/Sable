@@ -1,5 +1,24 @@
-import { ReactNode, useEffect, useState } from 'react';
-import { Box, Chip, Icon, IconButton, Icons, Text, Tooltip, color, config, toRem } from 'folds';
+import { ReactNode, useEffect, useMemo, useState } from 'react';
+import {
+  Box,
+  Chip,
+  Icon,
+  IconButton,
+  Icons,
+  Scroll,
+  Text,
+  Tooltip,
+  TooltipProvider,
+  color,
+  config,
+  toRem,
+} from 'folds';
+import { HTMLReactParserOptions } from 'html-react-parser';
+import { useMediaAuthentication } from '$hooks/useMediaAuthentication';
+import { Opts as LinkifyOpts } from 'linkifyjs';
+import { getReactCustomHtmlParser, LINKIFY_OPTS } from '$plugins/react-custom-html-parser';
+import { useSpoilerClickHandler } from '$hooks/useSpoilerClickHandler';
+import { RenderBody } from '$components/message';
 import { UploadStatus, UploadSuccess, useBindUploadAtom } from '$state/upload';
 import { useMatrixClient } from '$hooks/useMatrixClient';
 import { TUploadContent } from '$utils/matrix';
@@ -102,6 +121,7 @@ type UploadCardRendererProps = {
   setDesc: (fileItem: TUploadItem, body: string, formatted_body: string) => void;
   onRemove: (file: TUploadContent) => void;
   onComplete?: (upload: UploadSuccess) => void;
+  roomId: string;
 };
 export function UploadCardRenderer({
   isEncrypted,
@@ -110,6 +130,7 @@ export function UploadCardRenderer({
   setDesc,
   onRemove,
   onComplete,
+  roomId,
 }: UploadCardRendererProps) {
   const mx = useMatrixClient();
   const mediaConfig = useMediaConfig();
@@ -141,6 +162,20 @@ export function UploadCardRenderer({
       onComplete?.(upload);
     }
   }, [upload, onComplete]);
+
+  const linkifyOpts = useMemo<LinkifyOpts>(() => ({ ...LINKIFY_OPTS }), []);
+
+  const spoilerClickHandler = useSpoilerClickHandler();
+  const useAuthentication = useMediaAuthentication();
+  const htmlReactParserOptions = useMemo<HTMLReactParserOptions>(
+    () =>
+      getReactCustomHtmlParser(mx, roomId, {
+        linkifyOpts,
+        useAuthentication,
+        handleSpoilerClick: spoilerClickHandler,
+      }),
+    [linkifyOpts, mx, roomId, spoilerClickHandler, useAuthentication]
+  );
   return (
     <UploadCard
       radii="300"
@@ -159,17 +194,35 @@ export function UploadCardRenderer({
               <Text size="B300">Retry</Text>
             </Chip>
           )}
-          <IconButton
-            onClick={() => {
-              setIsDescribed(!isDescribed);
-            }}
-            aria-label="Add Upload Description"
-            variant="SurfaceVariant"
-            radii="Pill"
-            size="300"
-          >
-            <Icon src={isDescribed ? Icons.ChevronBottom : Icons.ChevronTop} size="50" />
-          </IconButton>
+          {!isDescribed && (
+            <IconButton
+              onClick={() => {
+                setIsDescribed(true);
+              }}
+              aria-label="Add Upload Description"
+              variant="SurfaceVariant"
+              radii="Pill"
+              size="300"
+            >
+              <Icon src={Icons.Pencil} size="50" />
+            </IconButton>
+          )}
+          {isDescribed && (
+            <TooltipProvider
+              delay={400}
+              position="Top"
+              style={{ textAlign: 'center' }}
+              tooltip={
+                <Tooltip>
+                  <Text size="H5">
+                    Don&apos;t forget to save your description before sending the message!
+                  </Text>
+                </Tooltip>
+              }
+            >
+              {(triggerRef) => <Icon ref={triggerRef} src={Icons.Info} size="50" />}
+            </TooltipProvider>
+          )}
 
           <IconButton
             onClick={removeUpload}
@@ -214,6 +267,7 @@ export function UploadCardRenderer({
               </Text>
             </UploadCardError>
           )}
+
           {isDescribed && (
             <DescriptionEditor
               value={fileItem.formatted_body || fileItem.body}
@@ -221,25 +275,34 @@ export function UploadCardRenderer({
                 setDesc(fileItem, plainText, htmlContent);
                 setIsDescribed(false);
               }}
+              onCancel={() => setIsDescribed(false)}
             />
           )}
           {!isDescribed && fileItem.body && fileItem.body.length > 0 && (
-            <Tooltip
+            <Scroll
+              direction="Vertical"
+              variant="SurfaceVariant"
+              visibility="Always"
+              size="300"
               style={{
-                maxHeight: toRem(105),
-                overflow: 'scroll',
+                backgroundColor: 'var(--sable-bg-container)',
+                borderRadius: config.radii.R400,
+                maxHeight: '180px',
+                marginTop: config.space.S0,
+                overflowY: 'auto',
               }}
             >
-              <Text
-                size="T200"
-                style={{
-                  height: '100%',
-                  wordBreak: 'break-word',
-                }}
-              >
-                {fileItem.body}
-              </Text>
-            </Tooltip>
+              <Box style={{ padding: config.space.S200, wordBreak: 'break-word' }}>
+                <Text size="T200" priority="400" as="div">
+                  <RenderBody
+                    body={fileItem.body}
+                    customBody={fileItem.formatted_body}
+                    htmlReactParserOptions={htmlReactParserOptions}
+                    linkifyOpts={linkifyOpts}
+                  />
+                </Text>
+              </Box>
+            </Scroll>
           )}
         </>
       }

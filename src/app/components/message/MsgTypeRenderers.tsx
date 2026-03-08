@@ -231,14 +231,20 @@ export function MImage({ content, renderImageContent, outlined }: MImageProps) {
   const height = scaleYDimension(imgInfo?.w || 400, 400, imgInfo?.h || 400);
 
   return (
-    <Attachment outlined={outlined}>
+    <Attachment
+      style={{
+        flexGrow: 1,
+        flexShrink: 0,
+      }}
+      outlined={outlined}
+    >
       <AttachmentBox
         style={{
           height: toRem(height < 48 ? 48 : height),
         }}
       >
         {renderImageContent({
-          body: content.body || 'Image',
+          body: content.filename || 'Image',
           info: imgInfo,
           mimeType: imgInfo?.mimetype,
           url: mxcUrl,
@@ -283,7 +289,13 @@ export function MVideo({ content, renderAsFile, renderVideoContent, outlined }: 
   const filename = content.filename ?? content.body ?? 'Video';
 
   return (
-    <Attachment outlined={outlined}>
+    <Attachment
+      style={{
+        flexGrow: 1,
+        flexShrink: 0,
+      }}
+      outlined={outlined}
+    >
       <AttachmentHeader>
         <FileHeader
           body={filename}
