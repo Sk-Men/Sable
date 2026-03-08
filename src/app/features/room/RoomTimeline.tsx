@@ -23,6 +23,7 @@ import {
   IRoomTimelineData,
   MatrixClient,
   MatrixEvent,
+  PushProcessor,
   RelationType,
   Room,
   RoomEvent,
@@ -562,6 +563,7 @@ export function RoomTimeline({
 }: RoomTimelineProps) {
   const mx = useMatrixClient();
   const useAuthentication = useMediaAuthentication();
+  const pushProcessor = useMemo(() => new PushProcessor(mx), [mx]);
   const [hideReads] = useSetting(settingsAtom, 'hideReads');
   const [messageLayout] = useSetting(settingsAtom, 'messageLayout');
   const [messageSpacing] = useSetting(settingsAtom, 'messageSpacing');
@@ -1324,6 +1326,12 @@ export function RoomTimeline({
         const { replyEventId, threadRootId } = mEvent;
         const highlighted = focusItem?.index === item && focusItem.highlight;
 
+        const pushActions = pushProcessor.actionsForEvent(mEvent);
+        let notifyHighlight: 'silent' | 'loud' | undefined;
+        if (pushActions?.notify && pushActions.tweaks?.highlight) {
+          notifyHighlight = pushActions.tweaks?.sound ? 'loud' : 'silent';
+        }
+
         const editedEvent = getEditedEvent(mEventId, mEvent, timelineSet);
         const editedNewContent = editedEvent?.getContent()['m.new_content'];
         // If makeReplaced was called with a stripped edit (no m.new_content),
@@ -1372,6 +1380,7 @@ export function RoomTimeline({
             messageLayout={messageLayout}
             collapse={collapse}
             highlight={highlighted}
+            notifyHighlight={notifyHighlight}
             edit={editId === mEventId}
             canDelete={canRedact || (canDeleteOwn && mEvent.getSender() === mx.getUserId())}
             canSendReaction={canSendReaction}
@@ -1449,6 +1458,12 @@ export function RoomTimeline({
         const senderDisplayName =
           getMemberDisplayName(room, senderId, nicknames) ?? getMxIdLocalPart(senderId) ?? senderId;
 
+        const pushActions = pushProcessor.actionsForEvent(mEvent);
+        let notifyHighlight: 'silent' | 'loud' | undefined;
+        if (pushActions?.notify && pushActions.tweaks?.highlight) {
+          notifyHighlight = pushActions.tweaks?.sound ? 'loud' : 'silent';
+        }
+
         return (
           <Message
             key={mEvent.getId()}
@@ -1460,6 +1475,7 @@ export function RoomTimeline({
             messageLayout={messageLayout}
             collapse={collapse}
             highlight={highlighted}
+            notifyHighlight={notifyHighlight}
             edit={editId === mEventId}
             canDelete={canRedact || (canDeleteOwn && mEvent.getSender() === mx.getUserId())}
             canSendReaction={canSendReaction}
