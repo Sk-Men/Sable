@@ -355,7 +355,7 @@ function RenderMessageContentInternal({
       <MCuteEvent
         content={content}
         type={content?.cute_type}
-        mentionedUserIds={content?.mentionedUserIds}
+        mentionedUserIds={content?.['m.mentions']?.user_ids}
       />
     );
   return <UnsupportedContent />;
