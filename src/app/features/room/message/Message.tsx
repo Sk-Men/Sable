@@ -74,6 +74,7 @@ import { useSetting } from '$state/hooks/settings';
 import { useBlobCache } from '$hooks/useBlobCache';
 import { MessageAllReactionItem } from '$components/message/modals/MessageReactions';
 import { MessageReadReceiptItem } from '$components/message/modals/MessageReadRecipts';
+import { MessageEditHistoryItem } from '$components/message/modals/MessageEditHistory';
 import { MessageSourceCodeItem } from '$components/message/modals/MessageSource';
 import { MessageForwardItem } from '$components/message/modals/MessageForward';
 import { MessageDeleteItem } from '$components/message/modals/MessageDelete';
@@ -852,6 +853,7 @@ function MessageInternal(
                         {!hideReadReceipts && (
                           <MessageReadReceiptItem room={room} eventId={mEvent.getId() ?? ''} />
                         )}
+                        <MessageEditHistoryItem room={room} mEvent={mEvent} />
                         {showDeveloperTools && (
                           <MessageSourceCodeItem room={room} mEvent={mEvent} />
                         )}
@@ -1146,6 +1148,7 @@ export const Event = as<'div', EventProps>(
                             {!hideReadReceipts && (
                               <MessageReadReceiptItem room={room} eventId={mEvent.getId() ?? ''} />
                             )}
+                            <MessageEditHistoryItem room={room} mEvent={mEvent} />
                             {showDeveloperTools && (
                               <MessageSourceCodeItem room={room} mEvent={mEvent} />
                             )}
