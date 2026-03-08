@@ -1,5 +1,5 @@
 ---
-sable: minor
+sable: patch
 ---
 
 Add `/hug`, `/cuddle`, `/wave`, `/headpat`, and `/poke` slash commands.
