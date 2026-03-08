@@ -10,6 +10,8 @@ import { NodeGlobalsPolyfillPlugin } from '@esbuild-plugins/node-globals-polyfil
 import inject from '@rollup/plugin-inject';
 import topLevelAwait from 'vite-plugin-top-level-await';
 import { VitePWA } from 'vite-plugin-pwa';
+import { compression, defineAlgorithm } from 'vite-plugin-compression2';
+import { constants as zlibConstants } from 'zlib';
 import fs from 'fs';
 import path from 'path';
 import { cloudflare } from '@cloudflare/vite-plugin';
@@ -182,6 +184,14 @@ export default defineConfig({
           not_found_handling: 'single-page-application',
         },
       },
+    }),
+    compression({
+      algorithms: [
+        defineAlgorithm('brotliCompress', {
+          params: { [zlibConstants.BROTLI_PARAM_QUALITY]: zlibConstants.BROTLI_MAX_QUALITY },
+        }),
+      ],
+      include: /\.(html|xml|css|json|js|mjs|svg|yaml|yml|toml|wasm|txt|map)$/,
     }),
   ],
   optimizeDeps: {
