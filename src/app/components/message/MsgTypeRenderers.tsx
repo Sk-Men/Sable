@@ -462,7 +462,10 @@ type MLocationProps = {
 export function MLocation({ content }: MLocationProps) {
   const geoUri = content.geo_uri;
   if (typeof geoUri !== 'string') return <BrokenContent />;
+
   const location = parseGeoUri(geoUri);
+  if (!location) return <BrokenContent />;
+
   return (
     <Box direction="Column" alignItems="Start" gap="100">
       <Text size="T400">{geoUri}</Text>
