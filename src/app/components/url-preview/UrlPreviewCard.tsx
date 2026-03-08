@@ -111,8 +111,8 @@ export const UrlPreviewCard = as<'div', { url: string; ts: number; mediaType?: s
           {!prev['og:video'] &&
             prev['og:image'] &&
             (() => {
-              const ogW = prev['og:image:width'] as number | undefined;
-              const ogH = prev['og:image:height'] as number | undefined;
+              const ogW = prev['og:image:width'];
+              const ogH = prev['og:image:height'];
               const aspectRatio = ogW && ogH ? `${ogW} / ${ogH}` : undefined;
               return (
                 <Box
