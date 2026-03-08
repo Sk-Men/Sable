@@ -31,6 +31,7 @@ import {
   MessageUnsupportedContent,
 } from './content';
 import { MessageTextBody } from './layout';
+import { unwrapForwardedContent } from './modals/MessageForward';
 
 export function MBadEncrypted() {
   return (
@@ -86,6 +87,10 @@ export function MText({ edited, content, renderBody, renderUrlsPreview, style }:
     typeof content.formatted_body === 'string' ? content.formatted_body : undefined;
 
   const trimmedBody = useMemo(() => trimReplyFromBody(body), [body]);
+  const unwrappedForwardedContent = useMemo(
+    () => unwrapForwardedContent(customBody ?? body),
+    [customBody, body]
+  );
 
   const safeCustomBody = useMemo(() => {
     if (!customBody) return undefined;
@@ -96,6 +101,10 @@ export function MText({ edited, content, renderBody, renderUrlsPreview, style }:
     return customBody;
   }, [customBody]);
 
+  const isForwarded = useMemo(() => {
+    const forwardMeta = content['moe.sable.message.forward'];
+    return typeof forwardMeta === 'object';
+  }, [content]);
   const isJumbo = useMemo(() => {
     if (!trimmedBody || trimmedBody.length >= 500) return false;
     if (!JUMBO_EMOJI_REG.test(trimmedBody)) return false;
@@ -112,6 +121,19 @@ export function MText({ edited, content, renderBody, renderUrlsPreview, style }:
 
   const urlsMatch = renderUrlsPreview && trimmedBody.match(URL_REG);
   const urls = urlsMatch ? [...new Set(urlsMatch)] : undefined;
+
+  if (isForwarded && unwrappedForwardedContent) {
+    return (
+      <MessageTextBody preWrap={typeof unwrappedForwardedContent !== 'string'} style={style}>
+        {renderBody({
+          body: trimmedBody,
+          customBody: unwrappedForwardedContent,
+        })}
+        {edited && <MessageEditedContent />}
+        {renderUrlsPreview && urls && urls.length > 0 && renderUrlsPreview(urls)}
+      </MessageTextBody>
+    );
+  }
 
   return (
     <>
