@@ -1,5 +1,5 @@
 ---
-sable: patch
+sable: minor
 ---
 
 Add message forwarding with metadata
