@@ -34,6 +34,8 @@ import { parsePronounsInput } from '$utils/pronouns';
 import { useRoomNavigate } from './useRoomNavigate';
 import { enrichWidgetUrl } from './useRoomWidgets';
 import { useUserProfile } from './useUserProfile';
+import { escapeHTML } from '$utils/transformation';
+import { use } from 'i18next';
 
 export const SHRUG = '¯\\_(ツ)_/¯';
 export const TABLEFLIP = '(╯°□°)╯︵ ┻━┻';
@@ -241,6 +243,9 @@ export enum Command {
   SetExt = 'setext',
   DelExt = 'delext',
   DiscardSession = 'discardsession',
+  // Cute Events
+  Hug = 'hug',
+  Cuddle = 'cuddle',
 }
 
 export type CommandContent = {
@@ -1293,6 +1298,41 @@ export const useCommands = (mx: MatrixClient, room: Room): CommandRecord => {
           } catch (e: any) {
             sendFeedback(`Failed to discard session: ${e.message}`);
           }
+        },
+      },
+      // Cute Events
+      [Command.Hug]: {
+        name: Command.Hug,
+        description: 'Send a hug to someone. Example: /hug [@user:example.org]',
+        exe: async (payload) => {
+          const target = payload.trim();
+          await mx.sendMessage(room.roomId, {
+            msgtype: 'im.fluffychat.cute_event',
+            'm.mentions': {
+              user_ids: target ? [target] : [],
+            },
+            cute_type: 'hug',
+            body: `🤗`,
+            format: 'org.matrix.custom.html',
+            formatted_body: `<em>hugs ${escapeHTML(target) ?? 'you'}</em>`,
+          } as any);
+        },
+      },
+      [Command.Cuddle]: {
+        name: Command.Cuddle,
+        description: 'Send a cuddle to someone. Example: /cuddle [@user:example.org]',
+        exe: async (payload) => {
+          const target = payload.trim();
+          await mx.sendMessage(room.roomId, {
+            msgtype: 'im.fluffychat.cute_event',
+            cute_type: 'cuddle',
+            'm.mentions': {
+              user_ids: target ? [target] : [],
+            },
+            body: `😊`,
+            format: 'org.matrix.custom.html',
+            formatted_body: `<em>cuddles ${escapeHTML(target) ?? 'you'}</em>`,
+          } as any);
         },
       },
     }),
