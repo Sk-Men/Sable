@@ -1,5 +1,5 @@
 ---
-sable: minor
+sable: patch
 ---
 
-# Fix picture in picture setting not effecting element-call
+Fix picture in picture setting not effecting element-call
