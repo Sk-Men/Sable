@@ -108,28 +108,42 @@ export const UrlPreviewCard = as<'div', { url: string; ts: number; mediaType?: s
               renderThumbnail={() => <Image src={imgUrl ?? undefined} />}
             />
           )}
-          {!prev['og:video'] && prev['og:image'] && (
-            <Box style={{ width: '100%', height: '220px', flexShrink: 0, overflow: 'hidden' }}>
-              <ImageContent
-                style={{ width: '100%', height: '100%', position: 'relative' }}
-                autoPlay
-                body={prev['og:title']}
-                url={prev['og:image']}
-                renderViewer={(p) => <ImageViewer {...p} />}
-                renderImage={(p) => (
-                  <Image
-                    {...p}
-                    style={{
-                      width: '100%',
-                      height: '100%',
-                      objectFit: 'contain',
-                      objectPosition: 'center',
-                    }}
-                  />
-                )}
-              />
-            </Box>
-          )}
+          {!prev['og:video'] && prev['og:image'] && (() => {
+            const ogW = prev['og:image:width'] as number | undefined;
+            const ogH = prev['og:image:height'] as number | undefined;
+            const aspectRatio = ogW && ogH ? `${ogW} / ${ogH}` : undefined;
+            return (
+              <Box
+                style={{
+                  width: '100%',
+                  maxHeight: '400px',
+                  aspectRatio: aspectRatio ?? '16 / 9',
+                  flexShrink: 0,
+                  overflow: 'hidden',
+                  position: 'relative',
+                }}
+              >
+                <ImageContent
+                  style={{ width: '100%', height: '100%', position: 'absolute', inset: 0 }}
+                  autoPlay
+                  body={prev['og:title']}
+                  url={prev['og:image']}
+                  renderViewer={(p) => <ImageViewer {...p} />}
+                  renderImage={(p) => (
+                    <Image
+                      {...p}
+                      style={{
+                        width: '100%',
+                        height: '100%',
+                        objectFit: 'contain',
+                        objectPosition: 'center',
+                      }}
+                    />
+                  )}
+                />
+              </Box>
+            );
+          })()}
           {!prev['og:video'] && !prev['og:image'] && prev['og:audio'] && (
             <Box className={css.UrlPreviewAudio} style={{ flexShrink: 0 }}>
               <AudioContent
