@@ -67,6 +67,7 @@ type RoomSettingsProps = {
   initialPage?: RoomSettingsPage;
   requestClose: () => void;
 };
+
 export function RoomSettings({ initialPage, requestClose }: RoomSettingsProps) {
   const room = useRoom();
   const mx = useMatrixClient();
@@ -118,6 +119,7 @@ export function RoomSettings({ initialPage, requestClose }: RoomSettingsProps) {
                       renderFallback={() => (
                         <RoomIcon
                           size="50"
+                          roomType={room.getType()}
                           joinRule={joinRuleContent?.join_rule ?? JoinRule.Invite}
                           filled
                         />

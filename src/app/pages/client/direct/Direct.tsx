@@ -50,7 +50,6 @@ import {
   useRoomsNotificationPreferencesContext,
 } from '$hooks/useRoomsNotificationPreferences';
 import { useDirectCreateSelected } from '$hooks/router/useDirectSelected';
-import { CallNavStatus } from '$features/room-nav/RoomCallNavStatus';
 import { useDirectRooms } from './useDirectRooms';
 
 type DirectMenuProps = {
@@ -58,13 +57,13 @@ type DirectMenuProps = {
 };
 const DirectMenu = forwardRef<HTMLDivElement, DirectMenuProps>(({ requestClose }, ref) => {
   const mx = useMatrixClient();
-  const [hideActivity] = useSetting(settingsAtom, 'hideActivity');
+  const [hideReads] = useSetting(settingsAtom, 'hideReads');
   const orphanRooms = useDirectRooms();
   const unread = useRoomsUnread(orphanRooms, roomToUnreadAtom);
 
   const handleMarkAsRead = () => {
     if (!unread) return;
-    orphanRooms.forEach((rId) => markAsRead(mx, rId, hideActivity));
+    orphanRooms.forEach((rId) => markAsRead(mx, rId, hideReads));
     requestClose();
   };
 
@@ -280,7 +279,6 @@ export function Direct() {
           </Box>
         </PageNavContent>
       )}
-      <CallNavStatus />
     </PageNav>
   );
 }

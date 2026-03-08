@@ -4,7 +4,7 @@ versioned_files = ["package.json", "package-lock.json"]
 changelog = "CHANGELOG.md"
 extra_changelog_sections = [
     { name = "Documentation", types = ["docs"] },
-    { name = "Notes", types = ["note"] }
+    { name = "Notes", types = ["note"] },
 ]
 # assets = "marker for GitHub bot" // TODO: add this later once we have assets
 
@@ -42,6 +42,12 @@ repo = "sable"
 
 [bot.releases]
 enabled = true
+pull_request.title = "$version changelog"
 
 [bot.checks]
 skip_labels = ["internal"]
+
+[release_notes]
+change_templates = [
+    "* $summary",
+]

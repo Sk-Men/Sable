@@ -55,12 +55,18 @@ const imagePackListEqual = (a: ImagePack[], b: ImagePack[]): boolean => {
 
 export const useUserImagePack = (): ImagePack | undefined => {
   const mx = useMatrixClient();
-  const [userPack, setUserPack] = useState<ImagePack | undefined>(() => {
-    const live = getUserImagePack(mx);
-    if (live) return live;
-    const userId = mx.getUserId();
-    return userId ? readCachedPack(userId, userPackScope()) : undefined;
-  });
+  const [userPack, setUserPack] = useState<ImagePack | undefined>(() => getUserImagePack(mx));
+
+  // Async: seed from cache after first render if no live data is available yet
+  useEffect(() => {
+    setUserPack((current) => {
+      if (current) return current;
+      const userId = mx.getUserId();
+      if (!userId) return current;
+      return readCachedPack(userId, userPackScope()) ?? current;
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     const userId = mx.getUserId();
@@ -87,12 +93,19 @@ export const useUserImagePack = (): ImagePack | undefined => {
 
 export const useGlobalImagePacks = (): ImagePack[] => {
   const mx = useMatrixClient();
-  const [globalPacks, setGlobalPacks] = useState<ImagePack[]>(() => {
-    const live = getGlobalImagePacks(mx);
-    if (live.length > 0) return live;
-    const userId = mx.getUserId();
-    return userId ? readCachedPacks(userId, globalPacksScope()) : [];
-  });
+  const [globalPacks, setGlobalPacks] = useState<ImagePack[]>(() => getGlobalImagePacks(mx));
+
+  // Async: seed from cache after first render if no live data is available yet
+  useEffect(() => {
+    setGlobalPacks((current) => {
+      if (current.length > 0) return current;
+      const userId = mx.getUserId();
+      if (!userId) return current;
+      const cached = readCachedPacks(userId, globalPacksScope());
+      return cached.length > 0 ? cached : current;
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     const userId = mx.getUserId();
@@ -142,16 +155,24 @@ export const useGlobalImagePacks = (): ImagePack[] => {
 
 export const useRoomImagePack = (room: Room, stateKey: string): ImagePack | undefined => {
   const mx = useMatrixClient();
-  const [roomPack, setRoomPack] = useState<ImagePack | undefined>(() => {
-    const live = getRoomImagePack(room, stateKey);
-    if (live) return live;
-    const userId = mx.getUserId();
-    if (!userId) return undefined;
-    // Find a matching cached pack by roomId + stateKey
-    return readCachedPacks(userId, roomPacksScope(room.roomId)).find(
-      (p) => p.address?.stateKey === stateKey
-    );
-  });
+  const [roomPack, setRoomPack] = useState<ImagePack | undefined>(() =>
+    getRoomImagePack(room, stateKey)
+  );
+
+  // Async: seed from cache after first render if no live data is available yet
+  useEffect(() => {
+    setRoomPack((current) => {
+      if (current) return current;
+      const userId = mx.getUserId();
+      if (!userId) return current;
+      return (
+        readCachedPacks(userId, roomPacksScope(room.roomId)).find(
+          (p) => p.address?.stateKey === stateKey
+        ) ?? current
+      );
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     const userId = mx.getUserId();
@@ -185,12 +206,19 @@ export const useRoomImagePack = (room: Room, stateKey: string): ImagePack | unde
 
 export const useRoomImagePacks = (room: Room): ImagePack[] => {
   const mx = useMatrixClient();
-  const [roomPacks, setRoomPacks] = useState<ImagePack[]>(() => {
-    const live = getRoomImagePacks(room);
-    if (live.length > 0) return live;
-    const userId = mx.getUserId();
-    return userId ? readCachedPacks(userId, roomPacksScope(room.roomId)) : [];
-  });
+  const [roomPacks, setRoomPacks] = useState<ImagePack[]>(() => getRoomImagePacks(room));
+
+  // Async: seed from cache after first render if no live data is available yet
+  useEffect(() => {
+    setRoomPacks((current) => {
+      if (current.length > 0) return current;
+      const userId = mx.getUserId();
+      if (!userId) return current;
+      const cached = readCachedPacks(userId, roomPacksScope(room.roomId));
+      return cached.length > 0 ? cached : current;
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     const userId = mx.getUserId();
@@ -220,18 +248,23 @@ export const useRoomImagePacks = (room: Room): ImagePack[] => {
 
 export const useRoomsImagePacks = (rooms: Room[]) => {
   const mx = useMatrixClient();
-  const [roomPacks, setRoomPacks] = useState<ImagePack[]>(() => {
-    const live = rooms.flatMap(getRoomImagePacks);
-    if (live.length > 0) return live;
-    const userId = mx.getUserId();
-    if (!userId) return [];
-    // Seed from cache for each room that has no live packs
-    return rooms.flatMap((room) => {
-      const livePacks = getRoomImagePacks(room);
-      if (livePacks.length > 0) return livePacks;
-      return readCachedPacks(userId, roomPacksScope(room.roomId));
+  const [roomPacks, setRoomPacks] = useState<ImagePack[]>(() => rooms.flatMap(getRoomImagePacks));
+
+  // Async: seed from cache after first render if no live data is available yet
+  useEffect(() => {
+    setRoomPacks((current) => {
+      if (current.length > 0) return current;
+      const userId = mx.getUserId();
+      if (!userId) return current;
+      const cached = rooms.flatMap((room) => {
+        const livePacks = getRoomImagePacks(room);
+        if (livePacks.length > 0) return livePacks;
+        return readCachedPacks(userId, roomPacksScope(room.roomId));
+      });
+      return cached.length > 0 ? cached : current;
     });
-  });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     const userId = mx.getUserId();

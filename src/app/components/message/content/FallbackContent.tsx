@@ -58,6 +58,13 @@ export const MessageEmptyContent = as<'div', { children?: never }>(({ ...props }
   </Box>
 ));
 
+export const MessageBlockedContent = as<'div', { children?: never }>(({ ...props }, ref) => (
+  <Box as="span" alignItems="Center" gap="100" style={warningStyle} {...props} ref={ref}>
+    <Icon size="50" src={Icons.Cross} />
+    <i>Message from a blocked user</i>
+  </Box>
+));
+
 export const MessageEditedContent = as<'span', { children?: never }>(({ ...props }, ref) => (
   <Text as="span" size="T200" priority="300" {...props} ref={ref}>
     {' (edited)'}

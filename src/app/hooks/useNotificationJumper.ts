@@ -1,17 +1,23 @@
 import { useCallback, useEffect, useRef } from 'react';
 import { useAtom, useAtomValue } from 'jotai';
+import { useNavigate } from 'react-router-dom';
 import { SyncState, ClientEvent } from '$types/matrix-sdk';
 import { activeSessionIdAtom, pendingNotificationAtom } from '../state/sessions';
+import { mDirectAtom } from '../state/mDirectList';
 import { useSyncState } from './useSyncState';
 import { useMatrixClient } from './useMatrixClient';
-import { useRoomNavigate } from './useRoomNavigate';
+import { getCanonicalAliasOrRoomId } from '../utils/matrix';
+import { getDirectRoomPath, getHomeRoomPath, getSpaceRoomPath } from '../pages/pathUtils';
+import { roomToParentsAtom } from '../state/room/roomToParents';
 import { createLogger } from '../utils/debug';
 
 export function NotificationJumper() {
   const [pending, setPending] = useAtom(pendingNotificationAtom);
   const activeSessionId = useAtomValue(activeSessionIdAtom);
+  const mDirects = useAtomValue(mDirectAtom);
+  const roomToParents = useAtomValue(roomToParentsAtom);
   const mx = useMatrixClient();
-  const { navigateRoom } = useRoomNavigate();
+  const navigate = useNavigate();
   const log = createLogger('NotificationJumper');
 
   // Set true the moment we fire navigateRoom. Only reset when `pending` changes
@@ -45,9 +51,31 @@ export function NotificationJumper() {
     const isJoined = room?.getMyMembership() === 'join';
 
     if (isSyncing && isJoined) {
-      log.log('jumping to:', pending.roomId);
+      log.log('jumping to:', pending.roomId, pending.eventId);
       jumpingRef.current = true;
-      navigateRoom(pending.roomId, pending.eventId);
+      // Navigate directly to home or direct path — bypasses space routing which
+      // on mobile shows the space-nav panel first instead of the room timeline.
+      const roomIdOrAlias = getCanonicalAliasOrRoomId(mx, pending.roomId);
+      if (mDirects.has(pending.roomId)) {
+        navigate(getDirectRoomPath(roomIdOrAlias, pending.eventId));
+      } else {
+        // If the room lives inside a space, route through the space path so
+        // SpaceRouteRoomProvider can resolve it — HomeRouteRoomProvider only
+        // knows orphan rooms and would show JoinBeforeNavigate otherwise.
+        const parents = roomToParents.get(pending.roomId);
+        const firstParentId = parents && [...parents][0];
+        if (firstParentId) {
+          navigate(
+            getSpaceRoomPath(
+              getCanonicalAliasOrRoomId(mx, firstParentId),
+              roomIdOrAlias,
+              pending.eventId
+            )
+          );
+        } else {
+          navigate(getHomeRoomPath(roomIdOrAlias, pending.eventId));
+        }
+      }
       setPending(null);
       // jumpingRef stays true until pending changes — see effect below.
     } else {
@@ -57,7 +85,7 @@ export function NotificationJumper() {
         membership: room?.getMyMembership(),
       });
     }
-  }, [pending, activeSessionId, mx, navigateRoom, setPending, log]);
+  }, [pending, activeSessionId, mx, mDirects, roomToParents, navigate, setPending, log]);
 
   // Reset the guard only when pending is replaced (new notification or cleared).
   useEffect(() => {

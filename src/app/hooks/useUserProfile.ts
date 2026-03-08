@@ -20,6 +20,8 @@ export type UserProfile = {
   status?: string;
   bannerUrl?: string;
   nameColor?: string;
+  isCat?: boolean;
+  hasCats?: boolean;
   extended?: Record<string, any>;
   _fetched?: boolean;
 };
@@ -36,6 +38,8 @@ const normalizeInfo = (info: any): UserProfile => {
     'chat.commet.profile_banner',
     'chat.commet.profile_status',
     'moe.sable.app.name_color',
+    'kitty.meow.has_cats',
+    'kitty.meow.is_cat',
   ];
 
   const extended: Record<string, any> = {};
@@ -54,6 +58,8 @@ const normalizeInfo = (info: any): UserProfile => {
     status: info['chat.commet.profile_status'],
     bannerUrl: info['chat.commet.profile_banner'],
     nameColor: info['moe.sable.app.name_color'],
+    isCat: info['kitty.meow.is_cat'] === true,
+    hasCats: info['kitty.meow.has_cats'] === true,
     extended,
     _fetched: true,
   };

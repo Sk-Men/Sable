@@ -174,3 +174,61 @@ pre {
   letter-spacing: -0.01em;
   font-variant-ligatures: contextual;
 }
+
+/* Accessibility Overrides :D */
+
+.force-underline-links a {
+  text-decoration: underline !important;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
+}
+
+body.reduced-motion * {
+  animation-duration: 0.001ms !important;
+  transition-duration: 0.001ms !important;
+}
+
+body.reduced-motion button:hover,
+body.reduced-motion a:hover,
+body.reduced-motion [role='button']:hover {
+  transform: none !important;
+  scale: 1 !important;
+}
+
+body.reduced-motion div[class*='Sidebar_SidebarItem']:hover,
+body.reduced-motion div[class*='Sidebar_SidebarItem']:hover button,
+body.reduced-motion div[class*='Sidebar_SidebarItem']:hover img {
+  transform: none !important;
+  scale: 1 !important;
+  translate: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+body.reduced-motion div[class*='Sidebar_SidebarStack']:hover {
+  width: revert !important;
+  translate: none !important;
+  transform: none !important;
+}
+
+body.reduced-motion div[class*='layout_MessageBase'] {
+  animation: none !important;
+  transition: none !important;
+  transform: none !important;
+}
+
+body.reduced-motion div[class*='RoomTimeline_messageList'],
+body.reduced-motion div[class*='RoomTimeline_messageList'] > * {
+  scroll-behavior: auto !important;
+}
+
+body.reduced-motion span[class*='layout_AvatarBase']:hover,
+body.reduced-motion span[class*='layout_AvatarBase']:hover *,
+body.reduced-motion button[class*='styles_MessageAvatar']:hover,
+body.reduced-motion button[class*='styles_MessageAvatar']:hover * {
+  transform: none !important;
+  scale: 1 !important;
+  translate: none !important;
+  animation: none !important;
+  margin: 0 !important;
+}

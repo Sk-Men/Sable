@@ -1,6 +1,7 @@
 import {
   Avatar,
   Box,
+  Chip,
   Icon,
   IconButton,
   Icons,
@@ -74,9 +75,11 @@ import { useBlobCache } from '$hooks/useBlobCache';
 import { MessageAllReactionItem } from '$components/message/modals/MessageReactions';
 import { MessageReadReceiptItem } from '$components/message/modals/MessageReadRecipts';
 import { MessageSourceCodeItem } from '$components/message/modals/MessageSource';
+import { MessageForwardItem } from '$components/message/modals/MessageForward';
 import { MessageDeleteItem } from '$components/message/modals/MessageDelete';
 import { MessageReportItem } from '$components/message/modals/MessageReport';
 import { filterPronounsByLanguage } from '$utils/pronouns';
+import { useMentionClickHandler } from '$hooks/useMentionClickHandler';
 import { MessageEditor } from './MessageEditor';
 import * as css from './styles.css';
 
@@ -154,6 +157,7 @@ export const MessageCopyLinkItem = as<
   );
 });
 
+// message pinning
 export const MessagePinItem = as<
   'button',
   {
@@ -194,6 +198,14 @@ export const MessagePinItem = as<
   );
 });
 
+export type ForwardedMessageProps = {
+  originalTimestamp: number;
+  isForwarded: boolean;
+  originalRoomId: string;
+  originalEventId: string;
+  originalEventPrivate: boolean;
+};
+
 export type MessageProps = {
   room: Room;
   mEvent: MatrixEvent;
@@ -229,6 +241,7 @@ export type MessageProps = {
   sendStatus?: EventStatus | null;
   onResend?: (event: MatrixEvent) => void;
   onDeleteFailedSend?: (event: MatrixEvent) => void;
+  messageForwardedProps?: ForwardedMessageProps;
 };
 
 function useMobileDoubleTap(callback: () => void, delay = 300) {
@@ -328,6 +341,7 @@ function MessageInternal(
     sendStatus,
     onResend,
     onDeleteFailedSend,
+    messageForwardedProps,
     ...props
   }: MessageProps & { className?: string; children?: ReactNode },
   ref: any
@@ -340,9 +354,11 @@ function MessageInternal(
   const { color: usernameColor, font: usernameFont } = useSableCosmetics(senderId, room);
 
   // Avatars
+  // Prefer the room-scoped member avatar (m.room.member) over the global profile
+  // avatar so per-room avatar overrides are respected in the timeline.
   const avatarUrl = useMemo(() => {
     if (collapse) return undefined;
-    const mxc = profile.avatarUrl || getMemberAvatarMxc(room, senderId);
+    const mxc = getMemberAvatarMxc(room, senderId) || profile.avatarUrl;
     return mxc ? mxcUrlToHttp(mx, mxc, useAuthentication, 48, 48, 'crop') : undefined;
   }, [collapse, profile.avatarUrl, senderId, mx, room, useAuthentication]);
 
@@ -466,6 +482,8 @@ function MessageInternal(
   const isFailedSend = sendStatus === EventStatus.NOT_SENT;
   const canResend = isFailedSend && senderId === mx.getUserId() && !!onResend;
   const canDeleteFailedSend = isFailedSend && senderId === mx.getUserId() && !!onDeleteFailedSend;
+  // handle clicks on mentions in the message body (e.g. jump to original message from a forwarded message notice)
+  const mentionClickHandler = useMentionClickHandler(room.roomId);
 
   const handleResendClick: MouseEventHandler<HTMLButtonElement> = useCallback(
     (evt) => {
@@ -497,6 +515,35 @@ function MessageInternal(
         [css.MessageFailed]: isFailedSend,
       })}
     >
+      {messageForwardedProps?.isForwarded && (
+        <Chip as="div" variant="SurfaceVariant" radii="Pill">
+          <Text size="T200" priority="300">
+            Forwarded{' '}
+            {messageForwardedProps.originalEventPrivate ? 'private message' : 'from another room'}{' '}
+            {!messageForwardedProps.originalEventPrivate && (
+              <a
+                href={getMatrixToRoomEvent(
+                  messageForwardedProps.originalRoomId,
+                  messageForwardedProps.originalEventId
+                )}
+                rel="noreferrer noopener"
+                data-mention-id={messageForwardedProps.originalRoomId}
+                data-mention-event-id={messageForwardedProps.originalEventId}
+                onClick={mentionClickHandler}
+              >
+                jump to original
+              </a>
+            )}
+            <Time
+              ts={messageForwardedProps?.originalTimestamp ?? 0}
+              compact={messageLayout === MessageLayout.Compact}
+              hour24Clock={hour24Clock}
+              dateFormatString={dateFormatString}
+              style={{ marginLeft: config.space.S100, justifyContent: 'flex-end' }}
+            />
+          </Text>
+        </Chip>
+      )}
       {reply}
       {edit && onEditId ? (
         <MessageEditor
@@ -520,18 +567,19 @@ function MessageInternal(
             Failed to send.
           </Text>
           {canResend && (
-            <button type="button" className={css.SendStatusButton} onClick={handleResendClick}>
-              Retry
-            </button>
+            <Chip type="button" variant="Primary" radii="Pill" outlined onClick={handleResendClick}>
+              <Text size="B300">Retry</Text>
+            </Chip>
           )}
           {canDeleteFailedSend && (
-            <button
+            <Chip
               type="button"
-              className={css.SendStatusButton}
+              variant="Critical"
+              radii="Pill"
               onClick={handleDeleteFailedSendClick}
             >
-              Delete
-            </button>
+              <Text size="B300">Delete</Text>
+            </Chip>
           )}
         </Box>
       )}
@@ -808,6 +856,7 @@ function MessageInternal(
                           <MessageSourceCodeItem room={room} mEvent={mEvent} />
                         )}
                         <MessageCopyLinkItem room={room} mEvent={mEvent} onClose={closeMenu} />
+                        <MessageForwardItem room={room} mEvent={mEvent} onClose={closeMenu} />
                         {canPinEvent && (
                           <MessagePinItem room={room} mEvent={mEvent} onClose={closeMenu} />
                         )}
@@ -966,6 +1015,10 @@ export type EventProps = {
   mEvent: MatrixEvent;
   highlight: boolean;
   canDelete?: boolean;
+  onReplyClick: (
+    ev: Parameters<MouseEventHandler<HTMLButtonElement>>[0],
+    startThread?: boolean
+  ) => void;
   messageSpacing: MessageSpacing;
   hideReadReceipts?: boolean;
   showDeveloperTools?: boolean;
@@ -978,6 +1031,7 @@ export const Event = as<'div', EventProps>(
       mEvent,
       highlight,
       canDelete,
+      onReplyClick,
       messageSpacing,
       hideReadReceipts,
       showDeveloperTools,
@@ -1096,6 +1150,7 @@ export const Event = as<'div', EventProps>(
                               <MessageSourceCodeItem room={room} mEvent={mEvent} />
                             )}
                             <MessageCopyLinkItem room={room} mEvent={mEvent} onClose={closeMenu} />
+                            <MessageForwardItem room={room} mEvent={mEvent} onClose={closeMenu} />
                           </Box>
                           {((!mEvent.isRedacted() && canDelete && !stateEvent) ||
                             (mEvent.getSender() !== mx.getUserId() && !stateEvent)) && (
@@ -1115,6 +1170,15 @@ export const Event = as<'div', EventProps>(
                       </FocusTrap>
                     }
                   >
+                    <IconButton
+                      onClick={onReplyClick}
+                      data-event-id={mEvent.getId()}
+                      variant="SurfaceVariant"
+                      size="300"
+                      radii="300"
+                    >
+                      <Icon src={Icons.ReplyArrow} size="100" />
+                    </IconButton>
                     <IconButton
                       variant="SurfaceVariant"
                       size="300"
