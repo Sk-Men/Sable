@@ -46,7 +46,7 @@ Also, we use [ESLint](https://eslint.org/) for clean and stylistically consisten
 
 ## Restrictions on Generative AI Usage
 
-We expect and appreciate authentic engagement in our community.  
+We expect and appreciate authentic engagement in our community.
 
 Do not post output from Large Language Models or similar generative AI as comments on GitHub, as such comments tend to be formulaic and low content.
 
