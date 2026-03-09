@@ -37,9 +37,9 @@ import {
   resolveNotificationPreviewText,
 } from '$utils/notificationStyle';
 import { mobileOrTablet } from '$utils/user-agent';
+import { useSlidingSyncActiveRoom } from '$hooks/useSlidingSyncActiveRoom';
 import { getInboxInvitesPath } from '../pathUtils';
 import { BackgroundNotifications } from './BackgroundNotifications';
-import { useSlidingSyncActiveRoom } from '$hooks/useSlidingSyncActiveRoom';
 
 function clearMediaSessionQuickly(): void {
   if (!('mediaSession' in navigator)) return;

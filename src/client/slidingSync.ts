@@ -492,6 +492,7 @@ export class SlidingSyncManager {
       } catch {
         // Swallow errors — the next iteration will retry with updated ranges.
       } finally {
+        // eslint-disable-next-line no-await-in-loop
         await new Promise<void>((res) => {
           setTimeout(res, gapBetweenRequestsMs);
         });
