@@ -808,7 +808,8 @@ function MessageInternal(
                                   mx,
                                   `sticker-${mEvent.getId()}`,
                                   mEvent.getContent().url,
-                                  mEvent.getContent().info?.mimetype ?? 'image/png'
+                                  mEvent.getContent().body,
+                                  mEvent.getContent().info
                                 );
                                 closeMenu();
                               }}
