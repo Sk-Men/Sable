@@ -30,7 +30,7 @@ type SimilarIssue = {
   html_url: string;
 };
 
-const GITHUB_REPO = '7w1/sable';
+const GITHUB_REPO = 'SableClient/Sable';
 
 async function searchSimilarIssues(query: string, signal: AbortSignal): Promise<SimilarIssue[]> {
   // Split into individual words, drop very short ones, and join with OR so that
