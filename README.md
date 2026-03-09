@@ -1,6 +1,6 @@
 # Sable
 
-A Matrix client built to enhance the user experience with quality-of-life features, cosmetics, utilities, and sheer usability. See the [changelog](https://github.com/7w1/sable/blob/dev/CHANGELOG.md).
+A Matrix client built to enhance the user experience with quality-of-life features, cosmetics, utilities, and sheer usability. See the [changelog](https://github.com/SableClient/Sable/blob/dev/CHANGELOG.md).
 
 Join our matrix space [here](https://matrix.to/#/#sable:sable.moe) to discuss features, issues, or meowing.
 
@@ -9,7 +9,7 @@ Forked from [Cinny](https://github.com/cinnyapp/cinny/).
 ## Getting started
 The web app is available at [app.sable.moe](https://app.sable.moe/) and gets updated on frequently, as soon as a feature is deemed stable.
 
-You can also download our desktop app for windows and linux from [releases](https://github.com/7w1/sable/releases/latest).
+You can also download our desktop app for windows and linux from [releases](https://github.com/SableClient/Sable/releases/latest).
 
 ## Self-hosting
 You have a few options for self hosting, you can:
@@ -19,7 +19,7 @@ You have a few options for self hosting, you can:
 
 ### Docker
 
-Prebuilt images are published to `ghcr.io/7w1/sable`.
+Prebuilt images are published to `ghcr.io/sableclient/sable`.
 
 - `latest` tracks the current `dev` branch image.
 - `X.Y.Z` tags are versioned releases.
@@ -29,7 +29,7 @@ Prebuilt images are published to `ghcr.io/7w1/sable`.
 Run the latest image with:
 
 ```sh
-docker run --rm -p 8080:8080 ghcr.io/7w1/sable:latest
+docker run --rm -p 8080:8080 ghcr.io/sableclient/sable:latest
 ```
 
 Then open `http://localhost:8080`.
@@ -40,7 +40,7 @@ file at `/app/config.json`:
 ```yaml
 services:
   sable:
-    image: ghcr.io/7w1/sable:latest
+    image: ghcr.io/sableclient/sable:latest
     ports:
       - '8080:8080'
     volumes:
