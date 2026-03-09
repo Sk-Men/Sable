@@ -75,7 +75,8 @@ export const EventHistory = as<'div', EventHistoryProps>(
             style={{
               display: 'flex',
               justifyContent: 'center',
-              padding: `0 ${config.space.S200}`,
+              padding: `${config.space.S200} ${config.space.S200}`,
+              height: 'unset',
             }}
             radii="400"
             onClick={(event) => {
@@ -110,7 +111,10 @@ export const EventHistory = as<'div', EventHistoryProps>(
                 return (
                   <MenuItem
                     key={readerId}
-                    style={{ padding: `0 ${config.space.S200}` }}
+                    style={{
+                      padding: `${config.space.S200} ${config.space.S200}`,
+                      height: 'unset',
+                    }}
                     radii="400"
                     before={
                       <Time
