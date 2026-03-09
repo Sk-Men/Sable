@@ -39,6 +39,7 @@ import {
 import { mobileOrTablet } from '$utils/user-agent';
 import { getInboxInvitesPath } from '../pathUtils';
 import { BackgroundNotifications } from './BackgroundNotifications';
+import { useSlidingSyncActiveRoom } from '$hooks/useSlidingSyncActiveRoom';
 
 function clearMediaSessionQuickly(): void {
   if (!('mediaSession' in navigator)) return;
@@ -569,6 +570,11 @@ function SyncNotificationSettingsWithServiceWorker() {
   return null;
 }
 
+function SlidingSyncActiveRoomSubscriber() {
+  useSlidingSyncActiveRoom();
+  return null;
+}
+
 export function ClientNonUIFeatures({ children }: ClientNonUIFeaturesProps) {
   return (
     <>
@@ -580,6 +586,7 @@ export function ClientNonUIFeatures({ children }: ClientNonUIFeaturesProps) {
       <MessageNotifications />
       <BackgroundNotifications />
       <SyncNotificationSettingsWithServiceWorker />
+      <SlidingSyncActiveRoomSubscriber />
       {children}
     </>
   );
