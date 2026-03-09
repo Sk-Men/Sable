@@ -1,4 +1,7 @@
 import {
+  ClientEvent,
+  Extension,
+  ExtensionState,
   MatrixClient,
   MSC3575List,
   MSC3575RoomSubscription,
@@ -9,6 +12,7 @@ import {
   MSC3575_STATE_KEY_LAZY,
   MSC3575_STATE_KEY_ME,
   EventType,
+  User,
 } from '$types/matrix-sdk';
 import { createLogger } from '$utils/debug';
 
@@ -233,6 +237,45 @@ const getListEndIndex = (list: MSC3575List | null): number => {
   return list.ranges.reduce((max, range) => Math.max(max, range[1] ?? -1), -1);
 };
 
+// MSC4186 presence extension: requests `extensions.presence` in every sliding sync
+// poll and feeds received `m.presence` events into the SDK's User objects so that
+// components using `useUserPresence` see live updates (same path as regular /sync).
+class ExtensionPresence implements Extension<{ enabled: boolean }, { events?: object[] }> {
+  public constructor(private readonly mx: MatrixClient) {}
+
+  public name(): string {
+    return 'presence';
+  }
+
+  public when(): ExtensionState {
+    // Run after the main response body has been processed so room/member state is ready.
+    return ExtensionState.PostProcess;
+  }
+
+  public async onRequest(_isInitial: boolean): Promise<{ enabled: boolean }> {
+    return { enabled: true };
+  }
+
+  public async onResponse(data: { events?: object[] }): Promise<void> {
+    if (!data?.events?.length) return;
+    const mapper = this.mx.getEventMapper();
+    data.events.forEach((rawEvent) => {
+      const event = mapper(rawEvent as Parameters<typeof mapper>[0]);
+      const userId = event.getSender() ?? (event.getContent() as { user_id?: string }).user_id;
+      if (!userId) return;
+      let user = this.mx.store.getUser(userId);
+      if (user) {
+        user.setPresenceEvent(event);
+      } else {
+        user = User.createUser(userId, this.mx);
+        user.setPresenceEvent(event);
+        this.mx.store.storeUser(user);
+      }
+      this.mx.emit(ClientEvent.Event, event);
+    });
+  }
+}
+
 export class SlidingSyncManager {
   private disposed = false;
 
@@ -283,6 +326,10 @@ export class SlidingSyncManager {
     const lists = buildLists(listPageSize, includeInviteList);
     this.listKeys = Array.from(lists.keys());
     this.slidingSync = new SlidingSync(proxyBaseUrl, lists, defaultSubscription, mx, pollTimeoutMs);
+
+    // Register the presence extension so m.presence events from the server are fed
+    // into the SDK's User objects, keeping useUserPresence accurate during sliding sync.
+    this.slidingSync.registerExtension(new ExtensionPresence(mx));
 
     // Register a custom subscription for unencrypted active rooms; encrypted rooms use
     // the default subscription (which already has [*,*]).
