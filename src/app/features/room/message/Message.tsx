@@ -80,6 +80,10 @@ import { MessageDeleteItem } from '$components/message/modals/MessageDelete';
 import { MessageReportItem } from '$components/message/modals/MessageReport';
 import { filterPronounsByLanguage } from '$utils/pronouns';
 import { useMentionClickHandler } from '$hooks/useMentionClickHandler';
+import {
+  addStickerToDefaultPack,
+  doesStickerExistInDefaultPack,
+} from '$utils/addStickerToDefaultStickerPack';
 import { MessageEditor } from './MessageEditor';
 import * as css from './styles.css';
 
@@ -649,6 +653,7 @@ function MessageInternal(
   });
 
   const isThreadedMessage = mEvent.threadRootId !== undefined;
+  const isStickerMessage = mEvent.getType() === 'm.sticker';
 
   return (
     <MessageBase
@@ -792,6 +797,32 @@ function MessageInternal(
                             </Text>
                           </MenuItem>
                         )}
+                        {isStickerMessage &&
+                          !doesStickerExistInDefaultPack(mx, mEvent.getContent().url) && (
+                            <MenuItem
+                              size="300"
+                              after={<Icon size="100" src={Icons.Star} />}
+                              radii="300"
+                              onClick={() => {
+                                addStickerToDefaultPack(
+                                  mx,
+                                  `sticker-${mEvent.getId()}`,
+                                  mEvent.getContent().url,
+                                  mEvent.getContent().info?.mimetype ?? 'image/png'
+                                );
+                                closeMenu();
+                              }}
+                            >
+                              <Text
+                                className={css.MessageMenuItemText}
+                                as="span"
+                                size="T300"
+                                truncate
+                              >
+                                Add your User Sticker Pack
+                              </Text>
+                            </MenuItem>
+                          )}
                         {relations && <MessageAllReactionItem room={room} relations={relations} />}
                         <MenuItem
                           size="300"
