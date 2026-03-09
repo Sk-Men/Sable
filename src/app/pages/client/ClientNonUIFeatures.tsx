@@ -370,7 +370,7 @@ function MessageNotifications() {
       if (document.visibilityState !== 'visible') return;
 
       // Page is visible — show the themed in-app notification banner.
-      if (showNotifications && (isHighlightByRule || loudByRule || isDM)) {
+      if (showNotifications && (isHighlightByRule || isLoud)) {
         const avatarMxc =
           room.getAvatarFallbackMember()?.getMxcAvatarUrl() ?? room.getMxcAvatarUrl();
         const roomAvatar = avatarMxc

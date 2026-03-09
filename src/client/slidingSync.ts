@@ -149,14 +149,30 @@ const resolveAdaptiveRoomTimelineLimit = (
 //     state events (one per child, keyed by child room ID) to build the space hierarchy.
 //     Without these events the SDK has no parent→child mapping, so all rooms appear as
 //     orphans in the Home view and spaces appear empty.
+//   - im.ponies.room_emotes with wildcard is required: custom emoji/sticker packs are
+//     stored as im.ponies.room_emotes state events (one per pack, keyed by pack state key).
+//     getGlobalImagePacks reads these from pack rooms listed in im.ponies.emote_rooms
+//     account data; imagePackRooms also reads them from parent spaces. Without these
+//     events all list-entry rooms would show no emoji or sticker packs.
+//   - m.room.topic is required: topics are displayed for joined child rooms in space
+//     lobby (RoomItem → LocalRoomSummaryLoader → useLocalRoomSummary) and in the
+//     invite list. Without this event the topic always shows as blank for non-active
+//     rooms.
+//   - m.room.canonical_alias is required: getCanonicalAlias() is used in several places
+//     for non-active rooms — notification serverName extraction, mention autocomplete
+//     alias display, and getCanonicalAliasOrRoomId for navigation. Without it, aliases
+//     fall back silently to room IDs.
 const buildListRequiredState = (): MSC3575RoomSubscription['required_state'] => [
   [EventType.RoomJoinRules, ''],
   [EventType.RoomAvatar, ''],
   [EventType.RoomTombstone, ''],
   [EventType.RoomEncryption, ''],
   [EventType.RoomCreate, ''],
+  [EventType.RoomTopic, ''],
+  [EventType.RoomCanonicalAlias, ''],
   [EventType.RoomMember, MSC3575_STATE_KEY_ME],
   ['m.space.child', MSC3575_WILDCARD],
+  ['im.ponies.room_emotes', MSC3575_WILDCARD],
 ];
 
 // For an active encrypted room: fetch everything so the client can decrypt all events.
@@ -435,8 +451,11 @@ export class SlidingSyncManager {
       [EventType.RoomTombstone, ''],
       [EventType.RoomEncryption, ''],
       [EventType.RoomCreate, ''],
+      [EventType.RoomTopic, ''],
+      [EventType.RoomCanonicalAlias, ''],
       [EventType.RoomMember, MSC3575_STATE_KEY_ME],
       ['m.space.child', MSC3575_WILDCARD],
+      ['im.ponies.room_emotes', MSC3575_WILDCARD],
     ];
 
     while (hasMore) {
