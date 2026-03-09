@@ -38,6 +38,7 @@ import {
 } from '$utils/notificationStyle';
 import { mobileOrTablet } from '$utils/user-agent';
 import { useSlidingSyncActiveRoom } from '$hooks/useSlidingSyncActiveRoom';
+import { getSlidingSyncManager } from '$client/initMatrix';
 import { getInboxInvitesPath } from '../pathUtils';
 import { BackgroundNotifications } from './BackgroundNotifications';
 
@@ -575,6 +576,17 @@ function SlidingSyncActiveRoomSubscriber() {
   return null;
 }
 
+function PresenceFeature() {
+  const mx = useMatrixClient();
+  const [sendPresence] = useSetting(settingsAtom, 'sendPresence');
+
+  useEffect(() => {
+    getSlidingSyncManager(mx)?.setPresenceEnabled(sendPresence);
+  }, [mx, sendPresence]);
+
+  return null;
+}
+
 export function ClientNonUIFeatures({ children }: ClientNonUIFeaturesProps) {
   return (
     <>
@@ -587,6 +599,7 @@ export function ClientNonUIFeatures({ children }: ClientNonUIFeaturesProps) {
       <BackgroundNotifications />
       <SyncNotificationSettingsWithServiceWorker />
       <SlidingSyncActiveRoomSubscriber />
+      <PresenceFeature />
       {children}
     </>
   );

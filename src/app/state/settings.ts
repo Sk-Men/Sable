@@ -78,6 +78,7 @@ export interface Settings {
   captionPosition: CaptionPosition;
 
   // Sable features!
+  sendPresence: boolean;
   mobileGestures: boolean;
   rightSwipeAction: RightSwipeAction;
   hideMembershipInReadOnly: boolean;
@@ -153,6 +154,7 @@ const defaultSettings: Settings = {
   captionPosition: CaptionPosition.Below,
 
   // Sable features!
+  sendPresence: true,
   mobileGestures: true,
   rightSwipeAction: RightSwipeAction.Reply,
   hideMembershipInReadOnly: true,

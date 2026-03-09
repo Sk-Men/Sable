@@ -242,7 +242,13 @@ const getListEndIndex = (list: MSC3575List | null): number => {
 // poll and feeds received `m.presence` events into the SDK's User objects so that
 // components using `useUserPresence` see live updates (same path as regular /sync).
 class ExtensionPresence implements Extension<{ enabled: boolean }, { events?: object[] }> {
+  private enabled = true;
+
   public constructor(private readonly mx: MatrixClient) {}
+
+  public setEnabled(value: boolean): void {
+    this.enabled = value;
+  }
 
   // eslint-disable-next-line class-methods-use-this
   public name(): string {
@@ -255,9 +261,8 @@ class ExtensionPresence implements Extension<{ enabled: boolean }, { events?: ob
     return ExtensionState.PostProcess;
   }
 
-  // eslint-disable-next-line class-methods-use-this
   public async onRequest(): Promise<{ enabled: boolean }> {
-    return { enabled: true };
+    return { enabled: this.enabled };
   }
 
   public async onResponse(data: { events?: object[] }): Promise<void> {
@@ -301,6 +306,8 @@ export class SlidingSyncManager {
 
   private readonly onLifecycle: (state: SlidingSyncState, resp: unknown, err?: Error) => void;
 
+  private presenceExtension!: ExtensionPresence;
+
   public readonly slidingSync: SlidingSync;
 
   public readonly probeTimeoutMs: number;
@@ -333,7 +340,8 @@ export class SlidingSyncManager {
 
     // Register the presence extension so m.presence events from the server are fed
     // into the SDK's User objects, keeping useUserPresence accurate during sliding sync.
-    this.slidingSync.registerExtension(new ExtensionPresence(mx));
+    this.presenceExtension = new ExtensionPresence(mx);
+    this.slidingSync.registerExtension(this.presenceExtension);
 
     // Register a custom subscription for unencrypted active rooms; encrypted rooms use
     // the default subscription (which already has [*,*]).
@@ -408,6 +416,10 @@ export class SlidingSyncManager {
       UNENCRYPTED_SUBSCRIPTION_KEY,
       buildUnencryptedSubscription(timelineLimit)
     );
+  }
+
+  public setPresenceEnabled(enabled: boolean): void {
+    this.presenceExtension.setEnabled(enabled);
   }
 
   public getDiagnostics(): SlidingSyncDiagnostics {
