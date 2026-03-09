@@ -68,7 +68,8 @@ export function NotificationJumper() {
         // paths are not recognised by the router and land on JoinBeforeNavigate.
         const orphanParents = getOrphanParents(roomToParents, pending.roomId);
         if (orphanParents.length > 0) {
-          const parentSpace = guessPerfectParent(mx, pending.roomId, orphanParents) ?? orphanParents[0];
+          const parentSpace =
+            guessPerfectParent(mx, pending.roomId, orphanParents) ?? orphanParents[0];
           navigate(
             getSpaceRoomPath(
               getCanonicalAliasOrRoomId(mx, parentSpace),

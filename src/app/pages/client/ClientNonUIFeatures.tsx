@@ -329,11 +329,7 @@ function MessageNotifications() {
       // in sandboxed environments, browsers with DnD active, or Electron — and
       // an uncaught exception here would abort the handler before setInAppBanner
       // is reached, causing in-app notifications to silently vanish too.
-      if (
-        !mobileOrTablet() &&
-        showSystemNotifications &&
-        notificationPermission('granted')
-      ) {
+      if (!mobileOrTablet() && showSystemNotifications && notificationPermission('granted')) {
         try {
           const isEncryptedRoom = !!getStateEvent(room, StateEvent.RoomEncryption);
           const avatarMxc =
