@@ -103,7 +103,6 @@ import {
   useIntersectionObserver,
 } from '$hooks/useIntersectionObserver';
 import { markAsRead } from '$utils/notifications';
-import { useDebounce } from '$hooks/useDebounce';
 import { getResizeObserverEntry, useResizeObserver } from '$hooks/useResizeObserver';
 import { inSameDay, minuteDifference, timeDayMonthYear, today, yesterday } from '$utils/time';
 import { createMentionElement, isEmptyEditor, moveCursor } from '$components/editor';
@@ -620,9 +619,13 @@ export function RoomTimeline({
   }
 
   const atBottomAnchorRef = useRef<HTMLElement>(null);
-  const [atBottom, setAtBottom] = useState<boolean>(true);
+
+  const [atBottom, setAtBottomState] = useState<boolean>(true);
   const atBottomRef = useRef(atBottom);
-  atBottomRef.current = atBottom;
+  const setAtBottom = useCallback((val: boolean) => {
+    setAtBottomState(val);
+    atBottomRef.current = val;
+  }, []);
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const scrollToBottomRef = useRef({
@@ -734,6 +737,7 @@ export function RoomTimeline({
         if (!alive()) return;
         const evLength = getTimelinesEventsCount(lTimelines);
 
+        setAtBottom(false);
         setFocusItem({
           index: evtAbsIndex,
           scrollTo: true,
@@ -747,7 +751,7 @@ export function RoomTimeline({
           },
         });
       },
-      [alive]
+      [alive, setAtBottom]
     ),
     useCallback(() => {
       if (!alive()) return;
@@ -829,6 +833,8 @@ export function RoomTimeline({
         evtTimeline && getEventIdAbsoluteIndex(timeline.linkedTimelines, evtTimeline, evtId);
 
       if (typeof absoluteIndex === 'number') {
+        setAtBottom(false);
+
         const scrolled = scrollToItem(absoluteIndex, {
           behavior: reducedMotion ? 'instant' : 'smooth',
           align: 'center',
@@ -837,14 +843,14 @@ export function RoomTimeline({
         if (onScroll) onScroll(scrolled);
         setFocusItem({
           index: absoluteIndex,
-          scrollTo: false,
+          scrollTo: !scrolled,
           highlight,
         });
       } else {
         loadEventTimeline(evtId);
       }
     },
-    [room, timeline, scrollToItem, loadEventTimeline, reducedMotion]
+    [room, timeline, scrollToItem, loadEventTimeline, reducedMotion, setAtBottom]
   );
 
   useLiveTimelineRefresh(
@@ -910,29 +916,26 @@ export function RoomTimeline({
     }
   }, [mx, room, hideReads]);
 
-  const debounceSetAtBottom = useDebounce(
-    useCallback((entry: IntersectionObserverEntry) => {
-      if (!entry.isIntersecting) setAtBottom(false);
-    }, []),
-    { wait: 1000 }
-  );
   useIntersectionObserver(
     useCallback(
       (entries) => {
         const target = atBottomAnchorRef.current;
         if (!target) return;
         const targetEntry = getIntersectionObserverEntry(target, entries);
-        if (targetEntry) debounceSetAtBottom(targetEntry);
-        if (targetEntry?.isIntersecting) {
-          // Track scroll position independently of atLiveEndRef so that atBottom
-          // is always accurate. tryAutoMarkAsRead still requires atLiveEndRef.
+        if (!targetEntry) return;
+
+        if (targetEntry.isIntersecting) {
+          // User has reached the bottom
           setAtBottom(true);
           if (atLiveEndRef.current && document.hasFocus()) {
             tryAutoMarkAsRead();
           }
+        } else {
+          // User has intentionally scrolled up.
+          setAtBottom(false);
         }
       },
-      [debounceSetAtBottom, tryAutoMarkAsRead]
+      [tryAutoMarkAsRead, setAtBottom]
     ),
     useCallback(
       () => ({
@@ -1006,36 +1009,20 @@ export function RoomTimeline({
     const contentEl = scrollEl?.firstElementChild as HTMLElement;
     if (!scrollEl || !contentEl) return () => {};
 
-    let lastScrollTop = scrollEl.scrollTop;
-    let userIsScrollingUp = false;
-
-    // Track if user is scrolling up
-    const handleScroll = () => {
-      if (scrollEl.scrollTop < lastScrollTop) {
-        userIsScrollingUp = true;
-      } else if (scrollEl.scrollHeight - scrollEl.scrollTop <= scrollEl.clientHeight + 10) {
-        userIsScrollingUp = false;
-      }
-      lastScrollTop = scrollEl.scrollTop;
-    };
-
     const forceScroll = () => {
       // if the user isn't scrolling jump down to latest content
-      if (!userIsScrollingUp) {
-        scrollToBottom(scrollEl, 'instant');
-      }
+      if (!atBottomRef.current) return;
+      scrollToBottom(scrollEl, 'instant');
     };
 
     const resizeObserver = new ResizeObserver(() => {
       requestAnimationFrame(forceScroll);
     });
 
-    scrollEl.addEventListener('scroll', handleScroll, { passive: true });
     resizeObserver.observe(contentEl);
 
     return () => {
       resizeObserver.disconnect();
-      scrollEl.removeEventListener('scroll', handleScroll);
     };
   }, [room]);
 
@@ -1090,7 +1077,9 @@ export function RoomTimeline({
         // reach the true bottom (e.g. after images finish loading or the
         // virtual keyboard shifts the viewport).
         if (behavior === 'instant') {
-          setTimeout(() => scrollToBottom(scrollEl, 'instant'), 80);
+          setTimeout(() => {
+            scrollToBottom(scrollEl, 'instant');
+          }, 80);
         }
       }
     }

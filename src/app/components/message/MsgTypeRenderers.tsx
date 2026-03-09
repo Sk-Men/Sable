@@ -473,6 +473,8 @@ export function MLocation({ content }: MLocationProps) {
     return <BrokenContent body={typeof content.body === 'string' ? content.body : undefined} />;
   }
   const location = parseGeoUri(geoUri);
+  if (!location) return <BrokenContent />;
+
   return (
     <Box direction="Column" alignItems="Start" gap="100">
       <Text size="T400">{geoUri}</Text>
