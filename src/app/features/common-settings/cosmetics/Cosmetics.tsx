@@ -1,4 +1,11 @@
-import { ChangeEventHandler, FormEventHandler, useCallback, useEffect, useState } from 'react';
+import {
+  ChangeEventHandler,
+  FormEventHandler,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react';
 import {
   Box,
   Text,
@@ -12,6 +19,12 @@ import {
   config,
   Button,
   Spinner,
+  OverlayBackdrop,
+  Overlay,
+  OverlayCenter,
+  Modal,
+  Dialog,
+  Header,
 } from 'folds';
 import { Page, PageContent, PageHeader } from '$components/page';
 import { SequenceCard } from '$components/sequence-card';
@@ -32,6 +45,15 @@ import { getMxIdLocalPart, mxcUrlToHttp } from '$utils/matrix';
 import { AsyncStatus, useAsyncCallback } from '$hooks/useAsyncCallback';
 import { Room, RoomMember } from '$types/matrix-sdk';
 import { Command, useCommands } from '$hooks/useCommands';
+import { useCapabilities } from '$hooks/useCapabilities';
+import { useObjectURL } from '$hooks/useObjectURL';
+import { createUploadAtom, UploadSuccess } from '$state/upload';
+import { useFilePicker } from '$hooks/useFilePicker';
+import { CompactUploadCardRenderer } from '$components/upload-card';
+import FocusTrap from 'focus-trap-react';
+import { ImageEditor } from '$components/image-editor';
+import { stopPropagation } from '$utils/keyboard';
+import { ModalWide } from '$styles/Modal.css';
 
 const log = createLogger('Cosmetics');
 
@@ -43,19 +65,46 @@ type CosmeticsSettingProps = {
 };
 export function CosmeticsAvatar({ profile, member, userId, room }: CosmeticsSettingProps) {
   const mx = useMatrixClient();
-
   const useAuthentication = useMediaAuthentication();
-  /* const avatarUrl = profile.avatarUrl
-    ? (mxcUrlToHttp(mx, profile.avatarUrl, useAuthentication, 96, 96, 'crop') ?? undefined)
-    : undefined; */
+  const capabilities = useCapabilities();
+  const [alertRemove, setAlertRemove] = useState(false);
+  const disableSetAvatar = capabilities['m.set_avatar_url']?.enabled === false;
+
   const avatarMxc = member.getMxcAvatarUrl();
   const avatarUrl =
     avatarMxc && (mxcUrlToHttp(mx, avatarMxc, useAuthentication, 96, 96, 'crop') ?? undefined);
 
+  const [imageFile, setImageFile] = useState<File>();
+  const imageFileURL = useObjectURL(imageFile);
+  const uploadAtom = useMemo(() => {
+    if (imageFile) return createUploadAtom(imageFile);
+    return undefined;
+  }, [imageFile]);
+
+  const pickFile = useFilePicker(setImageFile, false);
+
+  const handleRemoveUpload = useCallback(() => {
+    setImageFile(undefined);
+  }, []);
+
+  const myRoomAvatar = useCommands(mx, room)[Command.MyRoomAvatar];
+  const handleUploaded = useCallback(
+    (upload: UploadSuccess) => {
+      const { mxc } = upload;
+      myRoomAvatar.exe(mxc);
+      handleRemoveUpload();
+    },
+    [myRoomAvatar, handleRemoveUpload]
+  );
+
+  const handleRemoveAvatar = () => {
+    myRoomAvatar.exe('');
+    setAlertRemove(false);
+  };
+
   return (
     <SettingTile
-      title="Avatar"
-      description="This...is still a placeholder"
+      title="Room Avatar"
       after={
         <Avatar size="500" radii="300">
           <UserAvatar
@@ -67,7 +116,107 @@ export function CosmeticsAvatar({ profile, member, userId, room }: CosmeticsSett
           />
         </Avatar>
       }
-    />
+    >
+      {uploadAtom ? (
+        <Box gap="200" direction="Column">
+          <CompactUploadCardRenderer
+            uploadAtom={uploadAtom}
+            onRemove={handleRemoveUpload}
+            onComplete={handleUploaded}
+          />
+        </Box>
+      ) : (
+        <Box gap="200">
+          <Button
+            onClick={() => pickFile('image/*')}
+            size="300"
+            variant="Secondary"
+            fill="Soft"
+            outlined
+            radii="300"
+            disabled={disableSetAvatar}
+          >
+            <Text size="B300">Upload</Text>
+          </Button>
+          {avatarUrl &&
+            avatarUrl !==
+              mxcUrlToHttp(mx, profile.avatarUrl ?? '', useAuthentication, 96, 96, 'crop') && (
+              <Button
+                size="300"
+                variant="Critical"
+                fill="None"
+                radii="300"
+                disabled={disableSetAvatar}
+                onClick={() => setAlertRemove(true)}
+              >
+                <Text size="B300">Remove</Text>
+              </Button>
+            )}
+        </Box>
+      )}
+
+      {imageFileURL && (
+        <Overlay open={false} backdrop={<OverlayBackdrop />}>
+          <OverlayCenter>
+            <FocusTrap
+              focusTrapOptions={{
+                initialFocus: false,
+                onDeactivate: handleRemoveUpload,
+                clickOutsideDeactivates: true,
+                escapeDeactivates: stopPropagation,
+              }}
+            >
+              <Modal className={ModalWide} variant="Surface" size="500">
+                <ImageEditor
+                  name={imageFile?.name ?? 'Unnamed'}
+                  url={imageFileURL}
+                  requestClose={handleRemoveUpload}
+                />
+              </Modal>
+            </FocusTrap>
+          </OverlayCenter>
+        </Overlay>
+      )}
+
+      <Overlay open={alertRemove} backdrop={<OverlayBackdrop />}>
+        <OverlayCenter>
+          <FocusTrap
+            focusTrapOptions={{
+              initialFocus: false,
+              onDeactivate: () => setAlertRemove(false),
+              clickOutsideDeactivates: true,
+              escapeDeactivates: stopPropagation,
+            }}
+          >
+            <Dialog variant="Surface">
+              <Header
+                style={{
+                  padding: `0 ${config.space.S200} 0 ${config.space.S400}`,
+                  borderBottomWidth: config.borderWidth.B300,
+                }}
+                variant="Surface"
+                size="500"
+              >
+                <Box grow="Yes">
+                  <Text size="H4">Remove Room Avatar</Text>
+                </Box>
+                <IconButton size="300" onClick={() => setAlertRemove(false)} radii="300">
+                  <Icon src={Icons.Cross} />
+                </IconButton>
+              </Header>
+              <Box style={{ padding: config.space.S400 }} direction="Column" gap="400">
+                <Box direction="Column" gap="200">
+                  <Text priority="400">Are you sure you want to remove room avatar?</Text>
+                </Box>
+                <Button variant="Critical" onClick={handleRemoveAvatar}>
+                  <Text size="B400">Remove</Text>
+                </Button>
+              </Box>
+            </Dialog>
+          </FocusTrap>
+        </OverlayCenter>
+      </Overlay>
+    </SettingTile>
   );
 }
 
