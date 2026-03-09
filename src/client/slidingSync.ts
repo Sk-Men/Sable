@@ -192,10 +192,7 @@ const buildUnencryptedSubscription = (timelineLimit: number): MSC3575RoomSubscri
   ],
 });
 
-const buildLists = (
-  pageSize: number,
-  includeInviteList: boolean
-): Map<string, MSC3575List> => {
+const buildLists = (pageSize: number, includeInviteList: boolean): Map<string, MSC3575List> => {
   const lists = new Map<string, MSC3575List>();
   const listRequiredState = buildListRequiredState();
 
@@ -273,7 +270,9 @@ export class SlidingSyncManager {
     this.listPageSize = listPageSize;
     const includeInviteList = config.includeInviteList !== false;
 
-    const adaptiveTimeline = !(typeof config.timelineLimit === 'number' && config.timelineLimit > 0);
+    const adaptiveTimeline = !(
+      typeof config.timelineLimit === 'number' && config.timelineLimit > 0
+    );
     const signals = readAdaptiveSignals();
     const roomTimelineLimit = resolveAdaptiveRoomTimelineLimit(config.timelineLimit, signals);
     this.adaptiveTimeline = adaptiveTimeline;
@@ -306,14 +305,22 @@ export class SlidingSyncManager {
       if (nextLimit === this.roomTimelineLimit) return;
       this.roomTimelineLimit = nextLimit;
       this.applyRoomTimelineLimit(nextLimit);
-      log.log(`Sliding Sync adaptive room timeline updated to ${nextLimit} for ${this.mx.getUserId()}`);
+      log.log(
+        `Sliding Sync adaptive room timeline updated to ${nextLimit} for ${this.mx.getUserId()}`
+      );
     };
   }
 
   public attach(): void {
     this.slidingSync.on(SlidingSyncEvent.Lifecycle, this.onLifecycle);
-    const connection = (typeof navigator !== 'undefined' ? (navigator as any).connection : undefined) as
-      | { addEventListener?: (e: string, cb: () => void) => void; removeEventListener?: (e: string, cb: () => void) => void; onchange?: (() => void) | null }
+    const connection = (
+      typeof navigator !== 'undefined' ? (navigator as any).connection : undefined
+    ) as
+      | {
+          addEventListener?: (e: string, cb: () => void) => void;
+          removeEventListener?: (e: string, cb: () => void) => void;
+          onchange?: (() => void) | null;
+        }
       | undefined;
     connection?.addEventListener?.('change', this.onConnectionChange);
     if (connection && connection.onchange === null) connection.onchange = this.onConnectionChange;
@@ -327,8 +334,14 @@ export class SlidingSyncManager {
     if (this.disposed) return;
     this.disposed = true;
     this.slidingSync.removeListener(SlidingSyncEvent.Lifecycle, this.onLifecycle);
-    const connection = (typeof navigator !== 'undefined' ? (navigator as any).connection : undefined) as
-      | { addEventListener?: (e: string, cb: () => void) => void; removeEventListener?: (e: string, cb: () => void) => void; onchange?: (() => void) | null }
+    const connection = (
+      typeof navigator !== 'undefined' ? (navigator as any).connection : undefined
+    ) as
+      | {
+          addEventListener?: (e: string, cb: () => void) => void;
+          removeEventListener?: (e: string, cb: () => void) => void;
+          onchange?: (() => void) | null;
+        }
       | undefined;
     connection?.removeEventListener?.('change', this.onConnectionChange);
     if (connection?.onchange === this.onConnectionChange) connection.onchange = null;
@@ -434,7 +447,9 @@ export class SlidingSyncManager {
   public async startSpidering(batchSize: number, gapBetweenRequestsMs: number): Promise<void> {
     // Delay before the first request — startSpidering is called right after attach(),
     // so give the initial sync a moment to settle first.
-    await new Promise<void>((res) => { setTimeout(res, gapBetweenRequestsMs); });
+    await new Promise<void>((res) => {
+      setTimeout(res, gapBetweenRequestsMs);
+    });
     if (this.disposed) return;
 
     // Use a single expanding range [[0, endIndex]] rather than a two-range sliding
@@ -477,7 +492,9 @@ export class SlidingSyncManager {
       } catch {
         // Swallow errors — the next iteration will retry with updated ranges.
       } finally {
-        await new Promise<void>((res) => { setTimeout(res, gapBetweenRequestsMs); });
+        await new Promise<void>((res) => {
+          setTimeout(res, gapBetweenRequestsMs);
+        });
       }
 
       if (this.disposed) return;

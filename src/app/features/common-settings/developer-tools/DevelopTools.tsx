@@ -446,8 +446,10 @@ export function DeveloperTools({ requestClose }: DeveloperToolsProps) {
                                     </Text>
                                     <Text size="T200">
                                       Room timeline: {syncDiagnostics.sliding.timelineLimit}
-                                      {syncDiagnostics.sliding.adaptiveTimeline ? ' (adaptive)' : ''} | page
-                                      size: {syncDiagnostics.sliding.listPageSize}
+                                      {syncDiagnostics.sliding.adaptiveTimeline
+                                        ? ' (adaptive)'
+                                        : ''}{' '}
+                                      | page size: {syncDiagnostics.sliding.listPageSize}
                                     </Text>
                                   </>
                                 ) : (
