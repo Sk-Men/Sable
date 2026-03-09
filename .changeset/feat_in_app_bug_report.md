@@ -1,5 +1,5 @@
 ---
-"sable": minor
+'sable': minor
 ---
 
 feat: in-app bug report and feature request modal
