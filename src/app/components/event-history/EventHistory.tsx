@@ -23,9 +23,14 @@ import { getMouseEventCords } from '$utils/dom';
 import { useAtomValue } from 'jotai';
 import { nicknamesAtom } from '$state/nicknames';
 import { UserAvatar } from '$components/user-avatar';
-import { Time } from '$components/message';
+import { RenderBody, Time } from '$components/message';
 import { useSetting } from '$state/hooks/settings';
 import { settingsAtom } from '$state/settings';
+import { useMemo } from 'react';
+import { getReactCustomHtmlParser, LINKIFY_OPTS } from '$plugins/react-custom-html-parser';
+import { Opts as LinkifyOpts } from 'linkifyjs';
+import { HTMLReactParserOptions } from 'html-react-parser';
+import { useSpoilerClickHandler } from '$hooks/useSpoilerClickHandler';
 import * as css from './EventHistory.css';
 
 export type EventHistoryProps = {
@@ -54,6 +59,17 @@ export const EventHistory = as<'div', EventHistoryProps>(
     const [hour24Clock] = useSetting(settingsAtom, 'hour24Clock');
     const [dateFormatString] = useSetting(settingsAtom, 'dateFormatString');
 
+    const linkifyOpts = useMemo<LinkifyOpts>(() => ({ ...LINKIFY_OPTS }), []);
+    const spoilerClickHandler = useSpoilerClickHandler();
+    const htmlReactParserOptions = useMemo<HTMLReactParserOptions>(
+      () =>
+        getReactCustomHtmlParser(mx, mEvents[0].getRoomId(), {
+          linkifyOpts,
+          useAuthentication,
+          handleSpoilerClick: spoilerClickHandler,
+        }),
+      [linkifyOpts, mEvents, mx, spoilerClickHandler, useAuthentication]
+    );
     return (
       <Box
         className={classNames(css.EventHistory, className)}
@@ -102,7 +118,7 @@ export const EventHistory = as<'div', EventHistoryProps>(
             <Text size="T400">{name}</Text>
           </MenuItem>
         </Header>
-        <Box grow="Yes">
+        <Box grow="Yes" style={{ overflow: 'scroll' }}>
           <Scroll visibility="Hover">
             <Box className={css.Content} direction="Column">
               {mEvents.map((mEvent) => {
@@ -124,10 +140,21 @@ export const EventHistory = as<'div', EventHistoryProps>(
                       />
                     }
                   >
-                    <Text size="T400">
-                      {mEvent?.event?.content?.['m.new_content']?.body ??
-                        mEvent.event?.content?.body ??
-                        ''}
+                    <Text size="T400" style={{ wordBreak: 'break-word' }}>
+                      <RenderBody
+                        body={
+                          mEvent?.event?.content?.['m.new_content']?.body ??
+                          mEvent.event?.content?.body ??
+                          ''
+                        }
+                        customBody={
+                          mEvent?.event?.content?.['m.new_content']?.formatted_body ??
+                          mEvent.event?.content?.formatted_body ??
+                          ''
+                        }
+                        htmlReactParserOptions={htmlReactParserOptions}
+                        linkifyOpts={linkifyOpts}
+                      />
                     </Text>
                   </MenuItem>
                 );
