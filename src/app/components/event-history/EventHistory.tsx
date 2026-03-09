@@ -125,22 +125,13 @@ export const EventHistory = as<'div', EventHistoryProps>(
                 if (!mEvent.event.sender) return <div />;
 
                 return (
-                  <MenuItem
-                    key={readerId}
-                    style={{
-                      padding: `${config.space.S200} ${config.space.S200}`,
-                      height: 'unset',
-                    }}
-                    radii="400"
-                    before={
-                      <Time
-                        ts={mEvent.getTs()}
-                        hour24Clock={hour24Clock}
-                        dateFormatString={dateFormatString}
-                      />
-                    }
-                  >
-                    <Text size="T400" style={{ wordBreak: 'break-word' }}>
+                  <Box className={css.EventItem}>
+                    <Time
+                      ts={mEvent.getTs()}
+                      hour24Clock={hour24Clock}
+                      dateFormatString={dateFormatString}
+                    />
+                    <Text size="T400" style={{ paddingLeft: '10px', wordBreak: 'break-word' }}>
                       <RenderBody
                         body={
                           mEvent?.event?.content?.['m.new_content']?.body ??
@@ -156,7 +147,7 @@ export const EventHistory = as<'div', EventHistoryProps>(
                         linkifyOpts={linkifyOpts}
                       />
                     </Text>
-                  </MenuItem>
+                  </Box>
                 );
               })}
             </Box>
