@@ -820,7 +820,7 @@ function MessageInternal(
                                 size="T300"
                                 truncate
                               >
-                                Add your User Sticker Pack
+                                Add to User Sticker Pack
                               </Text>
                             </MenuItem>
                           )}
