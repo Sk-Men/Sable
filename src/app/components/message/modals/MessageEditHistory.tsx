@@ -50,6 +50,7 @@ export function MessageEditHistoryInternal({
       evtTimeline &&
       getEventEdits(evtTimeline.getTimelineSet(), evtId, mEvent.getType())?.getRelations();
     if (!edits) return [mEvent];
+    edits.sort((a, b) => a.getTs() - b.getTs());
     return [mEvent, ...edits];
   };
 

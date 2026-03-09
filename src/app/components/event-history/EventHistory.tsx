@@ -123,7 +123,7 @@ export const EventHistory = as<'div', EventHistoryProps>(
             <Box className={css.Content} direction="Column">
               {mEvents.map((mEvent) => {
                 if (!mEvent.event.sender) return <div />;
-
+                const EventContent = mEvent.getOriginalContent();
                 return (
                   <Box className={css.EventItem}>
                     <Time
@@ -133,14 +133,10 @@ export const EventHistory = as<'div', EventHistoryProps>(
                     />
                     <Text size="T400" style={{ paddingLeft: '10px', wordBreak: 'break-word' }}>
                       <RenderBody
-                        body={
-                          mEvent?.event?.content?.['m.new_content']?.body ??
-                          mEvent.event?.content?.body ??
-                          ''
-                        }
+                        body={EventContent?.['m.new_content']?.body ?? EventContent?.body ?? ''}
                         customBody={
-                          mEvent?.event?.content?.['m.new_content']?.formatted_body ??
-                          mEvent.event?.content?.formatted_body ??
+                          EventContent?.['m.new_content']?.formatted_body ??
+                          EventContent?.formatted_body ??
                           ''
                         }
                         htmlReactParserOptions={htmlReactParserOptions}
