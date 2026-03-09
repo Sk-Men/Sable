@@ -250,19 +250,26 @@ export function MImage({ content, renderImageContent, outlined }: MImageProps) {
   if (typeof mxcUrl !== 'string') {
     return <BrokenContent />;
   }
-  const height = scaleYDimension(imgInfo?.w || 400, 400, imgInfo?.h || 400);
+  const MAX_SIZE = 400;
+  const imgW = imgInfo?.w ?? MAX_SIZE;
+  const imgH = imgInfo?.h ?? MAX_SIZE;
+  const aspectRatio = imgInfo?.w && imgInfo?.h ? `${imgW} / ${imgH}` : undefined;
+  // this garbage is for portrait images, we cap the width so the card doesn't exceed the bounds of the image
+  const displayWidth = imgH > imgW ? Math.round(MAX_SIZE * (imgW / imgH)) : MAX_SIZE;
 
   return (
     <Attachment
       style={{
         flexGrow: 1,
         flexShrink: 0,
+        width: toRem(displayWidth),
       }}
       outlined={outlined}
     >
       <AttachmentBox
         style={{
-          height: toRem(height < 48 ? 48 : height),
+          aspectRatio,
+          maxHeight: toRem(MAX_SIZE),
         }}
       >
         {renderImageContent({
@@ -306,7 +313,7 @@ export function MVideo({ content, renderAsFile, renderVideoContent, outlined }: 
     return <BrokenContent />;
   }
 
-  const height = scaleYDimension(videoInfo.w || 400, 400, videoInfo.h || 400);
+  const height = Math.min(scaleYDimension(videoInfo.w || 400, 400, videoInfo.h || 400), 400);
 
   const filename = content.filename ?? content.body ?? 'Video';
 
@@ -455,7 +462,10 @@ type MLocationProps = {
 export function MLocation({ content }: MLocationProps) {
   const geoUri = content.geo_uri;
   if (typeof geoUri !== 'string') return <BrokenContent />;
+
   const location = parseGeoUri(geoUri);
+  if (!location) return <BrokenContent />;
+
   return (
     <Box direction="Column" alignItems="Start" gap="100">
       <Text size="T400">{geoUri}</Text>
