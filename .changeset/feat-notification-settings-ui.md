@@ -1,5 +1,5 @@
 ---
-sable: minor
+sable: patch
 ---
 
 Notification settings page improvements.
