@@ -1,3 +1,4 @@
+/* eslint-disable max-classes-per-file */
 import {
   ClientEvent,
   Extension,
@@ -243,16 +244,19 @@ const getListEndIndex = (list: MSC3575List | null): number => {
 class ExtensionPresence implements Extension<{ enabled: boolean }, { events?: object[] }> {
   public constructor(private readonly mx: MatrixClient) {}
 
+  // eslint-disable-next-line class-methods-use-this
   public name(): string {
     return 'presence';
   }
 
+  // eslint-disable-next-line class-methods-use-this
   public when(): ExtensionState {
     // Run after the main response body has been processed so room/member state is ready.
     return ExtensionState.PostProcess;
   }
 
-  public async onRequest(_isInitial: boolean): Promise<{ enabled: boolean }> {
+  // eslint-disable-next-line class-methods-use-this
+  public async onRequest(): Promise<{ enabled: boolean }> {
     return { enabled: true };
   }
 
@@ -261,7 +265,7 @@ class ExtensionPresence implements Extension<{ enabled: boolean }, { events?: ob
     const mapper = this.mx.getEventMapper();
     data.events.forEach((rawEvent) => {
       const event = mapper(rawEvent as Parameters<typeof mapper>[0]);
-      const userId = event.getSender() ?? (event.getContent() as { user_id?: string }).user_id;
+      const userId = event.getSender() ?? (event.getContent().user_id as string | undefined);
       if (!userId) return;
       let user = this.mx.store.getUser(userId);
       if (user) {
