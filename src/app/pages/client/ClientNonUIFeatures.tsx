@@ -321,17 +321,16 @@ function MessageNotifications() {
         if (first) notifiedEventsRef.current.delete(first);
       }
 
-      // On desktop: fire an OS notification when the window is not focused so
-      // the user is alerted while the browser is minimised or the tab is in the
-      // background.  When the window IS focused the in-app banner (below) is the
-      // appropriate alert — we skip the OS notification to avoid a duplicate.
+      // On desktop: fire an OS notification whenever system notifications are
+      // enabled and permission is granted — regardless of whether the window is
+      // focused. When the window is also visible the in-app banner fires too,
+      // mirroring the behaviour of apps like Discord.
       // The whole block is wrapped in try/catch: window.Notification() can throw
       // in sandboxed environments, browsers with DnD active, or Electron — and
       // an uncaught exception here would abort the handler before setInAppBanner
       // is reached, causing in-app notifications to silently vanish too.
       if (
         !mobileOrTablet() &&
-        !document.hasFocus() &&
         showSystemNotifications &&
         notificationPermission('granted')
       ) {
