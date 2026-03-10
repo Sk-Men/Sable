@@ -80,59 +80,53 @@ jobs:
             echo "preview_url=${preview_url}"
           } >> "$GITHUB_OUTPUT"
 
-      - name: Write deployment summary
-        env:
-          PREVIEW_ALIAS: ${{ steps.preview.outputs.preview_alias }}
-          PREVIEW_URL: ${{ steps.preview.outputs.preview_url }}
-        shell: bash
-        run: |
-          {
-            echo "## Cloudflare Worker Preview"
-            echo
-            echo "- Alias: \`${PREVIEW_ALIAS}\`"
-            echo "- Preview URL: ${PREVIEW_URL}"
-          } >> "$GITHUB_STEP_SUMMARY"
-
-      - name: Publish preview URL
+      - name: Publish preview URL and write summary
         uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8
         env:
           MARKER: '<!-- cloudflare-worker-preview -->'
           PREVIEW_URL: ${{ steps.preview.outputs.preview_url }}
+          PREVIEW_ALIAS: ${{ steps.preview.outputs.preview_alias }}
+          SHORT_SHA: ${{ github.event.pull_request.head.sha }}
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             const marker = process.env.MARKER;
             const previewUrl = process.env.PREVIEW_URL;
+            const previewAlias = process.env.PREVIEW_ALIAS;
+            const shortSha = process.env.SHORT_SHA?.slice(0, 7);
+            const now = new Date().toUTCString().replace(':00 GMT', ' UTC');
+
             if (!previewUrl) {
               core.setFailed("Missing preview URL from Cloudflare deploy step.");
               return;
             }
 
-            const body = `${marker}\nWorker preview: ${previewUrl}`;
+            const tableRow = "| ✅ Deployment successful! | <a href='" + previewUrl + "'>" + previewUrl + "</a> | " + shortSha + " | `" + previewAlias + "` | " + now + " |";
+            const comment = [
+              marker,
+              `## Deploying with &nbsp;<a href="https://workers.dev"><img alt="Cloudflare Workers" src="https://workers.cloudflare.com/logo.svg" width="16"></a> &nbsp;Cloudflare Workers`,
+              ``,
+              `| Status | Preview URL | Commit | Alias | Updated (UTC) |`,
+              `| - | - | - | - | - |`,
+              tableRow,
+            ].join("\n");
+
+            // Write to step summary (marker stripped — not needed there)
+            await core.summary.addRaw(comment.replace(marker + "\n", "")).write();
+
+            // Always delete and recreate so the comment appears fresh after each push
             const { owner, repo } = context.repo;
             const issue_number = context.issue.number;
             const comments = await github.paginate(github.rest.issues.listComments, {
-              owner,
-              repo,
-              issue_number,
+              owner, repo, issue_number,
             });
             const existing = comments.find(
-              (comment) => comment.user.type === "Bot" && comment.body.includes(marker),
+              (c) => c.user.type === "Bot" && c.body.includes(marker),
             );
-
             if (existing) {
-              await github.rest.issues.updateComment({
-                owner,
-                repo,
-                comment_id: existing.id,
-                body,
+              await github.rest.issues.deleteComment({
+                owner, repo, comment_id: existing.id,
               });
-              return;
             }
 
-            await github.rest.issues.createComment({
-              owner,
-              repo,
-              issue_number,
-              body,
-            });
+            await github.rest.issues.createComment({ owner, repo, issue_number, body: comment });
