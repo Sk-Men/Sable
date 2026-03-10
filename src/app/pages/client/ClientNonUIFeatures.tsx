@@ -37,6 +37,7 @@ import {
   resolveNotificationPreviewText,
 } from '$utils/notificationStyle';
 import { mobileOrTablet } from '$utils/user-agent';
+import { useSlidingSyncActiveRoom } from '$hooks/useSlidingSyncActiveRoom';
 import { getInboxInvitesPath } from '../pathUtils';
 import { BackgroundNotifications } from './BackgroundNotifications';
 
@@ -369,7 +370,7 @@ function MessageNotifications() {
       if (document.visibilityState !== 'visible') return;
 
       // Page is visible — show the themed in-app notification banner.
-      if (showNotifications && (isHighlightByRule || loudByRule || isDM)) {
+      if (showNotifications && (isHighlightByRule || isLoud)) {
         const avatarMxc =
           room.getAvatarFallbackMember()?.getMxcAvatarUrl() ?? room.getMxcAvatarUrl();
         const roomAvatar = avatarMxc
@@ -569,6 +570,11 @@ function SyncNotificationSettingsWithServiceWorker() {
   return null;
 }
 
+function SlidingSyncActiveRoomSubscriber() {
+  useSlidingSyncActiveRoom();
+  return null;
+}
+
 export function ClientNonUIFeatures({ children }: ClientNonUIFeaturesProps) {
   return (
     <>
@@ -580,6 +586,7 @@ export function ClientNonUIFeatures({ children }: ClientNonUIFeaturesProps) {
       <MessageNotifications />
       <BackgroundNotifications />
       <SyncNotificationSettingsWithServiceWorker />
+      <SlidingSyncActiveRoomSubscriber />
       {children}
     </>
   );
