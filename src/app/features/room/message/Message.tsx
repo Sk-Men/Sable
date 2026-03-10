@@ -877,7 +877,13 @@ function MessageInternal(
                         {!hideReadReceipts && (
                           <MessageReadReceiptItem room={room} eventId={mEvent.getId() ?? ''} />
                         )}
-                        {isEdited && <MessageEditHistoryItem room={room} mEvent={mEvent} />}
+                        {isEdited && (
+                          <MessageEditHistoryItem
+                            room={room}
+                            mEvent={mEvent}
+                            closeMenu={closeMenu}
+                          />
+                        )}
                         {showDeveloperTools && (
                           <MessageSourceCodeItem room={room} mEvent={mEvent} />
                         )}
@@ -1179,7 +1185,13 @@ export const Event = as<'div', EventProps>(
                             {!hideReadReceipts && (
                               <MessageReadReceiptItem room={room} eventId={mEvent.getId() ?? ''} />
                             )}
-                            {isEdited && <MessageEditHistoryItem room={room} mEvent={mEvent} />}
+                            {isEdited && (
+                              <MessageEditHistoryItem
+                                room={room}
+                                mEvent={mEvent}
+                                closeMenu={closeMenu}
+                              />
+                            )}
                             {showDeveloperTools && (
                               <MessageSourceCodeItem room={room} mEvent={mEvent} />
                             )}
