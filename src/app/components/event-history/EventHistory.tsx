@@ -35,6 +35,10 @@ import { HTMLReactParserOptions } from 'html-react-parser';
 import { useSpoilerClickHandler } from '$hooks/useSpoilerClickHandler';
 import { modalAtom, ModalType } from '$state/modal';
 import { roomIdToReplyDraftAtomFamily } from '$state/room/roomInputDrafts';
+import { useRoomPermissions } from '$hooks/useRoomPermissions';
+import { useRoomCreators } from '$hooks/useRoomCreators';
+import { usePowerLevelsContext } from '$hooks/usePowerLevels';
+import { MessageEvent } from '$types/matrix/room';
 import * as css from './EventHistory.css';
 
 export type EventHistoryProps = {
@@ -74,6 +78,12 @@ export const EventHistory = as<'div', EventHistoryProps>(
         }),
       [linkifyOpts, mEvents, mx, spoilerClickHandler, useAuthentication]
     );
+    const powerLevels = usePowerLevelsContext();
+    const creators = useRoomCreators(room);
+    const permissions = useRoomPermissions(creators, powerLevels);
+    const canRedact = permissions.action('redact', mx.getSafeUserId());
+    const canDeleteOwn = permissions.event(MessageEvent.RoomRedaction, mx.getSafeUserId());
+    const canDelete = canRedact || (canDeleteOwn && mEvents[0].getSender() === mx.getUserId());
 
     const setReplyDraft = useSetAtom(roomIdToReplyDraftAtomFamily(room.roomId));
     const triggerReply = useCallback(
@@ -145,22 +155,24 @@ export const EventHistory = as<'div', EventHistoryProps>(
               }
             }}
           />
-          <MenuItem
-            size="300"
-            after={<Icon size="100" src={Icons.Delete} />}
-            radii="300"
-            fill="None"
-            variant="Critical"
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              setModal({
-                type: ModalType.Delete,
-                room,
-                mEvent,
-              });
-            }}
-          />
+          {canDelete && (
+            <MenuItem
+              size="300"
+              after={<Icon size="100" src={Icons.Delete} />}
+              radii="300"
+              fill="None"
+              variant="Critical"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setModal({
+                  type: ModalType.Delete,
+                  room,
+                  mEvent,
+                });
+              }}
+            />
+          )}
         </Menu>
       );
     }
