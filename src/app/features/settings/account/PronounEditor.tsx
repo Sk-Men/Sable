@@ -3,18 +3,19 @@ import { Input } from 'folds';
 import { SettingTile } from '$components/setting-tile';
 import { parsePronounsInput } from '$utils/pronouns';
 
-type PronounSet = {
+export type PronounSet = {
   summary: string;
   language?: string;
   grammatical_gender?: string;
 };
 
 type PronounEditorProps = {
+  title: string;
   current: PronounSet[];
   onSave: (p: PronounSet[]) => void;
 };
 
-export function PronounEditor({ current, onSave }: PronounEditorProps) {
+export function PronounEditor({ title, current, onSave }: PronounEditorProps) {
   const initialString = current
     .map((p) => `${p.language ? `${p.language}:` : ''}${p.summary}`)
     .join(', ');
@@ -35,7 +36,7 @@ export function PronounEditor({ current, onSave }: PronounEditorProps) {
 
   return (
     <SettingTile
-      title="Pronouns"
+      title={title}
       // let people specify multiple sets of pronouns for different languages
       // the input is a comma separated list of pronoun sets, each set can have an optional language tag (e.g. "en:they/them, de:sie/ihr")
       description="Separate sets with commas (e.g. 'en:they/them, en:it/its, de:sie/ihr')."

@@ -551,6 +551,7 @@ function ProfileExtended({ profile, userId }: ProfileProps) {
         gap="400"
       >
         <PronounEditor
+          title="Pronouns"
           current={pronouns}
           onSave={(p) => handleSaveField('io.fsky.nyx.pronouns', p)}
         />
