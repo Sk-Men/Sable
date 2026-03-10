@@ -13,9 +13,10 @@ type PronounEditorProps = {
   title: string;
   current: PronounSet[];
   onSave: (p: PronounSet[]) => void;
+  disabled?: boolean;
 };
 
-export function PronounEditor({ title, current, onSave }: PronounEditorProps) {
+export function PronounEditor({ title, current, onSave, disabled }: PronounEditorProps) {
   const initialString = current
     .map((p) => `${p.language ? `${p.language}:` : ''}${p.summary}`)
     .join(', ');
@@ -45,6 +46,7 @@ export function PronounEditor({ title, current, onSave }: PronounEditorProps) {
           value={val}
           size="300"
           radii="300"
+          disabled={disabled ?? false}
           variant="Secondary"
           placeholder="Add pronouns..."
           onChange={handleChange}

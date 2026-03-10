@@ -478,6 +478,7 @@ export function Cosmetics({ requestClose }: CosmeticsProps) {
                   <PronounEditor
                     title={isSpace ? 'Space Pronouns' : 'Room Pronouns'}
                     current={roomProfile.resolvedPronouns as any}
+                    disabled={!(canHaveRoomPronouns || canEditPermissions)}
                     onSave={(p) =>
                       commands[isSpace ? Command.SPronoun : Command.Pronoun].exe(
                         p
