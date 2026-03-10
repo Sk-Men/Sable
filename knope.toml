@@ -1,25 +1,51 @@
-[packages.sable]
+[package]
 versioned_files = ["package.json", "package-lock.json"]
 changelog = "CHANGELOG.md"
 extra_changelog_sections = [
     { name = "Documentation", types = ["docs"] },
     { name = "Notes", types = ["note"] },
 ]
-# assets = "marker for GitHub bot" // TODO: add this later once we have assets
+# assets = "marker" // TODO: add this later once we have assets
 
 [changes]
 ignore_conventional_commits = true
 
 [[workflows]]
 name = "prepare-release"
-help_text = "Bump version and update changelog for the next release (used by CI)"
+help_text = "Prepare a release PR"
+
+[[workflows.steps]]
+type = "Command"
+command = "git switch -c release"
 
 [[workflows.steps]]
 type = "PrepareRelease"
 
+[[workflows.steps]]
+type = "Command"
+command = "git commit -m \"chore: prepare release $version\""
+
+[[workflows.steps]]
+type = "Command"
+command = "git push --force --set-upstream origin release"
+
+[[workflows.steps]]
+type = "CreatePullRequest"
+base = "dev"
+
+[workflows.steps.title]
+template = "chore: prepare release $version"
+
+[workflows.steps.body]
+template = """
+> [!IMPORTANT]
+> Merging this PR will create a new release.
+
+$changelog"""
+
 [[workflows]]
 name = "release"
-help_text = "Create a GitHub release for the sable package (used by CI after PR merge)"
+help_text = "Create a GitHub release"
 
 [[workflows.steps]]
 type = "Release"
@@ -36,6 +62,8 @@ owner = "SableClient"
 repo = "Sable"
 
 [release_notes]
+# The <!-- commit:$commit_hash --> marker is used by prepare-release.yml
 change_templates = [
-    "* $summary",
+    "### $summary <!-- commit:$commit_hash -->\n\n$details",
+    "* $summary <!-- commit:$commit_hash -->",
 ]

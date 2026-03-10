@@ -49,34 +49,38 @@ jobs:
           fi
 
       - name: Manage changeset comment
-        if: steps.labels.outputs.skip == 'false'
         uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8
         env:
+          SKIP: ${{ steps.labels.outputs.skip }}
           CHANGESET_FOUND: ${{ steps.check.outputs.found }}
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             const marker = '<!-- require-changeset -->';
+            const skip = process.env.SKIP === 'true';
             const found = process.env.CHANGESET_FOUND === 'true';
             const { owner, repo } = context.repo;
             const issue_number = context.issue.number;
 
-            // Always delete the old comment first so the new one appears fresh after each commit
             const comments = await github.paginate(github.rest.issues.listComments, {
               owner, repo, issue_number,
             });
             const existing = comments.find(
               (c) => c.user.type === 'Bot' && c.body.includes(marker),
             );
-            if (existing) {
-              await github.rest.issues.deleteComment({
-                owner, repo, comment_id: existing.id,
-              });
+
+            if (skip || found) {
+              // Clean up the warning comment — changeset added or PR marked internal
+              if (existing) {
+                await github.rest.issues.deleteComment({
+                  owner, repo, comment_id: existing.id,
+                });
+              }
+              return;
             }
 
-            if (!found) {
-              const body = `${marker}
-            ### ⚠️ Missing changeset
+            const body = `${marker}
+            ## ⚠️ Missing changeset
 
             This pull request does not include a changeset. Please add one before requesting review so the change is properly documented and included in the release notes.
 
@@ -87,7 +91,7 @@ jobs:
 
             \`\`\`md
             ---
-            sable: patch
+            default: patch
             ---
 
             Short user-facing summary of the change.
@@ -99,6 +103,10 @@ jobs:
 
             > If this PR is internal/maintenance with no user-facing impact, a maintainer can add the \`internal\` label to skip this check.`;
 
-              await github.rest.issues.createComment({ owner, repo, issue_number, body });
-              core.setFailed('No changeset found. Add a changeset file or apply the "internal" label to skip.');
+            if (existing) {
+              await github.rest.issues.deleteComment({
+                owner, repo, comment_id: existing.id,
+              });
             }
+            await github.rest.issues.createComment({ owner, repo, issue_number, body });
+            core.setFailed('No changeset found. Add a changeset file or apply the "internal" label to skip.');
