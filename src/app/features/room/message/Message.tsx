@@ -49,7 +49,7 @@ import {
   Username,
   UsernameBold,
 } from '$components/message';
-import { canEditEvent, getMemberAvatarMxc } from '$utils/room';
+import { canEditEvent, getEventEdits, getMemberAvatarMxc } from '$utils/room';
 import { mxcUrlToHttp } from '$utils/matrix';
 import { getSettings, MessageLayout, MessageSpacing, settingsAtom } from '$state/settings';
 import { nicknamesAtom, setNicknameAtom } from '$state/nicknames';
@@ -74,6 +74,7 @@ import { useSetting } from '$state/hooks/settings';
 import { useBlobCache } from '$hooks/useBlobCache';
 import { MessageAllReactionItem } from '$components/message/modals/MessageReactions';
 import { MessageReadReceiptItem } from '$components/message/modals/MessageReadRecipts';
+import { MessageEditHistoryItem } from '$components/message/modals/MessageEditHistory';
 import { MessageSourceCodeItem } from '$components/message/modals/MessageSource';
 import { MessageForwardItem } from '$components/message/modals/MessageForward';
 import { MessageDeleteItem } from '$components/message/modals/MessageDelete';
@@ -211,6 +212,7 @@ export type MessageProps = {
   mEvent: MatrixEvent;
   collapse: boolean;
   highlight: boolean;
+  notifyHighlight?: 'silent' | 'loud';
   edit?: boolean;
   canDelete?: boolean;
   canSendReaction?: boolean;
@@ -314,6 +316,7 @@ function MessageInternal(
     mEvent,
     collapse,
     highlight,
+    notifyHighlight,
     edit,
     canDelete,
     canSendReaction,
@@ -349,6 +352,18 @@ function MessageInternal(
   const mx = useMatrixClient();
   const useAuthentication = useMediaAuthentication();
 
+  const pmp = useMemo(
+    () =>
+      mEvent.event.content?.['com.beeper.per_message_profile'] as
+        | {
+            avatar_url: string | undefined;
+            displayname: string | undefined;
+            id: string | undefined;
+          }
+        | undefined,
+    [mEvent]
+  );
+
   // Profiles and Colors
   const profile = useUserProfile(senderId, room);
   const { color: usernameColor, font: usernameFont } = useSableCosmetics(senderId, room);
@@ -358,9 +373,14 @@ function MessageInternal(
   // avatar so per-room avatar overrides are respected in the timeline.
   const avatarUrl = useMemo(() => {
     if (collapse) return undefined;
-    const mxc = getMemberAvatarMxc(room, senderId) || profile.avatarUrl;
+    const mxc = pmp?.avatar_url || getMemberAvatarMxc(room, senderId) || profile.avatarUrl;
     return mxc ? mxcUrlToHttp(mx, mxc, useAuthentication, 48, 48, 'crop') : undefined;
-  }, [collapse, profile.avatarUrl, senderId, mx, room, useAuthentication]);
+  }, [pmp, collapse, profile.avatarUrl, senderId, mx, room, useAuthentication]);
+
+  const displayName = useMemo(
+    () => pmp?.displayname || senderDisplayName,
+    [pmp, senderDisplayName]
+  );
 
   const cachedAvatar = useBlobCache(avatarUrl ?? undefined);
 
@@ -424,7 +444,7 @@ function MessageInternal(
           onClick={onUsernameClick}
         >
           <Text as="span" size={messageLayout === MessageLayout.Bubble ? 'T300' : 'T400'} truncate>
-            <UsernameBold>{senderDisplayName}</UsernameBold>
+            <UsernameBold>{displayName}</UsernameBold>
           </Text>
         </Username>
         {showPronouns && (
@@ -467,7 +487,7 @@ function MessageInternal(
         <UserAvatar
           userId={senderId}
           src={cachedAvatar}
-          alt={senderDisplayName}
+          alt={displayName}
           renderFallback={() => <Icon size="200" src={Icons.User} filled />}
         />
       </Avatar>
@@ -650,6 +670,13 @@ function MessageInternal(
 
   const isThreadedMessage = mEvent.threadRootId !== undefined;
 
+  const evtId = mEvent.getId()!;
+  const evtTimeline = room.getTimelineForEvent(evtId);
+  const edits =
+    evtTimeline &&
+    getEventEdits(evtTimeline.getTimelineSet(), evtId, mEvent.getType())?.getRelations();
+  const isEdited = edits !== undefined;
+
   return (
     <MessageBase
       className={classNames(css.MessageBase, className, {
@@ -659,6 +686,7 @@ function MessageInternal(
       space={messageSpacing}
       collapse={collapse}
       highlight={highlight}
+      notifyHighlight={notifyHighlight}
       selected={!!menuAnchor || !!emojiBoardAnchor}
       {...props}
       {...hoverProps}
@@ -852,6 +880,7 @@ function MessageInternal(
                         {!hideReadReceipts && (
                           <MessageReadReceiptItem room={room} eventId={mEvent.getId() ?? ''} />
                         )}
+                        {isEdited && <MessageEditHistoryItem room={room} mEvent={mEvent} />}
                         {showDeveloperTools && (
                           <MessageSourceCodeItem room={room} mEvent={mEvent} />
                         )}
@@ -873,7 +902,7 @@ function MessageInternal(
                                 autoFocus
                                 value={nickDraft}
                                 onChange={(e) => setNickDraft(e.target.value)}
-                                placeholder={senderDisplayName}
+                                placeholder={displayName}
                                 onKeyDown={(e) => {
                                   if (e.key === 'Enter') {
                                     setNickname(senderId, nickDraft || undefined, mx);
@@ -1014,6 +1043,7 @@ export type EventProps = {
   room: Room;
   mEvent: MatrixEvent;
   highlight: boolean;
+  notifyHighlight?: 'silent' | 'loud';
   canDelete?: boolean;
   onReplyClick: (
     ev: Parameters<MouseEventHandler<HTMLButtonElement>>[0],
@@ -1030,6 +1060,7 @@ export const Event = as<'div', EventProps>(
       room,
       mEvent,
       highlight,
+      notifyHighlight,
       canDelete,
       onReplyClick,
       messageSpacing,
@@ -1107,6 +1138,13 @@ export const Event = as<'div', EventProps>(
       setMobileOptionsOpen(true);
     });
 
+    const evtId = mEvent.getId()!;
+    const evtTimeline = room.getTimelineForEvent(evtId);
+    const edits =
+      evtTimeline &&
+      getEventEdits(evtTimeline.getTimelineSet(), evtId, mEvent.getType())?.getRelations();
+    const isEdited = edits !== undefined;
+
     return (
       <MessageBase
         className={classNames(css.MessageBase, className)}
@@ -1114,6 +1152,7 @@ export const Event = as<'div', EventProps>(
         space={messageSpacing}
         autoCollapse
         highlight={highlight}
+        notifyHighlight={notifyHighlight}
         selected={!!menuAnchor}
         {...props}
         {...hoverProps}
@@ -1146,6 +1185,7 @@ export const Event = as<'div', EventProps>(
                             {!hideReadReceipts && (
                               <MessageReadReceiptItem room={room} eventId={mEvent.getId() ?? ''} />
                             )}
+                            {isEdited && <MessageEditHistoryItem room={room} mEvent={mEvent} />}
                             {showDeveloperTools && (
                               <MessageSourceCodeItem room={room} mEvent={mEvent} />
                             )}

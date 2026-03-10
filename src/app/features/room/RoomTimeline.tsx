@@ -23,6 +23,7 @@ import {
   IRoomTimelineData,
   MatrixClient,
   MatrixEvent,
+  PushProcessor,
   RelationType,
   Room,
   RoomEvent,
@@ -103,7 +104,6 @@ import {
   useIntersectionObserver,
 } from '$hooks/useIntersectionObserver';
 import { markAsRead } from '$utils/notifications';
-import { useDebounce } from '$hooks/useDebounce';
 import { getResizeObserverEntry, useResizeObserver } from '$hooks/useResizeObserver';
 import { inSameDay, minuteDifference, timeDayMonthYear, today, yesterday } from '$utils/time';
 import { createMentionElement, isEmptyEditor, moveCursor } from '$components/editor';
@@ -562,6 +562,7 @@ export function RoomTimeline({
 }: RoomTimelineProps) {
   const mx = useMatrixClient();
   const useAuthentication = useMediaAuthentication();
+  const pushProcessor = useMemo(() => new PushProcessor(mx), [mx]);
   const [hideReads] = useSetting(settingsAtom, 'hideReads');
   const [messageLayout] = useSetting(settingsAtom, 'messageLayout');
   const [messageSpacing] = useSetting(settingsAtom, 'messageSpacing');
@@ -620,9 +621,13 @@ export function RoomTimeline({
   }
 
   const atBottomAnchorRef = useRef<HTMLElement>(null);
-  const [atBottom, setAtBottom] = useState<boolean>(true);
+
+  const [atBottom, setAtBottomState] = useState<boolean>(true);
   const atBottomRef = useRef(atBottom);
-  atBottomRef.current = atBottom;
+  const setAtBottom = useCallback((val: boolean) => {
+    setAtBottomState(val);
+    atBottomRef.current = val;
+  }, []);
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const scrollToBottomRef = useRef({
@@ -734,6 +739,7 @@ export function RoomTimeline({
         if (!alive()) return;
         const evLength = getTimelinesEventsCount(lTimelines);
 
+        setAtBottom(false);
         setFocusItem({
           index: evtAbsIndex,
           scrollTo: true,
@@ -747,7 +753,7 @@ export function RoomTimeline({
           },
         });
       },
-      [alive]
+      [alive, setAtBottom]
     ),
     useCallback(() => {
       if (!alive()) return;
@@ -829,6 +835,8 @@ export function RoomTimeline({
         evtTimeline && getEventIdAbsoluteIndex(timeline.linkedTimelines, evtTimeline, evtId);
 
       if (typeof absoluteIndex === 'number') {
+        setAtBottom(false);
+
         const scrolled = scrollToItem(absoluteIndex, {
           behavior: reducedMotion ? 'instant' : 'smooth',
           align: 'center',
@@ -837,23 +845,46 @@ export function RoomTimeline({
         if (onScroll) onScroll(scrolled);
         setFocusItem({
           index: absoluteIndex,
-          scrollTo: false,
+          scrollTo: !scrolled,
           highlight,
         });
       } else {
         loadEventTimeline(evtId);
       }
     },
-    [room, timeline, scrollToItem, loadEventTimeline, reducedMotion]
+    [room, timeline, scrollToItem, loadEventTimeline, reducedMotion, setAtBottom]
   );
 
   useLiveTimelineRefresh(
     room,
     useCallback(() => {
-      if (liveTimelineLinked || timeline.linkedTimelines.length === 0) {
-        setTimeline(getInitialTimeline(room));
-      }
-    }, [room, liveTimelineLinked, timeline.linkedTimelines.length])
+      // Always reinitialize on TimelineRefresh. With sliding sync, a limited
+      // response replaces the room's live EventTimeline with a brand-new object,
+      // firing TimelineRefresh. At that moment liveTimelineLinked is stale-false
+      // (the stored linkedTimelines still reference the old detached object),
+      // so the previous guard `if (liveTimelineLinked || ...)` would silently
+      // skip reinit. Back-pagination then calls paginateEventTimeline against
+      // the dead old timeline, which no-ops, and the IntersectionObserver never
+      // re-fires because intersection state didn't change — causing a permanent
+      // hang at the top of the timeline with no spinner and no history loaded.
+      // Unconditionally reinitializing is correct: TimelineRefresh signals that
+      // the SDK has replaced the timeline chain, so any stored range/indices
+      // against the old chain are invalid anyway.
+      //
+      // Also force atBottom=true and queue a scroll-to-bottom. The SDK fires
+      // TimelineRefresh before adding new events to the fresh live timeline, so
+      // getInitialTimeline captures range.end=0. Once events arrive the
+      // rangeAtEnd self-heal useEffect needs atBottom=true to run; the
+      // IntersectionObserver may have transiently fired isIntersecting=false
+      // during the render transition, leaving atBottom=false and causing the
+      // "Jump to Latest" button to stick permanently. Forcing atBottom here is
+      // correct: TimelineRefresh always reinits to the live end, so the user
+      // should be repositioned to the bottom regardless.
+      setTimeline(getInitialTimeline(room));
+      setAtBottom(true);
+      scrollToBottomRef.current.count += 1;
+      scrollToBottomRef.current.smooth = false;
+    }, [room, setAtBottom])
   );
 
   // Re-render when non-live Replace relations arrive (bundled/historical edits
@@ -873,6 +904,21 @@ export function RoomTimeline({
     if (getLiveTimeline(room).getEvents().length === 0) return;
     setTimeline(getInitialTimeline(room));
   }, [eventId, room, timeline.linkedTimelines.length]);
+
+  // Fix stale rangeAtEnd after a sliding sync TimelineRefresh. The SDK fires
+  // TimelineRefresh before adding new events to the freshly-created live
+  // EventTimeline, so getInitialTimeline captures range.end=0. New events then
+  // arrive via useLiveEventArrive, but its atLiveEndRef guard is stale-false
+  // (hasn't re-rendered yet), bypassing the range-advance path. The next render
+  // ends up with liveTimelineLinked=true but rangeAtEnd=false, making the
+  // "Jump to Latest" button appear while the user is already at the bottom.
+  // Re-running getInitialTimeline post-render (after events were added to the
+  // live EventTimeline object) snaps range.end to the correct event count.
+  useEffect(() => {
+    if (liveTimelineLinked && !rangeAtEnd && atBottom) {
+      setTimeline(getInitialTimeline(room));
+    }
+  }, [liveTimelineLinked, rangeAtEnd, atBottom, room]);
 
   // Stay at bottom when room editor resize
   useResizeObserver(
@@ -910,29 +956,26 @@ export function RoomTimeline({
     }
   }, [mx, room, hideReads]);
 
-  const debounceSetAtBottom = useDebounce(
-    useCallback((entry: IntersectionObserverEntry) => {
-      if (!entry.isIntersecting) setAtBottom(false);
-    }, []),
-    { wait: 1000 }
-  );
   useIntersectionObserver(
     useCallback(
       (entries) => {
         const target = atBottomAnchorRef.current;
         if (!target) return;
         const targetEntry = getIntersectionObserverEntry(target, entries);
-        if (targetEntry) debounceSetAtBottom(targetEntry);
-        if (targetEntry?.isIntersecting) {
-          // Track scroll position independently of atLiveEndRef so that atBottom
-          // is always accurate. tryAutoMarkAsRead still requires atLiveEndRef.
+        if (!targetEntry) return;
+
+        if (targetEntry.isIntersecting) {
+          // User has reached the bottom
           setAtBottom(true);
           if (atLiveEndRef.current && document.hasFocus()) {
             tryAutoMarkAsRead();
           }
+        } else {
+          // User has intentionally scrolled up.
+          setAtBottom(false);
         }
       },
-      [debounceSetAtBottom, tryAutoMarkAsRead]
+      [tryAutoMarkAsRead, setAtBottom]
     ),
     useCallback(
       () => ({
@@ -1006,36 +1049,20 @@ export function RoomTimeline({
     const contentEl = scrollEl?.firstElementChild as HTMLElement;
     if (!scrollEl || !contentEl) return () => {};
 
-    let lastScrollTop = scrollEl.scrollTop;
-    let userIsScrollingUp = false;
-
-    // Track if user is scrolling up
-    const handleScroll = () => {
-      if (scrollEl.scrollTop < lastScrollTop) {
-        userIsScrollingUp = true;
-      } else if (scrollEl.scrollHeight - scrollEl.scrollTop <= scrollEl.clientHeight + 10) {
-        userIsScrollingUp = false;
-      }
-      lastScrollTop = scrollEl.scrollTop;
-    };
-
     const forceScroll = () => {
       // if the user isn't scrolling jump down to latest content
-      if (!userIsScrollingUp) {
-        scrollToBottom(scrollEl, 'instant');
-      }
+      if (!atBottomRef.current) return;
+      scrollToBottom(scrollEl, 'instant');
     };
 
     const resizeObserver = new ResizeObserver(() => {
       requestAnimationFrame(forceScroll);
     });
 
-    scrollEl.addEventListener('scroll', handleScroll, { passive: true });
     resizeObserver.observe(contentEl);
 
     return () => {
       resizeObserver.disconnect();
-      scrollEl.removeEventListener('scroll', handleScroll);
     };
   }, [room]);
 
@@ -1090,7 +1117,9 @@ export function RoomTimeline({
         // reach the true bottom (e.g. after images finish loading or the
         // virtual keyboard shifts the viewport).
         if (behavior === 'instant') {
-          setTimeout(() => scrollToBottom(scrollEl, 'instant'), 80);
+          setTimeout(() => {
+            scrollToBottom(scrollEl, 'instant');
+          }, 80);
         }
       }
     }
@@ -1324,6 +1353,12 @@ export function RoomTimeline({
         const { replyEventId, threadRootId } = mEvent;
         const highlighted = focusItem?.index === item && focusItem.highlight;
 
+        const pushActions = pushProcessor.actionsForEvent(mEvent);
+        let notifyHighlight: 'silent' | 'loud' | undefined;
+        if (pushActions?.notify && pushActions.tweaks?.highlight) {
+          notifyHighlight = pushActions.tweaks?.sound ? 'loud' : 'silent';
+        }
+
         const editedEvent = getEditedEvent(mEventId, mEvent, timelineSet);
         const editedNewContent = editedEvent?.getContent()['m.new_content'];
         // If makeReplaced was called with a stripped edit (no m.new_content),
@@ -1372,6 +1407,7 @@ export function RoomTimeline({
             messageLayout={messageLayout}
             collapse={collapse}
             highlight={highlighted}
+            notifyHighlight={notifyHighlight}
             edit={editId === mEventId}
             canDelete={canRedact || (canDeleteOwn && mEvent.getSender() === mx.getUserId())}
             canSendReaction={canSendReaction}
@@ -1449,6 +1485,12 @@ export function RoomTimeline({
         const senderDisplayName =
           getMemberDisplayName(room, senderId, nicknames) ?? getMxIdLocalPart(senderId) ?? senderId;
 
+        const pushActions = pushProcessor.actionsForEvent(mEvent);
+        let notifyHighlight: 'silent' | 'loud' | undefined;
+        if (pushActions?.notify && pushActions.tweaks?.highlight) {
+          notifyHighlight = pushActions.tweaks?.sound ? 'loud' : 'silent';
+        }
+
         return (
           <Message
             key={mEvent.getId()}
@@ -1460,6 +1502,7 @@ export function RoomTimeline({
             messageLayout={messageLayout}
             collapse={collapse}
             highlight={highlighted}
+            notifyHighlight={notifyHighlight}
             edit={editId === mEventId}
             canDelete={canRedact || (canDeleteOwn && mEvent.getSender() === mx.getUserId())}
             canSendReaction={canSendReaction}
@@ -2122,6 +2165,19 @@ export function RoomTimeline({
         </Box>
       );
     } else if (timelineItems.length === 0) {
+      // When eventsLength===0 AND liveTimelineLinked the live EventTimeline was
+      // just reset by a sliding sync TimelineRefresh and new events haven't
+      // arrived yet. Attaching the IntersectionObserver anchor here would
+      // immediately fire a server-side /messages request before current events
+      // land — potentially causing a "/messages hangs → spinner stuck" scenario.
+      // Suppressing the anchor for this transient state is safe: the rangeAtEnd
+      // self-heal useEffect will call getInitialTimeline once events arrive, and
+      // at that point the correct anchor (below) will be re-observed.
+      // eventsLength>0 covers the range={K,K} case from recalibratePagination
+      // where items=0 but events exist — that needs the anchor for local range
+      // extension (no server call since start>0).
+      const placeholderBackAnchor =
+        eventsLength > 0 || !liveTimelineLinked ? observeBackAnchor : undefined;
       backPaginationJSX =
         messageLayout === MessageLayout.Compact ? (
           <>
@@ -2137,7 +2193,7 @@ export function RoomTimeline({
             <MessageBase>
               <CompactPlaceholder />
             </MessageBase>
-            <MessageBase ref={observeBackAnchor}>
+            <MessageBase ref={placeholderBackAnchor}>
               <CompactPlaceholder />
             </MessageBase>
           </>
@@ -2149,7 +2205,7 @@ export function RoomTimeline({
             <MessageBase>
               <DefaultPlaceholder />
             </MessageBase>
-            <MessageBase ref={observeBackAnchor}>
+            <MessageBase ref={placeholderBackAnchor}>
               <DefaultPlaceholder />
             </MessageBase>
           </>

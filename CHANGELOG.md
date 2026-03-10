@@ -1,5 +1,49 @@
 # Sable Client Changelog
 
+## 1.6.0 (2026-03-10)
+
+### Features
+
+* GitHub repo moved to [SableClient/Sable](https://github.com/SableClient/Sable) go star it!
+* Added a pop-up for showing a message's edit history
+* In-app bug report and feature request modal.
+* Mentions now receive a full-width background highlight in the room timeline.
+
+* Adds a **Presence Status** toggle under Settings → General.
+
+* Rewrites the sliding sync implementation to match the Element Web approach (MSC4186).
+
+### Fixes
+
+* Enhance UnsupportedContent and BrokenContent to display message body.
+* Notification settings page improvements.
+* In-app notification banner placement fixes.
+* Notification delivery bug fixes.
+* Prevent multiple forwards of a message if sending is slow.
+
+## 1.5.3 (2026-03-08)
+
+### Fixes
+
+* Fix scroll clamping to bottom while scrolling up.
+* Fix message links sometimes scrolling to bottom of timeline instead of message + maybe other scroll bugs.
+* Merge upstream call fixes
+* Fix crash when invalid location events are sent.
+* Add rendering of per-message-profiles.
+* custom emojis are now also visible in forwards, instead of being reduced to it's shortcode
+
+* fix: default badge unread counts to off
+
+## 1.5.2 (2026-03-08)
+
+### Fixes
+
+* Add `/hug`, `/cuddle`, `/wave`, `/headpat`, and `/poke` slash commands.
+* Swap Caddy port to 8080 + fixes for MDAD setups.
+* Adjust media sizing and URL preview layout
+* Fix picture in picture setting not effecting element-call
+* Fixed an issue where the app would fail to load after completing SSO login (e.g., logging in with matrix.org). Users are now correctly redirected to the app after SSO authentication completes.
+
 ## 1.5.1 (2026-03-08)
 
 ### Fixes
