@@ -1,5 +1,5 @@
 ---
-'sable': patch
+sable: patch
 ---
 
-fix: in-app notification banner placement
+In-app notification banner placement fixes.
