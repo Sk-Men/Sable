@@ -54,6 +54,7 @@ import FocusTrap from 'focus-trap-react';
 import { ImageEditor } from '$components/image-editor';
 import { stopPropagation } from '$utils/keyboard';
 import { ModalWide } from '$styles/Modal.css';
+import { NameColorEditor } from '$features/settings/account/NameColorEditor';
 
 const log = createLogger('Cosmetics');
 
@@ -314,6 +315,7 @@ export function Cosmetics({ requestClose }: CosmeticsProps) {
   const userId = mx.getUserId()!;
   const profile = useUserProfile(userId);
   const room = useRoom();
+  const roomProfile = useUserProfile(userId, room);
   const creators = useRoomCreators(room);
   const member = room.getMember(userId)!;
   const powerLevels = usePowerLevels(room);
@@ -321,6 +323,8 @@ export function Cosmetics({ requestClose }: CosmeticsProps) {
 
   const permissions = useRoomPermissions(creators, powerLevels);
   const canEditPermissions = permissions.stateEvent(StateEvent.RoomPowerLevels, mx.getSafeUserId());
+
+  const commands = useCommands(mx, room);
 
   const getLevel = (eventType: string) => (powerLevels as any).events?.[eventType] ?? 50;
 
@@ -402,9 +406,10 @@ export function Cosmetics({ requestClose }: CosmeticsProps) {
                   direction="Column"
                   gap="400"
                 >
-                  <SettingTile
-                    title="Color"
-                    description="Placeholder. This is a work in progress still!"
+                  <NameColorEditor
+                    title="Room Name Color"
+                    current={roomProfile.resolvedColor}
+                    onSave={(color) => commands[Command.Color].exe(color ?? 'clear')}
                   />
                 </SequenceCard>
                 <SequenceCard
