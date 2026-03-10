@@ -407,9 +407,11 @@ export function Cosmetics({ requestClose }: CosmeticsProps) {
                   gap="400"
                 >
                   <NameColorEditor
-                    title="Room Name Color"
+                    title={isSpace ? 'Space Name Color' : 'Room Name Color'}
                     current={roomProfile.resolvedColor}
-                    onSave={(color) => commands[Command.Color].exe(color ?? 'clear')}
+                    onSave={(color) =>
+                      commands[isSpace ? Command.SColor : Command.Color].exe(color ?? 'clear')
+                    }
                   />
                 </SequenceCard>
                 <SequenceCard
