@@ -49,7 +49,7 @@ import {
   Username,
   UsernameBold,
 } from '$components/message';
-import { canEditEvent, getMemberAvatarMxc } from '$utils/room';
+import { canEditEvent, getEventEdits, getMemberAvatarMxc } from '$utils/room';
 import { mxcUrlToHttp } from '$utils/matrix';
 import { getSettings, MessageLayout, MessageSpacing, settingsAtom } from '$state/settings';
 import { nicknamesAtom, setNicknameAtom } from '$state/nicknames';
@@ -74,6 +74,7 @@ import { useSetting } from '$state/hooks/settings';
 import { useBlobCache } from '$hooks/useBlobCache';
 import { MessageAllReactionItem } from '$components/message/modals/MessageReactions';
 import { MessageReadReceiptItem } from '$components/message/modals/MessageReadRecipts';
+import { MessageEditHistoryItem } from '$components/message/modals/MessageEditHistory';
 import { MessageSourceCodeItem } from '$components/message/modals/MessageSource';
 import { MessageForwardItem } from '$components/message/modals/MessageForward';
 import { MessageDeleteItem } from '$components/message/modals/MessageDelete';
@@ -669,6 +670,13 @@ function MessageInternal(
 
   const isThreadedMessage = mEvent.threadRootId !== undefined;
 
+  const evtId = mEvent.getId()!;
+  const evtTimeline = room.getTimelineForEvent(evtId);
+  const edits =
+    evtTimeline &&
+    getEventEdits(evtTimeline.getTimelineSet(), evtId, mEvent.getType())?.getRelations();
+  const isEdited = edits !== undefined;
+
   return (
     <MessageBase
       className={classNames(css.MessageBase, className, {
@@ -872,6 +880,7 @@ function MessageInternal(
                         {!hideReadReceipts && (
                           <MessageReadReceiptItem room={room} eventId={mEvent.getId() ?? ''} />
                         )}
+                        {isEdited && <MessageEditHistoryItem room={room} mEvent={mEvent} />}
                         {showDeveloperTools && (
                           <MessageSourceCodeItem room={room} mEvent={mEvent} />
                         )}
@@ -1129,6 +1138,13 @@ export const Event = as<'div', EventProps>(
       setMobileOptionsOpen(true);
     });
 
+    const evtId = mEvent.getId()!;
+    const evtTimeline = room.getTimelineForEvent(evtId);
+    const edits =
+      evtTimeline &&
+      getEventEdits(evtTimeline.getTimelineSet(), evtId, mEvent.getType())?.getRelations();
+    const isEdited = edits !== undefined;
+
     return (
       <MessageBase
         className={classNames(css.MessageBase, className)}
@@ -1169,6 +1185,7 @@ export const Event = as<'div', EventProps>(
                             {!hideReadReceipts && (
                               <MessageReadReceiptItem room={room} eventId={mEvent.getId() ?? ''} />
                             )}
+                            {isEdited && <MessageEditHistoryItem room={room} mEvent={mEvent} />}
                             {showDeveloperTools && (
                               <MessageSourceCodeItem room={room} mEvent={mEvent} />
                             )}
