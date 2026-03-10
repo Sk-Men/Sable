@@ -55,6 +55,7 @@ import { ImageEditor } from '$components/image-editor';
 import { stopPropagation } from '$utils/keyboard';
 import { ModalWide } from '$styles/Modal.css';
 import { NameColorEditor } from '$features/settings/account/NameColorEditor';
+import { PronounEditor, PronounSet } from '$features/settings/account/PronounEditor';
 
 const log = createLogger('Cosmetics');
 
@@ -420,9 +421,18 @@ export function Cosmetics({ requestClose }: CosmeticsProps) {
                   direction="Column"
                   gap="400"
                 >
-                  <SettingTile
-                    title="Pronouns"
-                    description="Placeholder. This is a work in progress still!"
+                  <PronounEditor
+                    title={isSpace ? 'Space Pronouns' : 'Room Pronouns'}
+                    current={roomProfile.resolvedPronouns as any}
+                    onSave={(p) =>
+                      commands[isSpace ? Command.SPronoun : Command.Pronoun].exe(
+                        p
+                          .map(({ language, summary }: PronounSet) =>
+                            language ? `${language}:${summary}` : summary
+                          )
+                          .join()
+                      )
+                    }
                   />
                 </SequenceCard>
                 <SequenceCard
