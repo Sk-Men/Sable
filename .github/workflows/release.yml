@@ -32,6 +32,6 @@ jobs:
           version: 0.22.1
 
       - name: Create Release
-        run: knope release --package ${{ steps.branch.outputs.package }} --verbose
+        run: knope release --verbose
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
