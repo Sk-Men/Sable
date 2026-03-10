@@ -24,10 +24,10 @@ export const EventItem = style({
   height: 'unset',
   borderRadius: '5px',
   border: '2px hidden',
-  borderColor: color.Secondary.Main,
+  backgroundColor: 'inherit',
   selectors: {
     '&:hover': {
-      border: '2px solid',
+      backgroundColor: color.Surface.ContainerHover,
     },
   },
 });

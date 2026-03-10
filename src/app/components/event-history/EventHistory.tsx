@@ -10,6 +10,7 @@ import {
   Scroll,
   Text,
   as,
+  color,
   config,
 } from 'folds';
 import { MatrixEvent, Room } from '$types/matrix-sdk';
@@ -125,25 +126,28 @@ export const EventHistory = as<'div', EventHistoryProps>(
                 if (!mEvent.event.sender) return <div />;
                 const EventContent = mEvent.getOriginalContent();
                 return (
-                  <Box className={css.EventItem}>
-                    <Time
-                      ts={mEvent.getTs()}
-                      hour24Clock={hour24Clock}
-                      dateFormatString={dateFormatString}
-                    />
-                    <Text size="T400" style={{ paddingLeft: '10px', wordBreak: 'break-word' }}>
-                      <RenderBody
-                        body={EventContent?.['m.new_content']?.body ?? EventContent?.body ?? ''}
-                        customBody={
-                          EventContent?.['m.new_content']?.formatted_body ??
-                          EventContent?.formatted_body ??
-                          ''
-                        }
-                        htmlReactParserOptions={htmlReactParserOptions}
-                        linkifyOpts={linkifyOpts}
+                  <>
+                    <hr style={{ width: '100%', color: color.Surface.ContainerLine }} />
+                    <Box className={css.EventItem}>
+                      <Time
+                        ts={mEvent.getTs()}
+                        hour24Clock={hour24Clock}
+                        dateFormatString={dateFormatString}
                       />
-                    </Text>
-                  </Box>
+                      <Text size="T400" style={{ paddingLeft: '10px', wordBreak: 'break-word' }}>
+                        <RenderBody
+                          body={EventContent?.['m.new_content']?.body ?? EventContent?.body ?? ''}
+                          customBody={
+                            EventContent?.['m.new_content']?.formatted_body ??
+                            EventContent?.formatted_body ??
+                            ''
+                          }
+                          htmlReactParserOptions={htmlReactParserOptions}
+                          linkifyOpts={linkifyOpts}
+                        />
+                      </Text>
+                    </Box>
+                  </>
                 );
               })}
             </Box>
