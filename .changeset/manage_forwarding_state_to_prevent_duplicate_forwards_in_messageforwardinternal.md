@@ -2,4 +2,4 @@
 sable: patch
 ---
 
-prevent multiple forwards of a message if sending is slow
+Prevent multiple forwards of a message if sending is slow.
