@@ -524,13 +524,15 @@ export function Cosmetics({ requestClose }: CosmeticsProps) {
                   gap="400"
                 >
                   <SettingTile
-                    title={isSpace ? 'Space-Wide Fonts' : 'Room Fonts'}
-                    description={`Allow everyone to set a font that applies in ${isSpace ? "all the space's rooms" : 'this room'}.`}
+                    title={isSpace ? 'Space-Wide Pronouns' : 'Room Pronouns'}
+                    description={`Allow everyone to set pronouns that apply in ${isSpace ? "all the space's rooms" : 'this room'}.`}
                     after={
                       <Switch
                         variant="Primary"
-                        value={canHaveRoomFont}
-                        onChange={(enabled) => handleToggle(StateEvent.RoomCosmeticsFont, enabled)}
+                        value={canHaveRoomPronouns}
+                        onChange={(enabled) =>
+                          handleToggle(StateEvent.RoomCosmeticsPronouns, enabled)
+                        }
                         disabled={!canEditPermissions}
                       />
                     }
@@ -543,15 +545,13 @@ export function Cosmetics({ requestClose }: CosmeticsProps) {
                   gap="400"
                 >
                   <SettingTile
-                    title={isSpace ? 'Space-Wide Pronouns' : 'Room Pronouns'}
-                    description={`Allow everyone to set pronouns that apply in ${isSpace ? "all the space's rooms" : 'this room'}.`}
+                    title={isSpace ? 'Space-Wide Fonts' : 'Room Fonts'}
+                    description={`Allow everyone to set a font that applies in ${isSpace ? "all the space's rooms" : 'this room'}.`}
                     after={
                       <Switch
                         variant="Primary"
-                        value={canHaveRoomPronouns}
-                        onChange={(enabled) =>
-                          handleToggle(StateEvent.RoomCosmeticsPronouns, enabled)
-                        }
+                        value={canHaveRoomFont}
+                        onChange={(enabled) => handleToggle(StateEvent.RoomCosmeticsFont, enabled)}
                         disabled={!canEditPermissions}
                       />
                     }
