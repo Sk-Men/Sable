@@ -313,10 +313,12 @@ export function CosmeticsFont({
   room,
   isSpace,
   font,
+  disabled,
 }: {
   room: Room;
   isSpace: boolean;
   font?: string;
+  disabled: boolean;
 }) {
   const mx = useMatrixClient();
 
@@ -344,6 +346,7 @@ export function CosmeticsFont({
           value={val}
           size="300"
           radii="300"
+          disabled={disabled}
           variant="Secondary"
           placeholder="Comic Sans"
           onChange={handleChange}
@@ -496,7 +499,7 @@ export function Cosmetics({ requestClose }: CosmeticsProps) {
                   direction="Column"
                   gap="400"
                 >
-                  <CosmeticsFont room={room} isSpace={isSpace} font={roomProfile.resolvedFont} />
+                  <CosmeticsFont room={room} isSpace={isSpace} font={roomProfile.resolvedFont}  disabled={!(canHaveRoomFont || canEditPermissions)} />
                 </SequenceCard>
               </Box>
               <Box direction="Column" gap="100">
