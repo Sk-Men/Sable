@@ -8,6 +8,7 @@ import { useMatrixClient } from '$hooks/useMatrixClient';
 import { SequenceCardStyle } from '$features/settings/styles.css';
 import { Method } from '$types/matrix-sdk';
 import { useState } from 'react';
+import { useOpenBugReportModal } from '$state/hooks/bugReportModal';
 
 export function HomeserverInfo() {
   const mx = useMatrixClient();
@@ -149,6 +150,7 @@ export function About({ requestClose }: AboutProps) {
   const mx = useMatrixClient();
   const devLabel = IS_RELEASE_TAG ? '' : '-dev';
   const buildLabel = BUILD_HASH ? ` (${BUILD_HASH})` : '';
+  const openBugReport = useOpenBugReportModal();
 
   return (
     <Page>
@@ -190,7 +192,7 @@ export function About({ requestClose }: AboutProps) {
                   <Box gap="200" wrap="Wrap">
                     <Button
                       as="a"
-                      href="https://github.com/7w1/sable"
+                      href="https://github.com/SableClient/Sable"
                       rel="noreferrer noopener"
                       target="_blank"
                       variant="Secondary"
@@ -203,7 +205,7 @@ export function About({ requestClose }: AboutProps) {
                     </Button>
                     <Button
                       as="a"
-                      href="https://github.com/7w1/sable/pulls"
+                      href="https://github.com/SableClient/Sable/pulls"
                       rel="noreferrer noopener"
                       target="_blank"
                       variant="Critical"
@@ -238,6 +240,29 @@ export function About({ requestClose }: AboutProps) {
                         outlined
                       >
                         <Text size="B300">Clear Cache</Text>
+                      </Button>
+                    }
+                  />
+                </SequenceCard>
+                <SequenceCard
+                  className={SequenceCardStyle}
+                  variant="SurfaceVariant"
+                  direction="Column"
+                  gap="400"
+                >
+                  <SettingTile
+                    title="Report an Issue"
+                    description="Report a bug or request a feature on GitHub."
+                    after={
+                      <Button
+                        onClick={openBugReport}
+                        variant="Secondary"
+                        fill="Soft"
+                        size="300"
+                        radii="300"
+                        outlined
+                      >
+                        <Text size="B300">Report</Text>
                       </Button>
                     }
                   />

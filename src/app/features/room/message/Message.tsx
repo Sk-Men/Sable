@@ -81,6 +81,10 @@ import { MessageDeleteItem } from '$components/message/modals/MessageDelete';
 import { MessageReportItem } from '$components/message/modals/MessageReport';
 import { filterPronounsByLanguage } from '$utils/pronouns';
 import { useMentionClickHandler } from '$hooks/useMentionClickHandler';
+import {
+  addStickerToDefaultPack,
+  doesStickerExistInDefaultPack,
+} from '$utils/addStickerToDefaultStickerPack';
 import { MessageEditor } from './MessageEditor';
 import * as css from './styles.css';
 
@@ -212,6 +216,7 @@ export type MessageProps = {
   mEvent: MatrixEvent;
   collapse: boolean;
   highlight: boolean;
+  notifyHighlight?: 'silent' | 'loud';
   edit?: boolean;
   canDelete?: boolean;
   canSendReaction?: boolean;
@@ -315,6 +320,7 @@ function MessageInternal(
     mEvent,
     collapse,
     highlight,
+    notifyHighlight,
     edit,
     canDelete,
     canSendReaction,
@@ -667,6 +673,7 @@ function MessageInternal(
   });
 
   const isThreadedMessage = mEvent.threadRootId !== undefined;
+  const isStickerMessage = mEvent.getType() === 'm.sticker';
 
   const evtId = mEvent.getId()!;
   const evtTimeline = room.getTimelineForEvent(evtId);
@@ -684,6 +691,7 @@ function MessageInternal(
       space={messageSpacing}
       collapse={collapse}
       highlight={highlight}
+      notifyHighlight={notifyHighlight}
       selected={!!menuAnchor || !!emojiBoardAnchor}
       {...props}
       {...hoverProps}
@@ -817,6 +825,33 @@ function MessageInternal(
                             </Text>
                           </MenuItem>
                         )}
+                        {isStickerMessage &&
+                          !doesStickerExistInDefaultPack(mx, mEvent.getContent().url) && (
+                            <MenuItem
+                              size="300"
+                              after={<Icon size="100" src={Icons.Star} />}
+                              radii="300"
+                              onClick={() => {
+                                addStickerToDefaultPack(
+                                  mx,
+                                  `sticker-${mEvent.getId()}`,
+                                  mEvent.getContent().url,
+                                  mEvent.getContent().body,
+                                  mEvent.getContent().info
+                                );
+                                closeMenu();
+                              }}
+                            >
+                              <Text
+                                className={css.MessageMenuItemText}
+                                as="span"
+                                size="T300"
+                                truncate
+                              >
+                                Add to User Sticker Pack
+                              </Text>
+                            </MenuItem>
+                          )}
                         {relations && <MessageAllReactionItem room={room} relations={relations} />}
                         <MenuItem
                           size="300"
@@ -1046,6 +1081,7 @@ export type EventProps = {
   room: Room;
   mEvent: MatrixEvent;
   highlight: boolean;
+  notifyHighlight?: 'silent' | 'loud';
   canDelete?: boolean;
   onReplyClick: (
     ev: Parameters<MouseEventHandler<HTMLButtonElement>>[0],
@@ -1062,6 +1098,7 @@ export const Event = as<'div', EventProps>(
       room,
       mEvent,
       highlight,
+      notifyHighlight,
       canDelete,
       onReplyClick,
       messageSpacing,
@@ -1153,6 +1190,7 @@ export const Event = as<'div', EventProps>(
         space={messageSpacing}
         autoCollapse
         highlight={highlight}
+        notifyHighlight={notifyHighlight}
         selected={!!menuAnchor}
         {...props}
         {...hoverProps}
