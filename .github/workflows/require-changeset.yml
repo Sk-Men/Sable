@@ -29,19 +29,23 @@ jobs:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         if: steps.labels.outputs.skip == 'false'
         with:
+          fetch-depth: 0
           persist-credentials: false
 
-      - name: Check for changeset
+      - name: Check for changeset added by this PR
         if: steps.labels.outputs.skip == 'false'
         id: check
         shell: bash
+        env:
+          BASE_REF: ${{ github.event.pull_request.base.ref }}
         run: |
-          count=$(find .changeset -maxdepth 1 -name '*.md' ! -name 'README.md' | wc -l)
+          # Only count changeset files this PR added, ignoring pre-existing ones on the base branch.
+          count=$(git diff --name-only --diff-filter=A "origin/${BASE_REF}...HEAD"             | grep -E '^\.changeset/.+\.md$' | grep -cv README.md || true)
           if [[ "$count" -eq 0 ]]; then
             echo "found=false" >> "$GITHUB_OUTPUT"
           else
             echo "found=true" >> "$GITHUB_OUTPUT"
-            echo "Found $count changeset file(s)."
+            echo "Found $count new changeset file(s)."
           fi
 
       - name: Manage changeset comment
