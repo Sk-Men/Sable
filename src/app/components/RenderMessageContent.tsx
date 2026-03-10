@@ -120,8 +120,9 @@ function RenderMessageContentInternal({
   );
 
   const renderCaption = () => {
+    const hasCaption = content.body && content.body.trim().length > 0;
     if (captionPosition === CaptionPosition.Hidden) return null;
-    if (content.filename && content.filename !== content.body) {
+    if (hasCaption && content.filename && content.filename !== content.body) {
       if (captionPosition !== CaptionPosition.Inline)
         return (
           <MText
