@@ -77,6 +77,7 @@ import {
 } from '$components/editor';
 import { EmojiBoard, EmojiBoardTab } from '$components/emoji-board';
 import { UseStateProvider } from '$components/UseStateProvider';
+import { BellSimpleIcon, BellSimpleSlashIcon } from '@phosphor-icons/react';
 import {
   TUploadContent,
   encryptFile,
@@ -285,6 +286,7 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
     );
     const [scheduleMenuAnchor, setScheduleMenuAnchor] = useState<RectCords>();
     const [showSchedulePicker, setShowSchedulePicker] = useState(false);
+    const [silentReply, setSilentReply] = useState(false);
     const [hour24Clock] = useSetting(settingsAtom, 'hour24Clock');
     const isEncrypted = room.hasEncryptionStateEvent();
 
@@ -343,6 +345,12 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
       },
       [roomId, editor, setMsgDraft]
     );
+
+    useEffect(() => {
+      if (replyDraft !== undefined) {
+        setSilentReply(replyDraft.userId === mx.getUserId());
+      }
+    }, [mx, replyDraft]);
 
     const handleFileMetadata = useCallback(
       (fileItem: TUploadItem, metadata: TUploadMetadata) => {
@@ -517,7 +525,7 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
         body,
       };
 
-      if (replyDraft && replyDraft.userId !== mx.getUserId()) {
+      if (replyDraft && !silentReply) {
         mentionData.users.add(replyDraft.userId);
       }
 
@@ -581,6 +589,7 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
       mx,
       roomId,
       replyDraft,
+      silentReply,
       scheduledTime,
       editingScheduledDelayId,
       handleQuickReact,
@@ -848,6 +857,15 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
                     gap="300"
                     style={{ padding: `${config.space.S200} ${config.space.S300} 0` }}
                   >
+                    <IconButton
+                      variant="SurfaceVariant"
+                      size="300"
+                      radii="300"
+                      onClick={() => setSilentReply(!silentReply)}
+                    >
+                      {!silentReply && <BellSimpleIcon size="20" />}
+                      {silentReply && <BellSimpleSlashIcon size="20" />}
+                    </IconButton>
                     <IconButton
                       onClick={() => setReplyDraft(undefined)}
                       variant="SurfaceVariant"
