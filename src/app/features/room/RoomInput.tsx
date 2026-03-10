@@ -861,6 +861,13 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
                       variant="SurfaceVariant"
                       size="300"
                       radii="300"
+                      title={
+                        silentReply ? 'Unmute reply notifications' : 'Mute reply notifications'
+                      }
+                      aria-pressed={silentReply}
+                      aria-label={
+                        silentReply ? 'Unmute reply notifications' : 'Mute reply notifications'
+                      }
                       onClick={() => setSilentReply(!silentReply)}
                     >
                       {!silentReply && <BellSimpleIcon size="20" />}
