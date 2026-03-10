@@ -2,6 +2,15 @@ name: Cloudflare Worker Preview Deploy
 
 on:
   pull_request:
+    paths:
+      - 'src/**'
+      - 'index.html'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'vite.config.ts'
+      - 'tsconfig.json'
+      - '.github/workflows/cloudflare-web-preview.yml'
+      - '.github/actions/setup/**'
 
 concurrency:
   group: cloudflare-worker-preview-${{ github.event.pull_request.number }}
