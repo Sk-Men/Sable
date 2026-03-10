@@ -1,4 +1,5 @@
 import {
+  ChangeEvent,
   ChangeEventHandler,
   FormEventHandler,
   useCallback,
@@ -308,6 +309,53 @@ export function CosmeticsNickname({ profile, member, userId, room }: CosmeticsSe
   );
 }
 
+export function CosmeticsFont({
+  room,
+  isSpace,
+  font,
+}: {
+  room: Room;
+  isSpace: boolean;
+  font?: string;
+}) {
+  const mx = useMatrixClient();
+
+  const initialFont = (/^"?(.*?)"?, var\(--font-secondary\)$/.exec(font ?? '') ?? [''])[1];
+  const [val, setVal] = useState(initialFont);
+
+  useEffect(() => setVal(initialFont), [initialFont]);
+
+  const fontCommand = useCommands(mx, room)[isSpace ? Command.SFont : Command.Font];
+  const handleSave = () => {
+    if (val === initialFont) return;
+    fontCommand.exe(val);
+  };
+
+  const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
+    setVal(e.currentTarget.value);
+  };
+
+  return (
+    <SettingTile
+      title={isSpace ? 'Space Font' : 'Room Font'}
+      description="Use a custom font to render your display name"
+      after={
+        <Input
+          value={val}
+          size="300"
+          radii="300"
+          variant="Secondary"
+          placeholder="Comic Sans"
+          onChange={handleChange}
+          onBlur={handleSave}
+          onKeyDown={(e) => e.key === 'Enter' && handleSave()}
+          style={{ width: '232px' }}
+        />
+      }
+    />
+  );
+}
+
 type CosmeticsProps = {
   requestClose: () => void;
 };
@@ -441,10 +489,7 @@ export function Cosmetics({ requestClose }: CosmeticsProps) {
                   direction="Column"
                   gap="400"
                 >
-                  <SettingTile
-                    title="Font"
-                    description="Placeholder. This is a work in progress still!"
-                  />
+                  <CosmeticsFont room={room} isSpace={isSpace} font={roomProfile.resolvedFont} />
                 </SequenceCard>
               </Box>
               <Box direction="Column" gap="100">
