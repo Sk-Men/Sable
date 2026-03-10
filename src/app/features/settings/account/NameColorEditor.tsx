@@ -5,11 +5,13 @@ import { SettingTile } from '$components/setting-tile';
 import { HexColorPickerPopOut } from '$components/HexColorPickerPopOut';
 
 type NameColorEditorProps = {
+  title: string;
+  description?: string;
   current?: string;
   onSave: (color: string | null) => void;
 };
 
-export function NameColorEditor({ current, onSave }: NameColorEditorProps) {
+export function NameColorEditor({ title, description, current, onSave }: NameColorEditorProps) {
   const stripQuotes = (str?: string) => {
     if (!str) return '';
     // to solve the silly tuwunel
@@ -48,10 +50,7 @@ export function NameColorEditor({ current, onSave }: NameColorEditorProps) {
 
   return (
     <Box direction="Column" gap="100">
-      <SettingTile
-        title="Global Name Color"
-        description="Custom name color everywhere names have color!"
-      />
+      <SettingTile title={title} description={description} />
       <Box
         alignItems="Center"
         justifyContent="SpaceBetween"
