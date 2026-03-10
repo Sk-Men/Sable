@@ -77,7 +77,6 @@ import {
 } from '$components/editor';
 import { EmojiBoard, EmojiBoardTab } from '$components/emoji-board';
 import { UseStateProvider } from '$components/UseStateProvider';
-import { BellSimpleIcon, BellSimpleSlashIcon } from '@phosphor-icons/react';
 import {
   TUploadContent,
   encryptFile,
@@ -858,22 +857,6 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
                     style={{ padding: `${config.space.S200} ${config.space.S300} 0` }}
                   >
                     <IconButton
-                      variant="SurfaceVariant"
-                      size="300"
-                      radii="300"
-                      title={
-                        silentReply ? 'Unmute reply notifications' : 'Mute reply notifications'
-                      }
-                      aria-pressed={silentReply}
-                      aria-label={
-                        silentReply ? 'Unmute reply notifications' : 'Mute reply notifications'
-                      }
-                      onClick={() => setSilentReply(!silentReply)}
-                    >
-                      {!silentReply && <BellSimpleIcon size="20" />}
-                      {silentReply && <BellSimpleSlashIcon size="20" />}
-                    </IconButton>
-                    <IconButton
                       onClick={() => setReplyDraft(undefined)}
                       variant="SurfaceVariant"
                       size="300"
@@ -881,24 +864,56 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
                     >
                       <Icon src={Icons.Cross} size="50" />
                     </IconButton>
-                    <Box direction="Row" gap="200" alignItems="Center">
-                      {replyDraft.relation?.rel_type === RelationType.Thread && <ThreadIndicator />}
-                      <ReplyLayout
-                        userColor={replyUsernameColor}
-                        username={
-                          <Text size="T300" truncate style={{ fontFamily: replyUsernameFont }}>
-                            <b>
-                              {getMemberDisplayName(room, replyDraft.userId, nicknames) ??
-                                getMxIdLocalPart(replyDraft.userId) ??
-                                replyDraft.userId}
-                            </b>
-                          </Text>
-                        }
+                    <Box
+                      direction="Row"
+                      gap="200"
+                      alignItems="Center"
+                      grow="Yes"
+                      style={{ minWidth: 0 }}
+                    >
+                      <Box
+                        direction="Row"
+                        gap="200"
+                        alignItems="Center"
+                        grow="Yes"
+                        style={{ minWidth: 0 }}
                       >
-                        <Text size="T300" truncate>
-                          {replyBodyJSX}
-                        </Text>
-                      </ReplyLayout>
+                        {replyDraft.relation?.rel_type === RelationType.Thread && (
+                          <ThreadIndicator />
+                        )}
+                        <ReplyLayout
+                          userColor={replyUsernameColor}
+                          username={
+                            <Text size="T300" truncate style={{ fontFamily: replyUsernameFont }}>
+                              <b>
+                                {getMemberDisplayName(room, replyDraft.userId, nicknames) ??
+                                  getMxIdLocalPart(replyDraft.userId) ??
+                                  replyDraft.userId}
+                              </b>
+                            </Text>
+                          }
+                        >
+                          <Text size="T300" truncate>
+                            {replyBodyJSX}
+                          </Text>
+                        </ReplyLayout>
+                      </Box>
+                      <IconButton
+                        variant="SurfaceVariant"
+                        size="300"
+                        radii="300"
+                        title={
+                          silentReply ? 'Unmute reply notifications' : 'Mute reply notifications'
+                        }
+                        aria-pressed={silentReply}
+                        aria-label={
+                          silentReply ? 'Unmute reply notifications' : 'Mute reply notifications'
+                        }
+                        onClick={() => setSilentReply(!silentReply)}
+                      >
+                        {!silentReply && <Icon src={Icons.BellPing} />}
+                        {silentReply && <Icon src={Icons.BellMute} />}
+                      </IconButton>
                     </Box>
                   </Box>
                 </div>
