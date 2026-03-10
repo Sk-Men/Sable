@@ -2,4 +2,4 @@
 sable: patch
 ---
 
-Enhance UnsupportedContent and BrokenContent to display message body
+Enhance UnsupportedContent and BrokenContent to display message body.
