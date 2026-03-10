@@ -67,7 +67,7 @@ jobs:
         id: knope
         shell: bash
         run: |
-          if knope prepare-release --package ${{ matrix.package }} --verbose; then
+          if knope prepare-release --verbose; then
             echo "released=true" >> "$GITHUB_OUTPUT"
           else
             echo "released=false" >> "$GITHUB_OUTPUT"
