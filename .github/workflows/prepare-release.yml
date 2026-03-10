@@ -7,46 +7,12 @@ on:
 permissions: {}
 
 jobs:
-  load-packages:
-    if: "!contains(github.event.head_commit.message, 'chore: prepare release')"
-    runs-on: ubuntu-latest
-    outputs:
-      matrix: ${{ steps.parse.outputs.matrix }}
-    steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-        with:
-          persist-credentials: false
-
-      - name: Parse packages from knope.toml
-        id: parse
-        shell: python3 {0}
-        run: |
-          import tomllib, json, os
-
-          with open("knope.toml", "rb") as f:
-              config = tomllib.load(f)
-
-          packages = config.get("packages", {})
-          matrix = [
-              {"package": name, "changelog": pkg["changelog"]}
-              for name, pkg in packages.items()
-          ]
-
-          with open(os.environ["GITHUB_OUTPUT"], "a") as out:
-              out.write(f"matrix={json.dumps(matrix)}\n")
-
   prepare-release:
-    needs: load-packages
-    if: needs.load-packages.outputs.matrix != '[]'
+    if: "!contains(github.event.head_commit.message, 'chore: prepare release')"
     runs-on: ubuntu-latest
     permissions:
       contents: write
       pull-requests: write
-    strategy:
-      # Run each package independently so one with no changes doesn't block others
-      fail-fast: false
-      matrix:
-        include: ${{ fromJSON(needs.load-packages.outputs.matrix) }}
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
@@ -59,63 +25,66 @@ jobs:
         with:
           version: 0.22.1
 
-      - name: Switch to release branch
-        shell: bash
-        run: git switch -c release/${{ matrix.package }}
-
       - name: Prepare Release
-        id: knope
-        shell: bash
-        run: |
-          if knope prepare-release --verbose; then
-            echo "released=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "released=false" >> "$GITHUB_OUTPUT"
-          fi
+        run: knope prepare-release --verbose
+        continue-on-error: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Commit and push release branch
-        if: steps.knope.outputs.released == 'true'
+      - name: Enrich changelog with PR attribution
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const fs = require("fs");
+            const changelog = "CHANGELOG.md";
+
+            if (!fs.existsSync(changelog)) return;
+
+            let content = fs.readFileSync(changelog, "utf8");
+            const marker = /<!-- commit:([0-9a-f]+) -->/g;
+            const hashes = [...new Set([...content.matchAll(marker)].map(m => m[1]))];
+
+            if (hashes.length === 0) return;
+
+            const { owner, repo } = context.repo;
+
+            for (const hash of hashes) {
+              let replacement = "";
+              try {
+                // Find PRs associated with this commit. Knope uses the commit that
+                // first introduced the changeset file, so this reliably points to
+                // the original PR regardless of later edits on the branch.
+                const prs = await github.rest.repos.listPullRequestsAssociatedWithCommit({
+                  owner, repo, commit_sha: hash,
+                });
+                const pr = prs.data[0];
+                if (pr) {
+                  replacement = `([#${pr.number}](${pr.html_url}) by @${pr.user.login})`;
+                } else {
+                  // Commit exists but has no associated PR (e.g. direct push to dev)
+                  replacement = `(\`${hash}\`)`;
+                }
+              } catch {
+                replacement = `(\`${hash}\`)`;
+              }
+              content = content.replaceAll(`<!-- commit:${hash} -->`, replacement);
+            }
+
+            fs.writeFileSync(changelog, content);
+
+      - name: Amend release commit with enriched changelog
         shell: bash
         run: |
-          git commit -m "chore: prepare release ${{ matrix.package }}"
-          git push --force --set-upstream origin release/${{ matrix.package }}
-
-      - name: Read version and changelog
-        id: meta
-        if: steps.knope.outputs.released == 'true'
-        shell: bash
-        run: |
-          # Read the top version header from the changelog knope just wrote.
-          VERSION=$(awk '/^## [0-9]/{print $2; exit}' ${{ matrix.changelog }})
-          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
-
-          CHANGELOG=$(awk "/^## $VERSION/{found=1; next} found && /^## /{exit} found{print}" ${{ matrix.changelog }})
-          {
-            echo "changelog<<EOF"
-            echo "$CHANGELOG"
-            echo "EOF"
-          } >> "$GITHUB_OUTPUT"
-
-      - name: Create or update release PR
-        if: steps.knope.outputs.released == 'true'
-        shell: bash
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          PACKAGE: ${{ matrix.package }}
-          VERSION: ${{ steps.meta.outputs.version }}
-          CHANGELOG: ${{ steps.meta.outputs.changelog }}
-        run: |
-          BRANCH="release/${PACKAGE}"
-          TITLE="chore: prepare release ${PACKAGE} ${VERSION}"
-          BODY="> [!IMPORTANT]
-          > Merging this PR will create a new release.
-
-          ${CHANGELOG}"
-
-          if gh pr view "$BRANCH" --json number -q '.number' &>/dev/null; then
-            gh pr edit "$BRANCH" --title "$TITLE" --body "$BODY"
-          else
-            gh pr create --head "$BRANCH" --base dev --title "$TITLE" --body "$BODY"
+          # Only amend if the changelog was actually staged by knope
+          if git diff --cached --name-only | grep -q "CHANGELOG.md"; then
+            git add CHANGELOG.md
+            git commit --amend --no-edit
+          elif git diff --name-only HEAD | grep -q "CHANGELOG.md"; then
+            git add CHANGELOG.md
+            git commit --amend --no-edit
           fi
+
+      - name: Push release branch
+        shell: bash
+        run: git push --force --set-upstream origin release
