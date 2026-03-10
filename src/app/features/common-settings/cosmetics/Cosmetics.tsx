@@ -377,6 +377,10 @@ export function Cosmetics({ requestClose }: CosmeticsProps) {
 
   const getLevel = (eventType: string) => (powerLevels as any).events?.[eventType] ?? 50;
 
+  const canHaveRoomColor = getLevel(StateEvent.RoomCosmeticsColor) === 0;
+  const canHaveRoomPronouns = getLevel(StateEvent.RoomCosmeticsPronouns) === 0;
+  const canHaveRoomFont = getLevel(StateEvent.RoomCosmeticsFont) === 0;
+
   const handleToggle = useCallback(
     async (eventType: string, enabled: boolean) => {
       const newLevel = enabled ? 0 : 50;
@@ -506,7 +510,7 @@ export function Cosmetics({ requestClose }: CosmeticsProps) {
                     after={
                       <Switch
                         variant="Primary"
-                        value={getLevel(StateEvent.RoomCosmeticsColor) === 0}
+                        value={canHaveRoomColor}
                         onChange={(enabled) => handleToggle(StateEvent.RoomCosmeticsColor, enabled)}
                         disabled={!canEditPermissions}
                       />
@@ -525,7 +529,7 @@ export function Cosmetics({ requestClose }: CosmeticsProps) {
                     after={
                       <Switch
                         variant="Primary"
-                        value={getLevel(StateEvent.RoomCosmeticsFont) === 0}
+                        value={canHaveRoomFont}
                         onChange={(enabled) => handleToggle(StateEvent.RoomCosmeticsFont, enabled)}
                         disabled={!canEditPermissions}
                       />
@@ -544,7 +548,7 @@ export function Cosmetics({ requestClose }: CosmeticsProps) {
                     after={
                       <Switch
                         variant="Primary"
-                        value={getLevel(StateEvent.RoomCosmeticsPronouns) === 0}
+                        value={canHaveRoomPronouns}
                         onChange={(enabled) =>
                           handleToggle(StateEvent.RoomCosmeticsPronouns, enabled)
                         }
