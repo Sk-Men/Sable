@@ -1,7 +1,7 @@
 import { useAtomValue, useSetAtom } from 'jotai';
 import { ReactNode, useCallback, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { PushProcessor, RoomEvent, RoomEventHandlerMap } from '$types/matrix-sdk';
+import { PushProcessor, RoomEvent, RoomEventHandlerMap, SetPresence } from '$types/matrix-sdk';
 import parse from 'html-react-parser';
 import { getReactCustomHtmlParser, LINKIFY_OPTS } from '$plugins/react-custom-html-parser';
 import { sanitizeCustomHtml } from '$utils/sanitize';
@@ -38,6 +38,7 @@ import {
 } from '$utils/notificationStyle';
 import { mobileOrTablet } from '$utils/user-agent';
 import { useSlidingSyncActiveRoom } from '$hooks/useSlidingSyncActiveRoom';
+import { getSlidingSyncManager } from '$client/initMatrix';
 import { getInboxInvitesPath } from '../pathUtils';
 import { BackgroundNotifications } from './BackgroundNotifications';
 
@@ -575,6 +576,21 @@ function SlidingSyncActiveRoomSubscriber() {
   return null;
 }
 
+function PresenceFeature() {
+  const mx = useMatrixClient();
+  const [sendPresence] = useSetting(settingsAtom, 'sendPresence');
+
+  useEffect(() => {
+    // Classic sync: set_presence query param on every /sync poll.
+    // Passing undefined restores the default (online); Offline suppresses broadcasting.
+    mx.setSyncPresence(sendPresence ? undefined : SetPresence.Offline);
+    // Sliding sync: enable/disable the presence extension on the next poll.
+    getSlidingSyncManager(mx)?.setPresenceEnabled(sendPresence);
+  }, [mx, sendPresence]);
+
+  return null;
+}
+
 export function ClientNonUIFeatures({ children }: ClientNonUIFeaturesProps) {
   return (
     <>
@@ -587,6 +603,7 @@ export function ClientNonUIFeatures({ children }: ClientNonUIFeaturesProps) {
       <BackgroundNotifications />
       <SyncNotificationSettingsWithServiceWorker />
       <SlidingSyncActiveRoomSubscriber />
+      <PresenceFeature />
       {children}
     </>
   );
