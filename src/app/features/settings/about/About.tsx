@@ -243,6 +243,13 @@ export function About({ requestClose }: AboutProps) {
                       </Button>
                     }
                   />
+                </SequenceCard>
+                <SequenceCard
+                  className={SequenceCardStyle}
+                  variant="SurfaceVariant"
+                  direction="Column"
+                  gap="400"
+                >
                   <SettingTile
                     title="Report an Issue"
                     description="Report a bug or request a feature on GitHub."
