@@ -1,6 +1,6 @@
 /* eslint-disable no-nested-ternary */
 import { useCallback, useEffect, useState } from 'react';
-import { Box, Text, Switch, Button, color, Spinner } from 'folds';
+import { Box, Text, Switch, Button, color, Spinner, config } from 'folds';
 import { IPusherRequest } from '$types/matrix-sdk';
 import { useAtom } from 'jotai';
 import { SequenceCard } from '$components/sequence-card';
@@ -315,7 +315,9 @@ export function SystemNotification() {
         <DeregisterAllPushersSetting />
       </SequenceCard>
 
-      <Text size="L400">Badges</Text>
+      <Text size="L400" style={{ paddingTop: config.space.S700 }}>
+        Badges
+      </Text>
       <Text size="T300" style={{ opacity: 0.7 }}>
         {badgeBehaviourSummary()}
       </Text>
