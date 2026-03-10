@@ -461,7 +461,6 @@ export function Cosmetics({ requestClose }: CosmeticsProps) {
                   variant="SurfaceVariant"
                   direction="Column"
                   gap="400"
-                  style={{ opacity: canHaveRoomColor || canEditPermissions ? 1 : 0.5 }}
                 >
                   <NameColorEditor
                     title={isSpace ? 'Space Name Color' : 'Room Name Color'}
@@ -499,7 +498,12 @@ export function Cosmetics({ requestClose }: CosmeticsProps) {
                   direction="Column"
                   gap="400"
                 >
-                  <CosmeticsFont room={room} isSpace={isSpace} font={roomProfile.resolvedFont}  disabled={!(canHaveRoomFont || canEditPermissions)} />
+                  <CosmeticsFont
+                    room={room}
+                    isSpace={isSpace}
+                    font={roomProfile.resolvedFont}
+                    disabled={!(canHaveRoomFont || canEditPermissions)}
+                  />
                 </SequenceCard>
               </Box>
               <Box direction="Column" gap="100">

@@ -12,7 +12,13 @@ type NameColorEditorProps = {
   disabled?: boolean;
 };
 
-export function NameColorEditor({ title, description, current, onSave, disabled }: NameColorEditorProps) {
+export function NameColorEditor({
+  title,
+  description,
+  current,
+  onSave,
+  disabled,
+}: NameColorEditorProps) {
   const stripQuotes = (str?: string) => {
     if (!str) return '';
     // to solve the silly tuwunel
