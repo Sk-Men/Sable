@@ -458,10 +458,12 @@ export function Cosmetics({ requestClose }: CosmeticsProps) {
                   variant="SurfaceVariant"
                   direction="Column"
                   gap="400"
+                  style={{ opacity: canHaveRoomColor || canEditPermissions ? 1 : 0.5 }}
                 >
                   <NameColorEditor
                     title={isSpace ? 'Space Name Color' : 'Room Name Color'}
                     current={roomProfile.resolvedColor}
+                    disabled={!(canHaveRoomColor || canEditPermissions)}
                     onSave={(color) =>
                       commands[isSpace ? Command.SColor : Command.Color].exe(color ?? 'clear')
                     }

@@ -9,9 +9,10 @@ type NameColorEditorProps = {
   description?: string;
   current?: string;
   onSave: (color: string | null) => void;
+  disabled?: boolean;
 };
 
-export function NameColorEditor({ title, description, current, onSave }: NameColorEditorProps) {
+export function NameColorEditor({ title, description, current, onSave, disabled }: NameColorEditorProps) {
   const stripQuotes = (str?: string) => {
     if (!str) return '';
     // to solve the silly tuwunel
@@ -72,6 +73,7 @@ export function NameColorEditor({ title, description, current, onSave }: NameCol
                 variant="Secondary"
                 fill="None"
                 radii="300"
+                disabled={disabled ?? false}
                 style={{
                   padding: config.space.S100,
                   border: `2px solid ${opened ? 'var(--sable-primary-main)' : 'var(--sable-border-focus)'}`,
@@ -98,6 +100,7 @@ export function NameColorEditor({ title, description, current, onSave }: NameCol
               variant="Background"
               size="300"
               radii="300"
+              disabled={disabled ?? false}
               style={{
                 textTransform: 'uppercase',
                 fontFamily: 'monospace',
@@ -109,6 +112,7 @@ export function NameColorEditor({ title, description, current, onSave }: NameCol
                 variant="Secondary"
                 size="300"
                 radii="300"
+                disabled={disabled ?? false}
                 onClick={handleReset}
                 title="Reset to default"
               >
