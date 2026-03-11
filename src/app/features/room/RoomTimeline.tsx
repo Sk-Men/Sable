@@ -2185,18 +2185,18 @@ export function RoomTimeline({
     } else {
       backPaginationJSX = (
         <div
-          ref={observeBackAnchor}
+          ref={backwardStatus === 'idle' ? observeBackAnchor : undefined}
           style={{
-            height: '40px',
+            height: '100px',
+            visibility: 'hidden',
             overflowAnchor: 'none',
           }}
-        >
-          {backwardStatus === 'loading' && (
-            <Box justifyContent="Center" style={{ padding: config.space.S300 }}>
-              <Spinner variant="Secondary" size="400" />
-            </Box>
-          )}
-        </div>
+        />
+      );
+      const backwardLoadingJSX = backwardStatus === 'loading' && (
+        <Box justifyContent="Center" style={{ padding: config.space.S300 }}>
+          <Spinner variant="Secondary" size="400" />
+        </Box>
       );
     }
   }
@@ -2270,45 +2270,26 @@ export function RoomTimeline({
       );
     }
   }
-
-  const prevBackwardStatus = useRef(backwardStatus);
-  const scrollAnchor = useRef<{ id: string; offsetTop: number } | null>(null);
+  const lastScrollHeight = useRef<number>(0);
 
   useLayoutEffect(() => {
     const scrollEl = scrollRef.current;
     if (!scrollEl) return;
 
-    // When going to loading store the exact position
-    if (prevBackwardStatus.current === 'idle' && backwardStatus === 'loading') {
-      const topMessage = scrollEl.querySelector('[data-message-id]');
-      if (topMessage) {
-        scrollAnchor.current = {
-          id: topMessage.getAttribute('data-message-id') || '',
-          offsetTop: (topMessage as HTMLElement).offsetTop,
-        };
-      }
+    if (backwardStatus === 'loading') {
+      lastScrollHeight.current = scrollEl.scrollHeight;
     }
 
-    // After fetch finishes calculate new content and force scroll to position hopefully
-    if (prevBackwardStatus.current === 'loading' && backwardStatus === 'idle') {
-      if (scrollAnchor.current) {
-        const anchorNode = scrollEl.querySelector(
-          `[data-message-id="${scrollAnchor.current.id}"]`
-        ) as HTMLElement;
+    if (backwardStatus === 'idle' && lastScrollHeight.current > 0) {
+      const newScrollHeight = scrollEl.scrollHeight;
+      const heightDifference = newScrollHeight - lastScrollHeight.current;
 
-        if (anchorNode) {
-          const delta = anchorNode.offsetTop - scrollAnchor.current.offsetTop;
-
-          if (delta > 0) {
-            scrollEl.scrollBy({ top: delta, behavior: 'instant' });
-          }
-        }
-        scrollAnchor.current = null;
+      if (heightDifference > 0) {
+        scrollEl.scrollTop += heightDifference;
       }
+      lastScrollHeight.current = 0;
     }
-
-    prevBackwardStatus.current = backwardStatus;
-  }, [backwardStatus, processedEvents]);
+  }, [backwardStatus, processedEvents.length]);
 
   return (
     <Box grow="Yes" style={{ position: 'relative' }}>
