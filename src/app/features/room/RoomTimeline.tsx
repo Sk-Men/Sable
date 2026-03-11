@@ -240,7 +240,7 @@ export const getEventIdAbsoluteIndex = (
   eventTimeline: EventTimeline,
   eventId: string
 ): number | undefined => {
-  const timelineIndex = timelines.findIndex((t) => t === eventTimeline);
+  const timelineIndex = timelines.indexOf(eventTimeline);
   if (timelineIndex === -1) return undefined;
 
   const currentEvents = eventTimeline.getEvents();
@@ -285,17 +285,17 @@ const useEventTimelineLoader = (
     async (eventId: string) => {
       const withTimeout = async <T,>(promise: Promise<T>, timeoutMs: number): Promise<T> =>
         new Promise<T>((resolve, reject) => {
-          const timeoutId = window.setTimeout(() => {
+          const timeoutId = globalThis.setTimeout(() => {
             reject(new Error('Timed out loading event timeline'));
           }, timeoutMs);
 
           promise
             .then((value) => {
-              window.clearTimeout(timeoutId);
+              globalThis.clearTimeout(timeoutId);
               resolve(value);
             })
             .catch((error) => {
-              window.clearTimeout(timeoutId);
+              globalThis.clearTimeout(timeoutId);
               reject(error);
             });
         });
@@ -381,7 +381,7 @@ const useTimelinePagination = (
       const { linkedTimelines: lTimelines } = timelineRef.current;
       const timelinesEventsCount = lTimelines.map(timelineToEventsCount);
 
-      const timelineToPaginate = backwards ? lTimelines[0] : lTimelines[lTimelines.length - 1];
+      const timelineToPaginate = backwards ? lTimelines[0] : lTimelines.at(-1);
       if (!timelineToPaginate) return;
 
       const paginationToken = timelineToPaginate.getPaginationToken(
@@ -687,8 +687,7 @@ export function RoomTimeline({
     eventId ? getEmptyTimeline() : getInitialTimeline(room)
   );
   const eventsLength = getTimelinesEventsCount(timeline.linkedTimelines);
-  const liveTimelineLinked =
-    timeline.linkedTimelines[timeline.linkedTimelines.length - 1] === getLiveTimeline(room);
+  const liveTimelineLinked = timeline.linkedTimelines.at(-1) === getLiveTimeline(room);
   const canPaginateBack =
     typeof timeline.linkedTimelines[0]?.getPaginationToken(Direction.Backward) === 'string';
   const rangeAtStart = timeline.range.start === 0;
@@ -1087,7 +1086,7 @@ export function RoomTimeline({
 
   // scroll to focused message
   useLayoutEffect(() => {
-    if (focusItem && focusItem.scrollTo) {
+    if (focusItem?.scrollTo) {
       scrollToItem(focusItem.index, {
         behavior: 'instant',
         align: 'center',
@@ -1348,7 +1347,7 @@ export function RoomTimeline({
     {
       [MessageEvent.RoomMessage]: (mEventId, mEvent, item, timelineSet, collapse) => {
         const reactionRelations = getEventReactions(timelineSet, mEventId);
-        const reactions = reactionRelations && reactionRelations.getSortedAnnotationsByKey();
+        const reactions = reactionRelations?.getSortedAnnotationsByKey();
         const hasReactions = reactions && reactions.length > 0;
         const { replyEventId, threadRootId } = mEvent;
         const highlighted = focusItem?.index === item && focusItem.highlight;
@@ -1477,7 +1476,7 @@ export function RoomTimeline({
       },
       [MessageEvent.RoomMessageEncrypted]: (mEventId, mEvent, item, timelineSet, collapse) => {
         const reactionRelations = getEventReactions(timelineSet, mEventId);
-        const reactions = reactionRelations && reactionRelations.getSortedAnnotationsByKey();
+        const reactions = reactionRelations?.getSortedAnnotationsByKey();
         const hasReactions = reactions && reactions.length > 0;
         const { replyEventId, threadRootId } = mEvent;
         const highlighted = focusItem?.index === item && focusItem.highlight;
@@ -1617,7 +1616,7 @@ export function RoomTimeline({
       },
       [MessageEvent.Sticker]: (mEventId, mEvent, item, timelineSet, collapse) => {
         const reactionRelations = getEventReactions(timelineSet, mEventId);
-        const reactions = reactionRelations && reactionRelations.getSortedAnnotationsByKey();
+        const reactions = reactionRelations?.getSortedAnnotationsByKey();
         const hasReactions = reactions && reactions.length > 0;
         const { replyEventId, threadRootId } = mEvent;
         const highlighted = focusItem?.index === item && focusItem.highlight;
