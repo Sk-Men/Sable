@@ -2184,18 +2184,20 @@ export function RoomTimeline({
         );
     } else {
       backPaginationJSX = (
-        <div
-          ref={backwardStatus === 'idle' ? observeBackAnchor : undefined}
-          style={{
-            height: '100px',
-            visibility: 'hidden',
-            overflowAnchor: 'none',
-          }}
-        />
-      );
-      const backwardLoadingJSX = backwardStatus === 'loading' && (
-        <Box justifyContent="Center" style={{ padding: config.space.S300 }}>
-          <Spinner variant="Secondary" size="400" />
+        <Box direction="Column">
+          {backwardStatus === 'loading' && (
+            <Box justifyContent="Center" style={{ padding: config.space.S300 }}>
+              <Spinner variant="Secondary" size="400" />
+            </Box>
+          )}
+          <div
+            ref={backwardStatus === 'idle' ? observeBackAnchor : undefined}
+            style={{
+              height: '100px',
+              visibility: 'hidden',
+              overflowAnchor: 'none',
+            }}
+          />
         </Box>
       );
     }
