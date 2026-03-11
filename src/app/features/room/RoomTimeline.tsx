@@ -627,6 +627,12 @@ export function RoomTimeline({
     readUptoEventIdRef.current = unreadInfo.readUptoEventId;
   }
 
+  const hideReadsRef = useRef(hideReads);
+  hideReadsRef.current = hideReads;
+
+  const unreadInfoRef = useRef(unreadInfo);
+  unreadInfoRef.current = unreadInfo;
+
   const atBottomAnchorRef = useRef<HTMLElement>(null);
 
   const [atBottom, setAtBottomState] = useState<boolean>(true);
@@ -779,14 +785,15 @@ export function RoomTimeline({
         // otherwise we update timeline without paginating
         // so timeline can be updated with evt like: edits, reactions etc
         if (atBottomRef.current && atLiveEndRef.current) {
-          if (document.hasFocus() && (!unreadInfo || mEvt.getSender() === mx.getUserId())) {
-            // Check if the document is in focus (user is actively viewing the app),
-            // and either there are no unread messages or the latest message is from the current user.
-            // If either condition is met, trigger the markAsRead function to send a read receipt.
-            requestAnimationFrame(() => markAsRead(mx, mEvt.getRoomId()!, hideReads));
+          if (
+            document.hasFocus() &&
+            (!unreadInfoRef.current || mEvt.getSender() === mx.getUserId())
+          ) {
+            // Check if the document is in focus and trigger markAsRead
+            requestAnimationFrame(() => markAsRead(mx, mEvt.getRoomId()!, hideReadsRef.current));
           }
 
-          if (!document.hasFocus() && !unreadInfo) {
+          if (!document.hasFocus() && !unreadInfoRef.current) {
             setUnreadInfo(getRoomUnreadInfo(room));
           }
 
@@ -805,11 +812,11 @@ export function RoomTimeline({
           return;
         }
         setTimeline((ct) => ({ ...ct }));
-        if (!unreadInfo) {
+        if (!unreadInfoRef.current) {
           setUnreadInfo(getRoomUnreadInfo(room));
         }
       },
-      [mx, room, unreadInfo, hideReads]
+      [mx, room, setUnreadInfo]
     )
   );
 
