@@ -87,7 +87,11 @@ type ForwardMeta = {
   original_event_private: boolean;
 };
 
-export function MessageForwardInternal({ room, mEvent, onClose }: MessageForwardInternalProps) {
+export function MessageForwardInternal({
+  room,
+  mEvent,
+  onClose,
+}: Readonly<MessageForwardInternalProps>) {
   const mx = useMatrixClient();
 
   const [isTargetSelected, setIsTargetSelected] = useState(false);
@@ -191,7 +195,7 @@ export function MessageForwardInternal({ room, mEvent, onClose }: MessageForward
       const safeHtml =
         originalFormattedBody !== undefined
           ? sanitizeCustomHtml(originalFormattedBody)
-          : sanitizeCustomHtml(originalBody).replace(/\n/g, '<br>');
+          : sanitizeCustomHtml(originalBody).replaceAll('\n', '<br>');
 
       newBodyHtml =
         `<div data-forward-marker>` +
@@ -241,19 +245,13 @@ export function MessageForwardInternal({ room, mEvent, onClose }: MessageForward
       };
     }
 
-    try {
-      mx.sendEvent(targetRoom.roomId, null, eventType, content as unknown as SendEventContent)
-        .then(() => setIsForwardSuccess(true))
-        .catch(() => {
-          setIsForwarding(false);
-          setIsForwardSuccess(false);
-          setIsForwardError(true);
-        });
-    } catch {
-      setIsForwarding(false);
-      setIsForwardSuccess(false);
-      setIsForwardError(true);
-    }
+    mx.sendEvent(targetRoom.roomId, null, eventType, content as unknown as SendEventContent)
+      .then(() => setIsForwardSuccess(true))
+      .catch(() => {
+        setIsForwarding(false);
+        setIsForwardSuccess(false);
+        setIsForwardError(true);
+      });
   };
 
   return (
