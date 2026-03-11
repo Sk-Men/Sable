@@ -1102,13 +1102,15 @@ export function RoomTimeline({
       });
     }
 
-    setTimeout(() => {
+    const timeoutId = setTimeout(() => {
       if (!alive()) return;
       setFocusItem((currentItem) => {
         if (currentItem === focusItem) return undefined;
         return currentItem;
       });
     }, 2000);
+
+    return () => clearTimeout(timeoutId);
   }, [alive, focusItem, scrollToItem]);
 
   // scroll to bottom of timeline
