@@ -71,7 +71,10 @@ After that, you can copy the dist/ directory to your server and serve it.
 
 Execute the following commands to start a development server:
 ```sh
-pnpm ci # Installs all dependencies
+fnm use --corepack-enabled # Activates the Node version and enables corepack
+# If you not using fnm, install corepack manually: npm install --global corepack@latest
+corepack install # Installs the pnpm version specified in package.json
+pnpm i # Installs all dependencies
 pnpm run dev # Serve a development version
 ```
 
