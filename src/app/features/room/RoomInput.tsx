@@ -836,6 +836,7 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
                       variant="SurfaceVariant"
                       size="300"
                       radii="300"
+                      title="schedule message send"
                     >
                       <Icon src={Icons.Cross} size="50" />
                     </IconButton>
@@ -861,6 +862,8 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
                       variant="SurfaceVariant"
                       size="300"
                       radii="300"
+                      aria-label="Cancel reply"
+                      title="Cancel reply"
                     >
                       <Icon src={Icons.Cross} size="50" />
                     </IconButton>
@@ -926,6 +929,8 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
               variant="SurfaceVariant"
               size="300"
               radii="300"
+              title="Upload File"
+              aria-label="Upload and attach a File"
             >
               <Icon src={Icons.PlusCircle} />
             </IconButton>
@@ -936,6 +941,9 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
                 variant="SurfaceVariant"
                 size="300"
                 radii="300"
+                title={toolbar ? 'Hide Toolbar' : 'Show Toolbar'}
+                aria-pressed={toolbar}
+                aria-label={toolbar ? 'Hide Toolbar' : 'Show Toolbar'}
                 onClick={() => setToolbar(!toolbar)}
               >
                 <Icon src={toolbar ? Icons.AlphabetUnderline : Icons.Alphabet} />
@@ -980,6 +988,8 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
                         variant="SurfaceVariant"
                         size="300"
                         radii="300"
+                        title="open sticker picker"
+                        aria-label="Open sticker picker"
                       >
                         <Icon
                           src={Icons.Sticker}
@@ -996,6 +1006,8 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
                       variant="SurfaceVariant"
                       size="300"
                       radii="300"
+                      title="open emoji picker"
+                      aria-label="Open emoji picker"
                     >
                       <Icon
                         src={Icons.Smile}
@@ -1052,6 +1064,8 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
               />
               <Box display="Flex" alignItems="Center">
                 <IconButton
+                  title="Send Message"
+                  aria-label="Send your composed Message"
                   onClick={() => {
                     if (isLongPress.current) {
                       isLongPress.current = false;
@@ -1093,6 +1107,8 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
                     onClick={(evt: MouseEvent<HTMLButtonElement>) => {
                       setScheduleMenuAnchor(evt.currentTarget.getBoundingClientRect());
                     }}
+                    title="Schedule Message"
+                    aria-label="Schedule message send"
                     variant={scheduledTime ? 'Primary' : 'SurfaceVariant'}
                     size="300"
                     radii="0"
