@@ -2,4 +2,4 @@
 default: patch
 ---
 
-added a few accessibility tags to the elements involved in message composing
+Added a few accessibility tags to the elements involved in message composing.

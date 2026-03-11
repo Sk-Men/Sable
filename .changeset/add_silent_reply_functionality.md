@@ -1,5 +1,5 @@
 ---
-sable: minor
+default: minor
 ---
 
-add silent replies when clicking the bell icon during composing a reply
+Add silent replies when clicking the bell icon during composing a reply.
