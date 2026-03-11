@@ -37,17 +37,21 @@ export const messageList = style({
   overflowAnchor: 'none',
 });
 
-globalStyle(`body ${messageList} [data-message-id]`, {
+globalStyle(`body ${messageList} > *`, {
   overflowAnchor: 'auto',
+});
+
+globalStyle(`body ${messageList} [data-message-id]`, {
   transition: 'background-color 0.1s ease-in-out !important',
   position: 'relative',
   zIndex: 1,
 });
 
-globalStyle(
-  `body ${messageList} [data-message-id]:hover, body ${messageList} [data-message-id]:focus-within`,
-  {
-    backgroundColor: 'var(--sable-surface-container-hover) !important',
-    zIndex: 10,
-  }
-);
+globalStyle(`body ${messageList} [data-message-id]:hover`, {
+  backgroundColor: 'var(--sable-surface-container-hover) !important',
+  zIndex: 2,
+});
+
+globalStyle(`body ${messageList} [data-message-id]:focus-within`, {
+  zIndex: 10,
+});

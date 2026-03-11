@@ -2186,17 +2186,13 @@ export function RoomTimeline({
       backPaginationJSX = (
         <Box direction="Column">
           {backwardStatus === 'loading' && (
-            <Box justifyContent="Center" style={{ padding: config.space.S300 }}>
+            <Box justifyContent="Center" style={{ height: '75vh', paddingTop: config.space.S600 }}>
               <Spinner variant="Secondary" size="400" />
             </Box>
           )}
           <div
             ref={backwardStatus === 'idle' ? observeBackAnchor : undefined}
-            style={{
-              height: '100px',
-              visibility: 'hidden',
-              overflowAnchor: 'none',
-            }}
+            style={{ height: '1px', visibility: 'hidden', overflowAnchor: 'none' }}
           />
         </Box>
       );
