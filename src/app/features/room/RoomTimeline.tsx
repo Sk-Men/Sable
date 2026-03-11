@@ -2184,16 +2184,22 @@ export function RoomTimeline({
         );
     } else {
       backPaginationJSX = (
-        <Box direction="Column">
+        <Box
+          style={{ position: 'relative', width: '100%', height: '60px', overflowAnchor: 'none' }}
+        >
+          <div
+            ref={observeBackAnchor}
+            style={{ position: 'absolute', top: 0, width: '100%', height: '1px' }}
+          />
           {backwardStatus === 'loading' && (
-            <Box justifyContent="Center" style={{ height: '75vh', paddingTop: config.space.S600 }}>
+            <Box
+              justifyContent="Center"
+              alignItems="Center"
+              style={{ position: 'absolute', inset: 0 }}
+            >
               <Spinner variant="Secondary" size="400" />
             </Box>
           )}
-          <div
-            ref={backwardStatus === 'idle' ? observeBackAnchor : undefined}
-            style={{ height: '1px', visibility: 'hidden', overflowAnchor: 'none' }}
-          />
         </Box>
       );
     }
@@ -2257,37 +2263,26 @@ export function RoomTimeline({
         );
     } else {
       frontPaginationJSX = (
-        <>
-          <div ref={observeFrontAnchor} style={{ height: 1 }} />
+        <Box
+          style={{ position: 'relative', width: '100%', height: '60px', overflowAnchor: 'none' }}
+        >
+          <div
+            ref={observeFrontAnchor}
+            style={{ position: 'absolute', bottom: 0, width: '100%', height: '1px' }}
+          />
           {forwardStatus === 'loading' && (
-            <Box justifyContent="Center" style={{ padding: config.space.S300 }}>
+            <Box
+              justifyContent="Center"
+              alignItems="Center"
+              style={{ position: 'absolute', inset: 0 }}
+            >
               <Spinner variant="Secondary" size="400" />
             </Box>
           )}
-        </>
+        </Box>
       );
     }
   }
-  const lastScrollHeight = useRef<number>(0);
-
-  useLayoutEffect(() => {
-    const scrollEl = scrollRef.current;
-    if (!scrollEl) return;
-
-    if (backwardStatus === 'loading') {
-      lastScrollHeight.current = scrollEl.scrollHeight;
-    }
-
-    if (backwardStatus === 'idle' && lastScrollHeight.current > 0) {
-      const newScrollHeight = scrollEl.scrollHeight;
-      const heightDifference = newScrollHeight - lastScrollHeight.current;
-
-      if (heightDifference > 0) {
-        scrollEl.scrollTop += heightDifference;
-      }
-      lastScrollHeight.current = 0;
-    }
-  }, [backwardStatus, processedEvents.length]);
 
   return (
     <Box grow="Yes" style={{ position: 'relative' }}>
