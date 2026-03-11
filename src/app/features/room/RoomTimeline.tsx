@@ -345,9 +345,10 @@ const useTimelinePagination = (
   const [backwardStatus, setBackwardStatus] = useState<PaginationStatus>('idle');
   const [forwardStatus, setForwardStatus] = useState<PaginationStatus>('idle');
 
-  const paginate = useMemo(() => {
-    let fetching = false;
+  // Strict lock so timeline no do shift shift
+  const fetchingRef = useRef({ backward: false, forward: false });
 
+  const paginate = useMemo(() => {
     const recalibratePagination = (
       linkedTimelines: EventTimeline[],
       timelinesEventsCount: number[],
@@ -377,7 +378,11 @@ const useTimelinePagination = (
     };
 
     return async (backwards: boolean) => {
-      if (fetching) return;
+      const directionKey = backwards ? 'backward' : 'forward';
+
+      // Enforce the lock
+      if (fetchingRef.current[directionKey]) return;
+
       const { linkedTimelines: lTimelines } = timelineRef.current;
       const timelinesEventsCount = lTimelines.map(timelineToEventsCount);
 
@@ -396,7 +401,8 @@ const useTimelinePagination = (
         return;
       }
 
-      fetching = true;
+      // Engage the lock
+      fetchingRef.current[directionKey] = true;
       if (alive()) {
         (backwards ? setBackwardStatus : setForwardStatus)('loading');
       }
@@ -430,7 +436,8 @@ const useTimelinePagination = (
           (backwards ? setBackwardStatus : setForwardStatus)('idle');
         }
       } finally {
-        fetching = false;
+        // Release the lock
+        fetchingRef.current[directionKey] = false;
       }
     };
   }, [mx, alive, setTimeline, limit, setBackwardStatus, setForwardStatus]);
@@ -980,7 +987,7 @@ export function RoomTimeline({
     useCallback(
       () => ({
         root: getScrollElement(),
-        rootMargin: '100px',
+        rootMargin: '150px 0px 150px 0px',
       }),
       [getScrollElement]
     ),
@@ -2131,24 +2138,7 @@ export function RoomTimeline({
           </Chip>
         </Box>
       );
-    } else if (backwardStatus === 'loading' && getItems().length > 0) {
-      backPaginationJSX = (
-        <Box justifyContent="Center" style={{ padding: config.space.S300 }}>
-          <Spinner variant="Secondary" size="400" />
-        </Box>
-      );
     } else if (getItems().length === 0) {
-      // When eventsLength===0 AND liveTimelineLinked the live EventTimeline was
-      // just reset by a sliding sync TimelineRefresh and new events haven't
-      // arrived yet. Attaching the IntersectionObserver anchor here would
-      // immediately fire a server-side /messages request before current events
-      // land — potentially causing a "/messages hangs → spinner stuck" scenario.
-      // Suppressing the anchor for this transient state is safe: the rangeAtEnd
-      // self-heal useEffect will call getInitialTimeline once events arrive, and
-      // at that point the correct anchor (below) will be re-observed.
-      // eventsLength>0 covers the range={K,K} case from recalibratePagination
-      // where items=0 but events exist — that needs the anchor for local range
-      // extension (no server call since start>0).
       const placeholderBackAnchor =
         eventsLength > 0 || !liveTimelineLinked ? observeBackAnchor : undefined;
       backPaginationJSX =
@@ -2184,7 +2174,16 @@ export function RoomTimeline({
           </>
         );
     } else {
-      backPaginationJSX = <div ref={observeBackAnchor} style={{ height: 1 }} />;
+      backPaginationJSX = (
+        <>
+          {backwardStatus === 'loading' && (
+            <Box justifyContent="Center" style={{ padding: config.space.S300 }}>
+              <Spinner variant="Secondary" size="400" />
+            </Box>
+          )}
+          <div ref={observeBackAnchor} style={{ height: 1 }} />
+        </>
+      );
     }
   }
 
@@ -2209,12 +2208,6 @@ export function RoomTimeline({
           >
             <Text size="B300">Retry</Text>
           </Chip>
-        </Box>
-      );
-    } else if (forwardStatus === 'loading' && getItems().length > 0) {
-      frontPaginationJSX = (
-        <Box justifyContent="Center" style={{ padding: config.space.S300 }}>
-          <Spinner variant="Secondary" size="400" />
         </Box>
       );
     } else if (getItems().length === 0) {
@@ -2251,7 +2244,16 @@ export function RoomTimeline({
           </>
         );
     } else {
-      frontPaginationJSX = <div ref={observeFrontAnchor} style={{ height: 1 }} />;
+      frontPaginationJSX = (
+        <>
+          <div ref={observeFrontAnchor} style={{ height: 1 }} />
+          {forwardStatus === 'loading' && (
+            <Box justifyContent="Center" style={{ padding: config.space.S300 }}>
+              <Spinner variant="Secondary" size="400" />
+            </Box>
+          )}
+        </>
+      );
     }
   }
 
