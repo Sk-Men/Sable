@@ -312,10 +312,11 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
 
     if (htmlBody) {
       const strippedHtml = trimReplyFromFormattedBody(htmlBody)
-        .replace(/<br\s*\/?>/gi, ' ')
-        .replace(/<\/p>\s*<p[^>]*>/gi, ' ')
-        .replace(/<\/?p[^>]*>/gi, '')
-        .replace(/(?:\r\n|\r|\n)/g, ' ');
+        .replaceAll(/<br\s*\/?>/gi, ' ')
+        .replaceAll(/<\/p>\s*<p[^>]*>/gi, ' ')
+        .replaceAll(/<\/?p[^>]*>/gi, '')
+        .replaceAll(/(?:\r\n|\r|\n)/g, ' ')
+        .trim();
       const parserOpts = getReactCustomHtmlParser(mx, roomId, {
         linkifyOpts: LINKIFY_OPTS,
         useAuthentication,
@@ -323,7 +324,7 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
       });
       replyBodyJSX = parse(strippedHtml, parserOpts);
     } else if (plainBody) {
-      const strippedBody = trimReplyFromBody(plainBody).replace(/(?:\r\n|\r|\n)/g, ' ');
+      const strippedBody = trimReplyFromBody(plainBody).replaceAll(/(?:\r\n|\r|\n)/g, ' ');
       replyBodyJSX = scaleSystemEmoji(strippedBody);
     }
 
@@ -333,11 +334,11 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
 
     useEffect(
       () => () => {
-        if (!isEmptyEditor(editor)) {
-          const parsedDraft = JSON.parse(JSON.stringify(editor.children));
-          setMsgDraft(parsedDraft);
-        } else {
+        if (isEmptyEditor(editor)) {
           setMsgDraft([]);
+        } else {
+          const parsedDraft = structuredClone(editor.children);
+          setMsgDraft(parsedDraft);
         }
         resetEditor(editor);
         resetEditorHistory(editor);
