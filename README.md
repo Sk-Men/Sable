@@ -54,8 +54,8 @@ services:
 To build and serve Sable yourself with nginx, clone this repo and build it:
 
 ```sh
-npm ci # Installs all dependencies
-npm run build # Compiles the app into the dist/ directory
+pnpm i # Installs all dependencies
+pnpm run build # Compiles the app into the dist/ directory
 ```
 
 After that, you can copy the dist/ directory to your server and serve it.
@@ -71,13 +71,13 @@ After that, you can copy the dist/ directory to your server and serve it.
 
 Execute the following commands to start a development server:
 ```sh
-npm ci # Installs all dependencies
-npm run dev # Serve a development version
+pnpm ci # Installs all dependencies
+pnpm run dev # Serve a development version
 ```
 
 To build the app:
 ```sh
-npm run build # Compiles the app into the dist/ directory
+pnpm run build # Compiles the app into the dist/ directory
 ```
 
 ## Deployment and infrastructure

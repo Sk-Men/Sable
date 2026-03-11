@@ -86,7 +86,7 @@ jobs:
 
             **How to add a changeset:**
 
-            1. Run \`npm run document-change\` (interactive) and commit the generated file, or
+            1. Run \`pnpm run document-change\` (interactive) and commit the generated file, or
             2. Manually create \`.changeset/<descriptive-name>.md\`:
 
             \`\`\`md
