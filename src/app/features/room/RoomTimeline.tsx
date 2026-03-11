@@ -2271,6 +2271,45 @@ export function RoomTimeline({
     }
   }
 
+  const prevBackwardStatus = useRef(backwardStatus);
+  const scrollAnchor = useRef<{ id: string; offsetTop: number } | null>(null);
+
+  useLayoutEffect(() => {
+    const scrollEl = scrollRef.current;
+    if (!scrollEl) return;
+
+    // When going to loading store the exact position
+    if (prevBackwardStatus.current === 'idle' && backwardStatus === 'loading') {
+      const topMessage = scrollEl.querySelector('[data-message-id]');
+      if (topMessage) {
+        scrollAnchor.current = {
+          id: topMessage.getAttribute('data-message-id') || '',
+          offsetTop: (topMessage as HTMLElement).offsetTop,
+        };
+      }
+    }
+
+    // After fetch finishes calculate new content and force scroll to position hopefully
+    if (prevBackwardStatus.current === 'loading' && backwardStatus === 'idle') {
+      if (scrollAnchor.current) {
+        const anchorNode = scrollEl.querySelector(
+          `[data-message-id="${scrollAnchor.current.id}"]`
+        ) as HTMLElement;
+
+        if (anchorNode) {
+          const delta = anchorNode.offsetTop - scrollAnchor.current.offsetTop;
+
+          if (delta > 0) {
+            scrollEl.scrollBy({ top: delta, behavior: 'instant' });
+          }
+        }
+        scrollAnchor.current = null;
+      }
+    }
+
+    prevBackwardStatus.current = backwardStatus;
+  }, [backwardStatus, processedEvents]);
+
   return (
     <Box grow="Yes" style={{ position: 'relative' }}>
       {unreadInfo?.readUptoEventId && !unreadInfo?.inLiveTimeline && (
