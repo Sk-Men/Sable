@@ -38,8 +38,14 @@ export const messageList = style({
 
 globalStyle(`body ${messageList} [data-message-id]`, {
   transition: 'background-color 0.1s ease-in-out !important',
+  position: 'relative',
+  zIndex: 1,
 });
 
-globalStyle(`body ${messageList} [data-message-id]:hover`, {
-  backgroundColor: 'var(--sable-surface-container-hover) !important',
-});
+globalStyle(
+  `body ${messageList} [data-message-id]:hover, body ${messageList} [data-message-id]:focus-within`,
+  {
+    backgroundColor: 'var(--sable-surface-container-hover) !important',
+    zIndex: 10,
+  }
+);
