@@ -1,0 +1,65 @@
+import FocusTrap from 'focus-trap-react';
+import { Box, Text, color, config } from 'folds';
+import { useRef } from 'react';
+import { VoiceRecorder } from 'react-voice-recorder-kit';
+
+type AudioMessageRecorderProps = {
+  onRecordingComplete: (audioBlob: Blob) => void;
+};
+
+// We use a react voice recorder library to handle the recording of audio messages, as it provides a simple API and handles the complexities of recording audio in the browser.
+// The component is wrapped in a focus trap to ensure that keyboard users can easily navigate and interact with the recorder without accidentally losing focus or interacting with other parts of the UI.
+// The styling is kept simple and consistent with the rest of the app, using Folds' design tokens for colors, spacing, and typography.
+// we use https://www.npmjs.com/package/react-voice-recorder-kit for the recording
+export function AudioMessageRecorder({ onRecordingComplete }: AudioMessageRecorderProps) {
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  // uses default styling, we use at other places
+  return (
+    <FocusTrap
+      focusTrapOptions={{
+        returnFocusOnDeactivate: false,
+        initialFocus: false,
+        clickOutsideDeactivates: true,
+        allowOutsideClick: true,
+        fallbackFocus: () => containerRef.current!,
+      }}
+    >
+      <div ref={containerRef} tabIndex={-1} style={{ outline: 'none' }}>
+        <Box
+          direction="Column"
+          gap="200"
+          alignItems="Center"
+          style={{
+            backgroundColor: color.Surface.Container,
+            color: color.Surface.OnContainer,
+            border: `${config.borderWidth.B300} solid ${color.Surface.ContainerLine}`,
+            borderRadius: config.radii.R400,
+            boxShadow: config.shadow.E200,
+            padding: config.space.S400,
+            minWidth: 300,
+          }}
+        >
+          <Text size="H4">Audio Message Recorder</Text>
+          <VoiceRecorder
+            autoStart
+            onStop={(audioFile) => {
+              // closes the recorder and sends the audio file back to the parent component to be uploaded and sent as a message
+              onRecordingComplete(audioFile);
+            }}
+            buttonBackgroundColor={color.SurfaceVariant.Container}
+            buttonHoverBackgroundColor={color.SurfaceVariant.ContainerHover}
+            iconColor={color.Primary.Main}
+            visualizerBarColor={(level) => {
+              const hue = (level * 120).toString();
+              return `hsl(${hue}, 70%, 50%)`;
+            }}
+            style={{
+              backgroundColor: color.Surface.ContainerActive,
+            }}
+          />
+        </Box>
+      </div>
+    </FocusTrap>
+  );
+}
