@@ -5,14 +5,19 @@ import { VoiceRecorder } from 'react-voice-recorder-kit';
 
 type AudioMessageRecorderProps = {
   onRecordingComplete: (audioBlob: Blob) => void;
+  onRequestClose: () => void;
 };
 
 // We use a react voice recorder library to handle the recording of audio messages, as it provides a simple API and handles the complexities of recording audio in the browser.
 // The component is wrapped in a focus trap to ensure that keyboard users can easily navigate and interact with the recorder without accidentally losing focus or interacting with other parts of the UI.
 // The styling is kept simple and consistent with the rest of the app, using Folds' design tokens for colors, spacing, and typography.
 // we use https://www.npmjs.com/package/react-voice-recorder-kit for the recording
-export function AudioMessageRecorder({ onRecordingComplete }: AudioMessageRecorderProps) {
+export function AudioMessageRecorder({
+  onRecordingComplete,
+  onRequestClose,
+}: AudioMessageRecorderProps) {
   const containerRef = useRef<HTMLDivElement>(null);
+  const isDismissedRef = useRef(false);
 
   // uses default styling, we use at other places
   return (
@@ -20,6 +25,10 @@ export function AudioMessageRecorder({ onRecordingComplete }: AudioMessageRecord
       focusTrapOptions={{
         returnFocusOnDeactivate: false,
         initialFocus: false,
+        onDeactivate: () => {
+          isDismissedRef.current = true;
+          onRequestClose();
+        },
         clickOutsideDeactivates: true,
         allowOutsideClick: true,
         fallbackFocus: () => containerRef.current!,
@@ -44,6 +53,7 @@ export function AudioMessageRecorder({ onRecordingComplete }: AudioMessageRecord
           <VoiceRecorder
             autoStart
             onStop={(audioFile) => {
+              if (isDismissedRef.current) return;
               // closes the recorder and sends the audio file back to the parent component to be uploaded and sent as a message
               onRecordingComplete(audioFile);
             }}

@@ -923,6 +923,9 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
                   alignOffset={-44}
                   content={
                     <AudioMessageRecorder
+                      onRequestClose={() => {
+                        setShowAudioRecorder(false);
+                      }}
                       onRecordingComplete={(audioBlob) => {
                         const file = new File(
                           [audioBlob],
