@@ -55,7 +55,7 @@ jobs:
         uses: ./.github/actions/setup
 
       - name: Run TypeScript typecheck
-        run: pnpm run typecheck -- --pretty false
+        run: pnpm run typecheck --pretty false
 
   knip:
     name: Knip

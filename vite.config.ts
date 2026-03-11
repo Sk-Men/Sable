@@ -1,5 +1,5 @@
 import { defineConfig } from 'vite';
-import type { ViteDevServer } from 'vite';
+import type { ViteDevServer, PluginOption } from 'vite';
 import { execSync } from 'child_process';
 import react from '@vitejs/plugin-react';
 import svgr from 'vite-plugin-svgr';
@@ -160,7 +160,7 @@ export default defineConfig({
     }),
     viteStaticCopy(copyFiles),
     vanillaExtractPlugin({ identifiers: 'debug' }),
-    wasm(),
+    wasm() as PluginOption,
     react(),
     svgr(),
     VitePWA({
@@ -219,7 +219,7 @@ export default defineConfig({
     sourcemap: true,
     copyPublicDir: false,
     rollupOptions: {
-      plugins: [inject({ Buffer: ['buffer', 'Buffer'] })],
+      plugins: [inject({ Buffer: ['buffer', 'Buffer'] }) as PluginOption],
     },
   },
 });
