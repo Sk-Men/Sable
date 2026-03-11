@@ -285,6 +285,7 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
     );
     const [scheduleMenuAnchor, setScheduleMenuAnchor] = useState<RectCords>();
     const [showSchedulePicker, setShowSchedulePicker] = useState(false);
+    const [silentReply, setSilentReply] = useState(false);
     const [hour24Clock] = useSetting(settingsAtom, 'hour24Clock');
     const isEncrypted = room.hasEncryptionStateEvent();
 
@@ -343,6 +344,12 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
       },
       [roomId, editor, setMsgDraft]
     );
+
+    useEffect(() => {
+      if (replyDraft !== undefined) {
+        setSilentReply(replyDraft.userId === mx.getUserId());
+      }
+    }, [mx, replyDraft]);
 
     const handleFileMetadata = useCallback(
       (fileItem: TUploadItem, metadata: TUploadMetadata) => {
@@ -517,7 +524,7 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
         body,
       };
 
-      if (replyDraft && replyDraft.userId !== mx.getUserId()) {
+      if (replyDraft && !silentReply) {
         mentionData.users.add(replyDraft.userId);
       }
 
@@ -581,6 +588,7 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
       mx,
       roomId,
       replyDraft,
+      silentReply,
       scheduledTime,
       editingScheduledDelayId,
       handleQuickReact,
@@ -859,24 +867,56 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
                     >
                       <Icon src={Icons.Cross} size="50" />
                     </IconButton>
-                    <Box direction="Row" gap="200" alignItems="Center">
-                      {replyDraft.relation?.rel_type === RelationType.Thread && <ThreadIndicator />}
-                      <ReplyLayout
-                        userColor={replyUsernameColor}
-                        username={
-                          <Text size="T300" truncate style={{ fontFamily: replyUsernameFont }}>
-                            <b>
-                              {getMemberDisplayName(room, replyDraft.userId, nicknames) ??
-                                getMxIdLocalPart(replyDraft.userId) ??
-                                replyDraft.userId}
-                            </b>
-                          </Text>
-                        }
+                    <Box
+                      direction="Row"
+                      gap="200"
+                      alignItems="Center"
+                      grow="Yes"
+                      style={{ minWidth: 0 }}
+                    >
+                      <Box
+                        direction="Row"
+                        gap="200"
+                        alignItems="Center"
+                        grow="Yes"
+                        style={{ minWidth: 0 }}
                       >
-                        <Text size="T300" truncate>
-                          {replyBodyJSX}
-                        </Text>
-                      </ReplyLayout>
+                        {replyDraft.relation?.rel_type === RelationType.Thread && (
+                          <ThreadIndicator />
+                        )}
+                        <ReplyLayout
+                          userColor={replyUsernameColor}
+                          username={
+                            <Text size="T300" truncate style={{ fontFamily: replyUsernameFont }}>
+                              <b>
+                                {getMemberDisplayName(room, replyDraft.userId, nicknames) ??
+                                  getMxIdLocalPart(replyDraft.userId) ??
+                                  replyDraft.userId}
+                              </b>
+                            </Text>
+                          }
+                        >
+                          <Text size="T300" truncate>
+                            {replyBodyJSX}
+                          </Text>
+                        </ReplyLayout>
+                      </Box>
+                      <IconButton
+                        variant="SurfaceVariant"
+                        size="300"
+                        radii="300"
+                        title={
+                          silentReply ? 'Unmute reply notifications' : 'Mute reply notifications'
+                        }
+                        aria-pressed={silentReply}
+                        aria-label={
+                          silentReply ? 'Unmute reply notifications' : 'Mute reply notifications'
+                        }
+                        onClick={() => setSilentReply(!silentReply)}
+                      >
+                        {!silentReply && <Icon src={Icons.BellPing} />}
+                        {silentReply && <Icon src={Icons.BellMute} />}
+                      </IconButton>
                     </Box>
                   </Box>
                 </div>
