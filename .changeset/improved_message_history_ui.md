@@ -1,5 +1,5 @@
 ---
-sable: fix
+default: minor
 ---
 
-Added Hover Menu inside Message Version Pop-out
+Added hover menu inside Message Version Pop-out.
