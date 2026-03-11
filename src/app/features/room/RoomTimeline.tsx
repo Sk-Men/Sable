@@ -2039,101 +2039,74 @@ export function RoomTimeline({
     }
   );
 
-  let prevEvent: MatrixEvent | undefined;
-  let isPrevRendered = false;
-  let newDivider = false;
-  let dayDivider = false;
-  const timelineItems = getItems();
-  const eventRenderer = (item: number) => {
-    const [eventTimeline, baseIndex] = getTimelineAndBaseIndex(timeline.linkedTimelines, item);
-    if (!eventTimeline) return null;
-    const timelineSet = eventTimeline?.getTimelineSet();
-    const mEvent = getTimelineEvent(eventTimeline, getTimelineRelativeIndex(item, baseIndex));
-    const mEventId = mEvent?.getId();
+  const processedEvents = useMemo(() => {
+    const items = getItems();
+    let prevEvent: MatrixEvent | undefined;
+    let isPrevRendered = false;
+    let newDivider = false;
+    let dayDivider = false;
 
-    if (!mEvent || !mEventId) return null;
+    const chronologicallyProcessed = items
+      .map((item) => {
+        const [eventTimeline, baseIndex] = getTimelineAndBaseIndex(timeline.linkedTimelines, item);
+        if (!eventTimeline) return null;
 
-    const eventSender = mEvent.getSender();
-    if (eventSender && ignoredUsersSet.has(eventSender)) {
-      return null;
-    }
-    if (mEvent.isRedacted() && !showHiddenEvents) {
-      return null;
-    }
+        const timelineSet = eventTimeline.getTimelineSet();
+        const mEvent = getTimelineEvent(eventTimeline, getTimelineRelativeIndex(item, baseIndex));
+        const mEventId = mEvent?.getId();
 
-    if (!newDivider && readUptoEventIdRef.current) {
-      newDivider = prevEvent?.getId() === readUptoEventIdRef.current;
-    }
-    if (!dayDivider) {
-      dayDivider = prevEvent ? !inSameDay(prevEvent.getTs(), mEvent.getTs()) : false;
-    }
+        if (!mEvent || !mEventId) return null;
 
-    const collapsed =
-      isPrevRendered &&
-      !dayDivider &&
-      (!newDivider || eventSender === mx.getUserId()) &&
-      prevEvent !== undefined &&
-      prevEvent.getSender() === eventSender &&
-      prevEvent.getType() === mEvent.getType() &&
-      minuteDifference(prevEvent.getTs(), mEvent.getTs()) < 2;
+        const eventSender = mEvent.getSender();
+        if (eventSender && ignoredUsersSet.has(eventSender)) return null;
+        if (mEvent.isRedacted() && !showHiddenEvents) return null;
 
-    const eventJSX = reactionOrEditEvent(mEvent)
-      ? null
-      : renderMatrixEvent(
-          mEvent.getType(),
-          typeof mEvent.getStateKey() === 'string',
-          mEventId,
+        if (!newDivider && readUptoEventIdRef.current) {
+          newDivider = prevEvent?.getId() === readUptoEventIdRef.current;
+        }
+        if (!dayDivider) {
+          dayDivider = prevEvent ? !inSameDay(prevEvent.getTs(), mEvent.getTs()) : false;
+        }
+
+        const isReactionOrEdit = reactionOrEditEvent(mEvent);
+        const willBeRendered = !isReactionOrEdit;
+
+        const collapsed =
+          isPrevRendered &&
+          !dayDivider &&
+          (!newDivider || eventSender === mx.getUserId()) &&
+          prevEvent !== undefined &&
+          prevEvent.getSender() === eventSender &&
+          prevEvent.getType() === mEvent.getType() &&
+          minuteDifference(prevEvent.getTs(), mEvent.getTs()) < 2;
+
+        const willRenderNewDivider = newDivider && willBeRendered && eventSender !== mx.getUserId();
+        const willRenderDayDivider = dayDivider && willBeRendered;
+
+        prevEvent = mEvent;
+        isPrevRendered = willBeRendered;
+
+        if (willRenderNewDivider) newDivider = false;
+        if (willRenderDayDivider) dayDivider = false;
+
+        if (!willBeRendered) return null;
+
+        return {
+          id: mEventId,
+          itemIndex: item,
           mEvent,
-          item,
           timelineSet,
-          collapsed
-        );
-    prevEvent = mEvent;
-    isPrevRendered = !!eventJSX;
+          eventSender,
+          collapsed,
+          willRenderNewDivider,
+          willRenderDayDivider,
+        };
+      })
+      .filter((e): e is NonNullable<typeof e> => e !== null);
 
-    const newDividerJSX =
-      newDivider && eventJSX && eventSender !== mx.getUserId() ? (
-        <MessageBase space={messageSpacing}>
-          <TimelineDivider style={{ color: color.Success.Main }} variant="Inherit">
-            <Badge as="span" size="500" variant="Success" fill="Solid" radii="300">
-              <Text size="L400">New Messages</Text>
-            </Badge>
-          </TimelineDivider>
-        </MessageBase>
-      ) : null;
-
-    const dayDividerJSX =
-      dayDivider && eventJSX ? (
-        <MessageBase space={messageSpacing}>
-          <TimelineDivider variant="Surface">
-            <Badge as="span" size="500" variant="Secondary" fill="None" radii="300">
-              <Text size="L400">
-                {(() => {
-                  if (today(mEvent.getTs())) return 'Today';
-                  if (yesterday(mEvent.getTs())) return 'Yesterday';
-                  return timeDayMonthYear(mEvent.getTs());
-                })()}
-              </Text>
-            </Badge>
-          </TimelineDivider>
-        </MessageBase>
-      ) : null;
-
-    if (eventJSX && (newDividerJSX || dayDividerJSX)) {
-      if (newDividerJSX) newDivider = false;
-      if (dayDividerJSX) dayDivider = false;
-
-      return (
-        <Fragment key={mEventId}>
-          {newDividerJSX}
-          {dayDividerJSX}
-          {eventJSX}
-        </Fragment>
-      );
-    }
-
-    return eventJSX;
-  };
+    // Reverse for column-reverse rendering
+    return chronologicallyProcessed.reverse();
+  }, [timeline.linkedTimelines, getItems, ignoredUsersSet, showHiddenEvents, mx]);
 
   let backPaginationJSX: ReactNode | undefined;
   if (canPaginateBack || !rangeAtStart || backwardStatus !== 'idle') {
@@ -2158,13 +2131,13 @@ export function RoomTimeline({
           </Chip>
         </Box>
       );
-    } else if (backwardStatus === 'loading' && timelineItems.length > 0) {
+    } else if (backwardStatus === 'loading' && getItems().length > 0) {
       backPaginationJSX = (
         <Box justifyContent="Center" style={{ padding: config.space.S300 }}>
           <Spinner variant="Secondary" size="400" />
         </Box>
       );
-    } else if (timelineItems.length === 0) {
+    } else if (getItems().length === 0) {
       // When eventsLength===0 AND liveTimelineLinked the live EventTimeline was
       // just reset by a sliding sync TimelineRefresh and new events haven't
       // arrived yet. Attaching the IntersectionObserver anchor here would
@@ -2238,13 +2211,13 @@ export function RoomTimeline({
           </Chip>
         </Box>
       );
-    } else if (forwardStatus === 'loading' && timelineItems.length > 0) {
+    } else if (forwardStatus === 'loading' && getItems().length > 0) {
       frontPaginationJSX = (
         <Box justifyContent="Center" style={{ padding: config.space.S300 }}>
           <Spinner variant="Secondary" size="400" />
         </Box>
       );
-    } else if (timelineItems.length === 0) {
+    } else if (getItems().length === 0) {
       frontPaginationJSX =
         messageLayout === MessageLayout.Compact ? (
           <>
@@ -2310,11 +2283,70 @@ export function RoomTimeline({
       <Scroll ref={scrollRef} visibility="Hover">
         <Box
           className={css.messageList}
-          direction="Column"
-          justifyContent="End"
           style={{ minHeight: '100%', padding: `${config.space.S600} 0` }}
         >
-          {!canPaginateBack && rangeAtStart && getItems().length > 0 && (
+          <span ref={atBottomAnchorRef} />
+          {frontPaginationJSX}
+
+          {processedEvents.map((eventData) => {
+            const {
+              id,
+              itemIndex,
+              mEvent,
+              timelineSet,
+              willRenderNewDivider,
+              willRenderDayDivider,
+              collapsed,
+            } = eventData;
+
+            const eventJSX = renderMatrixEvent(
+              mEvent.getType(),
+              typeof mEvent.getStateKey() === 'string',
+              id,
+              mEvent,
+              itemIndex,
+              timelineSet,
+              collapsed
+            );
+
+            const newDividerJSX = willRenderNewDivider ? (
+              <MessageBase space={messageSpacing}>
+                <TimelineDivider style={{ color: color.Success.Main }} variant="Inherit">
+                  <Badge as="span" size="500" variant="Success" fill="Solid" radii="300">
+                    <Text size="L400">New Messages</Text>
+                  </Badge>
+                </TimelineDivider>
+              </MessageBase>
+            ) : null;
+
+            const dayDividerJSX = willRenderDayDivider ? (
+              <MessageBase space={messageSpacing}>
+                <TimelineDivider variant="Surface">
+                  <Badge as="span" size="500" variant="Secondary" fill="None" radii="300">
+                    <Text size="L400">
+                      {(() => {
+                        if (today(mEvent.getTs())) return 'Today';
+                        if (yesterday(mEvent.getTs())) return 'Yesterday';
+                        return timeDayMonthYear(mEvent.getTs());
+                      })()}
+                    </Text>
+                  </Badge>
+                </TimelineDivider>
+              </MessageBase>
+            ) : null;
+
+            return (
+              <Fragment key={id}>
+                {eventJSX}
+                {dayDividerJSX}
+                {newDividerJSX}
+              </Fragment>
+            );
+          })}
+
+          {backPaginationJSX}
+
+          {!canPaginateBack && rangeAtStart && processedEvents.length > 0 && (
             <div
               style={{
                 padding: `${config.space.S700} ${config.space.S400} ${config.space.S600} ${
@@ -2325,12 +2357,6 @@ export function RoomTimeline({
               <RoomIntro room={room} />
             </div>
           )}
-          {backPaginationJSX}
-
-          {timelineItems.map(eventRenderer)}
-
-          {frontPaginationJSX}
-          <span ref={atBottomAnchorRef} />
         </Box>
       </Scroll>
       {(!atBottom || !(liveTimelineLinked && rangeAtEnd)) && (

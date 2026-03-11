@@ -32,7 +32,7 @@ export type TimelineFloatVariants = RecipeVariants<typeof TimelineFloat>;
 
 export const messageList = style({
   display: 'flex',
-  flexDirection: 'column',
+  flexDirection: 'column-reverse',
   width: '100%',
 });
 
