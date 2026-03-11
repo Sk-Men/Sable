@@ -1,7 +1,7 @@
 {
   "name": "sable",
   "version": "1.6.0",
-  "description": "Yet another matrix client fork",
+  "description": "An almost stable Matrix client",
   "type": "module",
   "packageManager": "npm@11.11.0",
   "engines": {
