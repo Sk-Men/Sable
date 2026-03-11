@@ -2184,14 +2184,19 @@ export function RoomTimeline({
         );
     } else {
       backPaginationJSX = (
-        <>
+        <div
+          ref={observeBackAnchor}
+          style={{
+            height: '40px',
+            overflowAnchor: 'none',
+          }}
+        >
           {backwardStatus === 'loading' && (
             <Box justifyContent="Center" style={{ padding: config.space.S300 }}>
               <Spinner variant="Secondary" size="400" />
             </Box>
           )}
-          <div ref={observeBackAnchor} style={{ height: 1 }} />
-        </>
+        </div>
       );
     }
   }
