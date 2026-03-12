@@ -1,5 +1,5 @@
 import { style } from '@vanilla-extract/css';
-import { color, config } from 'folds';
+import { color } from 'folds';
 
 export const GroupAvatarContainer = style({
   position: 'relative',
