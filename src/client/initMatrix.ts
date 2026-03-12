@@ -16,11 +16,13 @@ import {
 } from '$state/sessions';
 import { getLocalStorageItem } from '$state/utils/atomWithLocalStorage';
 import { createLogger } from '$utils/debug';
+import { createDebugLogger } from '$utils/debugLogger';
 import { pushSessionToSW } from '../sw-session';
 import { cryptoCallbacks } from './secretStorageKeys';
 import { SlidingSyncConfig, SlidingSyncDiagnostics, SlidingSyncManager } from './slidingSync';
 
 const log = createLogger('initMatrix');
+const debugLog = createDebugLogger('initMatrix');
 const slidingSyncByClient = new WeakMap<MatrixClient, SlidingSyncManager>();
 const FAST_SYNC_POLL_TIMEOUT_MS = 10000;
 const SLIDING_SYNC_POLL_TIMEOUT_MS = 20000;
@@ -150,6 +152,7 @@ const waitForClientReady = (mx: MatrixClient, timeoutMs: number): Promise<void> 
     let timer = 0;
     let finish = () => {};
     const onSync = (state: string) => {
+      debugLog.info('sync', `Sync state changed: ${state}`, { state, ready: isClientReadyForUi(state) });
       if (isClientReadyForUi(state)) finish();
     };
 
@@ -263,7 +266,7 @@ const buildClient = async (session: Session): Promise<MatrixClient> => {
 
 export const initClient = async (session: Session): Promise<MatrixClient> => {
   const storeName = getSessionStoreName(session);
-  log.log('initClient', { userId: session.userId, baseUrl: session.baseUrl, storeName });
+  debugLog.info('sync', 'Initializing Matrix client', { userId: session.userId, baseUrl: session.baseUrl });
 
   const isMismatch = (err: unknown): boolean => {
     const msg = err instanceof Error ? err.message : String(err);
@@ -276,6 +279,8 @@ export const initClient = async (session: Session): Promise<MatrixClient> => {
   };
 
   const wipeAllStores = async () => {
+    log.warn('initClient: wiping all stores for', session.userId);
+    debugLog.warn('sync', 'Wiping all stores due to mismatch', { userId: session.userId }
     log.warn('initClient: wiping all stores for', session.userId);
     await deleteSessionStores(storeName);
     try {
@@ -294,17 +299,25 @@ export const initClient = async (session: Session): Promise<MatrixClient> => {
   };
 
   let mx: MatrixClient;
-  try {
-    mx = await buildClient(session);
-  } catch (err) {
-    if (!isMismatch(err)) throw err;
+  try {{
+      debugLog.error('sync', 'Failed to build client', { error: err });
+      throw err;
+    }
     log.warn('initClient: mismatch on buildClient — wiping and retrying:', err);
+    debugLog.warn('sync', 'Client build mismatch - wiping stores and retrying', { error: err });
     await wipeAllStores();
     mx = await buildClient(session);
   }
 
   try {
     await mx.initRustCrypto({ cryptoDatabasePrefix: storeName.rustCryptoPrefix });
+  } catch (err) {
+    if (!isMismatch(err)) {
+      debugLog.error('sync', 'Failed to initialize crypto', { error: err });
+      throw err;
+    }
+    log.warn('initClient: mismatch on initRustCrypto — wiping and retrying:', err);
+    debugLog.warn('sync', 'Crypto init mismatch - wiping stores and retrying', { error: err };
   } catch (err) {
     if (!isMismatch(err)) throw err;
     log.warn('initClient: mismatch on initRustCrypto — wiping and retrying:', err);
@@ -336,16 +349,7 @@ const disposeSlidingSync = (mx: MatrixClient): void => {
   slidingSyncByClient.delete(mx);
 };
 
-export const stopClient = (mx: MatrixClient): void => {
-  disposeSlidingSync(mx);
-  mx.stopClient();
-};
-
-export const getSlidingSyncManager = (mx: MatrixClient): SlidingSyncManager | undefined =>
-  slidingSyncByClient.get(mx);
-
-export const startClient = async (mx: MatrixClient, config?: StartClientConfig) => {
-  log.log('startClient', mx.getUserId());
+expebugLog.info('sync', 'Starting Matrix client', { userId: mx.getUserId() });
   disposeSlidingSync(mx);
   const slidingConfig = config?.slidingSync;
   const slidingEnabledOnServer = resolveSlidingEnabled(slidingConfig?.enabled);
@@ -353,6 +357,25 @@ export const startClient = async (mx: MatrixClient, config?: StartClientConfig) 
   const proxyBaseUrl = slidingConfig?.proxyBaseUrl ?? config?.baseUrl;
   const hasSlidingProxy = typeof proxyBaseUrl === 'string' && proxyBaseUrl.trim().length > 0;
   log.log('startClient sliding config', {
+    userId: mx.getUserId(),
+    enabled: slidingConfig?.enabled,
+    enabledOnServer: slidingEnabledOnServer,
+    sessionOptIn: config?.sessionSlidingSyncOptIn === true,
+    requestedEnabled: slidingRequested,
+    proxyBaseUrl,
+    hasSlidingProxy,
+  });
+  debugLog.info('sync', 'Sliding sync configuration', {
+    enabledOnServer: slidingEnabledOnServer,
+    requested: slidingRequested,
+    hasProxy: hasSlidingProxy,
+  });
+
+  const startClassicSync = async (fallbackFromSliding: boolean, reason: SyncTransportReason) => {
+    debugLog.info('sync', `Starting classic sync (reason: ${reason})`, {
+      fallback: fallbackFromSliding,
+      reason,
+    });
     userId: mx.getUserId(),
     enabled: slidingConfig?.enabled,
     enabledOnServer: slidingEnabledOnServer,
@@ -504,10 +527,12 @@ export const getClientSyncDiagnostics = (mx: MatrixClient): ClientSyncDiagnostic
  */
 export const logoutClient = async (mx: MatrixClient, session?: Session) => {
   log.log('logoutClient', { userId: mx.getUserId(), sessionUserId: session?.userId });
+  debugLog.info('general', 'Logging out client', { userId: mx.getUserId() });
   pushSessionToSW();
   stopClient(mx);
   try {
     await mx.logout();
+    debugLog.info('general', 'Logout successful', { userId: mx.getUserId() });
   } catch {
     // ignore
   }
@@ -525,6 +550,7 @@ export const logoutClient = async (mx: MatrixClient, session?: Session) => {
 };
 
 export const clearLoginData = async () => {
+  debugLog.info('general', 'Clearing all login data and reloading');
   const dbs = await window.indexedDB.databases();
   dbs.forEach((idbInfo) => {
     const { name } = idbInfo;

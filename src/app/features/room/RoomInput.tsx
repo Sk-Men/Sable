@@ -128,6 +128,7 @@ import { useImagePackRooms } from '$hooks/useImagePackRooms';
 import { useComposingCheck } from '$hooks/useComposingCheck';
 import { useSableCosmetics } from '$hooks/useSableCosmetics';
 import { createLogger } from '$utils/debug';
+import { createDebugLogger } from '$utils/debugLogger';
 import FocusTrap from 'focus-trap-react';
 import { useQueryClient } from '@tanstack/react-query';
 import {
@@ -176,6 +177,7 @@ const getReplyContent = (replyDraft: IReplyDraft | undefined): IEventRelation =>
 };
 
 const log = createLogger('RoomInput');
+const debugLog = createDebugLogger('RoomInput');
 interface ReplyEventContent {
   'm.relates_to'?: IEventRelation;
 }
@@ -422,10 +424,16 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
 
       await Promise.all(
         contents.map((content) =>
-          mx.sendMessage(roomId, content as any).catch((error: unknown) => {
-            log.error('failed to send uploaded message', { roomId }, error);
-            throw error;
-          })
+          mx.sendMessage(roomId, content as any)
+            .then((res) => {
+              debugLog.info('message', 'Uploaded file message sent', { roomId, eventId: res.event_id, msgtype: content.msgtype });
+              return res;
+            })
+            .catch((error: unknown) => {
+              debugLog.error('message', 'Failed to send uploaded file message', { roomId, error: error instanceof Error ? error.message : String(error) });
+              log.error('failed to send uploaded message', { roomId }, error);
+              throw error;
+            })
         )
       );
     };
@@ -569,18 +577,27 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
       } else if (editingScheduledDelayId) {
         try {
           await cancelDelayedEvent(mx, editingScheduledDelayId);
-          mx.sendMessage(roomId, content as any);
+          debugLog.info('message', 'Sending message after cancelling scheduled event', { roomId, scheduledDelayId: editingScheduledDelayId });
+          const res = await mx.sendMessage(roomId, content as any);
+          debugLog.info('message', 'Message sent successfully', { roomId, eventId: res.event_id });
           invalidate();
           setEditingScheduledDelayId(null);
           resetInput();
-        } catch {
+        } catch (error) {
+          debugLog.error('message', 'Failed to send message after cancelling scheduled event', { roomId, error: error instanceof Error ? error.message : String(error) });
           // Cancel failed — leave state intact for retry
         }
       } else {
         resetInput();
-        mx.sendMessage(roomId, content as any).catch((error: unknown) => {
-          log.error('failed to send message', { roomId }, error);
-        });
+        debugLog.info('message', 'Sending message', { roomId, msgtype: (content as any).msgtype });
+        mx.sendMessage(roomId, content as any)
+          .then((res) => {
+            debugLog.info('message', 'Message sent successfully', { roomId, eventId: res.event_id });
+          })
+          .catch((error: unknown) => {
+            debugLog.error('message', 'Failed to send message', { roomId, error: error instanceof Error ? error.message : String(error) });
+            log.error('failed to send message', { roomId }, error);
+          });
       }
     }, [
       editor,

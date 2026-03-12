@@ -32,6 +32,7 @@ import {
 } from '$utils/room';
 import { NotificationType, StateEvent } from '$types/matrix/room';
 import { createLogger } from '$utils/debug';
+import { createDebugLogger } from '$utils/debugLogger';
 import LogoSVG from '$public/res/svg/cinny.svg';
 import { nicknamesAtom } from '$state/nicknames';
 import {
@@ -43,6 +44,7 @@ import { useClientConfig } from '$hooks/useClientConfig';
 import { mobileOrTablet } from '$utils/user-agent';
 
 const log = createLogger('BackgroundNotifications');
+const debugLog = createDebugLogger('BackgroundNotifications');
 const isClientReadyForNotifications = (state: SyncState | string | null): boolean =>
   state === SyncState.Prepared || state === SyncState.Syncing || state === SyncState.Catchup;
 
@@ -303,6 +305,10 @@ export function BackgroundNotifications() {
 
             const notificationType = getNotificationType(mx, room.roomId);
             if (notificationType === NotificationType.Mute) {
+              debugLog.debug('notification', 'Room is muted - skipping notification', {
+                roomId: room.roomId,
+                eventId,
+              });
               return;
             }
 
@@ -329,8 +335,23 @@ export function BackgroundNotifications() {
             const shouldNotify = pushActions?.notify || shouldForceDMNotification;
 
             if (!shouldNotify) {
+              debugLog.debug('notification', 'Event filtered - no push action match', {
+                eventId,
+                roomId: room.roomId,
+                eventType,
+                isDM,
+              });
               return;
             }
+
+            debugLog.info('notification', 'Processing notification event', {
+              eventId,
+              roomId: room.roomId,
+              eventType,
+              isDM,
+              isHighlight,
+              loud: loudByRule,
+            });
 
             const senderName =
               getMemberDisplayName(room, sender, nicknamesRef.current) ??
@@ -360,6 +381,10 @@ export function BackgroundNotifications() {
 
             // Silent-rule events: unread badge updated above; no OS notification or sound.
             if (!loudByRule && !isHighlight) {
+              debugLog.debug('notification', 'Silent notification - badge updated only', {
+                eventId,
+                roomId: room.roomId,
+              });
               return;
             }
 
@@ -410,6 +435,11 @@ export function BackgroundNotifications() {
 
             if (canShowInAppBanner) {
               // App is in the foreground on a different account — show the themed in-app banner.
+              debugLog.info('notification', 'Showing in-app banner', {
+                eventId,
+                roomId: room.roomId,
+                title: notificationPayload.title,
+              });
               setInAppBannerRef.current({
                 id: dedupeId,
                 title: notificationPayload.title,
@@ -422,6 +452,12 @@ export function BackgroundNotifications() {
             } else if (loudByRule) {
               // App is backgrounded or in-app notifications disabled — fire an OS notification.
               // Only send for loud (sound-tweak) rules; highlight-only events are silently counted.
+              debugLog.info('notification', 'Sending OS notification', {
+                eventId,
+                roomId: room.roomId,
+                title: notificationPayload.title,
+                hasSound: !notificationPayload.options.silent,
+              });
               sendNotification({
                 title: notificationPayload.title,
                 icon: notificationPayload.options.icon,
@@ -438,6 +474,10 @@ export function BackgroundNotifications() {
         })
         .catch((err) => {
           log.error('failed to start background client for', session.userId, err);
+          debugLog.error('notification', 'Failed to start background client', {
+            userId: session.userId,
+            error: err,
+          });
         });
     });
 

@@ -14,10 +14,18 @@ import {
   MSC3575_STATE_KEY_ME,
   EventType,
   User,
+import {
+  MatrixClient,
+  SlidingSync,
+  SlidingSyncEvent,
+  SlidingSyncEventHandlerMap,
+  SlidingSyncState,
 } from '$types/matrix-sdk';
 import { createLogger } from '$utils/debug';
+import { createDebugLogger } from '$utils/debugLogger';
 
 const log = createLogger('slidingSync');
+const debugLog = createDebugLogger('slidingSync');
 
 export const LIST_JOINED = 'joined';
 export const LIST_INVITES = 'invites';
@@ -359,17 +367,26 @@ export class SlidingSyncManager {
     );
 
     this.onLifecycle = (state, resp, err) => {
+      debugLog.info('sync', `Sliding sync lifecycle: ${state}`, { state, hasError: !!err });
+      if (err) {
+        debugLog.error('sync', 'Sliding sync error', { error: err });
+      }
       if (this.disposed || err || !resp || state !== SlidingSyncState.Complete) return;
       this.expandListsToKnownCount();
     };
 
     this.onConnectionChange = () => {
+      const isOnline = navigator.onLine;
+      debugLog.info('network', `Network connectivity changed: ${isOnline ? 'online' : 'offline'}`, { online: isOnline });
       if (this.disposed || !this.adaptiveTimeline) return;
       const nextLimit = resolveAdaptiveRoomTimelineLimit(
         this.configuredTimelineLimit,
         readAdaptiveSignals()
       );
       if (nextLimit === this.roomTimelineLimit) return;
+      debugLog.info('sync', `Adaptive timeline limit updated to ${nextLimit}`, {
+        limit: nextLimit,
+      });
       this.roomTimelineLimit = nextLimit;
       this.applyRoomTimelineLimit(nextLimit);
       log.log(
