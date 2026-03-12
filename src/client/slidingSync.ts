@@ -201,7 +201,7 @@ const buildUnencryptedSubscription = (timelineLimit: number): MSC3575RoomSubscri
 const buildLists = (pageSize: number, includeInviteList: boolean): Map<string, MSC3575List> => {
   const lists = new Map<string, MSC3575List>();
   const listRequiredState = buildListRequiredState();
-  
+
   // Start with a reasonable initial range that will quickly expand to full list
   // Since timeline_limit=1, loading many rooms is very cheap
   // This prevents the white page issue from progressive loading delays
@@ -462,27 +462,27 @@ export class SlidingSyncManager {
 
       const existing = this.slidingSync.getListParams(key);
       const currentEnd = getListEndIndex(existing);
-      
+
       // Calculate how many rooms we still need to load
       const maxEnd = Math.min(knownCount, this.maxRooms) - 1;
-      
+
       if (currentEnd >= maxEnd) {
         // This list is fully loaded
         return;
       }
 
       allListsComplete = false;
-      
+
       // Progressive expansion: load in moderate chunks to balance speed with stability
       // Chunk size reduced to 100 to prevent timeline ordering issues when opening rooms
       // while lists are still expanding. Rooms should get at least one clean sync from
       // their list before the active subscription requests a high timeline limit.
       const chunkSize = 100;
       const desiredEnd = Math.min(currentEnd + chunkSize, maxEnd);
-      
+
       this.slidingSync.setListRanges(key, [[0, desiredEnd]]);
       expandedAny = true;
-      
+
       if (knownCount > this.maxRooms) {
         log.warn(
           `Sliding Sync list "${key}" capped at ${this.maxRooms}/${knownCount} rooms for ${this.mx.getUserId()}`
