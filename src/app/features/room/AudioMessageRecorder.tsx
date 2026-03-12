@@ -71,8 +71,6 @@ export function AudioMessageRecorder({
               onWaveformUpdate(waveform);
               onAudioLengthUpdate(audioLength);
             }}
-            onWaveformUpdate={onWaveformUpdate}
-            onAudioLengthUpdate={onAudioLengthUpdate}
             buttonBackgroundColor={color.SurfaceVariant.Container}
             buttonHoverBackgroundColor={color.SurfaceVariant.ContainerHover}
             iconColor={color.Primary.Main}
