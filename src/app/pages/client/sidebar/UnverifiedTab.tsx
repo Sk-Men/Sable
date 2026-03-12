@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Badge, color, Icon, Icons, Text } from 'folds';
+import { Badge, color, Icon, Icons, Text, toRem } from 'folds';
 import {
   SidebarAvatar,
   SidebarItem,

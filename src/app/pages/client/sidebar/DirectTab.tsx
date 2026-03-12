@@ -107,11 +107,11 @@ export function DirectTab() {
         )}
       </SidebarItemTooltip>
       {directUnread && (
-        <SidebarItemBadge 
+        <SidebarItemBadge
           hasCount={directUnread.total > 0}
-          style={{ 
-            left: directUnread.total > 0 ? toRem(-6) : toRem(-2), 
-            right: 'auto' 
+          style={{
+            left: directUnread.total > 0 ? toRem(-6) : toRem(-2),
+            right: 'auto',
           }}
         >
           <UnreadBadge
