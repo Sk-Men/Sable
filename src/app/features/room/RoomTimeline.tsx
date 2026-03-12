@@ -573,6 +573,7 @@ export function RoomTimeline({
   const [encUrlPreview] = useSetting(settingsAtom, 'encUrlPreview');
   const showUrlPreview = room.hasEncryptionStateEvent() ? encUrlPreview : urlPreview;
   const [showHiddenEvents] = useSetting(settingsAtom, 'showHiddenEvents');
+  const [showTombstoneEvents] = useSetting(settingsAtom, 'showTombstoneEvents');
   const [showDeveloperTools] = useSetting(settingsAtom, 'developerTools');
   const [reducedMotion] = useSetting(settingsAtom, 'reducedMotion');
 
@@ -2063,7 +2064,7 @@ export function RoomTimeline({
     if (eventSender && ignoredUsersSet.has(eventSender)) {
       return null;
     }
-    if (mEvent.isRedacted() && !showHiddenEvents) {
+    if (mEvent.isRedacted() && !(showHiddenEvents || showTombstoneEvents)) {
       return null;
     }
 

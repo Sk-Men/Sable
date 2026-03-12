@@ -826,6 +826,10 @@ function Messages() {
   const [urlPreview, setUrlPreview] = useSetting(settingsAtom, 'urlPreview');
   const [encUrlPreview, setEncUrlPreview] = useSetting(settingsAtom, 'encUrlPreview');
   const [showHiddenEvents, setShowHiddenEvents] = useSetting(settingsAtom, 'showHiddenEvents');
+  const [showTombstoneEvents, setShowTombstoneEvents] = useSetting(
+    settingsAtom,
+    'showTombstoneEvents'
+  );
   const [hideMembershipInReadOnly, setHideMembershipInReadOnly] = useSetting(
     settingsAtom,
     'hideMembershipInReadOnly'
@@ -925,6 +929,18 @@ function Messages() {
           title="Show Hidden Events"
           after={
             <Switch variant="Primary" value={showHiddenEvents} onChange={setShowHiddenEvents} />
+          }
+        />
+      </SequenceCard>
+      <SequenceCard className={SequenceCardStyle} variant="SurfaceVariant" direction="Column">
+        <SettingTile
+          title="Show Tombstones for Redacted Messages"
+          after={
+            <Switch
+              variant="Primary"
+              value={showTombstoneEvents || showHiddenEvents}
+              onChange={setShowTombstoneEvents}
+            />
           }
         />
       </SequenceCard>
