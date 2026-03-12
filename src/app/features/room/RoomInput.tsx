@@ -158,6 +158,7 @@ import {
 } from './msgContent';
 import { CommandAutocomplete } from './CommandAutocomplete';
 import { AudioMessageRecorder } from './AudioMessageRecorder';
+import { i } from 'node_modules/vite/dist/node/chunks/moduleRunnerTransport';
 
 const getReplyContent = (replyDraft: IReplyDraft | undefined): IEventRelation => {
   if (!replyDraft) return {};
@@ -228,6 +229,8 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
 
     const [toolbar, setToolbar] = useSetting(settingsAtom, 'editorToolbar');
     const [showAudioRecorder, setShowAudioRecorder] = useState(false);
+    const [audioMsgWaveform, setAudioMsgWaveform] = useState<number[] | undefined>(undefined);
+    const [audioMsgLength, setAudioMsgLength] = useState<number | undefined>(undefined);
     const [autocompleteQuery, setAutocompleteQuery] =
       useState<AutocompleteQuery<AutocompletePrefix>>();
     const [isQuickTextReact, setQuickTextReact] = useState(false);
@@ -409,7 +412,7 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
           return getVideoMsgContent(mx, fileItem, upload.mxc);
         }
         if (fileItem.file.type.startsWith('audio')) {
-          return getAudioMsgContent(fileItem, upload.mxc);
+          return getAudioMsgContent(fileItem, upload.mxc, audioMsgWaveform, audioMsgLength);
         }
         return getFileMsgContent(fileItem, upload.mxc);
       });
@@ -977,7 +980,7 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
                       onRecordingComplete={(audioBlob) => {
                         const file = new File(
                           [audioBlob],
-                          `sable-audio-message-${Date.now()}.webm`,
+                          `sable-audio-message-${Date.now()}.ogg`,
                           {
                             type: audioBlob.type,
                           }
@@ -986,6 +989,8 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
                         // Close the recorder after handling the file, to give some feedback that the recording was successful
                         setShowAudioRecorder(false);
                       }}
+                      onAudioLengthUpdate={(len) => setAudioMsgLength(len)}
+                      onWaveformUpdate={(w) => setAudioMsgWaveform(w)}
                     />
                   }
                 />

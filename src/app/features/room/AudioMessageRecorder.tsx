@@ -1,20 +1,24 @@
 import FocusTrap from 'focus-trap-react';
 import { Box, Text, color, config } from 'folds';
 import { useRef } from 'react';
-import { VoiceRecorder } from 'react-voice-recorder-kit';
+import { VoiceRecorder } from 'src/voice-recorder-kit';
 
 type AudioMessageRecorderProps = {
   onRecordingComplete: (audioBlob: Blob) => void;
   onRequestClose: () => void;
+  onWaveformUpdate: (waveform: number[]) => void;
+  onAudioLengthUpdate: (length: number) => void;
 };
 
 // We use a react voice recorder library to handle the recording of audio messages, as it provides a simple API and handles the complexities of recording audio in the browser.
 // The component is wrapped in a focus trap to ensure that keyboard users can easily navigate and interact with the recorder without accidentally losing focus or interacting with other parts of the UI.
 // The styling is kept simple and consistent with the rest of the app, using Folds' design tokens for colors, spacing, and typography.
-// we use https://www.npmjs.com/package/react-voice-recorder-kit for the recording
+// we use a modified version of https://www.npmjs.com/package/react-voice-recorder-kit for the recording
 export function AudioMessageRecorder({
   onRecordingComplete,
   onRequestClose,
+  onWaveformUpdate,
+  onAudioLengthUpdate,
 }: AudioMessageRecorderProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const isDismissedRef = useRef(false);
@@ -52,18 +56,26 @@ export function AudioMessageRecorder({
           <Text size="H4">Audio Message Recorder</Text>
           <VoiceRecorder
             autoStart
-            onStop={(audioFile) => {
+            onStop={({
+              audioFile,
+              waveform,
+              audioLength,
+            }: {
+              audioFile: Blob;
+              waveform: number[];
+              audioLength: number;
+            }) => {
               if (isDismissedRef.current) return;
               // closes the recorder and sends the audio file back to the parent component to be uploaded and sent as a message
               onRecordingComplete(audioFile);
+              onWaveformUpdate(waveform);
+              onAudioLengthUpdate(audioLength);
             }}
+            onWaveformUpdate={onWaveformUpdate}
+            onAudioLengthUpdate={onAudioLengthUpdate}
             buttonBackgroundColor={color.SurfaceVariant.Container}
             buttonHoverBackgroundColor={color.SurfaceVariant.ContainerHover}
             iconColor={color.Primary.Main}
-            visualizerBarColor={(level) => {
-              const hue = (level * 120).toString();
-              return `hsl(${hue}, 70%, 50%)`;
-            }}
             style={{
               backgroundColor: color.Surface.ContainerActive,
             }}
