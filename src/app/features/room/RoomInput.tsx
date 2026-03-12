@@ -158,7 +158,6 @@ import {
 } from './msgContent';
 import { CommandAutocomplete } from './CommandAutocomplete';
 import { AudioMessageRecorder } from './AudioMessageRecorder';
-import { i } from 'node_modules/vite/dist/node/chunks/moduleRunnerTransport';
 
 const getReplyContent = (replyDraft: IReplyDraft | undefined): IEventRelation => {
   if (!replyDraft) return {};
