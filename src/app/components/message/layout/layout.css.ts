@@ -152,8 +152,14 @@ export const BubbleBefore = style({
   minWidth: toRem(36),
 });
 
+export const BubbleWrapper = style({
+  maxWidth: '100%',
+  minWidth: 0,
+});
+
 export const BubbleContent = style({
-  maxWidth: toRem(800),
+  maxWidth: `min(${toRem(800)}, 100%)`,
+  minWidth: 0,
   padding: config.space.S200,
   backgroundColor: color.SurfaceVariant.Container,
   color: color.SurfaceVariant.OnContainer,
