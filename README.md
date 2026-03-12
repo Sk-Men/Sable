@@ -488,3 +488,5 @@ The component and hook have 5 different states:
 ## License
 
 MIT
+
+(orignal by Mohammadreza Fallahfaal: https://github.com/mohamad-fallah/react-voice-recorder-kit)
