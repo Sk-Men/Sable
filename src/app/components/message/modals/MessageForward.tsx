@@ -214,6 +214,8 @@ export function MessageForwardInternal({ room, mEvent, onClose }: MessageForward
       // we can still include the original message content in the body of the message, so we'll just use a fallback text/plain content with the original message body
       content = {
         ...mEvent.getContent(),
+        'm.relates_to': null, // remove any relations to avoid confusion in the target room
+        'm.mentions': null, // remove mentions to avoid leaking information about users in the original room
         ...forwardedTextContent,
         'moe.sable.message.forward': {
           v: 1,

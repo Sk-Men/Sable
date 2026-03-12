@@ -47,6 +47,7 @@ import { mobileOrTablet } from '$utils/user-agent';
 import { useSlidingSyncActiveRoom } from '$hooks/useSlidingSyncActiveRoom';
 import { getSlidingSyncManager } from '$client/initMatrix';
 import { NotificationBanner } from '$components/notification-banner';
+import { useCallSignaling } from '$hooks/useCallSignaling';
 import { getInboxInvitesPath } from '../pathUtils';
 import { BackgroundNotifications } from './BackgroundNotifications';
 
@@ -634,6 +635,7 @@ function PresenceFeature() {
 }
 
 export function ClientNonUIFeatures({ children }: ClientNonUIFeaturesProps) {
+  useCallSignaling();
   return (
     <>
       <SystemEmojiFeature />
