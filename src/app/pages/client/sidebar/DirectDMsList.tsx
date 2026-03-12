@@ -64,7 +64,7 @@ function DMItem({ room, selected }: DMItemProps) {
             {isGroupDM ? (
               <Box className={css.GroupAvatarContainer}>
                 <Box className={css.GroupAvatarRow}>
-                  {groupMembers.map((member, index) => {
+                  {groupMembers.map((member) => {
                     const avatarUrl = member.avatarUrl
                       ? (mxcUrlToHttp(mx, member.avatarUrl, useAuthentication, 48, 48, 'crop') ??
                         undefined)
