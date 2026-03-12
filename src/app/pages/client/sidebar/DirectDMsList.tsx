@@ -53,19 +53,6 @@ function DMItem({ room, selected }: DMItemProps) {
   // Members are sorted by who last sent messages (most recent first)
   const groupMembers = useGroupDMMembers(mx, room, MAX_GROUP_MEMBERS);
 
-  // Debug log
-  if (isGroupDM) {
-    console.log(
-      'Group DM:',
-      room.name,
-      'Member count:',
-      room.getJoinedMemberCount(),
-      'Group members found:',
-      groupMembers.length,
-      groupMembers
-    );
-  }
-
   // Get unread info for badge
   const unread = roomToUnread.get(room.roomId);
 
