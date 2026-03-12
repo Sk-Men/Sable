@@ -11,9 +11,10 @@ const debugLogger = getDebugLogger();
  * Atom for enabling/disabling debug logging
  */
 export const debugLoggerEnabledAtom = atom(
-  () => debugLogger.isEnabled(),
-  (_, set, enabled: boolean) => {
+  debugLogger.isEnabled(),
+  (get, set, enabled: boolean) => {
     debugLogger.setEnabled(enabled);
+    set(debugLoggerEnabledAtom, enabled);
     set(debugLogsAtom);
   }
 );

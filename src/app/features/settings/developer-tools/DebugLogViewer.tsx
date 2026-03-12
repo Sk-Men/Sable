@@ -1,6 +1,6 @@
-import { useEffect, useState, useCallback, useMemo } from 'react';
+import { useEffect, useState, useCallback, useMemo, MouseEventHandler } from 'react';
 import { useAtom, useAtomValue, useSetAtom } from 'jotai';
-import { Box, Text, Button, color, config, Badge, Menu, MenuItem, PopOut } from 'folds';
+import { Box, Text, Button, color, config, Badge, Menu, MenuItem, PopOut, RectCords } from 'folds';
 import { SequenceCard } from '$components/sequence-card';
 
 import {
@@ -91,7 +91,7 @@ function LogEntryItem({ entry }: { entry: LogEntry }) {
             [{entry.namespace}]
           </Text>
         </Box>
-        {entry.data && (
+        {entry.data != null && (
           <Button
             variant="Secondary"
             fill="None"
@@ -106,7 +106,7 @@ function LogEntryItem({ entry }: { entry: LogEntry }) {
       <Text size="T200" style={{ wordBreak: 'break-word' }}>
         {entry.message}
       </Text>
-      {expanded && entry.data && (
+      {expanded && entry.data != null && (
         <Box
           direction="Column"
           style={{
@@ -142,6 +142,16 @@ export function DebugLogViewer() {
   const scrollRef = useState<HTMLDivElement | null>(null)[0];
   const [filterLevel, setFilterLevel] = useState<LogLevel | 'all'>('all');
   const [filterCategory, setFilterCategory] = useState<LogCategory | 'all'>('all');
+  const [categoryAnchor, setCategoryAnchor] = useState<RectCords | undefined>();
+  const [levelAnchor, setLevelAnchor] = useState<RectCords | undefined>();
+
+  const handleOpenCategoryMenu: MouseEventHandler<HTMLButtonElement> = (evt) => {
+    setCategoryAnchor(evt.currentTarget.getBoundingClientRect());
+  };
+
+  const handleOpenLevelMenu: MouseEventHandler<HTMLButtonElement> = (evt) => {
+    setLevelAnchor(evt.currentTarget.getBoundingClientRect());
+  };
 
   // Filter logs based on current filters
   const filteredLogs = useMemo(() => {
@@ -281,6 +291,7 @@ export function DebugLogViewer() {
             Filters:
           </Text>
           <PopOut
+            anchor={categoryAnchor}
             offset={4}
             alignOffset={-4}
             position="Bottom"
@@ -290,7 +301,10 @@ export function DebugLogViewer() {
                 <MenuItem
                   size="300"
                   radii="300"
-                  onClick={() => setFilterCategory('all')}
+                  onClick={() => {
+                    setFilterCategory('all');
+                    setCategoryAnchor(undefined);
+                  }}
                   disabled={filterCategory === 'all'}
                 >
                   <Text size="T300">All Categories</Text>
@@ -298,7 +312,10 @@ export function DebugLogViewer() {
                 <MenuItem
                   size="300"
                   radii="300"
-                  onClick={() => setFilterCategory('sync')}
+                  onClick={() => {
+                    setFilterCategory('sync');
+                    setCategoryAnchor(undefined);
+                  }}
                   disabled={filterCategory === 'sync'}
                 >
                   <Text size="T300">Sync</Text>
@@ -306,7 +323,10 @@ export function DebugLogViewer() {
                 <MenuItem
                   size="300"
                   radii="300"
-                  onClick={() => setFilterCategory('network')}
+                  onClick={() => {
+                    setFilterCategory('network');
+                    setCategoryAnchor(undefined);
+                  }}
                   disabled={filterCategory === 'network'}
                 >
                   <Text size="T300">Network</Text>
@@ -314,7 +334,10 @@ export function DebugLogViewer() {
                 <MenuItem
                   size="300"
                   radii="300"
-                  onClick={() => setFilterCategory('notification')}
+                  onClick={() => {
+                    setFilterCategory('notification');
+                    setCategoryAnchor(undefined);
+                  }}
                   disabled={filterCategory === 'notification'}
                 >
                   <Text size="T300">Notification</Text>
@@ -322,7 +345,10 @@ export function DebugLogViewer() {
                 <MenuItem
                   size="300"
                   radii="300"
-                  onClick={() => setFilterCategory('message')}
+                  onClick={() => {
+                    setFilterCategory('message');
+                    setCategoryAnchor(undefined);
+                  }}
                   disabled={filterCategory === 'message'}
                 >
                   <Text size="T300">Message</Text>
@@ -330,7 +356,10 @@ export function DebugLogViewer() {
                 <MenuItem
                   size="300"
                   radii="300"
-                  onClick={() => setFilterCategory('call')}
+                  onClick={() => {
+                    setFilterCategory('call');
+                    setCategoryAnchor(undefined);
+                  }}
                   disabled={filterCategory === 'call'}
                 >
                   <Text size="T300">Call</Text>
@@ -338,7 +367,10 @@ export function DebugLogViewer() {
                 <MenuItem
                   size="300"
                   radii="300"
-                  onClick={() => setFilterCategory('ui')}
+                  onClick={() => {
+                    setFilterCategory('ui');
+                    setCategoryAnchor(undefined);
+                  }}
                   disabled={filterCategory === 'ui'}
                 >
                   <Text size="T300">UI</Text>
@@ -346,7 +378,10 @@ export function DebugLogViewer() {
                 <MenuItem
                   size="300"
                   radii="300"
-                  onClick={() => setFilterCategory('timeline')}
+                  onClick={() => {
+                    setFilterCategory('timeline');
+                    setCategoryAnchor(undefined);
+                  }}
                   disabled={filterCategory === 'timeline'}
                 >
                   <Text size="T300">Timeline</Text>
@@ -354,7 +389,10 @@ export function DebugLogViewer() {
                 <MenuItem
                   size="300"
                   radii="300"
-                  onClick={() => setFilterCategory('general')}
+                  onClick={() => {
+                    setFilterCategory('general');
+                    setCategoryAnchor(undefined);
+                  }}
                   disabled={filterCategory === 'general'}
                 >
                   <Text size="T300">General</Text>
@@ -362,7 +400,10 @@ export function DebugLogViewer() {
                 <MenuItem
                   size="300"
                   radii="300"
-                  onClick={() => setFilterCategory('error')}
+                  onClick={() => {
+                    setFilterCategory('error');
+                    setCategoryAnchor(undefined);
+                  }}
                   disabled={filterCategory === 'error'}
                 >
                   <Text size="T300">Error</Text>
@@ -370,22 +411,21 @@ export function DebugLogViewer() {
               </Menu>
             }
           >
-            {(targetRef) => (
-              <Button
-                ref={targetRef}
-                variant="Secondary"
-                fill="Soft"
-                size="300"
-                radii="300"
-              >
-                <Text size="B300">
-                  Category: {filterCategory === 'all' ? 'All' : filterCategory}
-                </Text>
-              </Button>
-            )}
+            <Button
+              onClick={handleOpenCategoryMenu}
+              variant="Secondary"
+              fill="Soft"
+              size="300"
+              radii="300"
+            >
+              <Text size="B300">
+                Category: {filterCategory === 'all' ? 'All' : filterCategory}
+              </Text>
+            </Button>
           </PopOut>
 
           <PopOut
+            anchor={levelAnchor}
             offset={4}
             alignOffset={-4}
             position="Bottom"
@@ -395,7 +435,10 @@ export function DebugLogViewer() {
                 <MenuItem
                   size="300"
                   radii="300"
-                  onClick={() => setFilterLevel('all')}
+                  onClick={() => {
+                    setFilterLevel('all');
+                    setLevelAnchor(undefined);
+                  }}
                   disabled={filterLevel === 'all'}
                 >
                   <Text size="T300">All Levels</Text>
@@ -403,7 +446,10 @@ export function DebugLogViewer() {
                 <MenuItem
                   size="300"
                   radii="300"
-                  onClick={() => setFilterLevel('debug')}
+                  onClick={() => {
+                    setFilterLevel('debug');
+                    setLevelAnchor(undefined);
+                  }}
                   disabled={filterLevel === 'debug'}
                 >
                   <Text size="T300">Debug</Text>
@@ -411,7 +457,10 @@ export function DebugLogViewer() {
                 <MenuItem
                   size="300"
                   radii="300"
-                  onClick={() => setFilterLevel('info')}
+                  onClick={() => {
+                    setFilterLevel('info');
+                    setLevelAnchor(undefined);
+                  }}
                   disabled={filterLevel === 'info'}
                 >
                   <Text size="T300">Info</Text>
@@ -419,7 +468,10 @@ export function DebugLogViewer() {
                 <MenuItem
                   size="300"
                   radii="300"
-                  onClick={() => setFilterLevel('warn')}
+                  onClick={() => {
+                    setFilterLevel('warn');
+                    setLevelAnchor(undefined);
+                  }}
                   disabled={filterLevel === 'warn'}
                 >
                   <Text size="T300">Warning</Text>
@@ -427,7 +479,10 @@ export function DebugLogViewer() {
                 <MenuItem
                   size="300"
                   radii="300"
-                  onClick={() => setFilterLevel('error')}
+                  onClick={() => {
+                    setFilterLevel('error');
+                    setLevelAnchor(undefined);
+                  }}
                   disabled={filterLevel === 'error'}
                 >
                   <Text size="T300">Error</Text>
@@ -435,19 +490,17 @@ export function DebugLogViewer() {
               </Menu>
             }
           >
-            {(targetRef) => (
-              <Button
-                ref={targetRef}
-                variant="Secondary"
-                fill="Soft"
-                size="300"
-                radii="300"
-              >
-                <Text size="B300">
-                  Level: {filterLevel === 'all' ? 'All' : filterLevel}
-                </Text>
-              </Button>
-            )}
+            <Button
+              onClick={handleOpenLevelMenu}
+              variant="Secondary"
+              fill="Soft"
+              size="300"
+              radii="300"
+            >
+              <Text size="B300">
+                Level: {filterLevel === 'all' ? 'All' : filterLevel}
+              </Text>
+            </Button>
           </PopOut>
 
           {(filterLevel !== 'all' || filterCategory !== 'all') && (

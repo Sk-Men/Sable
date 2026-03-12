@@ -14,12 +14,7 @@ import {
   MSC3575_STATE_KEY_ME,
   EventType,
   User,
-import {
-  MatrixClient,
-  SlidingSync,
-  SlidingSyncEvent,
   SlidingSyncEventHandlerMap,
-  SlidingSyncState,
 } from '$types/matrix-sdk';
 import { createLogger } from '$utils/debug';
 import { createDebugLogger } from '$utils/debugLogger';

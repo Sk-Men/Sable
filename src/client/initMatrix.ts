@@ -298,7 +298,10 @@ export const initClient = async (session: Session): Promise<MatrixClient> => {
   };
 
   let mx: MatrixClient;
-  try {{
+  try {
+    mx = await buildClient(session);
+  } catch (err) {
+    if (!isMismatch(err)) {
       debugLog.error('sync', 'Failed to build client', { error: err });
       throw err;
     }
@@ -316,10 +319,7 @@ export const initClient = async (session: Session): Promise<MatrixClient> => {
       throw err;
     }
     log.warn('initClient: mismatch on initRustCrypto — wiping and retrying:', err);
-    debugLog.warn('sync', 'Crypto init mismatch - wiping stores and retrying', { error: err };
-  } catch (err) {
-    if (!isMismatch(err)) throw err;
-    log.warn('initClient: mismatch on initRustCrypto — wiping and retrying:', err);
+    debugLog.warn('sync', 'Crypto init mismatch - wiping stores and retrying', { error: err });
     mx.stopClient();
     await wipeAllStores();
     mx = await buildClient(session);
@@ -348,7 +348,16 @@ const disposeSlidingSync = (mx: MatrixClient): void => {
   slidingSyncByClient.delete(mx);
 };
 
-expebugLog.info('sync', 'Starting Matrix client', { userId: mx.getUserId() });
+export const getSlidingSyncManager = (mx: MatrixClient): SlidingSyncManager | undefined => {
+  return slidingSyncByClient.get(mx);
+};
+
+
+export const startClient = async (
+  mx: MatrixClient,
+  config?: StartClientConfig
+): Promise<void> => {
+  debugLog.info('sync', 'Starting Matrix client', { userId: mx.getUserId() });
   disposeSlidingSync(mx);
   const slidingConfig = config?.slidingSync;
   const slidingEnabledOnServer = resolveSlidingEnabled(slidingConfig?.enabled);
@@ -368,20 +377,6 @@ expebugLog.info('sync', 'Starting Matrix client', { userId: mx.getUserId() });
     enabledOnServer: slidingEnabledOnServer,
     requested: slidingRequested,
     hasProxy: hasSlidingProxy,
-  });
-
-  const startClassicSync = async (fallbackFromSliding: boolean, reason: SyncTransportReason) => {
-    debugLog.info('sync', `Starting classic sync (reason: ${reason})`, {
-      fallback: fallbackFromSliding,
-      reason,
-    });
-    userId: mx.getUserId(),
-    enabled: slidingConfig?.enabled,
-    enabledOnServer: slidingEnabledOnServer,
-    sessionOptIn: config?.sessionSlidingSyncOptIn === true,
-    requestedEnabled: slidingRequested,
-    proxyBaseUrl,
-    hasSlidingProxy,
   });
 
   const startClassicSync = async (fallbackFromSliding: boolean, reason: SyncTransportReason) => {
@@ -492,6 +487,14 @@ expebugLog.info('sync', 'Starting Matrix client', { userId: mx.getUserId() });
     disposeSlidingSync(mx);
     throw err;
   }
+};
+
+export const stopClient = (mx: MatrixClient): void => {
+  log.log('stopClient', mx.getUserId());
+  debugLog.info('sync', 'Stopping client', { userId: mx.getUserId() });
+  disposeSlidingSync(mx);
+  mx.stopClient();
+  syncTransportByClient.delete(mx);
 };
 
 export const clearCacheAndReload = async (mx: MatrixClient) => {
