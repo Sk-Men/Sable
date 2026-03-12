@@ -24,7 +24,7 @@ import {
   Spinner,
 } from 'folds';
 import { useNavigate } from 'react-router-dom';
-import { Room } from '$types/matrix-sdk';
+import { EventTimeline, Room } from '$types/matrix-sdk';
 
 import { useStateEvent } from '$hooks/useStateEvent';
 import { PageHeader } from '$components/page';
@@ -82,6 +82,7 @@ import { RoomSettingsPage } from '$state/roomSettings';
 import { JumpToTime } from './jump-to-time';
 import { RoomPinMenu } from './room-pin-menu';
 import * as css from './RoomViewHeader.css';
+import { RoomCallButton } from './RoomCallButton';
 
 const log = createLogger('RoomViewHeader');
 
@@ -343,6 +344,11 @@ export function RoomViewHeader({ callView }: { callView?: boolean }) {
 
   const [chat, setChat] = useAtom(callChatAtom);
 
+  const canUseCalls = room
+    .getLiveTimeline()
+    .getState(EventTimeline.FORWARDS)
+    ?.maySendStateEvent('org.matrix.msc3401.call.member', mx.getUserId()!);
+
   const encryptionEvent = useStateEvent(room, StateEvent.RoomEncryption);
   const encryptedRoom = !!encryptionEvent;
   const avatarMxc = useRoomAvatar(room, direct);
@@ -577,6 +583,7 @@ export function RoomViewHeader({ callView }: { callView?: boolean }) {
                   </IconButton>
                 )}
               </TooltipProvider>
+              {canUseCalls && <RoomCallButton room={room} />}
               <PopOut
                 anchor={pinMenuAnchor}
                 position="Bottom"
