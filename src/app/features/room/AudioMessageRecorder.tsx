@@ -1,7 +1,7 @@
+import { VoiceRecorder } from '$plugins/voice-recorder-kit';
 import FocusTrap from 'focus-trap-react';
 import { Box, Text, color, config } from 'folds';
 import { useRef } from 'react';
-import { VoiceRecorder } from 'src/voice-recorder-kit';
 
 type AudioMessageRecorderProps = {
   onRecordingComplete: (audioBlob: Blob) => void;

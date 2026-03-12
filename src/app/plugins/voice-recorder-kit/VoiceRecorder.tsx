@@ -1,10 +1,10 @@
-import type { FC, CSSProperties } from 'react';
+import type { CSSProperties } from 'react';
 import { useMemo, useRef, useEffect, useState } from 'react';
 import { useVoiceRecorder } from './useVoiceRecorder';
 import type { VoiceRecorderProps } from './types';
 import { PlayIcon, PauseIcon, StopIcon, RepeatIcon, DeleteIcon, ResumeIcon } from './icons';
 
-const VoiceRecorder: FC<VoiceRecorderProps> = (props) => {
+function VoiceRecorder(props: VoiceRecorderProps) {
   const {
     width,
     height,
@@ -49,9 +49,7 @@ const VoiceRecorder: FC<VoiceRecorderProps> = (props) => {
     state,
     isRecording,
     isStopped,
-    isTemporaryStopped,
     isPlaying,
-    isPaused,
     seconds,
     levels,
     error,
@@ -63,7 +61,6 @@ const VoiceRecorder: FC<VoiceRecorderProps> = (props) => {
     handlePlay,
     handleRestart,
     handleDelete,
-    handleRecordAgain,
   } = useVoiceRecorder(recorderOptions);
 
   const containerRef = useRef<HTMLDivElement>(null);
@@ -104,7 +101,7 @@ const VoiceRecorder: FC<VoiceRecorderProps> = (props) => {
     }
     const calculatedBars = Math.floor(visualizerWidth / (barWidth + barGap));
     return Math.max(calculatedBars, 1);
-  }, [visualizerWidth, levels.length]);
+  }, [visualizerWidth, levels.length, barWidth, barGap]);
 
   const displayedLevels = useMemo(() => {
     if (maxBars <= 0 || levels.length === 0) {
@@ -148,7 +145,7 @@ const VoiceRecorder: FC<VoiceRecorderProps> = (props) => {
       border: `1px solid ${borderColor}`,
       padding: typeof padding === 'number' ? `${padding}px` : padding,
       width: width ?? '100%',
-      height: height,
+      height,
       boxSizing: 'border-box',
       ...style,
     }),
@@ -189,27 +186,21 @@ const VoiceRecorder: FC<VoiceRecorderProps> = (props) => {
           justifyContent: 'flex-start',
         }}
       >
-        {displayedLevels.map((level, index) => {
-          const clamped = Math.max(0.1, Math.min(level, 1));
-          const barHeight = 1 + clamped * (visualizerBarHeight - 1);
-          const barColor =
-            typeof visualizerBarColor === 'function'
-              ? visualizerBarColor(level, index)
-              : visualizerBarColor;
-
-          return (
-            <span
-              key={index}
-              style={{
-                width: barWidth,
-                borderRadius: 999,
-                backgroundColor: barColor,
-                height: barHeight,
-                flexShrink: 0,
-              }}
-            />
-          );
-        })}
+        {displayedLevels.map((level) => (
+          <span
+            key={Math.random()}
+            style={{
+              width: barWidth,
+              borderRadius: 999,
+              backgroundColor:
+                typeof visualizerBarColor === 'function'
+                  ? visualizerBarColor(level, displayedLevels.indexOf(level))
+                  : visualizerBarColor,
+              height: 1 + Math.max(0.1, Math.min(level, 1)) * (visualizerBarHeight - 1),
+              flexShrink: 0,
+            }}
+          />
+        ))}
       </div>
 
       {state === 'recording' && (
@@ -624,6 +615,6 @@ const VoiceRecorder: FC<VoiceRecorderProps> = (props) => {
       )}
     </div>
   );
-};
+}
 
 export default VoiceRecorder;

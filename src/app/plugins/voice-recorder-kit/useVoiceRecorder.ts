@@ -19,11 +19,11 @@ function downsampleWaveform(samples: number[], targetCount: number): number[] {
   }
   const result: number[] = [];
   const blockSize = samples.length / targetCount;
-  for (let i = 0; i < targetCount; i++) {
+  for (let i = 0; i < targetCount; i += 1) {
     const start = Math.floor(i * blockSize);
     const end = Math.floor((i + 1) * blockSize);
     let sum = 0;
-    for (let j = start; j < end; j++) {
+    for (let j = start; j < end; j += 1) {
       sum += samples[j];
     }
     result.push(sum / (end - start));
@@ -199,7 +199,7 @@ export function useVoiceRecorder(options: UseVoiceRecorderOptions = {}): UseVoic
       analyserRef.current = analyser;
       dataArrayRef.current = dataArray;
       source.connect(analyser);
-      void audioContext.resume();
+      audioContext.resume().catch(() => {});
       animateLevels();
     },
     [animateLevels]
@@ -219,7 +219,7 @@ export function useVoiceRecorder(options: UseVoiceRecorderOptions = {}): UseVoic
       dataArrayRef.current = dataArray;
       source.connect(analyser);
       analyser.connect(audioContext.destination);
-      void audioContext.resume();
+      audioContext.resume().catch(() => {});
       animateLevels();
     },
     [animateLevels]
@@ -326,7 +326,7 @@ export function useVoiceRecorder(options: UseVoiceRecorderOptions = {}): UseVoic
   ]);
 
   const start = useCallback(() => {
-    void internalStartRecording();
+    internalStartRecording();
   }, [internalStartRecording]);
 
   const handlePause = useCallback(() => {
@@ -346,7 +346,7 @@ export function useVoiceRecorder(options: UseVoiceRecorderOptions = {}): UseVoic
       }
 
       if (audioContextRef.current && audioContextRef.current.state !== 'closed') {
-        void audioContextRef.current.suspend();
+        audioContextRef.current.suspend().catch(() => {});
       }
 
       setLevels(Array.from({ length: BAR_COUNT }, () => 0.15));
@@ -497,7 +497,7 @@ export function useVoiceRecorder(options: UseVoiceRecorderOptions = {}): UseVoic
         audio.currentTime = 0;
         setSeconds(0);
       }
-      void audio.play();
+      audio.play().catch(() => {});
     }
   }, [
     audioUrl,
@@ -546,7 +546,7 @@ export function useVoiceRecorder(options: UseVoiceRecorderOptions = {}): UseVoic
         audio.currentTime = 0;
         setSeconds(0);
       }
-      void audio.play();
+      audio.play().catch(() => {});
     }
   }, [audioUrl, cleanupAudioContext, isPlaying, setupPlaybackGraph, startPlaybackTimer, stopTimer]);
 
@@ -730,12 +730,12 @@ export function useVoiceRecorder(options: UseVoiceRecorderOptions = {}): UseVoic
 
     setAudioUrl(null);
     setAudioFile(null);
-    void internalStartRecording();
+    internalStartRecording();
   }, [cleanupAudioContext, cleanupStream, internalStartRecording, stopTimer]);
 
   useEffect(() => {
     if (autoStart) {
-      void internalStartRecording();
+      internalStartRecording();
     }
     return () => {
       const mediaRecorder = mediaRecorderRef.current;
