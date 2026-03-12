@@ -38,7 +38,7 @@ export function useVoiceRecorder(options: UseVoiceRecorderOptions = {}): UseVoic
 
   const cleanupStream = useCallback(() => {
     if (streamRef.current) {
-      streamRef.current.getTracks().forEach((track) => track.stop())
+      streamRef.current.getTracks().forEach((track: MediaStreamTrack) => track.stop())
       streamRef.current = null
     }
   }, [])
@@ -107,8 +107,8 @@ export function useVoiceRecorder(options: UseVoiceRecorderOptions = {}): UseVoic
 
       frameCountRef.current += 1
       if (frameCountRef.current >= 5) {
-        setLevels((prev) => {
-          const next = prev.slice(1)
+        setLevels((prev: number[]) => {
+          const next: number[] = prev.slice(1)
           next.push(normalized)
           return next
         })
@@ -206,7 +206,7 @@ export function useVoiceRecorder(options: UseVoiceRecorderOptions = {}): UseVoic
 
         if (chunksRef.current.length === 0) return
 
-        const blob = new Blob(chunksRef.current, { type: 'audio/webm' })
+        const blob = new Blob(chunksRef.current, { type: 'audio/ogg' })
         if (lastUrlRef.current) {
           URL.revokeObjectURL(lastUrlRef.current)
         }
@@ -214,7 +214,7 @@ export function useVoiceRecorder(options: UseVoiceRecorderOptions = {}): UseVoic
         lastUrlRef.current = url
         setAudioUrl(url)
 
-        const file = new File([blob], `voice-${Date.now()}.webm`, { type: 'audio/webm' })
+        const file = new File([blob], `voice-${Date.now()}.ogg`, { type: 'audio/ogg' })
         setAudioFile(file)
 
         if (isTemporaryStopRef.current) {
@@ -289,7 +289,7 @@ export function useVoiceRecorder(options: UseVoiceRecorderOptions = {}): UseVoic
       const allChunks = [...chunksRef.current]
 
       if (allChunks.length > 0) {
-        const blob = new Blob(allChunks, { type: 'audio/webm' })
+        const blob = new Blob(allChunks, { type: 'audio/ogg' })
         if (lastUrlRef.current) {
           URL.revokeObjectURL(lastUrlRef.current)
         }
@@ -297,7 +297,7 @@ export function useVoiceRecorder(options: UseVoiceRecorderOptions = {}): UseVoic
         lastUrlRef.current = url
         setAudioUrl(url)
 
-        const file = new File([blob], `voice-${Date.now()}.webm`, { type: 'audio/webm' })
+        const file = new File([blob], `voice-${Date.now()}.ogg`, { type: 'audio/ogg' })
         setAudioFile(file)
 
         if (onStop) {
@@ -361,7 +361,7 @@ export function useVoiceRecorder(options: UseVoiceRecorderOptions = {}): UseVoic
       const allChunks = chunksRef.current.length > 0 ? chunksRef.current : previousChunksRef.current
       
       if (allChunks.length > 0) {
-        const blob = new Blob(allChunks, { type: 'audio/webm' })
+        const blob = new Blob(allChunks, { type: 'audio/ogg' })
         urlToPlay = URL.createObjectURL(blob)
         temporaryPreviewUrlRef.current = urlToPlay
       }
