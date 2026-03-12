@@ -826,6 +826,7 @@ function MessageInternal(
                           </MenuItem>
                         )}
                         {isStickerMessage &&
+                          mEvent.getContent().url &&
                           !doesStickerExistInDefaultPack(mx, mEvent.getContent().url) && (
                             <MenuItem
                               size="300"
@@ -835,7 +836,7 @@ function MessageInternal(
                                 addStickerToDefaultPack(
                                   mx,
                                   `sticker-${mEvent.getId()}`,
-                                  mEvent.getContent().url,
+                                  mEvent.getContent().url ?? mEvent.getContent().file?.url ?? '',
                                   mEvent.getContent().body,
                                   mEvent.getContent().info
                                 );
