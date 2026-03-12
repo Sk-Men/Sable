@@ -385,6 +385,16 @@ function SelectDateFormat() {
   );
 }
 
+function getTombstoneSettingToggleTitle(showHidden: boolean, showTombstone: boolean): string {
+  if (showHidden) {
+    return 'Tombstone events are always shown when "Show Hidden Events" is enabled.';
+  }
+  if (showTombstone) {
+    return 'Disable to hide redacted messages entirely instead of showing a tombstone.';
+  }
+  return 'Enable to show tombstone events for redacted messages instead of hiding them entirely.';
+}
+
 function DateAndTime() {
   const [hour24Clock, setHour24Clock] = useSetting(settingsAtom, 'hour24Clock');
 
@@ -928,7 +938,16 @@ function Messages() {
         <SettingTile
           title="Show Hidden Events"
           after={
-            <Switch variant="Primary" value={showHiddenEvents} onChange={setShowHiddenEvents} />
+            <Switch
+              variant="Primary"
+              value={showHiddenEvents}
+              onChange={setShowHiddenEvents}
+              title={
+                showHiddenEvents
+                  ? 'Disable to hide hidden events'
+                  : 'Enable to show hidden events, this will cause visual clutter in busy rooms.'
+              }
+            />
           }
         />
       </SequenceCard>
@@ -940,6 +959,8 @@ function Messages() {
               variant="Primary"
               value={showTombstoneEvents || showHiddenEvents}
               onChange={setShowTombstoneEvents}
+              disabled={showHiddenEvents}
+              title={getTombstoneSettingToggleTitle(showHiddenEvents, showTombstoneEvents)}
             />
           }
         />
