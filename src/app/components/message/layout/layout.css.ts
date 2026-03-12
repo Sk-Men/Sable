@@ -220,6 +220,7 @@ export const PronounPill = style({
 export const MessageTextBody = recipe({
   base: {
     wordBreak: 'break-word',
+    fontSize: '1rem !important', // Override folds Text component to enable page zoom scaling
   },
   variants: {
     preWrap: {
@@ -229,27 +230,27 @@ export const MessageTextBody = recipe({
     },
     jumboEmoji: {
       none: {
-        fontSize: '1em',
+        fontSize: '1rem !important',
         lineHeight: 'inherit',
       },
       extraSmall: {
-        fontSize: '1.25em',
+        fontSize: '1.25rem !important',
         lineHeight: '1.4em',
       },
       small: {
-        fontSize: '1.5em',
+        fontSize: '1.5rem !important',
         lineHeight: '1.5em',
       },
       normal: {
-        fontSize: '1.805em',
+        fontSize: '1.805rem !important',
         lineHeight: '1.625em',
       },
       large: {
-        fontSize: '2.1em',
+        fontSize: '2.1rem !important',
         lineHeight: '1.675em',
       },
       extraLarge: {
-        fontSize: '2.4em',
+        fontSize: '2.4rem !important',
         lineHeight: '1.7em',
       },
     },

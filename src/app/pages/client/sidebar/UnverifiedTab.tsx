@@ -66,7 +66,7 @@ function UnverifiedIndicator() {
             )}
           </SidebarItemTooltip>
           {!unverified && unverifiedDeviceCount && unverifiedDeviceCount > 0 && (
-            <SidebarItemBadge hasCount>
+            <SidebarItemBadge hasCount style={{ left: toRem(-6), right: 'auto' }}>
               <Badge variant="Warning" size="400" fill="Solid" radii="Pill" outlined={false}>
                 <Text as="span" size="L400">
                   {unverifiedDeviceCount}

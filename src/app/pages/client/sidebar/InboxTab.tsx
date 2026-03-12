@@ -52,7 +52,7 @@ export function InboxTab() {
         )}
       </SidebarItemTooltip>
       {inviteCount > 0 && (
-        <SidebarItemBadge hasCount>
+        <SidebarItemBadge hasCount style={{ left: toRem(-6), right: 'auto' }}>
           <UnreadBadge highlight count={inviteCount} />
         </SidebarItemBadge>
       )}
