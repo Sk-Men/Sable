@@ -1,8 +1,8 @@
-import type { FC, CSSProperties } from 'react'
-import { useMemo, useRef, useEffect, useState } from 'react'
-import { useVoiceRecorder } from './useVoiceRecorder'
-import type { VoiceRecorderProps } from './types'
-import { PlayIcon, PauseIcon, StopIcon, RepeatIcon, DeleteIcon, ResumeIcon } from './icons'
+import type { FC, CSSProperties } from 'react';
+import { useMemo, useRef, useEffect, useState } from 'react';
+import { useVoiceRecorder } from './useVoiceRecorder';
+import type { VoiceRecorderProps } from './types';
+import { PlayIcon, PauseIcon, StopIcon, RepeatIcon, DeleteIcon, ResumeIcon } from './icons';
 
 const VoiceRecorder: FC<VoiceRecorderProps> = (props) => {
   const {
@@ -43,7 +43,7 @@ const VoiceRecorder: FC<VoiceRecorderProps> = (props) => {
     iconSize = 18,
     iconColor,
     ...recorderOptions
-  } = props
+  } = props;
 
   const {
     state,
@@ -63,92 +63,97 @@ const VoiceRecorder: FC<VoiceRecorderProps> = (props) => {
     handlePlay,
     handleRestart,
     handleDelete,
-    handleRecordAgain
-  } = useVoiceRecorder(recorderOptions)
+    handleRecordAgain,
+  } = useVoiceRecorder(recorderOptions);
 
-  const containerRef = useRef<HTMLDivElement>(null)
-  const [visualizerWidth, setVisualizerWidth] = useState(0)
-  const visualizerRef = useRef<HTMLDivElement>(null)
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [visualizerWidth, setVisualizerWidth] = useState(0);
+  const visualizerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const updateWidth = () => {
       if (visualizerRef.current) {
-        const availableWidth = visualizerRef.current.offsetWidth
-        setVisualizerWidth(Math.max(0, availableWidth))
+        const availableWidth = visualizerRef.current.offsetWidth;
+        setVisualizerWidth(Math.max(0, availableWidth));
       }
-    }
+    };
 
-    updateWidth()
-    const resizeObserver = new ResizeObserver(updateWidth)
+    updateWidth();
+    const resizeObserver = new ResizeObserver(updateWidth);
     if (visualizerRef.current) {
-      resizeObserver.observe(visualizerRef.current)
+      resizeObserver.observe(visualizerRef.current);
     }
 
     return () => {
-      resizeObserver.disconnect()
-    }
-  }, [width, isStopped, error])
+      resizeObserver.disconnect();
+    };
+  }, [width, isStopped, error]);
 
   const formattedTime = useMemo(() => {
-    const minutes = Math.floor(seconds / 60)
-    const secs = seconds % 60
-    return `${minutes}:${secs.toString().padStart(2, '0')}`
-  }, [seconds])
+    const minutes = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${minutes}:${secs.toString().padStart(2, '0')}`;
+  }, [seconds]);
 
-  const barWidth = visualizerBarWidth
-  const barGap = visualizerBarGap
+  const barWidth = visualizerBarWidth;
+  const barGap = visualizerBarGap;
 
   const maxBars = useMemo(() => {
     if (visualizerWidth <= 0) {
-      return Math.max(levels.length, 40)
+      return Math.max(levels.length, 40);
     }
-    const calculatedBars = Math.floor(visualizerWidth / (barWidth + barGap))
-    return Math.max(calculatedBars, 1)
-  }, [visualizerWidth, levels.length])
+    const calculatedBars = Math.floor(visualizerWidth / (barWidth + barGap));
+    return Math.max(calculatedBars, 1);
+  }, [visualizerWidth, levels.length]);
 
   const displayedLevels = useMemo(() => {
     if (maxBars <= 0 || levels.length === 0) {
-      return Array.from({ length: Math.max(maxBars, 40) }, () => 0.15)
+      return Array.from({ length: Math.max(maxBars, 40) }, () => 0.15);
     }
 
     if (maxBars <= levels.length) {
-      const step = levels.length / maxBars
+      const step = levels.length / maxBars;
       return Array.from({ length: maxBars }, (_, i) => {
-        const start = Math.floor(i * step)
-        const end = Math.floor((i + 1) * step)
-        const slice = levels.slice(start, end)
-        return slice.length > 0 ? Math.max(...slice) : 0.15
-      })
+        const start = Math.floor(i * step);
+        const end = Math.floor((i + 1) * step);
+        const slice = levels.slice(start, end);
+        return slice.length > 0 ? Math.max(...slice) : 0.15;
+      });
     }
 
-    const step = (levels.length - 1) / (maxBars - 1)
+    const step = (levels.length - 1) / (maxBars - 1);
     return Array.from({ length: maxBars }, (_, i) => {
-      const position = i * step
-      const lowerIndex = Math.floor(position)
-      const upperIndex = Math.min(Math.ceil(position), levels.length - 1)
-      const fraction = position - lowerIndex
+      const position = i * step;
+      const lowerIndex = Math.floor(position);
+      const upperIndex = Math.min(Math.ceil(position), levels.length - 1);
+      const fraction = position - lowerIndex;
 
       if (lowerIndex === upperIndex) {
-        return levels[lowerIndex] || 0.15
+        return levels[lowerIndex] || 0.15;
       }
 
-      return (levels[lowerIndex] || 0.15) * (1 - fraction) + (levels[upperIndex] || 0.15) * fraction
-    })
-  }, [levels, maxBars])
+      return (
+        (levels[lowerIndex] || 0.15) * (1 - fraction) + (levels[upperIndex] || 0.15) * fraction
+      );
+    });
+  }, [levels, maxBars]);
 
-  const containerStyle: CSSProperties = useMemo(() => ({
-    display: 'flex',
-    alignItems: 'center',
-    gap: typeof gap === 'number' ? `${gap}px` : gap,
-    backgroundColor,
-    borderRadius: typeof borderRadius === 'number' ? `${borderRadius}px` : borderRadius,
-    border: `1px solid ${borderColor}`,
-    padding: typeof padding === 'number' ? `${padding}px` : padding,
-    width: width ?? '100%',
-    height: height,
-    boxSizing: 'border-box',
-    ...style
-  }), [width, height, style, backgroundColor, borderColor, borderRadius, padding, gap])
+  const containerStyle: CSSProperties = useMemo(
+    () => ({
+      display: 'flex',
+      alignItems: 'center',
+      gap: typeof gap === 'number' ? `${gap}px` : gap,
+      backgroundColor,
+      borderRadius: typeof borderRadius === 'number' ? `${borderRadius}px` : borderRadius,
+      border: `1px solid ${borderColor}`,
+      padding: typeof padding === 'number' ? `${padding}px` : padding,
+      width: width ?? '100%',
+      height: height,
+      boxSizing: 'border-box',
+      ...style,
+    }),
+    [width, height, style, backgroundColor, borderColor, borderRadius, padding, gap]
+  );
 
   return (
     <div ref={containerRef} style={containerStyle}>
@@ -157,7 +162,7 @@ const VoiceRecorder: FC<VoiceRecorderProps> = (props) => {
           width: 8,
           height: 8,
           borderRadius: 9999,
-          backgroundColor: isRecording ? recordingIndicatorColor : idleIndicatorColor
+          backgroundColor: isRecording ? recordingIndicatorColor : idleIndicatorColor,
         }}
       />
       <span
@@ -166,7 +171,7 @@ const VoiceRecorder: FC<VoiceRecorderProps> = (props) => {
           fontWeight: timeFontWeight,
           minWidth: 40,
           fontFamily: timeFontFamily,
-          color: timeTextColor
+          color: timeTextColor,
         }}
       >
         {formattedTime}
@@ -181,15 +186,16 @@ const VoiceRecorder: FC<VoiceRecorderProps> = (props) => {
           overflow: 'hidden',
           height: visualizerHeight,
           minWidth: 0,
-          justifyContent: 'flex-start'
+          justifyContent: 'flex-start',
         }}
       >
         {displayedLevels.map((level, index) => {
-          const clamped = Math.max(0.1, Math.min(level, 1))
-          const barHeight = 1 + clamped * (visualizerBarHeight - 1)
-          const barColor = typeof visualizerBarColor === 'function'
-            ? visualizerBarColor(level, index)
-            : visualizerBarColor
+          const clamped = Math.max(0.1, Math.min(level, 1));
+          const barHeight = 1 + clamped * (visualizerBarHeight - 1);
+          const barColor =
+            typeof visualizerBarColor === 'function'
+              ? visualizerBarColor(level, index)
+              : visualizerBarColor;
 
           return (
             <span
@@ -199,10 +205,10 @@ const VoiceRecorder: FC<VoiceRecorderProps> = (props) => {
                 borderRadius: 999,
                 backgroundColor: barColor,
                 height: barHeight,
-                flexShrink: 0
+                flexShrink: 0,
               }}
             />
-          )
+          );
         })}
       </div>
 
@@ -215,7 +221,10 @@ const VoiceRecorder: FC<VoiceRecorderProps> = (props) => {
             style={{
               width: buttonSize,
               height: buttonSize,
-              borderRadius: typeof buttonBorderRadius === 'number' ? `${buttonBorderRadius}px` : buttonBorderRadius,
+              borderRadius:
+                typeof buttonBorderRadius === 'number'
+                  ? `${buttonBorderRadius}px`
+                  : buttonBorderRadius,
               border: `1px solid ${buttonBorderColor}`,
               backgroundColor: buttonBackgroundColor,
               display: 'flex',
@@ -224,16 +233,16 @@ const VoiceRecorder: FC<VoiceRecorderProps> = (props) => {
               padding: 0,
               cursor: 'pointer',
               color: iconColor,
-              transition: buttonHoverBackgroundColor ? 'background-color 0.2s' : undefined
+              transition: buttonHoverBackgroundColor ? 'background-color 0.2s' : undefined,
             }}
             onMouseEnter={(e) => {
               if (buttonHoverBackgroundColor) {
-                e.currentTarget.style.backgroundColor = buttonHoverBackgroundColor
+                e.currentTarget.style.backgroundColor = buttonHoverBackgroundColor;
               }
             }}
             onMouseLeave={(e) => {
               if (buttonHoverBackgroundColor) {
-                e.currentTarget.style.backgroundColor = buttonBackgroundColor
+                e.currentTarget.style.backgroundColor = buttonBackgroundColor;
               }
             }}
           >
@@ -246,7 +255,10 @@ const VoiceRecorder: FC<VoiceRecorderProps> = (props) => {
             style={{
               width: buttonSize,
               height: buttonSize,
-              borderRadius: typeof buttonBorderRadius === 'number' ? `${buttonBorderRadius}px` : buttonBorderRadius,
+              borderRadius:
+                typeof buttonBorderRadius === 'number'
+                  ? `${buttonBorderRadius}px`
+                  : buttonBorderRadius,
               border: `1px solid ${buttonBorderColor}`,
               backgroundColor: buttonBackgroundColor,
               display: 'flex',
@@ -255,16 +267,16 @@ const VoiceRecorder: FC<VoiceRecorderProps> = (props) => {
               padding: 0,
               cursor: 'pointer',
               color: iconColor,
-              transition: buttonHoverBackgroundColor ? 'background-color 0.2s' : undefined
+              transition: buttonHoverBackgroundColor ? 'background-color 0.2s' : undefined,
             }}
             onMouseEnter={(e) => {
               if (buttonHoverBackgroundColor) {
-                e.currentTarget.style.backgroundColor = buttonHoverBackgroundColor
+                e.currentTarget.style.backgroundColor = buttonHoverBackgroundColor;
               }
             }}
             onMouseLeave={(e) => {
               if (buttonHoverBackgroundColor) {
-                e.currentTarget.style.backgroundColor = buttonBackgroundColor
+                e.currentTarget.style.backgroundColor = buttonBackgroundColor;
               }
             }}
           >
@@ -277,7 +289,10 @@ const VoiceRecorder: FC<VoiceRecorderProps> = (props) => {
             style={{
               width: buttonSize,
               height: buttonSize,
-              borderRadius: typeof buttonBorderRadius === 'number' ? `${buttonBorderRadius}px` : buttonBorderRadius,
+              borderRadius:
+                typeof buttonBorderRadius === 'number'
+                  ? `${buttonBorderRadius}px`
+                  : buttonBorderRadius,
               border: `1px solid ${buttonBorderColor}`,
               backgroundColor: buttonBackgroundColor,
               display: 'flex',
@@ -286,16 +301,16 @@ const VoiceRecorder: FC<VoiceRecorderProps> = (props) => {
               padding: 0,
               cursor: 'pointer',
               color: iconColor,
-              transition: buttonHoverBackgroundColor ? 'background-color 0.2s' : undefined
+              transition: buttonHoverBackgroundColor ? 'background-color 0.2s' : undefined,
             }}
             onMouseEnter={(e) => {
               if (buttonHoverBackgroundColor) {
-                e.currentTarget.style.backgroundColor = buttonHoverBackgroundColor
+                e.currentTarget.style.backgroundColor = buttonHoverBackgroundColor;
               }
             }}
             onMouseLeave={(e) => {
               if (buttonHoverBackgroundColor) {
-                e.currentTarget.style.backgroundColor = buttonBackgroundColor
+                e.currentTarget.style.backgroundColor = buttonBackgroundColor;
               }
             }}
           >
@@ -313,7 +328,10 @@ const VoiceRecorder: FC<VoiceRecorderProps> = (props) => {
             style={{
               width: buttonSize,
               height: buttonSize,
-              borderRadius: typeof buttonBorderRadius === 'number' ? `${buttonBorderRadius}px` : buttonBorderRadius,
+              borderRadius:
+                typeof buttonBorderRadius === 'number'
+                  ? `${buttonBorderRadius}px`
+                  : buttonBorderRadius,
               border: `1px solid ${buttonBorderColor}`,
               backgroundColor: buttonBackgroundColor,
               display: 'flex',
@@ -322,16 +340,16 @@ const VoiceRecorder: FC<VoiceRecorderProps> = (props) => {
               padding: 0,
               cursor: 'pointer',
               color: iconColor,
-              transition: buttonHoverBackgroundColor ? 'background-color 0.2s' : undefined
+              transition: buttonHoverBackgroundColor ? 'background-color 0.2s' : undefined,
             }}
             onMouseEnter={(e) => {
               if (buttonHoverBackgroundColor) {
-                e.currentTarget.style.backgroundColor = buttonHoverBackgroundColor
+                e.currentTarget.style.backgroundColor = buttonHoverBackgroundColor;
               }
             }}
             onMouseLeave={(e) => {
               if (buttonHoverBackgroundColor) {
-                e.currentTarget.style.backgroundColor = buttonBackgroundColor
+                e.currentTarget.style.backgroundColor = buttonBackgroundColor;
               }
             }}
           >
@@ -344,7 +362,10 @@ const VoiceRecorder: FC<VoiceRecorderProps> = (props) => {
             style={{
               width: buttonSize,
               height: buttonSize,
-              borderRadius: typeof buttonBorderRadius === 'number' ? `${buttonBorderRadius}px` : buttonBorderRadius,
+              borderRadius:
+                typeof buttonBorderRadius === 'number'
+                  ? `${buttonBorderRadius}px`
+                  : buttonBorderRadius,
               border: `1px solid ${buttonBorderColor}`,
               backgroundColor: buttonBackgroundColor,
               display: 'flex',
@@ -353,20 +374,22 @@ const VoiceRecorder: FC<VoiceRecorderProps> = (props) => {
               padding: 0,
               cursor: 'pointer',
               color: iconColor,
-              transition: buttonHoverBackgroundColor ? 'background-color 0.2s' : undefined
+              transition: buttonHoverBackgroundColor ? 'background-color 0.2s' : undefined,
             }}
             onMouseEnter={(e) => {
               if (buttonHoverBackgroundColor) {
-                e.currentTarget.style.backgroundColor = buttonHoverBackgroundColor
+                e.currentTarget.style.backgroundColor = buttonHoverBackgroundColor;
               }
             }}
             onMouseLeave={(e) => {
               if (buttonHoverBackgroundColor) {
-                e.currentTarget.style.backgroundColor = buttonBackgroundColor
+                e.currentTarget.style.backgroundColor = buttonBackgroundColor;
               }
             }}
           >
-            {isPlaying ? (customPauseIcon || <PauseIcon size={iconSize} />) : (customPlayIcon || <PlayIcon size={iconSize} />)}
+            {isPlaying
+              ? customPauseIcon || <PauseIcon size={iconSize} />
+              : customPlayIcon || <PlayIcon size={iconSize} />}
           </button>
           <button
             type="button"
@@ -375,7 +398,10 @@ const VoiceRecorder: FC<VoiceRecorderProps> = (props) => {
             style={{
               width: buttonSize,
               height: buttonSize,
-              borderRadius: typeof buttonBorderRadius === 'number' ? `${buttonBorderRadius}px` : buttonBorderRadius,
+              borderRadius:
+                typeof buttonBorderRadius === 'number'
+                  ? `${buttonBorderRadius}px`
+                  : buttonBorderRadius,
               border: `1px solid ${buttonBorderColor}`,
               backgroundColor: buttonBackgroundColor,
               display: 'flex',
@@ -384,16 +410,16 @@ const VoiceRecorder: FC<VoiceRecorderProps> = (props) => {
               padding: 0,
               cursor: 'pointer',
               color: iconColor,
-              transition: buttonHoverBackgroundColor ? 'background-color 0.2s' : undefined
+              transition: buttonHoverBackgroundColor ? 'background-color 0.2s' : undefined,
             }}
             onMouseEnter={(e) => {
               if (buttonHoverBackgroundColor) {
-                e.currentTarget.style.backgroundColor = buttonHoverBackgroundColor
+                e.currentTarget.style.backgroundColor = buttonHoverBackgroundColor;
               }
             }}
             onMouseLeave={(e) => {
               if (buttonHoverBackgroundColor) {
-                e.currentTarget.style.backgroundColor = buttonBackgroundColor
+                e.currentTarget.style.backgroundColor = buttonBackgroundColor;
               }
             }}
           >
@@ -406,7 +432,10 @@ const VoiceRecorder: FC<VoiceRecorderProps> = (props) => {
             style={{
               width: buttonSize,
               height: buttonSize,
-              borderRadius: typeof buttonBorderRadius === 'number' ? `${buttonBorderRadius}px` : buttonBorderRadius,
+              borderRadius:
+                typeof buttonBorderRadius === 'number'
+                  ? `${buttonBorderRadius}px`
+                  : buttonBorderRadius,
               border: `1px solid ${buttonBorderColor}`,
               backgroundColor: buttonBackgroundColor,
               display: 'flex',
@@ -415,16 +444,16 @@ const VoiceRecorder: FC<VoiceRecorderProps> = (props) => {
               padding: 0,
               cursor: 'pointer',
               color: iconColor,
-              transition: buttonHoverBackgroundColor ? 'background-color 0.2s' : undefined
+              transition: buttonHoverBackgroundColor ? 'background-color 0.2s' : undefined,
             }}
             onMouseEnter={(e) => {
               if (buttonHoverBackgroundColor) {
-                e.currentTarget.style.backgroundColor = buttonHoverBackgroundColor
+                e.currentTarget.style.backgroundColor = buttonHoverBackgroundColor;
               }
             }}
             onMouseLeave={(e) => {
               if (buttonHoverBackgroundColor) {
-                e.currentTarget.style.backgroundColor = buttonBackgroundColor
+                e.currentTarget.style.backgroundColor = buttonBackgroundColor;
               }
             }}
           >
@@ -442,7 +471,10 @@ const VoiceRecorder: FC<VoiceRecorderProps> = (props) => {
             style={{
               width: buttonSize,
               height: buttonSize,
-              borderRadius: typeof buttonBorderRadius === 'number' ? `${buttonBorderRadius}px` : buttonBorderRadius,
+              borderRadius:
+                typeof buttonBorderRadius === 'number'
+                  ? `${buttonBorderRadius}px`
+                  : buttonBorderRadius,
               border: `1px solid ${buttonBorderColor}`,
               backgroundColor: buttonBackgroundColor,
               display: 'flex',
@@ -451,20 +483,22 @@ const VoiceRecorder: FC<VoiceRecorderProps> = (props) => {
               padding: 0,
               cursor: 'pointer',
               color: iconColor,
-              transition: buttonHoverBackgroundColor ? 'background-color 0.2s' : undefined
+              transition: buttonHoverBackgroundColor ? 'background-color 0.2s' : undefined,
             }}
             onMouseEnter={(e) => {
               if (buttonHoverBackgroundColor) {
-                e.currentTarget.style.backgroundColor = buttonHoverBackgroundColor
+                e.currentTarget.style.backgroundColor = buttonHoverBackgroundColor;
               }
             }}
             onMouseLeave={(e) => {
               if (buttonHoverBackgroundColor) {
-                e.currentTarget.style.backgroundColor = buttonBackgroundColor
+                e.currentTarget.style.backgroundColor = buttonBackgroundColor;
               }
             }}
           >
-            {isPlaying ? (customPauseIcon || <PauseIcon size={iconSize} />) : (customPlayIcon || <PlayIcon size={iconSize} />)}
+            {isPlaying
+              ? customPauseIcon || <PauseIcon size={iconSize} />
+              : customPlayIcon || <PlayIcon size={iconSize} />}
           </button>
           <button
             type="button"
@@ -473,7 +507,10 @@ const VoiceRecorder: FC<VoiceRecorderProps> = (props) => {
             style={{
               width: buttonSize,
               height: buttonSize,
-              borderRadius: typeof buttonBorderRadius === 'number' ? `${buttonBorderRadius}px` : buttonBorderRadius,
+              borderRadius:
+                typeof buttonBorderRadius === 'number'
+                  ? `${buttonBorderRadius}px`
+                  : buttonBorderRadius,
               border: `1px solid ${buttonBorderColor}`,
               backgroundColor: buttonBackgroundColor,
               display: 'flex',
@@ -482,16 +519,16 @@ const VoiceRecorder: FC<VoiceRecorderProps> = (props) => {
               padding: 0,
               cursor: 'pointer',
               color: iconColor,
-              transition: buttonHoverBackgroundColor ? 'background-color 0.2s' : undefined
+              transition: buttonHoverBackgroundColor ? 'background-color 0.2s' : undefined,
             }}
             onMouseEnter={(e) => {
               if (buttonHoverBackgroundColor) {
-                e.currentTarget.style.backgroundColor = buttonHoverBackgroundColor
+                e.currentTarget.style.backgroundColor = buttonHoverBackgroundColor;
               }
             }}
             onMouseLeave={(e) => {
               if (buttonHoverBackgroundColor) {
-                e.currentTarget.style.backgroundColor = buttonBackgroundColor
+                e.currentTarget.style.backgroundColor = buttonBackgroundColor;
               }
             }}
           >
@@ -504,7 +541,10 @@ const VoiceRecorder: FC<VoiceRecorderProps> = (props) => {
             style={{
               width: buttonSize,
               height: buttonSize,
-              borderRadius: typeof buttonBorderRadius === 'number' ? `${buttonBorderRadius}px` : buttonBorderRadius,
+              borderRadius:
+                typeof buttonBorderRadius === 'number'
+                  ? `${buttonBorderRadius}px`
+                  : buttonBorderRadius,
               border: `1px solid ${buttonBorderColor}`,
               backgroundColor: buttonBackgroundColor,
               display: 'flex',
@@ -513,16 +553,16 @@ const VoiceRecorder: FC<VoiceRecorderProps> = (props) => {
               padding: 0,
               cursor: 'pointer',
               color: iconColor,
-              transition: buttonHoverBackgroundColor ? 'background-color 0.2s' : undefined
+              transition: buttonHoverBackgroundColor ? 'background-color 0.2s' : undefined,
             }}
             onMouseEnter={(e) => {
               if (buttonHoverBackgroundColor) {
-                e.currentTarget.style.backgroundColor = buttonHoverBackgroundColor
+                e.currentTarget.style.backgroundColor = buttonHoverBackgroundColor;
               }
             }}
             onMouseLeave={(e) => {
               if (buttonHoverBackgroundColor) {
-                e.currentTarget.style.backgroundColor = buttonBackgroundColor
+                e.currentTarget.style.backgroundColor = buttonBackgroundColor;
               }
             }}
           >
@@ -540,7 +580,10 @@ const VoiceRecorder: FC<VoiceRecorderProps> = (props) => {
             style={{
               width: buttonSize,
               height: buttonSize,
-              borderRadius: typeof buttonBorderRadius === 'number' ? `${buttonBorderRadius}px` : buttonBorderRadius,
+              borderRadius:
+                typeof buttonBorderRadius === 'number'
+                  ? `${buttonBorderRadius}px`
+                  : buttonBorderRadius,
               border: `1px solid ${buttonBorderColor}`,
               backgroundColor: buttonBackgroundColor,
               display: 'flex',
@@ -549,16 +592,16 @@ const VoiceRecorder: FC<VoiceRecorderProps> = (props) => {
               padding: 0,
               cursor: 'pointer',
               color: iconColor,
-              transition: buttonHoverBackgroundColor ? 'background-color 0.2s' : undefined
+              transition: buttonHoverBackgroundColor ? 'background-color 0.2s' : undefined,
             }}
             onMouseEnter={(e) => {
               if (buttonHoverBackgroundColor) {
-                e.currentTarget.style.backgroundColor = buttonHoverBackgroundColor
+                e.currentTarget.style.backgroundColor = buttonHoverBackgroundColor;
               }
             }}
             onMouseLeave={(e) => {
               if (buttonHoverBackgroundColor) {
-                e.currentTarget.style.backgroundColor = buttonBackgroundColor
+                e.currentTarget.style.backgroundColor = buttonBackgroundColor;
               }
             }}
           >
@@ -573,14 +616,14 @@ const VoiceRecorder: FC<VoiceRecorderProps> = (props) => {
             color: errorTextColor,
             fontSize: typeof errorFontSize === 'number' ? `${errorFontSize}px` : errorFontSize,
             marginLeft: 8,
-            fontFamily: errorFontFamily
+            fontFamily: errorFontFamily,
           }}
         >
           {error}
         </span>
       )}
     </div>
-  )
-}
+  );
+};
 
-export default VoiceRecorder
+export default VoiceRecorder;
