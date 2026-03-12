@@ -45,9 +45,10 @@ const UNENCRYPTED_SUBSCRIPTION_KEY = 'unencrypted';
 // Adaptive timeline limits for the room the user is actively viewing.
 // Lower limits reduce initial bandwidth on constrained devices/connections;
 // the user can always paginate further once the room is open.
-const ACTIVE_ROOM_TIMELINE_LIMIT_LOW = 20;
-const ACTIVE_ROOM_TIMELINE_LIMIT_MEDIUM = 35;
-const ACTIVE_ROOM_TIMELINE_LIMIT_HIGH = 50;
+// These values must be high enough to ensure proper timeline initialization and pagination tokens.
+const ACTIVE_ROOM_TIMELINE_LIMIT_LOW = 50;
+const ACTIVE_ROOM_TIMELINE_LIMIT_MEDIUM = 100;
+const ACTIVE_ROOM_TIMELINE_LIMIT_HIGH = 150;
 
 export type PartialSlidingSyncRequest = {
   filters?: MSC3575List['filters'];
@@ -200,9 +201,14 @@ const buildUnencryptedSubscription = (timelineLimit: number): MSC3575RoomSubscri
 const buildLists = (pageSize: number, includeInviteList: boolean): Map<string, MSC3575List> => {
   const lists = new Map<string, MSC3575List>();
   const listRequiredState = buildListRequiredState();
+  
+  // Start with a reasonable initial range that will quickly expand to full list
+  // Since timeline_limit=1, loading many rooms is very cheap
+  // This prevents the white page issue from progressive loading delays
+  const initialRange = Math.min(pageSize, 100);
 
   lists.set(LIST_JOINED, {
-    ranges: [[0, Math.max(0, pageSize - 1)]],
+    ranges: [[0, Math.max(0, initialRange - 1)]],
     sort: LIST_SORT_ORDER,
     timeline_limit: LIST_TIMELINE_LIMIT,
     required_state: listRequiredState,
@@ -212,7 +218,7 @@ const buildLists = (pageSize: number, includeInviteList: boolean): Map<string, M
 
   if (includeInviteList) {
     lists.set(LIST_INVITES, {
-      ranges: [[0, Math.max(0, pageSize - 1)]],
+      ranges: [[0, Math.max(0, initialRange - 1)]],
       sort: LIST_SORT_ORDER,
       timeline_limit: LIST_TIMELINE_LIMIT,
       required_state: listRequiredState,
@@ -222,7 +228,7 @@ const buildLists = (pageSize: number, includeInviteList: boolean): Map<string, M
   }
 
   lists.set(LIST_DMS, {
-    ranges: [[0, Math.max(0, pageSize - 1)]],
+    ranges: [[0, Math.max(0, initialRange - 1)]],
     sort: LIST_SORT_ORDER,
     timeline_limit: LIST_TIMELINE_LIMIT,
     required_state: listRequiredState,
@@ -307,6 +313,8 @@ export class SlidingSyncManager {
   private readonly onLifecycle: (state: SlidingSyncState, resp: unknown, err?: Error) => void;
 
   private presenceExtension!: ExtensionPresence;
+
+  private listsFullyLoaded = false;
 
   public readonly slidingSync: SlidingSync;
 
@@ -441,23 +449,54 @@ export class SlidingSyncManager {
   }
 
   private expandListsToKnownCount(): void {
+    // Stop expanding once we've loaded all rooms - prevents continuous updates
+    if (this.listsFullyLoaded) return;
+
+    let allListsComplete = true;
+    let expandedAny = false;
+
     this.listKeys.forEach((key) => {
       const listData = this.slidingSync.getListData(key);
       const knownCount = listData?.joinedCount ?? 0;
       if (knownCount <= 0) return;
 
-      const desiredEnd = Math.min(knownCount, this.maxRooms) - 1;
       const existing = this.slidingSync.getListParams(key);
       const currentEnd = getListEndIndex(existing);
-      if (desiredEnd === currentEnd) return;
+      
+      // Calculate how many rooms we still need to load
+      const maxEnd = Math.min(knownCount, this.maxRooms) - 1;
+      
+      if (currentEnd >= maxEnd) {
+        // This list is fully loaded
+        return;
+      }
 
+      allListsComplete = false;
+      
+      // Progressive expansion: load in moderate chunks to balance speed with stability
+      // Chunk size reduced to 100 to prevent timeline ordering issues when opening rooms
+      // while lists are still expanding. Rooms should get at least one clean sync from
+      // their list before the active subscription requests a high timeline limit.
+      const chunkSize = 100;
+      const desiredEnd = Math.min(currentEnd + chunkSize, maxEnd);
+      
       this.slidingSync.setListRanges(key, [[0, desiredEnd]]);
+      expandedAny = true;
+      
       if (knownCount > this.maxRooms) {
         log.warn(
           `Sliding Sync list "${key}" capped at ${this.maxRooms}/${knownCount} rooms for ${this.mx.getUserId()}`
         );
       }
     });
+
+    // Mark as fully loaded once all lists are complete
+    if (allListsComplete) {
+      this.listsFullyLoaded = true;
+      log.log(`Sliding Sync all lists fully loaded for ${this.mx.getUserId()}`);
+    } else if (expandedAny) {
+      log.log(`Sliding Sync lists expanding... for ${this.mx.getUserId()}`);
+    }
   }
 
   /**
