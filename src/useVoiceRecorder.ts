@@ -1,7 +1,35 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import type { UseVoiceRecorderOptions, UseVoiceRecorderReturn, RecorderState } from './types'
+import type {
+  UseVoiceRecorderOptions,
+  UseVoiceRecorderReturn,
+  RecorderState,
+  VoiceRecorderStopPayload,
+} from './types'
 
 const BAR_COUNT = 40
+const WAVEFORM_POINT_COUNT = 100
+
+// downsample an array of samples to a target count by averaging blocks of samples together
+function downsampleWaveform(samples: number[], targetCount: number): number[] {
+  if (samples.length === 0) return Array.from({ length: targetCount }, () => 0)
+  if (samples.length <= targetCount) {
+    const padded = [...samples]
+    while (padded.length < targetCount) padded.push(0)
+    return padded
+  }
+  const result: number[] = []
+  const blockSize = samples.length / targetCount
+  for (let i = 0; i < targetCount; i++) {
+    const start = Math.floor(i * blockSize)
+    const end = Math.floor((i + 1) * blockSize)
+    let sum = 0
+    for (let j = start; j < end; j++) {
+      sum += samples[j]
+    }
+    result.push(sum / (end - start))
+  }
+  return result
+}
 
 export function useVoiceRecorder(options: UseVoiceRecorderOptions = {}): UseVoiceRecorderReturn {
   const { autoStart = true, onStop, onDelete } = options
@@ -16,6 +44,7 @@ export function useVoiceRecorder(options: UseVoiceRecorderOptions = {}): UseVoic
   const [error, setError] = useState<string | null>(null)
   const [audioUrl, setAudioUrl] = useState<string | null>(null)
   const [audioFile, setAudioFile] = useState<File | null>(null)
+  const [waveform, setWaveform] = useState<number[] | null>(null)
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
   const chunksRef = useRef<Blob[]>([])
@@ -28,6 +57,7 @@ export function useVoiceRecorder(options: UseVoiceRecorderOptions = {}): UseVoic
   const timerRef = useRef<number | null>(null)
   const startTimeRef = useRef<number | null>(null)
   const pausedTimeRef = useRef<number>(0)
+  const secondsRef = useRef(0)
   const lastUrlRef = useRef<string | null>(null)
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const previousChunksRef = useRef<Blob[]>([])
@@ -35,6 +65,10 @@ export function useVoiceRecorder(options: UseVoiceRecorderOptions = {}): UseVoic
   const isRestartingRef = useRef(false)
   const isTemporaryStopRef = useRef(false)
   const temporaryPreviewUrlRef = useRef<string | null>(null)
+  // waveform samples collected during recording, used to generate waveform on stop. We collect all samples and downsample at the end to get a more accurate waveform, especially for short recordings. We use a ref to avoid causing re-renders on every sample.
+  const waveformSamplesRef = useRef<number[]>([])
+  // Flag to indicate whether we should be collecting waveform samples. We need this because there can be a short delay between starting recording and the audio graph being set up, during which we might get some samples that we don't want to include in the waveform.
+  const isCollectingWaveformRef = useRef(false)
 
   const cleanupStream = useCallback(() => {
     if (streamRef.current) {
@@ -85,6 +119,33 @@ export function useVoiceRecorder(options: UseVoiceRecorderOptions = {}): UseVoic
     [stopTimer]
   )
 
+  useEffect(() => {
+    // Keep a ref copy of seconds for use in callbacks to avoid stale closures
+    secondsRef.current = seconds
+  }, [seconds])
+
+  const getAudioLength = useCallback(() => {
+    if (startTimeRef.current === null) {
+      return secondsRef.current
+    }
+    const elapsedSeconds = Math.floor((Date.now() - startTimeRef.current) / 1000)
+    return Math.max(secondsRef.current, elapsedSeconds)
+  }, [])
+
+  const emitStopPayload = useCallback(
+    (file: File, url: string, waveformData: number[], audioLength: number) => {
+      if (!onStop) return
+      const payload: VoiceRecorderStopPayload = {
+        audioFile: file,
+        audioUrl: url,
+        waveform: waveformData,
+        audioLength,
+      }
+      onStop(payload)
+    },
+    [onStop]
+  )
+
   const animateLevels = useCallback(() => {
     const analyser = analyserRef.current
     const storedArray = dataArrayRef.current
@@ -112,6 +173,9 @@ export function useVoiceRecorder(options: UseVoiceRecorderOptions = {}): UseVoic
           next.push(normalized)
           return next
         })
+        if (isCollectingWaveformRef.current) {
+          waveformSamplesRef.current.push(normalized)
+        }
         frameCountRef.current = 0
       }
 
@@ -174,6 +238,8 @@ export function useVoiceRecorder(options: UseVoiceRecorderOptions = {}): UseVoic
       streamRef.current = stream
       chunksRef.current = []
       previousChunksRef.current = []
+      waveformSamplesRef.current = []
+      isCollectingWaveformRef.current = true
       setupAudioGraph(stream)
       startRecordingTimer()
 
@@ -192,7 +258,11 @@ export function useVoiceRecorder(options: UseVoiceRecorderOptions = {}): UseVoic
         stopTimer()
         setIsRecording(false)
         setIsPaused(false)
+        const audioLength = getAudioLength()
         pausedTimeRef.current = 0
+        startTimeRef.current = null
+
+        isCollectingWaveformRef.current = false
 
         if (isResumingRef.current) {
           isResumingRef.current = false
@@ -217,6 +287,9 @@ export function useVoiceRecorder(options: UseVoiceRecorderOptions = {}): UseVoic
         const file = new File([blob], `voice-${Date.now()}.ogg`, { type: 'audio/ogg' })
         setAudioFile(file)
 
+        const waveformData = downsampleWaveform(waveformSamplesRef.current, WAVEFORM_POINT_COUNT)
+        setWaveform(waveformData)
+
         if (isTemporaryStopRef.current) {
           setIsTemporaryStopped(true)
           setIsStopped(true)
@@ -224,9 +297,7 @@ export function useVoiceRecorder(options: UseVoiceRecorderOptions = {}): UseVoic
         } else {
           setIsStopped(true)
           setIsTemporaryStopped(false)
-          if (onStop) {
-            onStop(file, url)
-          }
+          emitStopPayload(file, url, waveformData, audioLength)
         }
       }
 
@@ -242,7 +313,7 @@ export function useVoiceRecorder(options: UseVoiceRecorderOptions = {}): UseVoic
       stopTimer()
       setIsRecording(false)
     }
-  }, [cleanupAudioContext, cleanupStream, onStop, setupAudioGraph, startRecordingTimer, stopTimer])
+  }, [cleanupAudioContext, cleanupStream, emitStopPayload, getAudioLength, setupAudioGraph, startRecordingTimer, stopTimer])
 
   const start = useCallback(() => {
     void internalStartRecording()
@@ -286,32 +357,14 @@ export function useVoiceRecorder(options: UseVoiceRecorderOptions = {}): UseVoic
       }
       mediaRecorder.stop()
 
-      const allChunks = [...chunksRef.current]
-
-      if (allChunks.length > 0) {
-        const blob = new Blob(allChunks, { type: 'audio/ogg' })
-        if (lastUrlRef.current) {
-          URL.revokeObjectURL(lastUrlRef.current)
-        }
-        const url = URL.createObjectURL(blob)
-        lastUrlRef.current = url
-        setAudioUrl(url)
-
-        const file = new File([blob], `voice-${Date.now()}.ogg`, { type: 'audio/ogg' })
-        setAudioFile(file)
-
-        if (onStop) {
-          onStop(file, url)
-        }
-      }
-
       setIsStopped(true)
       setIsTemporaryStopped(false)
       setIsPaused(false)
       pausedTimeRef.current = 0
     } else {
-      if (audioUrl && audioFile && onStop) {
-        onStop(audioFile, audioUrl)
+      if (audioUrl && audioFile) {
+        const waveformData = waveform ?? downsampleWaveform(waveformSamplesRef.current, WAVEFORM_POINT_COUNT)
+        emitStopPayload(audioFile, audioUrl, waveformData, secondsRef.current)
       }
       cleanupAudioContext()
       cleanupStream()
@@ -321,8 +374,9 @@ export function useVoiceRecorder(options: UseVoiceRecorderOptions = {}): UseVoic
       setIsTemporaryStopped(false)
       setIsPaused(false)
       pausedTimeRef.current = 0
+      startTimeRef.current = null
     }
-  }, [cleanupAudioContext, cleanupStream, stopTimer, onStop, audioUrl, audioFile])
+  }, [audioFile, audioUrl, cleanupAudioContext, cleanupStream, emitStopPayload, stopTimer, waveform])
 
   const handleStop = useCallback(() => {
     const mediaRecorder = mediaRecorderRef.current
@@ -336,8 +390,9 @@ export function useVoiceRecorder(options: UseVoiceRecorderOptions = {}): UseVoic
       setIsPaused(false)
       pausedTimeRef.current = 0
     } else {
-      if (audioUrl && audioFile && onStop) {
-        onStop(audioFile, audioUrl)
+      if (audioUrl && audioFile) {
+        const waveformData = waveform ?? downsampleWaveform(waveformSamplesRef.current, WAVEFORM_POINT_COUNT)
+        emitStopPayload(audioFile, audioUrl, waveformData, secondsRef.current)
       }
       cleanupAudioContext()
       cleanupStream()
@@ -347,8 +402,9 @@ export function useVoiceRecorder(options: UseVoiceRecorderOptions = {}): UseVoic
       setIsTemporaryStopped(false)
       setIsPaused(false)
       pausedTimeRef.current = 0
+      startTimeRef.current = null
     }
-  }, [cleanupAudioContext, cleanupStream, stopTimer, audioUrl, audioFile, onStop])
+  }, [audioFile, audioUrl, cleanupAudioContext, cleanupStream, emitStopPayload, stopTimer, waveform])
 
   const handlePreviewPlay = useCallback(() => {
     let urlToPlay = audioUrl
@@ -491,7 +547,11 @@ export function useVoiceRecorder(options: UseVoiceRecorderOptions = {}): UseVoic
         stopTimer()
         setIsRecording(false)
         setIsPaused(false)
+        const audioLength = getAudioLength()
         pausedTimeRef.current = 0
+        startTimeRef.current = null
+
+        isCollectingWaveformRef.current = false
 
         if (chunksRef.current.length === 0) return
 
@@ -506,9 +566,10 @@ export function useVoiceRecorder(options: UseVoiceRecorderOptions = {}): UseVoic
         const file = new File([blob], `voice-${Date.now()}.webm`, { type: 'audio/webm' })
         setAudioFile(file)
 
-        if (onStop) {
-          onStop(file, url)
-        }
+        const waveformData = downsampleWaveform(waveformSamplesRef.current, WAVEFORM_POINT_COUNT)
+        setWaveform(waveformData)
+
+        emitStopPayload(file, url, waveformData, audioLength)
       }
 
       mediaRecorder.start()
@@ -517,6 +578,8 @@ export function useVoiceRecorder(options: UseVoiceRecorderOptions = {}): UseVoic
       setIsStopped(false)
       setIsTemporaryStopped(false)
       setIsPlaying(false)
+
+      isCollectingWaveformRef.current = true
 
       if (audioRef.current) {
         audioRef.current.pause()
@@ -538,7 +601,7 @@ export function useVoiceRecorder(options: UseVoiceRecorderOptions = {}): UseVoic
       setIsRecording(false)
       isResumingRef.current = false
     }
-  }, [cleanupAudioContext, cleanupStream, onStop, setupAudioGraph, startRecordingTimer, stopTimer])
+  }, [cleanupAudioContext, cleanupStream, emitStopPayload, getAudioLength, setupAudioGraph, startRecordingTimer, stopTimer])
 
   const handleDelete = useCallback(() => {
     const mediaRecorder = mediaRecorderRef.current
@@ -560,9 +623,13 @@ export function useVoiceRecorder(options: UseVoiceRecorderOptions = {}): UseVoic
     setIsPaused(false)
     setSeconds(0)
     pausedTimeRef.current = 0
+    startTimeRef.current = null
     setLevels(Array.from({ length: BAR_COUNT }, () => 0.15))
     previousChunksRef.current = []
     chunksRef.current = []
+    waveformSamplesRef.current = []
+    isCollectingWaveformRef.current = false
+    setWaveform(null)
 
     if (temporaryPreviewUrlRef.current) {
       URL.revokeObjectURL(temporaryPreviewUrlRef.current)
@@ -597,10 +664,14 @@ export function useVoiceRecorder(options: UseVoiceRecorderOptions = {}): UseVoic
     setIsPlaying(false)
     setSeconds(0)
     pausedTimeRef.current = 0
+    startTimeRef.current = null
     setLevels(Array.from({ length: BAR_COUNT }, () => 0.15))
     previousChunksRef.current = []
     chunksRef.current = []
     isResumingRef.current = false
+    waveformSamplesRef.current = []
+    isCollectingWaveformRef.current = false
+    setWaveform(null)
 
     if (lastUrlRef.current) {
       URL.revokeObjectURL(lastUrlRef.current)
@@ -668,6 +739,7 @@ export function useVoiceRecorder(options: UseVoiceRecorderOptions = {}): UseVoic
     error,
     audioUrl,
     audioFile,
+    waveform,
     start,
     handlePause,
     handleStopTemporary,

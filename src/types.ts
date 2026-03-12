@@ -2,9 +2,16 @@ import type { CSSProperties, ReactNode } from 'react'
 
 export type RecorderState = 'idle' | 'recording' | 'paused' | 'reviewing' | 'playing'
 
+export type VoiceRecorderStopPayload = {
+  audioFile: Blob
+  audioUrl: string
+  waveform: number[]
+  audioLength: number
+}
+
 export type UseVoiceRecorderOptions = {
   autoStart?: boolean
-  onStop?: (file: File, url: string) => void
+  onStop?: (payload: VoiceRecorderStopPayload) => void
   onDelete?: () => void
 }
 
@@ -20,6 +27,7 @@ export type UseVoiceRecorderReturn = {
   error: string | null
   audioUrl: string | null
   audioFile: File | null
+  waveform: number[] | null
   start: () => void
   handlePause: () => void
   handleStopTemporary: () => void

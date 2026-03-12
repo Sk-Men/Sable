@@ -52,8 +52,10 @@ import { useState } from 'react'
 import { VoiceRecorder } from 'react-voice-recorder-kit'
 
 export default function Page() {
-  const [file, setFile] = useState<File | null>(null)
+  const [file, setFile] = useState<Blob | null>(null)
   const [url, setUrl] = useState<string | null>(null)
+  const [waveform, setWaveform] = useState<number[]>([])
+  const [audioLength, setAudioLength] = useState(0)
 
   return (
     <div style={{ padding: 20, maxWidth: 600, margin: '0 auto' }}>
@@ -61,24 +63,31 @@ export default function Page() {
 
       <VoiceRecorder
         autoStart={false}
-        onStop={(audioFile, audioUrl) => {
+        onStop={({ audioFile, audioUrl, waveform, audioLength }) => {
           setFile(audioFile)
           setUrl(audioUrl)
+          setWaveform(waveform)
+          setAudioLength(audioLength)
         }}
         onDelete={() => {
           setFile(null)
           setUrl(null)
+          setWaveform([])
+          setAudioLength(0)
         }}
       />
 
       {url && (
         <div style={{ marginTop: 16 }}>
           <audio controls src={url} style={{ width: '100%' }} />
-          {file && (
+          {file instanceof File && (
             <p style={{ fontSize: 12, marginTop: 8 }}>
               File name: {file.name} | Size: {file.size} bytes
             </p>
           )}
+          <p style={{ fontSize: 12, marginTop: 8 }}>
+            Length: {audioLength}s | Waveform points: {waveform.length}
+          </p>
         </div>
       )}
     </div>
@@ -113,7 +122,7 @@ export default function VoicePage() {
 | Prop      | Type                              | Default   | Description                                    |
 | --------- | --------------------------------- | --------- | ---------------------------------------------- |
 | autoStart | boolean                           | true      | Auto-start recording on mount                  |
-| onStop    | (file: File, url: string) => void | undefined | Callback after recording stops                 |
+| onStop    | (payload: { audioFile: Blob; audioUrl: string; waveform: number[]; audioLength: number }) => void | undefined | Callback after recording stops (all values batched) |
 | onDelete  | () => void                        | undefined | Callback after recording is deleted           |
 | width     | string \| number                  | '100%'    | Component width                                |
 | height    | string \| number                  | undefined | Component height                               |
@@ -203,14 +212,18 @@ import { useState } from 'react'
 import { VoiceRecorder } from 'react-voice-recorder-kit'
 
 function RecorderWithCallbacks() {
-  const [audioFile, setAudioFile] = useState<File | null>(null)
+  const [audioFile, setAudioFile] = useState<Blob | null>(null)
 
   return (
     <VoiceRecorder
       autoStart={false}
-      onStop={(file, url) => {
-        console.log('Recording stopped:', file.name)
-        setAudioFile(file)
+      onStop={({ audioFile, waveform, audioLength }) => {
+        if (audioFile instanceof File) {
+          console.log('Recording stopped:', audioFile.name)
+        }
+        console.log('Audio length (s):', audioLength)
+        console.log('Waveform points:', waveform.length)
+        setAudioFile(audioFile)
       }}
       onDelete={() => {
         console.log('Recording deleted')
@@ -255,7 +268,7 @@ import { useVoiceRecorder } from 'react-voice-recorder-kit'
 ```ts
 type UseVoiceRecorderOptions = {
   autoStart?: boolean
-  onStop?: (file: File, url: string) => void
+  onStop?: (payload: { audioFile: Blob; audioUrl: string; waveform: number[]; audioLength: number }) => void
   onDelete?: () => void
 }
 ```
@@ -275,6 +288,7 @@ type UseVoiceRecorderReturn = {
   error: string | null
   audioUrl: string | null
   audioFile: File | null
+  waveform: number[] | null
   start: () => void
   handlePause: () => void
   handleStopTemporary: () => void
@@ -301,6 +315,7 @@ type UseVoiceRecorderReturn = {
 | error             | string \| null | Error message if any                           |
 | audioUrl          | string \| null | URL of recorded audio file                     |
 | audioFile         | File \| null   | Recorded audio file                            |
+| waveform          | number[] \| null | Downsampled waveform points for the recording |
 | start             | () => void     | Start recording                                |
 | handlePause       | () => void     | Pause recording                                |
 | handleStopTemporary| () => void    | Temporary stop and review                      |
