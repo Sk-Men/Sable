@@ -125,7 +125,8 @@ class DebugLoggerService {
     }
 
     if (filters?.since) {
-      filtered = filtered.filter((log) => log.timestamp >= filters.since);
+      const since = filters.since;
+      filtered = filtered.filter((log) => log.timestamp >= since);
     }
 
     return filtered;
