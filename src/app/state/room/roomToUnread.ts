@@ -230,7 +230,7 @@ export const useBindRoomToUnreadAtom = (mx: MatrixClient, unreadAtom: typeof roo
       }
 
       // Handle live events (new messages arriving in real-time)
-      if (data.liveEvent && isNotificationEvent(mEvent)) {
+      if (data.liveEvent && isNotificationEvent(mEvent, room, mx.getUserId())) {
         if (mEvent.getSender() === mx.getUserId()) return;
         const unreadInfo = getUnreadInfo(room, { applyFixup: shouldApplyUnreadFixup(), mDirects });
         setUnreadAtom({
