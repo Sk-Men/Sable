@@ -270,8 +270,9 @@ export function DebugLogViewer() {
         </Box>
 
         <Text size="T300" style={{ opacity: 0.8 }}>
-          Internal debug logging captures sync state, errors, notifications, messages, and call
-          events. Logs are stored in memory (max 1000 entries) and cleared when you close the app.
+          Internal debug logging captures sync state, network events, notifications, messages,
+          calls, UI component lifecycle, and timeline operations. Logs are stored in memory (max
+          1000 entries) and cleared when you close the app.
         </Text>
 
         {/* Filter Controls */}
@@ -333,6 +334,22 @@ export function DebugLogViewer() {
                   disabled={filterCategory === 'call'}
                 >
                   <Text size="T300">Call</Text>
+                </MenuItem>
+                <MenuItem
+                  size="300"
+                  radii="300"
+                  onClick={() => setFilterCategory('ui')}
+                  disabled={filterCategory === 'ui'}
+                >
+                  <Text size="T300">UI</Text>
+                </MenuItem>
+                <MenuItem
+                  size="300"
+                  radii="300"
+                  onClick={() => setFilterCategory('timeline')}
+                  disabled={filterCategory === 'timeline'}
+                >
+                  <Text size="T300">Timeline</Text>
                 </MenuItem>
                 <MenuItem
                   size="300"

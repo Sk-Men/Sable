@@ -13,6 +13,8 @@ export type LogCategory =
   | 'notification'
   | 'message'
   | 'call'
+  | 'ui'
+  | 'timeline'
   | 'error'
   | 'general';
 

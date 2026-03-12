@@ -131,8 +131,11 @@ import { useRoomPermissions } from '$hooks/useRoomPermissions';
 import { useGetMemberPowerTag } from '$hooks/useMemberPowerTag';
 import { profilesCacheAtom } from '$state/userRoomProfile';
 import { ClientSideHoverFreeze } from '$components/ClientSideHoverFreeze';
+import { createDebugLogger } from '$utils/debugLogger';
 import * as css from './RoomTimeline.css';
 import { EncryptedContent, Event, ForwardedMessageProps, Message, Reactions } from './message';
+
+const debugLog = createDebugLogger('RoomTimeline');
 
 const TimelineFloat = as<'div', css.TimelineFloatVariants>(
   ({ position, className, ...props }, ref) => (
@@ -399,6 +402,11 @@ const useTimelinePagination = (
       fetching = true;
       if (alive()) {
         (backwards ? setBackwardStatus : setForwardStatus)('loading');
+        debugLog.info('timeline', 'Timeline pagination started', {
+          direction: backwards ? 'backward' : 'forward',
+          eventsLoaded: getTimelinesEventsCount(lTimelines),
+          hasToken: !!paginationToken,
+        });
       }
       try {
         const [err] = await to(
@@ -410,6 +418,10 @@ const useTimelinePagination = (
         if (err) {
           if (alive()) {
             (backwards ? setBackwardStatus : setForwardStatus)('error');
+            debugLog.error('timeline', 'Timeline pagination failed', {
+              direction: backwards ? 'backward' : 'forward',
+              error: err instanceof Error ? err.message : String(err),
+            });
           }
           return;
         }
@@ -428,6 +440,10 @@ const useTimelinePagination = (
         if (alive()) {
           recalibratePagination(lTimelines, timelinesEventsCount, backwards);
           (backwards ? setBackwardStatus : setForwardStatus)('idle');
+          debugLog.info('timeline', 'Timeline pagination completed', {
+            direction: backwards ? 'backward' : 'forward',
+            totalEventsNow: getTimelinesEventsCount(lTimelines),
+          });
         }
       } finally {
         fetching = false;
@@ -689,6 +705,28 @@ export function RoomTimeline({
   );
   const eventsLength = getTimelinesEventsCount(timeline.linkedTimelines);
   const liveTimelineLinked = timeline.linkedTimelines.at(-1) === getLiveTimeline(room);
+
+  // Log timeline component mount/unmount
+  useEffect(() => {
+    debugLog.info('timeline', 'Timeline mounted', {
+      roomId: room.roomId,
+      eventId,
+      initialEventsCount: eventsLength,
+      liveTimelineLinked,
+    });
+    return () => {
+      debugLog.info('timeline', 'Timeline unmounted', { roomId: room.roomId });
+    };
+  }, [room.roomId, eventId]); // Only log on mount/unmount
+
+  // Log live timeline linking state changes
+  useEffect(() => {
+    debugLog.debug('timeline', 'Live timeline link state changed', {
+      roomId: room.roomId,
+      liveTimelineLinked,
+      eventsLength,
+    });
+  }, [liveTimelineLinked, room.roomId, eventsLength]);
   const canPaginateBack =
     typeof timeline.linkedTimelines[0]?.getPaginationToken(Direction.Backward) === 'string';
   const rangeAtStart = timeline.range.start === 0;
@@ -739,6 +777,13 @@ export function RoomTimeline({
         if (!alive()) return;
         const evLength = getTimelinesEventsCount(lTimelines);
 
+        debugLog.info('timeline', 'Loading event timeline', {
+          roomId: room.roomId,
+          eventId: evtId,
+          totalEvents: evLength,
+          focusIndex: evtAbsIndex,
+        });
+
         setAtBottom(false);
         setFocusItem({
           index: evtAbsIndex,
@@ -757,6 +802,7 @@ export function RoomTimeline({
     ),
     useCallback(() => {
       if (!alive()) return;
+      debugLog.info('timeline', 'Resetting timeline to initial state', { roomId: room.roomId });
       setTimeline(getInitialTimeline(room));
       scrollToBottomRef.current.count += 1;
       scrollToBottomRef.current.smooth = false;
@@ -830,6 +876,12 @@ export function RoomTimeline({
       highlight = true,
       onScroll: ((scrolled: boolean) => void) | undefined = undefined
     ) => {
+      debugLog.info('timeline', 'Jumping to event', {
+        roomId: room.roomId,
+        eventId: evtId,
+        highlight,
+      });
+
       const evtTimeline = getEventTimeline(room, evtId);
       const absoluteIndex =
         evtTimeline && getEventIdAbsoluteIndex(timeline.linkedTimelines, evtTimeline, evtId);
@@ -848,7 +900,16 @@ export function RoomTimeline({
           scrollTo: !scrolled,
           highlight,
         });
+        debugLog.debug('timeline', 'Event found in current timeline', {
+          roomId: room.roomId,
+          eventId: evtId,
+          index: absoluteIndex,
+        });
       } else {
+        debugLog.debug('timeline', 'Event not in current timeline, loading timeline', {
+          roomId: room.roomId,
+          eventId: evtId,
+        });
         loadEventTimeline(evtId);
       }
     },
@@ -880,6 +941,7 @@ export function RoomTimeline({
       // "Jump to Latest" button to stick permanently. Forcing atBottom here is
       // correct: TimelineRefresh always reinits to the live end, so the user
       // should be repositioned to the bottom regardless.
+      debugLog.info('timeline', 'Live timeline refresh triggered', { roomId: room.roomId });
       setTimeline(getInitialTimeline(room));
       setAtBottom(true);
       scrollToBottomRef.current.count += 1;
@@ -969,16 +1031,18 @@ export function RoomTimeline({
 
         if (targetEntry.isIntersecting) {
           // User has reached the bottom
+          debugLog.debug('timeline', 'Scrolled to bottom', { roomId: room.roomId });
           setAtBottom(true);
           if (atLiveEndRef.current && document.hasFocus()) {
             tryAutoMarkAsRead();
           }
         } else {
           // User has intentionally scrolled up.
+          debugLog.debug('timeline', 'Scrolled away from bottom', { roomId: room.roomId });
           setAtBottom(false);
         }
       },
-      [tryAutoMarkAsRead, setAtBottom]
+      [tryAutoMarkAsRead, setAtBottom, room.roomId]
     ),
     useCallback(
       () => ({

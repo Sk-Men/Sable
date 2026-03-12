@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useEffect } from 'react';
 import { Box, Line } from 'folds';
 import { useParams } from 'react-router-dom';
 import { isKeyHotkey } from 'is-hotkey';
@@ -19,16 +19,36 @@ import { RoomViewHeader } from './RoomViewHeader';
 import { MembersDrawer } from './MembersDrawer';
 import { RoomView } from './RoomView';
 import { CallChatView } from './CallChatView';
+import { createDebugLogger } from '$utils/debugLogger';
+
+const debugLog = createDebugLogger('Room');
 
 export function Room() {
   const { eventId } = useParams();
   const room = useRoom();
   const mx = useMatrixClient();
 
+  // Log room mount
+  useEffect(() => {
+    debugLog.info('ui', 'Room component mounted', { roomId: room.roomId, eventId });
+    return () => {
+      debugLog.info('ui', 'Room component unmounted', { roomId: room.roomId });
+    };
+  }, [room.roomId, eventId]);
+
   const [isDrawer] = useSetting(settingsAtom, 'isPeopleDrawer');
   const [isWidgetDrawerOpen] = useSetting(settingsAtom, 'isWidgetDrawer');
   const [hideReads] = useSetting(settingsAtom, 'hideReads');
   const screenSize = useScreenSizeContext();
+
+  // Log drawer state changes
+  useEffect(() => {
+    debugLog.debug('ui', 'Members drawer state changed', { roomId: room.roomId, isOpen: isDrawer });
+  }, [isDrawer, room.roomId]);
+
+  useEffect(() => {
+    debugLog.debug('ui', 'Widgets drawer state changed', { roomId: room.roomId, isOpen: isWidgetDrawerOpen });
+  }, [isWidgetDrawerOpen, room.roomId]);
   const powerLevels = usePowerLevels(room);
   const members = useRoomMembers(mx, room.roomId);
   const chat = useAtomValue(callChatAtom);
@@ -46,6 +66,11 @@ export function Room() {
   );
 
   const callView = room.isCallRoom();
+
+  // Log call view state
+  useEffect(() => {
+    debugLog.debug('ui', 'Room view mode', { roomId: room.roomId, callView, chatOpen: chat });
+  }, [callView, chat, room.roomId]);
 
   return (
     <PowerLevelsContextProvider value={powerLevels}>
