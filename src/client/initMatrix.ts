@@ -280,8 +280,7 @@ export const initClient = async (session: Session): Promise<MatrixClient> => {
 
   const wipeAllStores = async () => {
     log.warn('initClient: wiping all stores for', session.userId);
-    debugLog.warn('sync', 'Wiping all stores due to mismatch', { userId: session.userId }
-    log.warn('initClient: wiping all stores for', session.userId);
+    debugLog.warn('sync', 'Wiping all stores due to mismatch', { userId: session.userId });
     await deleteSessionStores(storeName);
     try {
       const allDbs = await window.indexedDB.databases();
