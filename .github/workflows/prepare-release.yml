@@ -61,6 +61,12 @@ jobs:
                 });
                 const pr = prs.data[0];
                 if (pr) {
+                  const isInternal = pr.labels.some(label => label.name.toLowerCase() === 'internal');
+                  if (isInternal) {
+                    const lineRegex = new RegExp(`^.*.*\\r?\\n?`, 'gm');
+                    content = content.replace(lineRegex, '');
+                    continue; 
+                  }
                   replacement = `([#${pr.number}](${pr.html_url}) by @${pr.user.login})`;
                 } else {
                   // Commit exists but has no associated PR (e.g. direct push to dev)
