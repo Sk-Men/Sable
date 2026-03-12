@@ -297,8 +297,7 @@ export function BackgroundNotifications() {
               return;
             }
 
-            const userId = mx.getUserId();
-            if (!isNotificationEvent(mEvent, room, userId)) {
+            if (!isNotificationEvent(mEvent)) {
               return;
             }
 

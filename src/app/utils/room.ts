@@ -224,10 +224,10 @@ export const isNotificationEvent = (mEvent: MatrixEvent, room?: Room, userId?: s
   if (mEvent.isRedacted()) return false;
   const relation = mEvent.getRelation();
   const relationType = relation?.rel_type;
-  
+
   // Filter out edits - they shouldn't count as new notifications
   if (relationType === 'm.replace') return false;
-  
+
   // For reactions: only count them if they're reactions to the current user's messages
   if (relationType === 'm.annotation') {
     if (!room || !userId || !relation) {
@@ -237,12 +237,12 @@ export const isNotificationEvent = (mEvent: MatrixEvent, room?: Room, userId?: s
     // Get the event being reacted to
     const reactedToEventId = relation.event_id;
     if (!reactedToEventId) return false;
-    
+
     const reactedToEvent = room.findEventById(reactedToEventId);
     // Only count as notification if the reacted-to message was sent by current user
     return reactedToEvent?.getSender() === userId;
   }
-  
+
   return true;
 };
 
@@ -319,7 +319,9 @@ export const getUnreadInfo = (room: Room, options?: UnreadInfoOptions): UnreadIn
         .reverse()
         .find(
           (event) =>
-            !event.isSending() && event.getSender() !== userId && isNotificationEvent(event, room, userId)
+            !event.isSending() &&
+            event.getSender() !== userId &&
+            isNotificationEvent(event, room, userId)
         );
       const latestNotificationId = latestNotification?.getId();
       if (latestNotificationId && room.hasUserReadEvent(userId, latestNotificationId)) {
