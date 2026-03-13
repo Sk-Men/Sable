@@ -1,6 +1,6 @@
 import { VoiceRecorder } from '$plugins/voice-recorder-kit';
 import FocusTrap from 'focus-trap-react';
-import { Box, Text, color, config } from 'folds';
+import { Box, Icon, Icons, Text, color, config } from 'folds';
 import { useRef } from 'react';
 
 type AudioMessageRecorderProps = {
@@ -74,6 +74,13 @@ export function AudioMessageRecorder({
             buttonBackgroundColor={color.SurfaceVariant.Container}
             buttonHoverBackgroundColor={color.SurfaceVariant.ContainerHover}
             iconColor={color.Primary.Main}
+            // icons for the recorder, we use Folds' icon library to keep the styling consistent with the rest of the app
+            customPauseIcon={<Icon src={Icons.Pause} size="200" color={color.Primary.Main} />}
+            customPlayIcon={<Icon src={Icons.Play} size="200" color={color.Primary.Main} />}
+            customDeleteIcon={<Icon src={Icons.Delete} size="200" color={color.Primary.Main} />}
+            customStopIcon={<Icon src={Icons.Send} size="200" color={color.Primary.Main} />}
+            customRepeatIcon={<Icon src={Icons.Reload} size="200" color={color.Primary.Main} />}
+            customResumeIcon={<Icon src={Icons.Mic} size="200" color={color.Primary.Main} />}
             style={{
               backgroundColor: color.Surface.ContainerActive,
             }}
