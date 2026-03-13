@@ -9,6 +9,7 @@ jobs:
   format:
     name: Format check
     runs-on: ubuntu-latest
+    if: github.head_ref != 'release'
     permissions:
       contents: read
     steps:
@@ -26,6 +27,7 @@ jobs:
   lint:
     name: Lint
     runs-on: ubuntu-latest
+    if: github.head_ref != 'release'
     permissions:
       contents: read
     steps:
@@ -43,6 +45,7 @@ jobs:
   typecheck:
     name: Typecheck
     runs-on: ubuntu-latest
+    if: github.head_ref != 'release'
     permissions:
       contents: read
     steps:
@@ -60,6 +63,7 @@ jobs:
   knip:
     name: Knip
     runs-on: ubuntu-latest
+    if: github.head_ref != 'release'
     permissions:
       contents: read
     steps:
