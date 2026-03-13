@@ -146,10 +146,12 @@ export function DebugLogViewer() {
   const [levelAnchor, setLevelAnchor] = useState<RectCords | undefined>();
 
   const handleOpenCategoryMenu: MouseEventHandler<HTMLButtonElement> = (evt) => {
+    evt.stopPropagation();
     setCategoryAnchor(evt.currentTarget.getBoundingClientRect());
   };
 
   const handleOpenLevelMenu: MouseEventHandler<HTMLButtonElement> = (evt) => {
+    evt.stopPropagation();
     setLevelAnchor(evt.currentTarget.getBoundingClientRect());
   };
 
