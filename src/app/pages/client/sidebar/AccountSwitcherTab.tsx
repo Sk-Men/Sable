@@ -276,7 +276,7 @@ export function AccountSwitcherTab() {
         )}
       </SidebarItemTooltip>
       {(totalBackgroundUnread > 0 || anyBackgroundHighlight) && (
-        <SidebarItemBadge hasCount>
+        <SidebarItemBadge hasCount style={{ left: toRem(-6), right: 'auto' }}>
           <UnreadBadge
             highlight={anyBackgroundHighlight}
             count={anyBackgroundHighlight ? totalBackgroundHighlight : totalBackgroundUnread}
