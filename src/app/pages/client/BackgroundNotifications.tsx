@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import {
   ClientEvent,
   createClient,
@@ -70,21 +70,29 @@ const startBackgroundClient = async (
 /**
  * Wait for the background client to finish its initial sync so that
  * push rules and account data are available before processing events.
+ * Rejects after 30 seconds so callers can handle a stalled client instead
+ * of blocking indefinitely.
  */
 const waitForSync = (mx: MatrixClient): Promise<void> =>
-  new Promise((resolve) => {
+  new Promise((resolve, reject) => {
     const state = mx.getSyncState();
     if (isClientReadyForNotifications(state)) {
       resolve();
       return;
     }
+    let syncTimer: ReturnType<typeof setTimeout> | undefined;
     const onSync = (newState: SyncState) => {
       if (isClientReadyForNotifications(newState)) {
+        if (syncTimer !== undefined) clearTimeout(syncTimer);
         mx.removeListener(ClientEvent.Sync, onSync);
         resolve();
       }
     };
     mx.on(ClientEvent.Sync, onSync);
+    syncTimer = setTimeout(() => {
+      mx.removeListener(ClientEvent.Sync, onSync);
+      reject(new Error('background client sync timed out'));
+    }, 30_000);
   });
 
 export function BackgroundNotifications() {
@@ -122,10 +130,18 @@ export function BackgroundNotifications() {
   setBackgroundUnreadsRef.current = setBackgroundUnreads;
   const setInAppBannerRef = useRef(setInAppBanner);
   setInAppBannerRef.current = setInAppBanner;
+  // Per-client listener teardown callbacks, so we can explicitly remove event
+  // listeners before stopping a background client.
+  const clientCleanupRef = useRef<Map<string, () => void>>(new Map());
 
-  const inactiveSessions = sessions.filter(
-    (s) => s.userId !== (activeSessionId ?? sessions[0]?.userId)
+  const inactiveSessions = useMemo(
+    () => sessions.filter((s) => s.userId !== (activeSessionId ?? sessions[0]?.userId)),
+    [sessions, activeSessionId]
   );
+  // Ref so retry setTimeout callbacks can access the current session list
+  // without stale closures.
+  const inactiveSessionsRef = useRef(inactiveSessions);
+  inactiveSessionsRef.current = inactiveSessions;
 
   interface NotifyOptions {
     /** Title shown in the notification banner. */
@@ -194,6 +210,8 @@ export function BackgroundNotifications() {
 
     current.forEach((mx, userId) => {
       if (!activeIds.has(userId)) {
+        clientCleanupRef.current.get(userId)?.();
+        clientCleanupRef.current.delete(userId);
         stopClient(mx);
         current.delete(userId);
         // Clear the background unread badge when this session is no longer a background account.
@@ -205,11 +223,14 @@ export function BackgroundNotifications() {
       }
     });
 
-    inactiveSessions.forEach((session) => {
-      const alreadyRunning = current.has(session.userId);
-      if (alreadyRunning) return;
+    // startSession handles init, listener teardown tracking, and retry-on-failure.
+    // Using a named function (vs. inline .then) lets the .catch() schedule a
+    // fresh retry referencing the latest session from inactiveSessionsRef.
+    const startSession = (session: Session, attempt = 0): void => {
+      let sessionMx: MatrixClient | undefined;
       startBackgroundClient(session, clientConfig.slidingSync)
         .then(async (mx) => {
+          sessionMx = mx;
           current.set(session.userId, mx);
 
           await waitForSync(mx);
@@ -471,6 +492,12 @@ export function BackgroundNotifications() {
           };
 
           mx.on(RoomEvent.Timeline, handleTimeline as unknown as (...args: unknown[]) => void);
+
+          // Register teardown so these listeners are removed when this client is stopped.
+          clientCleanupRef.current.set(session.userId, () => {
+            mx.off(ClientEvent.AccountData as any, handleAccountData);
+            mx.off(RoomEvent.Timeline, handleTimeline as unknown as (...args: unknown[]) => void);
+          });
         })
         .catch((err) => {
           log.error('failed to start background client for', session.userId, err);
@@ -478,11 +505,41 @@ export function BackgroundNotifications() {
             userId: session.userId,
             error: err,
           });
+
+          // Remove the stuck/failed client from current so future runs (or the
+          // retry below) can attempt a fresh start.
+          if (sessionMx && current.get(session.userId) === sessionMx) {
+            clientCleanupRef.current.get(session.userId)?.();
+            clientCleanupRef.current.delete(session.userId);
+            current.delete(session.userId);
+            stopClient(sessionMx);
+          }
+
+          // Retry with exponential backoff, up to 5 attempts (5s, 10s, 20s, 40s, 60s cap).
+          if (attempt < 5) {
+            const retryDelay = Math.min(5_000 * 2 ** attempt, 60_000);
+            setTimeout(() => {
+              const latestSession = inactiveSessionsRef.current.find(
+                (s) => s.userId === session.userId
+              );
+              if (latestSession && !current.has(session.userId)) {
+                startSession(latestSession, attempt + 1);
+              }
+            }, retryDelay);
+          }
         });
+    };
+
+    inactiveSessions.forEach((session) => {
+      if (!current.has(session.userId)) startSession(session);
     });
 
     return () => {
-      current.forEach((mx) => stopClient(mx));
+      current.forEach((mx, userId) => {
+        clientCleanupRef.current.get(userId)?.();
+        clientCleanupRef.current.delete(userId);
+        stopClient(mx);
+      });
       current.clear();
     };
   }, [

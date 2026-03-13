@@ -140,6 +140,7 @@ class DebugLoggerService {
     return JSON.stringify(
       {
         exportedAt: new Date().toISOString(),
+        build: `v${APP_VERSION}${BUILD_HASH ? ` (${BUILD_HASH})` : ''}`,
         logsCount: this.logs.length,
         logs: this.logs.map((log) => ({
           ...log,

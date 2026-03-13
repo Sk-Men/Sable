@@ -42,6 +42,9 @@ import { RoomType } from '$types/matrix/room';
 import { CreateRoomTypeSelector } from '$components/create-room/CreateRoomTypeSelector';
 import { getRoomIconSrc } from '$utils/room';
 import { ErrorCode } from '../../cs-errorcode';
+import { createDebugLogger } from '$utils/debugLogger';
+
+const debugLog = createDebugLogger('CreateRoom');
 
 const getCreateRoomAccessToIcon = (access: CreateRoomAccess, type?: CreateRoomType) => {
   const isVoiceRoom = type === CreateRoomType.VoiceRoom;
@@ -139,6 +142,16 @@ export function CreateRoomForm({
     let roomType: RoomType | undefined;
     if (type === CreateRoomType.VoiceRoom) roomType = RoomType.Call;
 
+    debugLog.info('ui', 'Create room button clicked', {
+      roomName,
+      access,
+      type,
+      publicRoom,
+      encryption,
+      hasParent: !!space,
+      parentRoomId: space?.roomId,
+    });
+
     create({
       version: selectedRoomVersion,
       type: roomType,
@@ -152,6 +165,12 @@ export function CreateRoomForm({
       allowFederation: federation,
       additionalCreators: allowAdditionalCreators ? additionalCreators : undefined,
     }).then((roomId) => {
+      debugLog.info('ui', 'Room created successfully', {
+        roomId,
+        roomName,
+        access,
+        type,
+      });
       if (alive()) {
         onCreate?.(roomId);
       }

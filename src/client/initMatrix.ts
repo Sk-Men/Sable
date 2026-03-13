@@ -433,8 +433,12 @@ export const startClient = async (
   if (await shouldBootstrapClassicOnColdCache()) {
     log.log('startClient cold-cache bootstrap: using classic sync for this run', mx.getUserId());
     await startClassicSync(false, 'cold_cache_bootstrap');
-    waitForClientReady(mx, COLD_CACHE_BOOTSTRAP_TIMEOUT_MS).catch(() => {
-      /* ignore */
+    waitForClientReady(mx, COLD_CACHE_BOOTSTRAP_TIMEOUT_MS).catch((err) => {
+      debugLog.warn('network', 'Cold cache bootstrap timed out', {
+        userId: mx.getUserId(),
+        timeout: `${COLD_CACHE_BOOTSTRAP_TIMEOUT_MS}ms`,
+        error: err instanceof Error ? err.message : String(err),
+      });
     });
     return;
   }
@@ -454,6 +458,11 @@ export const startClient = async (
   });
   if (!supported) {
     log.warn('Sliding Sync unavailable, falling back to classic sync for', mx.getUserId());
+    debugLog.warn('network', 'Sliding Sync probe failed, falling back to classic sync', {
+      userId: mx.getUserId(),
+      proxyBaseUrl: resolvedProxyBaseUrl,
+      probeTimeout: `${probeTimeoutMs}ms`,
+    });
     await startClassicSync(true, 'probe_failed_fallback');
     return;
   }
@@ -484,6 +493,12 @@ export const startClient = async (
       slidingSync: manager.slidingSync,
     });
   } catch (err) {
+    debugLog.error('network', 'Failed to start client with sliding sync', {
+      error: err instanceof Error ? err.message : String(err),
+      userId: mx.getUserId(),
+      proxyBaseUrl: resolvedProxyBaseUrl,
+      stack: err instanceof Error ? err.stack : undefined,
+    });
     disposeSlidingSync(mx);
     throw err;
   }

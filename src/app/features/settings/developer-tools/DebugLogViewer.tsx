@@ -202,6 +202,7 @@ export function DebugLogViewer() {
         jsonData = JSON.stringify(
           {
             exportedAt: new Date().toISOString(),
+            build: `v${APP_VERSION}${BUILD_HASH ? ` (${BUILD_HASH})` : ''}`,
             filters: {
               level: filterLevel !== 'all' ? filterLevel : 'none',
               category: filterCategory !== 'all' ? filterCategory : 'none',
@@ -249,6 +250,7 @@ export function DebugLogViewer() {
         jsonData = JSON.stringify(
           {
             exportedAt: new Date().toISOString(),
+            build: `v${APP_VERSION}${BUILD_HASH ? ` (${BUILD_HASH})` : ''}`,
             filters: {
               level: filterLevel !== 'all' ? filterLevel : 'none',
               category: filterCategory !== 'all' ? filterCategory : 'none',
