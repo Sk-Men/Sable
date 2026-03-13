@@ -897,6 +897,24 @@ export function RoomTimeline({
     }, [])
   );
 
+  // When historical events load (e.g., from active subscription), stay at bottom
+  // by adjusting the range. The virtual paginator expects the range to match the
+  // position we want to display. Without this, loading more history makes it look
+  // like we've scrolled up because the range (0, 10) is now showing the old events
+  // instead of the latest ones.
+  useEffect(() => {
+    if (atBottom && liveTimelineLinked && eventsLength > timeline.range.end) {
+      // More events exist than our current range shows. Adjust to stay at bottom.
+      setTimeline((ct) => ({
+        ...ct,
+        range: {
+          start: Math.max(eventsLength - PAGINATION_LIMIT, 0),
+          end: eventsLength,
+        },
+      }));
+    }
+  }, [atBottom, liveTimelineLinked, eventsLength, timeline.range.end]);
+
   // Recover from transient empty timeline state when the live timeline
   // already has events (can happen when opening by event id, then fallbacking).
   useEffect(() => {
@@ -905,21 +923,6 @@ export function RoomTimeline({
     if (getLiveTimeline(room).getEvents().length === 0) return;
     setTimeline(getInitialTimeline(room));
   }, [eventId, room, timeline.linkedTimelines.length]);
-
-  // Fix stale rangeAtEnd after a sliding sync TimelineRefresh. The SDK fires
-  // TimelineRefresh before adding new events to the freshly-created live
-  // EventTimeline, so getInitialTimeline captures range.end=0. New events then
-  // arrive via useLiveEventArrive, but its atLiveEndRef guard is stale-false
-  // (hasn't re-rendered yet), bypassing the range-advance path. The next render
-  // ends up with liveTimelineLinked=true but rangeAtEnd=false, making the
-  // "Jump to Latest" button appear while the user is already at the bottom.
-  // Re-running getInitialTimeline post-render (after events were added to the
-  // live EventTimeline object) snaps range.end to the correct event count.
-  useEffect(() => {
-    if (liveTimelineLinked && !rangeAtEnd && atBottom) {
-      setTimeline(getInitialTimeline(room));
-    }
-  }, [liveTimelineLinked, rangeAtEnd, atBottom, room]);
 
   // Stay at bottom when room editor resize
   useResizeObserver(
@@ -1112,16 +1115,21 @@ export function RoomTimeline({
       const scrollEl = scrollRef.current;
       if (scrollEl) {
         const behavior = scrollToBottomRef.current.smooth && !reducedMotion ? 'smooth' : 'instant';
-        scrollToBottom(scrollEl, behavior);
-        // On Android WebView, layout may still settle after the initial scroll.
-        // Fire a second instant scroll after a short delay to guarantee we
-        // reach the true bottom (e.g. after images finish loading or the
-        // virtual keyboard shifts the viewport).
-        if (behavior === 'instant') {
-          setTimeout(() => {
-            scrollToBottom(scrollEl, 'instant');
-          }, 80);
-        }
+        // Use requestAnimationFrame to ensure the virtual paginator has finished
+        // updating the DOM before we scroll. This prevents scroll position from
+        // being stale when new messages arrive while at the bottom.
+        requestAnimationFrame(() => {
+          scrollToBottom(scrollEl, behavior);
+          // On Android WebView, layout may still settle after the initial scroll.
+          // Fire a second instant scroll after a short delay to guarantee we
+          // reach the true bottom (e.g. after images finish loading or the
+          // virtual keyboard shifts the viewport).
+          if (behavior === 'instant') {
+            setTimeout(() => {
+              scrollToBottom(scrollEl, 'instant');
+            }, 80);
+          }
+        });
       }
     }
   }, [scrollToBottomCount, reducedMotion]);
