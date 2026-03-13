@@ -240,7 +240,7 @@ export const getEventIdAbsoluteIndex = (
   eventTimeline: EventTimeline,
   eventId: string
 ): number | undefined => {
-  const timelineIndex = timelines.findIndex((t) => t === eventTimeline);
+  const timelineIndex = timelines.indexOf(eventTimeline);
   if (timelineIndex === -1) return undefined;
 
   const currentEvents = eventTimeline.getEvents();
@@ -285,17 +285,17 @@ const useEventTimelineLoader = (
     async (eventId: string) => {
       const withTimeout = async <T,>(promise: Promise<T>, timeoutMs: number): Promise<T> =>
         new Promise<T>((resolve, reject) => {
-          const timeoutId = window.setTimeout(() => {
+          const timeoutId = globalThis.setTimeout(() => {
             reject(new Error('Timed out loading event timeline'));
           }, timeoutMs);
 
           promise
             .then((value) => {
-              window.clearTimeout(timeoutId);
+              globalThis.clearTimeout(timeoutId);
               resolve(value);
             })
             .catch((error) => {
-              window.clearTimeout(timeoutId);
+              globalThis.clearTimeout(timeoutId);
               reject(error);
             });
         });
@@ -386,7 +386,7 @@ const useTimelinePagination = (
       const { linkedTimelines: lTimelines } = timelineRef.current;
       const timelinesEventsCount = lTimelines.map(timelineToEventsCount);
 
-      const timelineToPaginate = backwards ? lTimelines[0] : lTimelines[lTimelines.length - 1];
+      const timelineToPaginate = backwards ? lTimelines[0] : lTimelines.at(-1);
       if (!timelineToPaginate) return;
 
       const paginationToken = timelineToPaginate.getPaginationToken(
@@ -580,6 +580,7 @@ export function RoomTimeline({
   const [encUrlPreview] = useSetting(settingsAtom, 'encUrlPreview');
   const showUrlPreview = room.hasEncryptionStateEvent() ? encUrlPreview : urlPreview;
   const [showHiddenEvents] = useSetting(settingsAtom, 'showHiddenEvents');
+  const [showTombstoneEvents] = useSetting(settingsAtom, 'showTombstoneEvents');
   const [showDeveloperTools] = useSetting(settingsAtom, 'developerTools');
   const [reducedMotion] = useSetting(settingsAtom, 'reducedMotion');
 
@@ -700,8 +701,7 @@ export function RoomTimeline({
     eventId ? getEmptyTimeline() : getInitialTimeline(room)
   );
   const eventsLength = getTimelinesEventsCount(timeline.linkedTimelines);
-  const liveTimelineLinked =
-    timeline.linkedTimelines[timeline.linkedTimelines.length - 1] === getLiveTimeline(room);
+  const liveTimelineLinked = timeline.linkedTimelines.at(-1) === getLiveTimeline(room);
   const canPaginateBack =
     typeof timeline.linkedTimelines[0]?.getPaginationToken(Direction.Backward) === 'string';
   const rangeAtStart = timeline.range.start === 0;
@@ -910,6 +910,24 @@ export function RoomTimeline({
     }, [])
   );
 
+  // When historical events load (e.g., from active subscription), stay at bottom
+  // by adjusting the range. The virtual paginator expects the range to match the
+  // position we want to display. Without this, loading more history makes it look
+  // like we've scrolled up because the range (0, 10) is now showing the old events
+  // instead of the latest ones.
+  useEffect(() => {
+    if (atBottom && liveTimelineLinked && eventsLength > timeline.range.end) {
+      // More events exist than our current range shows. Adjust to stay at bottom.
+      setTimeline((ct) => ({
+        ...ct,
+        range: {
+          start: Math.max(eventsLength - PAGINATION_LIMIT, 0),
+          end: eventsLength,
+        },
+      }));
+    }
+  }, [atBottom, liveTimelineLinked, eventsLength, timeline.range.end]);
+
   // Recover from transient empty timeline state when the live timeline
   // already has events (can happen when opening by event id, then fallbacking).
   useEffect(() => {
@@ -918,21 +936,6 @@ export function RoomTimeline({
     if (getLiveTimeline(room).getEvents().length === 0) return;
     setTimeline(getInitialTimeline(room));
   }, [eventId, room, timeline.linkedTimelines.length]);
-
-  // Fix stale rangeAtEnd after a sliding sync TimelineRefresh. The SDK fires
-  // TimelineRefresh before adding new events to the freshly-created live
-  // EventTimeline, so getInitialTimeline captures range.end=0. New events then
-  // arrive via useLiveEventArrive, but its atLiveEndRef guard is stale-false
-  // (hasn't re-rendered yet), bypassing the range-advance path. The next render
-  // ends up with liveTimelineLinked=true but rangeAtEnd=false, making the
-  // "Jump to Latest" button appear while the user is already at the bottom.
-  // Re-running getInitialTimeline post-render (after events were added to the
-  // live EventTimeline object) snaps range.end to the correct event count.
-  useEffect(() => {
-    if (liveTimelineLinked && !rangeAtEnd && atBottom) {
-      setTimeline(getInitialTimeline(room));
-    }
-  }, [liveTimelineLinked, rangeAtEnd, atBottom, room]);
 
   // Stay at bottom when room editor resize
   useResizeObserver(
@@ -1101,7 +1104,7 @@ export function RoomTimeline({
 
   // scroll to focused message
   useLayoutEffect(() => {
-    if (focusItem && focusItem.scrollTo) {
+    if (focusItem?.scrollTo) {
       scrollToItem(focusItem.index, {
         behavior: 'instant',
         align: 'center',
@@ -1127,16 +1130,21 @@ export function RoomTimeline({
       const scrollEl = scrollRef.current;
       if (scrollEl) {
         const behavior = scrollToBottomRef.current.smooth && !reducedMotion ? 'smooth' : 'instant';
-        scrollToBottom(scrollEl, behavior);
-        // On Android WebView, layout may still settle after the initial scroll.
-        // Fire a second instant scroll after a short delay to guarantee we
-        // reach the true bottom (e.g. after images finish loading or the
-        // virtual keyboard shifts the viewport).
-        if (behavior === 'instant') {
-          setTimeout(() => {
-            scrollToBottom(scrollEl, 'instant');
-          }, 80);
-        }
+        // Use requestAnimationFrame to ensure the virtual paginator has finished
+        // updating the DOM before we scroll. This prevents scroll position from
+        // being stale when new messages arrive while at the bottom.
+        requestAnimationFrame(() => {
+          scrollToBottom(scrollEl, behavior);
+          // On Android WebView, layout may still settle after the initial scroll.
+          // Fire a second instant scroll after a short delay to guarantee we
+          // reach the true bottom (e.g. after images finish loading or the
+          // virtual keyboard shifts the viewport).
+          if (behavior === 'instant') {
+            setTimeout(() => {
+              scrollToBottom(scrollEl, 'instant');
+            }, 80);
+          }
+        });
       }
     }
   }, [scrollToBottomCount, reducedMotion]);
@@ -1364,7 +1372,7 @@ export function RoomTimeline({
     {
       [MessageEvent.RoomMessage]: (mEventId, mEvent, item, timelineSet, collapse) => {
         const reactionRelations = getEventReactions(timelineSet, mEventId);
-        const reactions = reactionRelations && reactionRelations.getSortedAnnotationsByKey();
+        const reactions = reactionRelations?.getSortedAnnotationsByKey();
         const hasReactions = reactions && reactions.length > 0;
         const { replyEventId, threadRootId } = mEvent;
         const highlighted = focusItem?.index === item && focusItem.highlight;
@@ -1493,7 +1501,7 @@ export function RoomTimeline({
       },
       [MessageEvent.RoomMessageEncrypted]: (mEventId, mEvent, item, timelineSet, collapse) => {
         const reactionRelations = getEventReactions(timelineSet, mEventId);
-        const reactions = reactionRelations && reactionRelations.getSortedAnnotationsByKey();
+        const reactions = reactionRelations?.getSortedAnnotationsByKey();
         const hasReactions = reactions && reactions.length > 0;
         const { replyEventId, threadRootId } = mEvent;
         const highlighted = focusItem?.index === item && focusItem.highlight;
@@ -1633,7 +1641,7 @@ export function RoomTimeline({
       },
       [MessageEvent.Sticker]: (mEventId, mEvent, item, timelineSet, collapse) => {
         const reactionRelations = getEventReactions(timelineSet, mEventId);
-        const reactions = reactionRelations && reactionRelations.getSortedAnnotationsByKey();
+        const reactions = reactionRelations?.getSortedAnnotationsByKey();
         const hasReactions = reactions && reactions.length > 0;
         const { replyEventId, threadRootId } = mEvent;
         const highlighted = focusItem?.index === item && focusItem.highlight;
@@ -1911,7 +1919,13 @@ export function RoomTimeline({
         const senderId = mEvent.getSender() ?? '';
         const senderName = getMemberDisplayName(room, senderId) || getMxIdLocalPart(senderId);
 
-        const callJoined = mEvent.getContent<SessionMembershipData>().application;
+        const content = mEvent.getContent<SessionMembershipData>();
+        const prevContent = mEvent.getPrevContent();
+
+        const callJoined = content.application;
+        if (callJoined && 'application' in prevContent) {
+          return null;
+        }
 
         const timeJSX = (
           <Time
@@ -2054,7 +2068,6 @@ export function RoomTimeline({
       );
     }
   );
-
   const processedEvents = useMemo(() => {
     const items = getItems();
     let prevEvent: MatrixEvent | undefined;
@@ -2074,8 +2087,13 @@ export function RoomTimeline({
         if (!mEvent || !mEventId) return null;
 
         const eventSender = mEvent.getSender();
-        if (eventSender && ignoredUsersSet.has(eventSender)) return null;
-        if (mEvent.isRedacted() && !showHiddenEvents) return null;
+
+        if (eventSender && ignoredUsersSet.has(eventSender)) {
+          return null;
+        }
+        if (mEvent.isRedacted() && !(showHiddenEvents || showTombstoneEvents)) {
+          return null;
+        }
 
         if (!newDivider && readUptoEventIdRef.current) {
           newDivider = prevEvent?.getId() === readUptoEventIdRef.current;

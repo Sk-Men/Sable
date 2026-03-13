@@ -48,6 +48,7 @@ export interface Settings {
   urlPreview: boolean;
   encUrlPreview: boolean;
   showHiddenEvents: boolean;
+  showTombstoneEvents: boolean;
   legacyUsernameColor: boolean;
   allowPipVideos: boolean;
 
@@ -123,6 +124,7 @@ const defaultSettings: Settings = {
   urlPreview: true,
   encUrlPreview: false,
   showHiddenEvents: false,
+  showTombstoneEvents: false,
   legacyUsernameColor: false,
   allowPipVideos: false,
 

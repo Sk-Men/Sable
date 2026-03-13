@@ -1,5 +1,29 @@
 # Sable Client Changelog
 
+## 1.7.0 (2026-03-12)
+
+### Features
+
+* Added ability to start calls in DMs and rooms. DM calls will trigger a notification popup & ringtone (for other sable users/compatible clients, probably). <!-- commit:0110522 -->
+* Merge in upstream call things and remove the duplicate new voice room button. <!-- commit:49af037 -->
+* Add button to save a sticker you see in the message timeline to your personal account sticker pack. <!-- commit:e4fb834 -->
+* Added config option `hideUsernamePasswordFields` for hosts to hide username and password fields from login page. <!-- commit:7a700ab -->
+* Add silent replies when clicking the bell icon during composing a reply. <!-- commit:1647586 -->
+* Device names are now dynamic, showing your browser and OS (e.g., "Sable on Firefox for Windows") instead of just "Sable Web". <!-- commit:b71320e -->
+* Implement an interface to allow room/space profile customization without needing to call the relating commands directly. <!-- commit:4839466 -->
+* Added hover menu inside Message Version Pop-out. <!-- commit:9562aa8 -->
+
+### Fixes
+
+* Added a few accessibility tags to the elements involved in message composing. <!-- commit:485834b -->
+* Clarify notification settings and functionality once and for all. <!-- commit:8053c45 -->
+* Fix DM notifications, encrypted event notifications, and enable reaction notifications <!-- commit:976d2e8 -->
+* Fix images without an empty body display as "Broken Message" <!-- commit:b66f53a -->
+* Prevent overly wide emotes from taking up the entire screen width. <!-- commit:bee0356 -->
+* Change to more standard compliant msgtype `m.emote` for `/headpat` event. <!-- commit:399915d -->
+* fix message forwarding metadata leak when forwarding from private rooms [see issue 190](https://github.com/SableClient/Sable/issues/190) <!-- commit:6ec4f99 -->
+* "Underline Links" setting no longer affects the entire app, only links in chat, bios, and room descriptions. <!-- commit:c51e895 -->
+
 ## 1.6.0 (2026-03-10)
 
 ### Features
