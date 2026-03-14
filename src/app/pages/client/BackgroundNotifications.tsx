@@ -365,6 +365,9 @@ export function BackgroundNotifications() {
               return;
             }
 
+            const loudByRule = Boolean(pushActions.tweaks?.sound);
+            const isHighlight = Boolean(pushActions.tweaks?.highlight);
+
             debugLog.info('notification', 'Processing notification event', {
               eventId,
               roomId: room.roomId,
@@ -385,10 +388,7 @@ export function BackgroundNotifications() {
               ? (mxcUrlToHttp(mx, avatarMxc, false, 96, 96, 'crop') ?? undefined)
               : LogoSVG;
 
-            const loudByRule = Boolean(pushActions.tweaks?.sound);
-
             // Track background unread count for every notifiable event (loud or silent).
-            const isHighlight = Boolean(pushActions.tweaks?.highlight);
             setBackgroundUnreadsRef.current((prev) => {
               const cur = prev[session.userId] ?? { total: 0, highlight: 0 };
               return {
