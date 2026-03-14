@@ -61,10 +61,10 @@ jobs:
             }
 
             async function enrichText(text) {
-              const marker = //g;
+              const marker = /<!-- commit:([0-9a-f]+) -->/g;
               const hashes = [...new Set([...text.matchAll(marker)].map(m => m[1]))];
               for (const hash of hashes) {
-                text = text.replaceAll(``, await resolveHash(hash));
+                text = text.replaceAll(`<!-- commit:${hash} -->`, await resolveHash(hash));
               }
               return text;
             }
