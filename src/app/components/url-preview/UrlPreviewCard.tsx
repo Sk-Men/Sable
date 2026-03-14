@@ -7,23 +7,25 @@ import {
   getIntersectionObserverEntry,
   useIntersectionObserver,
 } from '$hooks/useIntersectionObserver';
-import { mxcUrlToHttp } from '$utils/matrix';
+import { mxcUrlToHttp, downloadMedia } from '$utils/matrix';
 import { useMediaAuthentication } from '$hooks/useMediaAuthentication';
 import * as css from './UrlPreviewCard.css';
 import { UrlPreview, UrlPreviewContent, UrlPreviewDescription } from './UrlPreview';
 import { AudioContent, ImageContent, VideoContent } from '../message';
 import { Image, MediaControl, Video } from '../media';
 import { ImageViewer } from '../image-viewer';
-import { downloadMedia } from '$utils/matrix';
 
 const linkStyles = { color: color.Success.Main };
 
 const openMediaInNewTab = async (url: string | undefined) => {
-  if (!url) { console.warn("Attempted to open an empty url"); return}
+  if (!url) {
+    console.warn('Attempted to open an empty url');
+    return;
+  }
   const blob = await downloadMedia(url);
   const blobUrl = URL.createObjectURL(blob);
-  window.open(blobUrl, "_blank");
-}
+  window.open(blobUrl, '_blank');
+};
 
 export const UrlPreviewCard = as<'div', { url: string; ts: number; mediaType?: string | null }>(
   ({ url, ts, mediaType, ...props }, ref) => {
@@ -59,16 +61,20 @@ export const UrlPreviewCard = as<'div', { url: string; ts: number; mediaType?: s
         false
       );
       const handleAuxClick = (ev: React.MouseEvent) => {
-        if (!prev['og:image']) { console.warn("No image"); return; }
+        if (!prev['og:image']) {
+          console.warn('No image');
+          return;
+        }
         if (ev.button === 1) {
           ev.preventDefault();
-          const useAuthentication = true;
-          const mxcUrl = mxcUrlToHttp(mx, prev['og:image'], useAuthentication);
-          if (!mxcUrl) { console.error("Error converting mxc:// url."); return; };
+          const mxcUrl = mxcUrlToHttp(mx, prev['og:image'], /* useAuthentication */ true);
+          if (!mxcUrl) {
+            console.error('Error converting mxc:// url.');
+            return;
+          }
           openMediaInNewTab(mxcUrl);
         }
       };
-
 
       return (
         <Box
