@@ -87,7 +87,11 @@ type ForwardMeta = {
   original_event_private: boolean;
 };
 
-export function MessageForwardInternal({ room, mEvent, onClose }: MessageForwardInternalProps) {
+export function MessageForwardInternal({
+  room,
+  mEvent,
+  onClose,
+}: Readonly<MessageForwardInternalProps>) {
   const mx = useMatrixClient();
 
   const [isTargetSelected, setIsTargetSelected] = useState(false);
@@ -191,7 +195,7 @@ export function MessageForwardInternal({ room, mEvent, onClose }: MessageForward
       const safeHtml =
         originalFormattedBody !== undefined
           ? sanitizeCustomHtml(originalFormattedBody)
-          : sanitizeCustomHtml(originalBody).replace(/\n/g, '<br>');
+          : sanitizeCustomHtml(originalBody).replaceAll('\n', '<br>');
 
       newBodyHtml =
         `<div data-forward-marker>` +
@@ -214,6 +218,8 @@ export function MessageForwardInternal({ room, mEvent, onClose }: MessageForward
       // we can still include the original message content in the body of the message, so we'll just use a fallback text/plain content with the original message body
       content = {
         ...mEvent.getContent(),
+        'm.relates_to': null, // remove any relations to avoid confusion in the target room
+        'm.mentions': null, // remove mentions to avoid leaking information about users in the original room
         ...forwardedTextContent,
         'moe.sable.message.forward': {
           v: 1,
@@ -241,19 +247,13 @@ export function MessageForwardInternal({ room, mEvent, onClose }: MessageForward
       };
     }
 
-    try {
-      mx.sendEvent(targetRoom.roomId, null, eventType, content as unknown as SendEventContent)
-        .then(() => setIsForwardSuccess(true))
-        .catch(() => {
-          setIsForwarding(false);
-          setIsForwardSuccess(false);
-          setIsForwardError(true);
-        });
-    } catch {
-      setIsForwarding(false);
-      setIsForwardSuccess(false);
-      setIsForwardError(true);
-    }
+    mx.sendEvent(targetRoom.roomId, null, eventType, content as unknown as SendEventContent)
+      .then(() => setIsForwardSuccess(true))
+      .catch(() => {
+        setIsForwarding(false);
+        setIsForwardSuccess(false);
+        setIsForwardError(true);
+      });
   };
 
   return (

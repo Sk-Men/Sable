@@ -825,7 +825,9 @@ function MessageInternal(
                             </Text>
                           </MenuItem>
                         )}
+                        {/* Only show "Add to User Sticker Pack" if the sticker isn't already in the default pack and isn't encrypted */}
                         {isStickerMessage &&
+                          mEvent.getContent().url &&
                           !doesStickerExistInDefaultPack(mx, mEvent.getContent().url) && (
                             <MenuItem
                               size="300"
@@ -835,7 +837,7 @@ function MessageInternal(
                                 addStickerToDefaultPack(
                                   mx,
                                   `sticker-${mEvent.getId()}`,
-                                  mEvent.getContent().url,
+                                  mEvent.getContent().url ?? mEvent.getContent().file?.url ?? '',
                                   mEvent.getContent().body,
                                   mEvent.getContent().info
                                 );
