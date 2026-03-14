@@ -64,7 +64,7 @@ type ProfileProps = {
   profile: UserProfile;
   userId: string;
 };
-function ProfileAvatar({ profile, userId }: ProfileProps) {
+function ProfileAvatar({ profile, userId }: Readonly<ProfileProps>) {
   const mx = useMatrixClient();
   const useAuthentication = useMediaAuthentication();
   const capabilities = useCapabilities();
@@ -218,7 +218,7 @@ function ProfileAvatar({ profile, userId }: ProfileProps) {
 }
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-function ProfileBanner({ profile, userId }: ProfileProps) {
+function ProfileBanner({ profile, userId }: Readonly<ProfileProps>) {
   const mx = useMatrixClient();
   const useAuthentication = useMediaAuthentication();
   const [alertRemove, setAlertRemove] = useState(false);
@@ -387,7 +387,7 @@ function ProfileBanner({ profile, userId }: ProfileProps) {
   );
 }
 
-function ProfileDisplayName({ profile, userId }: ProfileProps) {
+function ProfileDisplayName({ profile, userId }: Readonly<ProfileProps>) {
   const mx = useMatrixClient();
   const capabilities = useCapabilities();
   const disableSetDisplayname = capabilities['m.set_displayname']?.enabled === false;
@@ -479,7 +479,7 @@ function ProfileDisplayName({ profile, userId }: ProfileProps) {
   );
 }
 
-function ProfileExtended({ profile, userId }: ProfileProps) {
+function ProfileExtended({ profile, userId }: Readonly<ProfileProps>) {
   const mx = useMatrixClient();
   const setGlobalProfiles = useSetAtom(profilesCacheAtom);
 
@@ -488,12 +488,12 @@ function ProfileExtended({ profile, userId }: ProfileProps) {
   const currentStatus = presence?.status || '';
 
   // Keys we don't render here nor handle seperately but still need to exclude
-  const EXCLUDED_KEYS = ['kitty.meow.is_cat', 'kitty.meow.has_cats'];
+  const EXCLUDED_KEYS = new Set(['kitty.meow.is_cat', 'kitty.meow.has_cats']);
 
   // Unknown fields / unimplemented non-matrix-spec fields
   // Only renders them, can't edit or set
   const extendedFields = Object.entries(profile.extended || {}).filter(
-    ([key]) => !EXCLUDED_KEYS.includes(key)
+    ([key]) => !EXCLUDED_KEYS.has(key)
   );
 
   const handleSaveField = useCallback(
@@ -585,7 +585,7 @@ function ProfileExtended({ profile, userId }: ProfileProps) {
           onSave={(htmlBio) => {
             handleSaveField('moe.sable.app.bio', htmlBio);
 
-            const cleanedHtml = htmlBio.replace(/<br\/><\/blockquote>/g, '</blockquote>');
+            const cleanedHtml = htmlBio.replaceAll('<br/></blockquote>', '</blockquote>');
             handleSaveField('chat.commet.profile_bio', {
               format: 'org.matrix.custom.html',
               formatted_body: cleanedHtml,
@@ -642,7 +642,7 @@ type AnimalCosmeticsProps = {
   profile: UserProfile;
   userId: string;
 };
-function AnimalCosmetics({ profile, userId }: AnimalCosmeticsProps) {
+function AnimalCosmetics({ profile, userId }: Readonly<AnimalCosmeticsProps>) {
   const mx = useMatrixClient();
   const setGlobalProfiles = useSetAtom(profilesCacheAtom);
   const [renderAnimals, setRenderAnimals] = useSetting(settingsAtom, 'renderAnimals');

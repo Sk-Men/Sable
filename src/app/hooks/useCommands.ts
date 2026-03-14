@@ -36,16 +36,16 @@ import { useRoomNavigate } from './useRoomNavigate';
 import { enrichWidgetUrl } from './useRoomWidgets';
 import { useUserProfile } from './useUserProfile';
 
-export const SHRUG = '¯\\_(ツ)_/¯';
+export const SHRUG = String.raw`¯\_(ツ)_/¯`;
 export const TABLEFLIP = '(╯°□°)╯︵ ┻━┻';
 export const UNFLIP = '┬─┬ノ( º_ºノ)';
 
-const FLAG_PAT = '(?:^|\\s)-(\\w+)\\b';
+const FLAG_PAT = String.raw`(?:^|\s)-(\w+)\b`;
 const FLAG_REG = new RegExp(FLAG_PAT);
 const FLAG_REG_G = new RegExp(FLAG_PAT, 'g');
 
 export const splitPayloadContentAndFlags = (payload: string): [string, string | undefined] => {
-  const flagMatch = payload.match(FLAG_REG);
+  const flagMatch = new RegExp(FLAG_REG).exec(payload);
 
   if (!flagMatch) {
     return [payload, undefined];
@@ -116,7 +116,7 @@ export const parseTimestampFlag = (input: string): number | undefined => {
     return undefined;
   }
 
-  const value = parseFloat(match[1]); // supports decimal values
+  const value = Number.parseFloat(match[1]); // supports decimal values
   const unit = match[2];
 
   const now = Date.now(); // in milliseconds
@@ -282,7 +282,7 @@ export const useCommands = (mx: MatrixClient, room: Room): CommandRecord => {
       },
       [Command.Shrug]: {
         name: Command.Shrug,
-        description: 'Send ¯\\_(ツ)_/¯ as message',
+        description: String.raw`Send ¯\_(ツ)_/¯ as message`,
         exe: async () => undefined,
       },
       [Command.TableFlip]: {
@@ -559,8 +559,7 @@ export const useCommands = (mx: MatrixClient, room: Room): CommandRecord => {
               room.roomId,
               token,
               20,
-              Direction.Forward,
-              undefined
+              Direction.Forward
             );
             const { end, chunk } = response;
             // remove until the latest event;
@@ -749,7 +748,7 @@ export const useCommands = (mx: MatrixClient, room: Room): CommandRecord => {
         exe: async (payload) => {
           const input = payload
             .trim()
-            .replace(/[;{}<>]/g, '')
+            .replaceAll(/[;{}<>]/g, '')
             .slice(0, 32);
           const userId = mx.getSafeUserId();
 
@@ -793,7 +792,7 @@ export const useCommands = (mx: MatrixClient, room: Room): CommandRecord => {
         exe: async (payload) => {
           const input = payload
             .trim()
-            .replace(/[;{}<>]/g, '')
+            .replaceAll(/[;{}<>]/g, '')
             .slice(0, 32);
           const userId = mx.getSafeUserId();
 

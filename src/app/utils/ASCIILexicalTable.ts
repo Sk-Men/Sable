@@ -61,13 +61,13 @@ export class ASCIILexicalTable {
   }
 
   first(): string {
-    return String.fromCharCode(this.startCode);
+    return String.fromCodePoint(this.startCode);
   }
 
   last(): string {
     let str = '';
     for (let i = 0; i < this.maxStrWidth; i += 1) {
-      str += String.fromCharCode(this.endCode);
+      str += String.fromCodePoint(this.endCode);
     }
     return str;
   }

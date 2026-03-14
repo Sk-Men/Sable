@@ -121,7 +121,7 @@ const groupNotifications = (
 
     const groupIndex = groups.length - 1;
     const lastAddedGroup: RoomNotificationsGroup | undefined = groups[groupIndex];
-    if (lastAddedGroup && notification.room_id === lastAddedGroup.roomId) {
+    if (notification.room_id === lastAddedGroup?.roomId) {
       lastAddedGroup.notifications.push(notification);
       return;
     }
@@ -223,7 +223,7 @@ function RoomNotificationsGroupComp({
   legacyUsernameColor,
   hour24Clock,
   dateFormatString,
-}: RoomNotificationsGroupProps) {
+}: Readonly<RoomNotificationsGroupProps>) {
   const mx = useMatrixClient();
   const useAuthentication = useMediaAuthentication();
   const unread = useRoomUnread(room.roomId, roomToUnreadAtom);
@@ -623,7 +623,7 @@ export function Notifications() {
     loadTimeline();
   }, [loadTimeline]);
 
-  const lastVItem = vItems[vItems.length - 1];
+  const lastVItem = vItems.at(-1);
   const lastVItemIndex: number | undefined = lastVItem?.index;
   useEffect(() => {
     if (
@@ -671,7 +671,7 @@ export function Notifications() {
                   <Box gap="200">
                     <Chip
                       onClick={() => setOnlyHighlighted(false)}
-                      variant={!onlyHighlight ? 'Success' : 'Surface'}
+                      variant={onlyHighlight ? 'Surface' : 'Success'}
                       aria-pressed={!onlyHighlight}
                       before={!onlyHighlight && <Icon size="100" src={Icons.Check} />}
                       outlined
@@ -758,7 +758,7 @@ export function Notifications() {
 
                 {timelineState.status === AsyncStatus.Loading && (
                   <Box direction="Column" gap="100">
-                    {[...Array(8).keys()].map((key) => (
+                    {[...new Array(8).keys()].map((key) => (
                       <SequenceCard
                         variant="SurfaceVariant"
                         key={key}
