@@ -799,7 +799,7 @@ export function RoomTimeline({
           },
         });
       },
-      [alive, setAtBottom]
+      [alive, setAtBottom, room.roomId]
     ),
     useCallback(() => {
       if (!alive()) return;
@@ -807,7 +807,7 @@ export function RoomTimeline({
       setTimeline(getInitialTimeline(room));
       scrollToBottomRef.current.count += 1;
       scrollToBottomRef.current.smooth = false;
-    }, [alive, room, room.roomId])
+    }, [alive, room])
   );
 
   useLiveEventArrive(
