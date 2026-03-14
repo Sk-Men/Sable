@@ -676,11 +676,6 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
             });
             log.error('failed to send message', { roomId }, error);
           });
-=======
-        mx.sendMessage(roomId, threadRootId ?? null, content as any).catch((error: unknown) => {
-          log.error('failed to send message', { roomId }, error);
-        });
->>>>>>> af4c338d (feat(threads): add thread reply input handling)
       }
     }, [
       editor,
