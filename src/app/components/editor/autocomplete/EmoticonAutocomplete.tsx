@@ -57,13 +57,10 @@ export function EmoticonAutocomplete({
 
   const [emojiThreshold] = useSetting(settingsAtom, 'emojiSuggestThreshold');
 
-  const searchList = useMemo(() => {
-    const list: Array<EmoticonSearchItem> = [];
-    return list.concat(
-      imagePacks.flatMap((pack) => pack.getImages(ImageUsage.Emoticon)),
-      emojis
-    );
-  }, [imagePacks]);
+  const searchList = useMemo<Array<EmoticonSearchItem>>(
+    () => [...imagePacks.flatMap((pack) => pack.getImages(ImageUsage.Emoticon)), ...emojis],
+    [imagePacks]
+  );
 
   const [result, search, resetSearch] = useAsyncSearch(
     searchList,
@@ -94,7 +91,7 @@ export function EmoticonAutocomplete({
       requestClose();
     });
 
-  useKeyDown(window, (evt: KeyboardEvent) => {
+  useKeyDown(globalThis as Window, (evt: KeyboardEvent) => {
     onTabPress(evt, () => {
       if (autoCompleteEmoticon.length === 0) return;
       const emoticon = autoCompleteEmoticon[0];
