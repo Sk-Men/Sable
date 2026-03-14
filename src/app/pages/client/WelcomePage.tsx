@@ -1,11 +1,8 @@
 import { Box, Button, Icon, Icons, Text, config, toRem } from 'folds';
-import { useNavigate } from 'react-router-dom';
 import { Page, PageHero, PageHeroSection } from '$components/page';
 import CinnySVG from '$public/res/svg/cinny.svg';
-import { THREAD_MOCKUP_PATH } from '../paths';
 
 export function WelcomePage() {
-  const navigate = useNavigate();
   return (
     <Page>
       <Box
