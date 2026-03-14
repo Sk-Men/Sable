@@ -16,8 +16,10 @@ import {
   User,
 } from '$types/matrix-sdk';
 import { createLogger } from '$utils/debug';
+import { createDebugLogger } from '$utils/debugLogger';
 
 const log = createLogger('slidingSync');
+const debugLog = createDebugLogger('slidingSync');
 
 export const LIST_JOINED = 'joined';
 export const LIST_INVITES = 'invites';
@@ -316,6 +318,12 @@ export class SlidingSyncManager {
 
   private listsFullyLoaded = false;
 
+  private initialSyncCompleted = false;
+
+  private syncCount = 0;
+
+  private previousListCounts: Map<string, number> = new Map();
+
   public readonly slidingSync: SlidingSync;
 
   public readonly probeTimeoutMs: number;
@@ -359,17 +367,123 @@ export class SlidingSyncManager {
     );
 
     this.onLifecycle = (state, resp, err) => {
-      if (this.disposed || err || !resp || state !== SlidingSyncState.Complete) return;
+      const syncStartTime = performance.now();
+      this.syncCount += 1;
+
+      debugLog.info('sync', `Sliding sync lifecycle: ${state} (cycle #${this.syncCount})`, {
+        state,
+        hasError: !!err,
+        syncNumber: this.syncCount,
+        isInitialSync: !this.initialSyncCompleted,
+      });
+
+      if (err) {
+        debugLog.error('sync', 'Sliding sync error', {
+          error: err,
+          errorMessage: err.message,
+          syncNumber: this.syncCount,
+          state,
+        });
+      }
+
+      if (this.disposed) {
+        debugLog.warn('sync', 'Sync lifecycle called after disposal', { state });
+        return;
+      }
+
+      if (err || !resp || state !== SlidingSyncState.Complete) return;
+
+      // Track what changed in this sync cycle
+      const changes: Record<string, any> = {};
+      let totalRoomCount = 0;
+      let hasChanges = false;
+
+      this.listKeys.forEach((key) => {
+        const listData = this.slidingSync.getListData(key);
+        const currentCount = listData?.joinedCount ?? 0;
+        const previousCount = this.previousListCounts.get(key) ?? 0;
+
+        totalRoomCount += currentCount;
+
+        if (currentCount !== previousCount) {
+          changes[key] = {
+            previous: previousCount,
+            current: currentCount,
+            delta: currentCount - previousCount,
+          };
+          this.previousListCounts.set(key, currentCount);
+          hasChanges = true;
+        }
+      });
+
+      if (hasChanges || !this.initialSyncCompleted) {
+        debugLog.info('sync', 'Room counts changed in sync cycle', {
+          syncNumber: this.syncCount,
+          changes,
+          totalRoomCount,
+          isInitialSync: !this.initialSyncCompleted,
+        });
+      }
+
+      // Mark initial sync as complete after first successful cycle
+      if (!this.initialSyncCompleted) {
+        this.initialSyncCompleted = true;
+        debugLog.info('sync', 'Initial sync completed', {
+          syncNumber: this.syncCount,
+          totalRoomCount,
+          listCounts: Object.fromEntries(
+            this.listKeys.map((key) => [key, this.slidingSync.getListData(key)?.joinedCount ?? 0])
+          ),
+          timeElapsed: `${(performance.now() - syncStartTime).toFixed(2)}ms`,
+        });
+      }
+
       this.expandListsToKnownCount();
+
+      const syncDuration = performance.now() - syncStartTime;
+      if (syncDuration > 1000) {
+        debugLog.warn('sync', 'Slow sync cycle detected', {
+          syncNumber: this.syncCount,
+          duration: `${syncDuration.toFixed(2)}ms`,
+          totalRoomCount,
+        });
+      }
     };
 
     this.onConnectionChange = () => {
+      const isOnline = navigator.onLine;
+      const connectionInfo =
+        typeof navigator !== 'undefined' ? (navigator as any).connection : undefined;
+      const effectiveType = connectionInfo?.effectiveType;
+      const downlink = connectionInfo?.downlink;
+
+      debugLog.info('network', `Network connectivity changed: ${isOnline ? 'online' : 'offline'}`, {
+        online: isOnline,
+        effectiveType,
+        downlink: downlink ? `${downlink} Mbps` : undefined,
+      });
+
+      if (!isOnline) {
+        debugLog.warn('network', 'Device went offline - sync paused', {
+          syncNumber: this.syncCount,
+        });
+      } else {
+        debugLog.info('network', 'Device back online - sync will resume', {
+          syncNumber: this.syncCount,
+        });
+      }
+
       if (this.disposed || !this.adaptiveTimeline) return;
       const nextLimit = resolveAdaptiveRoomTimelineLimit(
         this.configuredTimelineLimit,
         readAdaptiveSignals()
       );
       if (nextLimit === this.roomTimelineLimit) return;
+      debugLog.info('sync', `Adaptive timeline limit updated to ${nextLimit}`, {
+        limit: nextLimit,
+        previousLimit: this.roomTimelineLimit,
+        reason: 'connection change',
+      });
       this.roomTimelineLimit = nextLimit;
       this.applyRoomTimelineLimit(nextLimit);
       log.log(
@@ -379,6 +493,15 @@ export class SlidingSyncManager {
   }
 
   public attach(): void {
+    debugLog.info('sync', 'Attaching sliding sync listeners', {
+      proxyBaseUrl: this.proxyBaseUrl,
+      listPageSize: this.listPageSize,
+      roomTimelineLimit: this.roomTimelineLimit,
+      adaptiveTimeline: this.adaptiveTimeline,
+      maxRooms: this.maxRooms,
+      lists: this.listKeys,
+    });
+
     this.slidingSync.on(SlidingSyncEvent.Lifecycle, this.onLifecycle);
     const connection = (
       typeof navigator !== 'undefined' ? (navigator as any).connection : undefined
@@ -395,10 +518,21 @@ export class SlidingSyncManager {
       window.addEventListener('online', this.onConnectionChange);
       window.addEventListener('offline', this.onConnectionChange);
     }
+
+    debugLog.info('sync', 'Sliding sync listeners attached successfully', {
+      hasConnectionAPI: !!connection,
+      hasWindowEvents: typeof window !== 'undefined',
+    });
   }
 
   public dispose(): void {
     if (this.disposed) return;
+
+    debugLog.info('sync', 'Disposing sliding sync', {
+      syncCount: this.syncCount,
+      initialSyncCompleted: this.initialSyncCompleted,
+    });
+
     this.disposed = true;
     this.slidingSync.removeListener(SlidingSyncEvent.Lifecycle, this.onLifecycle);
     const connection = (
@@ -416,6 +550,10 @@ export class SlidingSyncManager {
       window.removeEventListener('online', this.onConnectionChange);
       window.removeEventListener('offline', this.onConnectionChange);
     }
+
+    debugLog.info('sync', 'Sliding sync disposed successfully', {
+      totalSyncCycles: this.syncCount,
+    });
   }
 
   private applyRoomTimelineLimit(timelineLimit: number): void {
@@ -455,10 +593,16 @@ export class SlidingSyncManager {
     let allListsComplete = true;
     let expandedAny = false;
 
+    const expansionStartTime = performance.now();
+    const expansionDetails: Record<string, any> = {};
+
     this.listKeys.forEach((key) => {
       const listData = this.slidingSync.getListData(key);
       const knownCount = listData?.joinedCount ?? 0;
-      if (knownCount <= 0) return;
+      if (knownCount <= 0) {
+        expansionDetails[key] = { status: 'empty', knownCount: 0 };
+        return;
+      }
 
       const existing = this.slidingSync.getListParams(key);
       const currentEnd = getListEndIndex(existing);
@@ -468,6 +612,7 @@ export class SlidingSyncManager {
 
       if (currentEnd >= maxEnd) {
         // This list is fully loaded
+        expansionDetails[key] = { status: 'complete', knownCount, currentEnd };
         return;
       }
 
@@ -480,15 +625,50 @@ export class SlidingSyncManager {
       const chunkSize = 100;
       const desiredEnd = Math.min(currentEnd + chunkSize, maxEnd);
 
+      if (desiredEnd === currentEnd) {
+        expansionDetails[key] = {
+          status: 'complete',
+          knownCount,
+          currentEnd,
+          desiredEnd,
+        };
+        return;
+      }
+
       this.slidingSync.setListRanges(key, [[0, desiredEnd]]);
       expandedAny = true;
+
+      expansionDetails[key] = {
+        status: 'expanding',
+        knownCount,
+        previousEnd: currentEnd,
+        newEnd: desiredEnd,
+        roomsToLoad: desiredEnd - currentEnd,
+      };
+
+      debugLog.info('sync', `Expanding list "${key}" to full range`, {
+        list: key,
+        knownCount,
+        previousEnd: currentEnd,
+        newEnd: desiredEnd,
+        roomsToLoad: desiredEnd - currentEnd,
+      });
 
       if (knownCount > this.maxRooms) {
         log.warn(
           `Sliding Sync list "${key}" capped at ${this.maxRooms}/${knownCount} rooms for ${this.mx.getUserId()}`
         );
+        debugLog.warn('sync', `List "${key}" exceeds maxRooms limit`, {
+          list: key,
+          knownCount,
+          maxRooms: this.maxRooms,
+          cappedCount: this.maxRooms,
+        });
       }
     });
+
+    const expansionDuration = performance.now() - expansionStartTime;
+    const hasExpansions = Object.values(expansionDetails).some((d) => d.status === 'expanding');
 
     // Mark as fully loaded once all lists are complete
     if (allListsComplete) {
@@ -496,6 +676,23 @@ export class SlidingSyncManager {
       log.log(`Sliding Sync all lists fully loaded for ${this.mx.getUserId()}`);
     } else if (expandedAny) {
       log.log(`Sliding Sync lists expanding... for ${this.mx.getUserId()}`);
+    }
+
+    if (hasExpansions) {
+      debugLog.info('sync', 'List expansion completed', {
+        syncNumber: this.syncCount,
+        lists: expansionDetails,
+        timeElapsed: `${expansionDuration.toFixed(2)}ms`,
+      });
+    }
+
+    if (expansionDuration > 500) {
+      debugLog.warn('sync', 'Slow list expansion detected', {
+        duration: `${expansionDuration.toFixed(2)}ms`,
+        expandedLists: Object.keys(expansionDetails).filter(
+          (key) => expansionDetails[key].status === 'expanding'
+        ),
+      });
     }
   }
 
@@ -530,8 +727,13 @@ export class SlidingSyncManager {
       } else {
         this.slidingSync.setList(listKey, list);
       }
-    } catch {
+    } catch (error) {
       // ignore — the list will be re-sent on the next sync cycle
+      debugLog.warn('sync', `Failed to update list "${listKey}"`, {
+        list: listKey,
+        error: error instanceof Error ? error.message : String(error),
+        updateType: updateArgs.ranges && Object.keys(updateArgs).length === 1 ? 'ranges' : 'full',
+      });
     }
     return this.slidingSync.getListParams(listKey) ?? list;
   }

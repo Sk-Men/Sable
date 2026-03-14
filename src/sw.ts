@@ -91,9 +91,11 @@ async function cleanupDeadClients() {
 function setSession(clientId: string, accessToken: unknown, baseUrl: unknown) {
   if (typeof accessToken === 'string' && typeof baseUrl === 'string') {
     sessions.set(clientId, { accessToken, baseUrl });
+    console.debug('[SW] setSession: stored', clientId, baseUrl);
   } else {
     // Logout or invalid session
     sessions.delete(clientId);
+    console.debug('[SW] setSession: removed', clientId);
   }
 
   const resolveSession = clientToResolve.get(clientId);
@@ -124,12 +126,18 @@ async function requestSessionWithTimeout(
   timeoutMs = 3000
 ): Promise<SessionInfo | undefined> {
   const client = await self.clients.get(clientId);
-  if (!client) return undefined;
+  if (!client) {
+    console.warn('[SW] requestSessionWithTimeout: client not found', clientId);
+    return undefined;
+  }
 
   const sessionPromise = requestSession(client);
 
   const timeout = new Promise<undefined>((resolve) => {
-    setTimeout(() => resolve(undefined), timeoutMs);
+    setTimeout(() => {
+      console.warn('[SW] requestSessionWithTimeout: timed out after', timeoutMs, 'ms', clientId);
+      resolve(undefined);
+    }, timeoutMs);
   });
 
   return Promise.race([sessionPromise, timeout]);
@@ -274,6 +282,11 @@ self.addEventListener('fetch', (event: FetchEvent) => {
       if (s && validMediaRequest(url, s.baseUrl)) {
         return fetch(url, { ...fetchConfig(s.accessToken), redirect });
       }
+      console.warn(
+        '[SW fetch] No valid session for media request',
+        { url, clientId, hasSession: !!s },
+        'falling back to unauthenticated fetch'
+      );
       return fetch(event.request);
     })
   );
