@@ -535,6 +535,9 @@ export function BackgroundNotifications() {
     });
 
     return () => {
+      // Reading ref.current in cleanup is intentional - we want cleanup functions
+      // that were registered during async startBackgroundClient operations
+      // eslint-disable-next-line react-hooks/exhaustive-deps
       const cleanupMap = clientCleanupRef.current;
       current.forEach((mx, userId) => {
         cleanupMap.get(userId)?.();
