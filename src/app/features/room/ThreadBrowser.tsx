@@ -77,7 +77,7 @@ function ThreadPreview({ room, thread, onClick }: ThreadPreviewProps) {
   const linkifyOpts = useMemo<LinkifyOpts>(
     () => ({
       ...LINKIFY_OPTS,
-      render: factoryRenderLinkifyWithMention((href) =>
+      render: factoryRenderLinkifyWithMention((href: string) =>
         renderMatrixMention(
           mx,
           room.roomId,
@@ -269,7 +269,7 @@ export function ThreadBrowser({ room, onOpenThread, onClose, overlay }: ThreadBr
     };
   }, [room]);
 
-  const allThreads = room.getThreads().sort((a, b) => {
+  const allThreads = room.getThreads().sort((a: Thread, b: Thread) => {
     const aTs = a.events.at(-1)?.getTs() ?? a.rootEvent?.getTs() ?? 0;
     const bTs = b.events.at(-1)?.getTs() ?? b.rootEvent?.getTs() ?? 0;
     return bTs - aTs;
@@ -277,7 +277,7 @@ export function ThreadBrowser({ room, onOpenThread, onClose, overlay }: ThreadBr
 
   const lowerQuery = query.trim().toLowerCase();
   const threads = lowerQuery
-    ? allThreads.filter((t) => {
+    ? allThreads.filter((t: Thread) => {
         const body = t.rootEvent?.getContent()?.body ?? '';
         return typeof body === 'string' && body.toLowerCase().includes(lowerQuery);
       })
@@ -375,7 +375,7 @@ export function ThreadBrowser({ room, onOpenThread, onClose, overlay }: ThreadBr
               direction="Column"
               style={{ padding: `${config.space.S100} ${config.space.S200}` }}
             >
-              {threads.map((thread) => (
+              {threads.map((thread: Thread) => (
                 <ThreadPreview key={thread.id} room={room} thread={thread} onClick={onOpenThread} />
               ))}
             </Box>
