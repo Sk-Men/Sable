@@ -71,7 +71,7 @@ function RenderMessageContentInternal({
   htmlReactParserOptions,
   linkifyOpts,
   outlineAttachment,
-}: RenderMessageContentProps) {
+}: Readonly<RenderMessageContentProps>) {
   const content = useMemo(() => getContent<any>(), [getContent]);
 
   const [autoplayGifs] = useSetting(settingsAtom, 'autoplayGifs');

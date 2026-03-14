@@ -169,7 +169,7 @@ type EmojiSidebarProps = {
   packs: ImagePack[];
   onScrollToGroup: (groupId: string) => void;
 };
-function EmojiSidebar({ activeGroupAtom, packs, onScrollToGroup }: EmojiSidebarProps) {
+function EmojiSidebar({ activeGroupAtom, packs, onScrollToGroup }: Readonly<EmojiSidebarProps>) {
   const mx = useMatrixClient();
   const useAuthentication = useMediaAuthentication();
 
@@ -245,7 +245,7 @@ type StickerSidebarProps = {
   packs: ImagePack[];
   onScrollToGroup: (groupId: string) => void;
 };
-function StickerSidebar({ activeGroupAtom, packs, onScrollToGroup }: StickerSidebarProps) {
+function StickerSidebar({ activeGroupAtom, packs, onScrollToGroup }: Readonly<StickerSidebarProps>) {
   const mx = useMatrixClient();
   const useAuthentication = useMediaAuthentication();
 
@@ -294,7 +294,7 @@ function EmojiGroupHolder({
   previewAtom,
   onGroupItemClick,
   children,
-}: EmojiGroupHolderProps) {
+}: Readonly<EmojiGroupHolderProps>) {
   const setPreviewData = useSetAtom(previewAtom);
 
   const handleEmojiPreview = useCallback(
@@ -375,7 +375,7 @@ export function EmojiBoard({
   onStickerSelect,
   allowTextCustomEmoji,
   addToRecentEmoji = true,
-}: EmojiBoardProps) {
+}: Readonly<EmojiBoardProps>) {
   const mx = useMatrixClient();
 
   const emojiTab = tab === EmojiBoardTab.Emoji;
@@ -543,7 +543,7 @@ export function EmojiBoard({
                 id={SEARCH_GROUP_ID}
                 label={searchedItems.length ? 'Search Results' : 'No Results found'}
               >
-                {searchedItems.map(renderItem)}
+                {searchedItems.map((element, index) => renderItem(element, index))}
               </EmojiGroup>
             )}
             <div

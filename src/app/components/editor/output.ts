@@ -128,10 +128,12 @@ export const toMatrixCustomHTML = (
 
     return `${parsedMarkdown}${toMatrixCustomHTML(n, { ...opts, allowBlockMarkdown: false })}`;
   };
-  if (Array.isArray(node)) return node.map(parseNode).join('');
+  if (Array.isArray(node)) return node.map((element, index, array) => parseNode(element, index, array)).join('');
   if (Text.isText(node)) return textToCustomHtml(node, opts);
 
-  const children = node.children.map(parseNode).join('');
+  const children = node.children
+    .map((element, index, array) => parseNode(element, index, array))
+    .join('');
   return elementToCustomHtml(node, children);
 };
 
@@ -193,14 +195,14 @@ export const toPlainText = (node: Descendant | Descendant[], isMarkdown: boolean
  * @returns boolean
  */
 export const customHtmlEqualsPlainText = (customHtml: string, plain: string): boolean =>
-  customHtml.replace(/<br\/>/g, '\n') === sanitizeText(plain);
+  customHtml.replaceAll('<br/>', '\n') === sanitizeText(plain);
 
-export const trimCustomHtml = (customHtml: string) => customHtml.replace(/<br\/>$/g, '').trim();
+export const trimCustomHtml = (customHtml: string) => customHtml.replaceAll(/<br\/>$/g, '').trim();
 
 export const trimCommand = (cmdName: string, str: string) => {
   const cmdRegX = new RegExp(`^(\\s+)?(\\/${sanitizeForRegex(cmdName)})([^\\S\n]+)?`);
 
-  const match = str.match(cmdRegX);
+  const match = new RegExp(cmdRegX).exec(str);
   if (!match) return str;
   return str.slice(match[0].length);
 };
