@@ -148,17 +148,17 @@ window.addEventListener('error', (event) => {
   const isChunkLoadError =
     event.message?.includes('dynamically imported module') ||
     event.message?.includes('Failed to fetch') ||
-    (event.error?.name === 'ChunkLoadError');
+    event.error?.name === 'ChunkLoadError';
 
   if (isChunkLoadError) {
     const retryCount = parseInt(sessionStorage.getItem(CHUNK_RETRY_KEY) ?? '0', 10);
-    
+
     if (retryCount < MAX_CHUNK_RETRIES) {
       // Increment retry count and reload
       sessionStorage.setItem(CHUNK_RETRY_KEY, String(retryCount + 1));
       log.warn(`Chunk load failed, reloading (attempt ${retryCount + 1}/${MAX_CHUNK_RETRIES})`);
       window.location.reload();
-      
+
       // Prevent default error handling since we're reloading
       event.preventDefault();
     } else {
