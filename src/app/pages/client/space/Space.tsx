@@ -33,6 +33,7 @@ import { useSpace } from '$hooks/useSpace';
 import { VirtualTile } from '$components/virtualizer';
 import { spaceRoomsAtom } from '$state/spaceRooms';
 import { RoomNavCategoryButton, RoomNavItem } from '$features/room-nav';
+import { SpaceNavItem } from '$features/space-nav';
 import { makeNavCategoryId, getNavCategoryIdParts } from '$state/closedNavCategories';
 import { roomToUnreadAtom } from '$state/room/roomToUnread';
 import { useCategoryHandler } from '$hooks/useCategoryHandler';
@@ -519,7 +520,11 @@ export function Space() {
     space.roomId,
     getRoom,
     useCallback(
-      (parentId, roomId) => {
+      (parentId, roomId, depth) => {
+        if (depth >= 4)
+        {
+          return true;
+        }
         if (!getInClosedCategories(space.roomId, parentId, roomId)) {
           return false;
         }
@@ -564,7 +569,7 @@ export function Space() {
   const getCategoryPadding = (depth: number): string | undefined => {
     if (depth === 0) return undefined;
     if (depth === 1) return config.space.S400;
-    return config.space.S200;
+    return config.space.S0;
   };
 
   const navigate = useNavigate();
@@ -633,7 +638,24 @@ export function Space() {
                 const { roomId, depth } = hierarchy[vItem.index] ?? {};
                 const room = mx.getRoom(roomId);
                 if (!room) return null;
-
+                if (depth == 4 && room.isSpaceRoom()) {
+                  return (
+                    <VirtualTile
+                      virtualItem={vItem}
+                      key={vItem.index}
+                      ref={virtualizer.measureElement}
+                    >
+                      <div style={{ paddingLeft: `calc(${depth-2} * ${config.space.S200})` }}>
+                        <SpaceNavItem
+                          room={room}
+                          selected={selectedRoomId === roomId}
+                          linkPath={getSpaceLobbyPath(getCanonicalAliasOrRoomId(mx, roomId))}
+                        />
+                      </div>
+                    </VirtualTile>
+                  )
+                }
+                
                 const paddingTop = getCategoryPadding(depth)
                 const paddingLeft = `calc(${depth-1} * ${config.space.S200})`
 

@@ -49,7 +49,7 @@ const childEventByOrder: SortFunc<MatrixEvent> = (a, b) =>
 const getHierarchySpaces = (
   rootSpaceId: string,
   getRoom: GetRoomCallback,
-  excludeRoom: (parentId: string, roomId: string) => boolean,
+  excludeRoom: (parentId: string, roomId: string, depth: number) => boolean,
   spaceRooms: Set<string>
 ): HierarchyItemSpace[] => {
   const rootSpaceItem: HierarchyItemSpace = {
@@ -81,7 +81,7 @@ const getHierarchySpaces = (
         if (!isValidChild(childEvent)) return false;
         const childId = childEvent.getStateKey();
         if (!childId || !isRoomId(childId)) return false;
-        if (excludeRoom(spaceItem.roomId, childId)) return false;
+        if (excludeRoom(spaceItem.roomId, childId, spaceItem.depth)) return false;
 
         // because we can not find if a childId is space without joining
         // or requesting room summary, we will look it into spaceRooms local
@@ -202,7 +202,7 @@ export const useSpaceHierarchy = (
 const getSpaceJoinedHierarchy = (
   rootSpaceId: string,
   getRoom: GetRoomCallback,
-  excludeRoom: (parentId: string, roomId: string) => boolean,
+  excludeRoom: (parentId: string, roomId: string, depth: number) => boolean,
   sortRoomItems: (parentId: string, items: HierarchyItem[]) => HierarchyItem[]
 ): HierarchyItem[] => {
   const spaceItems: HierarchyItemSpace[] = getHierarchySpaces(
@@ -263,7 +263,7 @@ const getSpaceJoinedHierarchy = (
       const childId = childEvent.getStateKey();
       if (!childId) return;
 
-      if (excludeRoom(space.roomId, childId)) return;
+      if (excludeRoom(space.roomId, childId, spaceItem.depth)) return;
 
       const childItem: HierarchyItemRoom = {
         roomId: childId,
@@ -283,7 +283,7 @@ const getSpaceJoinedHierarchy = (
 export const useSpaceJoinedHierarchy = (
   spaceId: string,
   getRoom: GetRoomCallback,
-  excludeRoom: (parentId: string, roomId: string) => boolean,
+  excludeRoom: (parentId: string, roomId: string, depth: number) => boolean,
   sortByActivity: (spaceId: string) => boolean
 ): HierarchyItem[] => {
   const mx = useMatrixClient();
