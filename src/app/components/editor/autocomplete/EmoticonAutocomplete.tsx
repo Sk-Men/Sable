@@ -91,7 +91,7 @@ export function EmoticonAutocomplete({
       requestClose();
     });
 
-  useKeyDown(globalThis as Window, (evt: KeyboardEvent) => {
+  useKeyDown(window, (evt: KeyboardEvent) => {
     onTabPress(evt, () => {
       if (autoCompleteEmoticon.length === 0) return;
       const emoticon = autoCompleteEmoticon[0];
