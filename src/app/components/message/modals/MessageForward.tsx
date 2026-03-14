@@ -211,13 +211,15 @@ export function MessageForwardInternal({
           formatted_body: newBodyHtml,
         }
       : {};
+    const baseContent = { ...mEvent.getContent() };
+    delete baseContent['com.beeper.per_message_profile']; // remove per-message profile as that could confuse clients in the target room
     let content;
     // handle privacy stuff
     if (isPrivate) {
       // if the message is from a private room, we should strip any media or mentions to avoid leaking information to the target room
       // we can still include the original message content in the body of the message, so we'll just use a fallback text/plain content with the original message body
       content = {
-        ...mEvent.getContent(),
+        ...baseContent,
         'm.relates_to': null, // remove any relations to avoid confusion in the target room
         'm.mentions': null, // remove mentions to avoid leaking information about users in the original room
         ...forwardedTextContent,
@@ -230,7 +232,7 @@ export function MessageForwardInternal({
       };
     } else {
       content = {
-        ...mEvent.getContent(),
+        ...baseContent,
         ...forwardedTextContent,
         'm.relates_to': {
           rel_type: 'm.reference',
