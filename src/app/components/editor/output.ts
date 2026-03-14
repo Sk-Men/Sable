@@ -128,7 +128,8 @@ export const toMatrixCustomHTML = (
 
     return `${parsedMarkdown}${toMatrixCustomHTML(n, { ...opts, allowBlockMarkdown: false })}`;
   };
-  if (Array.isArray(node)) return node.map((element, index, array) => parseNode(element, index, array)).join('');
+  if (Array.isArray(node))
+    return node.map((element, index, array) => parseNode(element, index, array)).join('');
   if (Text.isText(node)) return textToCustomHtml(node, opts);
 
   const children = node.children

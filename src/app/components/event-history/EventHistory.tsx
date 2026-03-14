@@ -177,7 +177,10 @@ export const EventHistory = as<'div', EventHistoryProps>(
       );
     }
 
-    function EventItem({ mEvent, EventContent }: Readonly<{ mEvent: MatrixEvent; EventContent: IContent }>) {
+    function EventItem({
+      mEvent,
+      EventContent,
+    }: Readonly<{ mEvent: MatrixEvent; EventContent: IContent }>) {
       const [isHovered, setIsHovered] = useState(false);
       return (
         <Box

@@ -245,7 +245,11 @@ type StickerSidebarProps = {
   packs: ImagePack[];
   onScrollToGroup: (groupId: string) => void;
 };
-function StickerSidebar({ activeGroupAtom, packs, onScrollToGroup }: Readonly<StickerSidebarProps>) {
+function StickerSidebar({
+  activeGroupAtom,
+  packs,
+  onScrollToGroup,
+}: Readonly<StickerSidebarProps>) {
   const mx = useMatrixClient();
   const useAuthentication = useMediaAuthentication();
 
