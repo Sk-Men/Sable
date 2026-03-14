@@ -945,7 +945,7 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
           editableName="RoomInput"
           editor={editor}
           key={inputKey}
-          placeholder="Send a message..."
+          placeholder={showAudioRecorder && mobileOrTablet() ? '' : 'Send a message...'}
           onKeyDown={handleKeyDown}
           onKeyUp={handleKeyUp}
           onPaste={handlePaste}
@@ -1065,20 +1065,21 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
             </>
           }
           before={
-            <IconButton
-              onClick={() => pickFile('*')}
-              variant="SurfaceVariant"
-              size="300"
-              radii="300"
-              title="Upload File"
-              aria-label="Upload and attach a File"
-            >
-              <Icon src={Icons.PlusCircle} />
-            </IconButton>
+            !(showAudioRecorder && mobileOrTablet()) && (
+              <IconButton
+                onClick={() => pickFile('*')}
+                variant="SurfaceVariant"
+                size="300"
+                radii="300"
+                title="Upload File"
+                aria-label="Upload and attach a File"
+              >
+                <Icon src={Icons.PlusCircle} />
+              </IconButton>
+            )
           }
           after={
             <>
-              {/* ── Recording pill: grows into available space left of mic button ── */}
               {showAudioRecorder && (
                 <AudioMessageRecorder
                   ref={audioRecorderRef}
@@ -1112,7 +1113,11 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
                 aria-label={showAudioRecorder ? 'Stop recording' : 'Record audio message'}
                 aria-pressed={showAudioRecorder}
                 onClick={() => {
-                  if (mobileOrTablet()) return; // mobile handled via pointerdown/up
+                  if (mobileOrTablet() && showAudioRecorder) {
+                    audioRecorderRef.current?.stop();
+                    return;
+                  }
+                  if (mobileOrTablet()) return;
                   if (showAudioRecorder) {
                     audioRecorderRef.current?.stop();
                   } else {
@@ -1155,7 +1160,6 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
                 )}
               </IconButton>
 
-              {/* ── Toolbar toggle — always visible ── */}
               <IconButton
                 variant="SurfaceVariant"
                 size="300"

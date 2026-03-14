@@ -10,7 +10,7 @@ import {
 import { useVoiceRecorder } from '$plugins/voice-recorder-kit';
 import type { VoiceRecorderStopPayload } from '$plugins/voice-recorder-kit';
 import { mobileOrTablet } from '$utils/user-agent';
-import { Box, Text, IconButton, Icon, Icons } from 'folds';
+import { Box, Text } from 'folds';
 import * as css from './AudioMessageRecorder.css';
 
 export type AudioRecordingCompletePayload = {
@@ -202,18 +202,6 @@ export const AudioMessageRecorder = forwardRef<
             Recording duration: {formatTime(announcedTime)}
           </span>
         )}
-
-        <IconButton
-          variant="SurfaceVariant"
-          size="400"
-          radii="300"
-          title="Cancel recording"
-          aria-label="Cancel recording"
-          onClick={doCancel}
-          style={{ flexShrink: 0 }}
-        >
-          <Icon src={Icons.Cross} size="50" />
-        </IconButton>
 
         {showCancelHint && (
           <div

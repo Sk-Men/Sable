@@ -22,9 +22,9 @@ const Shake = keyframes({
 export const Container = style([
   DefaultReset,
   {
+    flexGrow: 1,
     minWidth: 0,
     overflow: 'hidden',
-    padding: `0 ${config.space.S200}`,
     touchAction: 'pan-y',
     userSelect: 'none',
   },
@@ -86,12 +86,11 @@ export const CancelHint = style([
   DefaultReset,
   {
     position: 'absolute',
-    left: 0,
+    left: config.space.S200,
     top: 0,
     bottom: 0,
     display: 'flex',
     alignItems: 'center',
-    paddingLeft: config.space.S200,
     color: color.Critical.Main,
     fontSize: toRem(12),
     fontWeight: 600,
