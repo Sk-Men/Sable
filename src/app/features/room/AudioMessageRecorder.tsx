@@ -1,7 +1,12 @@
-import { VoiceRecorder } from '$plugins/voice-recorder-kit';
-import FocusTrap from 'focus-trap-react';
-import { Box, Icon, Icons, Text, color, config } from 'folds';
-import { useRef } from 'react';
+import { forwardRef, useCallback, useImperativeHandle, useRef } from 'react';
+import { useVoiceRecorder } from '$plugins/voice-recorder-kit';
+import type { VoiceRecorderStopPayload } from '$plugins/voice-recorder-kit';
+import { Box, Text, color, config, toRem } from 'folds';
+
+export type AudioMessageRecorderHandle = {
+  stop: () => void;
+  cancel: () => void;
+};
 
 type AudioMessageRecorderProps = {
   onRecordingComplete: (audioBlob: Blob) => void;
@@ -10,83 +15,148 @@ type AudioMessageRecorderProps = {
   onAudioLengthUpdate: (length: number) => void;
 };
 
-// We use a react voice recorder library to handle the recording of audio messages, as it provides a simple API and handles the complexities of recording audio in the browser.
-// The component is wrapped in a focus trap to ensure that keyboard users can easily navigate and interact with the recorder without accidentally losing focus or interacting with other parts of the UI.
-// The styling is kept simple and consistent with the rest of the app, using Folds' design tokens for colors, spacing, and typography.
-// we use a modified version of https://www.npmjs.com/package/react-voice-recorder-kit for the recording
-export function AudioMessageRecorder({
-  onRecordingComplete,
-  onRequestClose,
-  onWaveformUpdate,
-  onAudioLengthUpdate,
-}: AudioMessageRecorderProps) {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const isDismissedRef = useRef(false);
+function formatTime(seconds: number): string {
+  const m = Math.floor(seconds / 60);
+  const s = seconds % 60;
+  return `${m}:${s.toString().padStart(2, '0')}`;
+}
 
-  // uses default styling, we use at other places
+const KEYFRAMES = `
+@keyframes recDotPulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.25; }
+}
+`;
+if (typeof document !== 'undefined') {
+  const styleId = '__audio-recorder-keyframes';
+  if (!document.getElementById(styleId)) {
+    const style = document.createElement('style');
+    style.id = styleId;
+    style.textContent = KEYFRAMES;
+    document.head.appendChild(style);
+  }
+}
+
+export const AudioMessageRecorder = forwardRef<
+  AudioMessageRecorderHandle,
+  AudioMessageRecorderProps
+>(({ onRecordingComplete, onRequestClose, onWaveformUpdate, onAudioLengthUpdate }, ref) => {
+  const isDismissedRef = useRef(false);
+  // Guard against React Strict Mode's double-invoke of the autoStart effect,
+  // which fires onstop with a ~110-byte blob before the user does anything.
+  const userRequestedStopRef = useRef(false);
+
+  // Keep stable refs for prop callbacks so useVoiceRecorder's internal
+  // useCallbacks never need to be recreated (which would reset the timer).
+  const onRecordingCompleteRef = useRef(onRecordingComplete);
+  onRecordingCompleteRef.current = onRecordingComplete;
+  const onRequestCloseRef = useRef(onRequestClose);
+  onRequestCloseRef.current = onRequestClose;
+  const onWaveformUpdateRef = useRef(onWaveformUpdate);
+  onWaveformUpdateRef.current = onWaveformUpdate;
+  const onAudioLengthUpdateRef = useRef(onAudioLengthUpdate);
+  onAudioLengthUpdateRef.current = onAudioLengthUpdate;
+
+  // Stable stop handler — empty dep array intentional; live values via refs.
+
+  const stableOnStop = useCallback((payload: VoiceRecorderStopPayload) => {
+    if (!userRequestedStopRef.current) return;
+    if (isDismissedRef.current) return;
+    onRecordingCompleteRef.current(payload.audioFile);
+    onWaveformUpdateRef.current(payload.waveform);
+    onAudioLengthUpdateRef.current(payload.audioLength);
+  }, []);
+
+  // Stable delete handler — empty dep array intentional; live values via refs.
+
+  const stableOnDelete = useCallback(() => {
+    isDismissedRef.current = true;
+    onRequestCloseRef.current();
+  }, []);
+
+  const { levels, seconds, handleStop, handleDelete } = useVoiceRecorder({
+    autoStart: true,
+    onStop: stableOnStop,
+    onDelete: stableOnDelete,
+  });
+
+  const doStop = useCallback(() => {
+    if (isDismissedRef.current) return;
+    userRequestedStopRef.current = true;
+    handleStop();
+  }, [handleStop]);
+
+  const doCancel = useCallback(() => {
+    if (isDismissedRef.current) return;
+    isDismissedRef.current = true;
+    handleDelete();
+  }, [handleDelete]);
+
+  useImperativeHandle(ref, () => ({ stop: doStop, cancel: doCancel }), [doStop, doCancel]);
+
+  const BAR_COUNT = 28;
+  const step = Math.max(1, levels.length / BAR_COUNT);
+  const bars = Array.from(
+    { length: BAR_COUNT },
+    (_, i) => levels[Math.min(Math.floor(i * step), levels.length - 1)] ?? 0.15
+  );
+
   return (
-    <FocusTrap
-      focusTrapOptions={{
-        returnFocusOnDeactivate: false,
-        initialFocus: false,
-        onDeactivate: () => {
-          isDismissedRef.current = true;
-          onRequestClose();
-        },
-        clickOutsideDeactivates: true,
-        allowOutsideClick: true,
-        fallbackFocus: () => containerRef.current!,
-      }}
+    <Box
+      grow="Yes"
+      alignItems="Center"
+      gap="200"
+      style={{ minWidth: 0, overflow: 'hidden', padding: `0 ${config.space.S200}` }}
     >
-      <div ref={containerRef} tabIndex={-1} style={{ outline: 'none' }}>
-        <Box
-          direction="Column"
-          gap="200"
-          alignItems="Center"
-          style={{
-            backgroundColor: color.Surface.Container,
-            color: color.Surface.OnContainer,
-            border: `${config.borderWidth.B300} solid ${color.Surface.ContainerLine}`,
-            borderRadius: config.radii.R400,
-            boxShadow: config.shadow.E200,
-            padding: config.space.S400,
-            minWidth: 300,
-          }}
-        >
-          <Text size="H4">Audio Message Recorder</Text>
-          <VoiceRecorder
-            autoStart
-            onStop={({
-              audioFile,
-              waveform,
-              audioLength,
-            }: {
-              audioFile: Blob;
-              waveform: number[];
-              audioLength: number;
-            }) => {
-              if (isDismissedRef.current) return;
-              // closes the recorder and sends the audio file back to the parent component to be uploaded and sent as a message
-              onRecordingComplete(audioFile);
-              onWaveformUpdate(waveform);
-              onAudioLengthUpdate(audioLength);
-            }}
-            buttonBackgroundColor={color.SurfaceVariant.Container}
-            buttonHoverBackgroundColor={color.SurfaceVariant.ContainerHover}
-            iconColor={color.Primary.Main}
-            // icons for the recorder, we use Folds' icon library to keep the styling consistent with the rest of the app
-            customPauseIcon={<Icon src={Icons.Pause} size="200" color={color.Primary.Main} />}
-            customPlayIcon={<Icon src={Icons.Play} size="200" color={color.Primary.Main} />}
-            customDeleteIcon={<Icon src={Icons.Delete} size="200" color={color.Primary.Main} />}
-            customStopIcon={<Icon src={Icons.Send} size="200" color={color.Primary.Main} />}
-            customRepeatIcon={<Icon src={Icons.Reload} size="200" color={color.Primary.Main} />}
-            customResumeIcon={<Icon src={Icons.Mic} size="200" color={color.Primary.Main} />}
+      {/* Pulsing red dot */}
+      <div
+        aria-hidden
+        style={{
+          width: 7,
+          height: 7,
+          borderRadius: '50%',
+          backgroundColor: color.Critical.Main,
+          flexShrink: 0,
+          animation: 'recDotPulse 1.4s ease-in-out infinite',
+        }}
+      />
+
+      {/* Live waveform bars */}
+      <Box
+        grow="Yes"
+        alignItems="Center"
+        gap="25"
+        style={{ height: 22, overflow: 'hidden', minWidth: 0 }}
+      >
+        {bars.map((level, i) => (
+          <div
+            // eslint-disable-next-line react/no-array-index-key
+            key={i}
             style={{
-              backgroundColor: color.Surface.ContainerActive,
+              width: 2,
+              height: Math.max(3, Math.round(level * 20)),
+              borderRadius: 1,
+              backgroundColor: color.Primary.Main,
+              transition: 'height 70ms ease-out',
+              flexShrink: 0,
             }}
           />
-        </Box>
-      </div>
-    </FocusTrap>
+        ))}
+      </Box>
+
+      {/* Timer */}
+      <Text
+        size="T200"
+        style={{
+          fontVariantNumeric: 'tabular-nums',
+          color: color.Critical.Main,
+          minWidth: toRem(28),
+          flexShrink: 0,
+          fontWeight: 600,
+        }}
+      >
+        {formatTime(seconds)}
+      </Text>
+    </Box>
   );
-}
+});

@@ -24,6 +24,7 @@ import { ReactEditor } from 'slate-react';
 import { Editor, Point, Range, Transforms } from 'slate';
 import {
   Box,
+  color,
   config,
   Dialog,
   Icon,
@@ -158,7 +159,8 @@ import {
   getVideoMsgContent,
 } from './msgContent';
 import { CommandAutocomplete } from './CommandAutocomplete';
-import { AudioMessageRecorder } from './AudioMessageRecorder';
+import { AudioMessageRecorder, AudioMessageRecorderHandle } from './AudioMessageRecorder';
+import { AudioAttachmentPreview } from './AudioAttachmentPreview';
 
 const getReplyContent = (replyDraft: IReplyDraft | undefined): IEventRelation => {
   if (!replyDraft) return {};
@@ -251,6 +253,18 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
     const [showAudioRecorder, setShowAudioRecorder] = useState(false);
     const [audioMsgWaveform, setAudioMsgWaveform] = useState<number[] | undefined>(undefined);
     const [audioMsgLength, setAudioMsgLength] = useState<number | undefined>(undefined);
+    // pendingAudioFileRef is a ref (not state) so its value is set synchronously
+    // before handleFiles → setSelectedFiles (Jotai) can trigger a render.
+    // Using useState here caused a render window where selectedFiles already contained
+    // the file but pendingAudioFile state was still null, letting UploadCardRenderer
+    // render for the audio file and trigger an upload-during-render state dispatch.
+    const pendingAudioFileRef = useRef<File | null>(null);
+    const [pendingAudioUrl, setPendingAudioUrl] = useState<string | null>(null);
+    const audioRecorderRef = useRef<AudioMessageRecorderHandle>(null);
+    // Tracks when the mic button was pressed on mobile so we can distinguish
+    // a quick tap (toggle — user stops manually) from a long hold (send on release).
+    const micHoldStartRef = useRef<number>(0);
+    const HOLD_THRESHOLD_MS = 400;
     const [autocompleteQuery, setAutocompleteQuery] =
       useState<AutocompleteQuery<AutocompletePrefix>>();
     const [isQuickTextReact, setQuickTextReact] = useState(false);
@@ -421,6 +435,19 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
     const handleRemoveUpload = useCallback(
       (upload: TUploadContent | TUploadContent[]) => {
         const uploads = Array.isArray(upload) ? upload : [upload];
+        // If the pending audio file is being removed (via UploadBoard's Remove button),
+        // clean up the object URL and reset audio preview state.
+        uploads.forEach((u) => {
+          if (u === pendingAudioFileRef.current) {
+            setPendingAudioUrl((url) => {
+              if (url) URL.revokeObjectURL(url);
+              return null;
+            });
+            pendingAudioFileRef.current = null;
+            setAudioMsgWaveform(undefined);
+            setAudioMsgLength(undefined);
+          }
+        });
         setSelectedFiles({
           type: 'DELETE',
           item: selectedFiles.filter((f) => uploads.find((u) => u === f.file)),
@@ -827,18 +854,35 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
                 <UploadBoardContent>
                   {Array.from(selectedFiles)
                     .reverse()
-                    .map((fileItem, index) => (
-                      <UploadCardRenderer
-                        // eslint-disable-next-line react/no-array-index-key
-                        key={index}
-                        isEncrypted={!!fileItem.encInfo}
-                        fileItem={fileItem}
-                        setMetadata={handleFileMetadata}
-                        onRemove={handleRemoveUpload}
-                        setDesc={setDesc}
-                        roomId={roomId}
-                      />
-                    ))}
+                    .map((fileItem, index) => {
+                      // pendingAudioFileRef is a ref so it's available synchronously
+                      // even in Jotai-triggered renders — UploadCardRenderer never
+                      // renders for the audio file, preventing the upload-during-render
+                      // setState warning on UploadBoardHeader.
+                      if (fileItem.file === pendingAudioFileRef.current && pendingAudioUrl) {
+                        return (
+                          <AudioAttachmentPreview
+                            // eslint-disable-next-line react/no-array-index-key
+                            key={index}
+                            audioUrl={pendingAudioUrl}
+                            waveform={audioMsgWaveform ?? []}
+                            duration={audioMsgLength ?? 0}
+                          />
+                        );
+                      }
+                      return (
+                        <UploadCardRenderer
+                          // eslint-disable-next-line react/no-array-index-key
+                          key={index}
+                          isEncrypted={!!fileItem.encInfo}
+                          fileItem={fileItem}
+                          setMetadata={handleFileMetadata}
+                          onRemove={handleRemoveUpload}
+                          setDesc={setDesc}
+                          roomId={roomId}
+                        />
+                      );
+                    })}
                 </UploadBoardContent>
               </Scroll>
             )}
@@ -1059,6 +1103,79 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
           }
           after={
             <>
+              {/* ── Recording pill: grows into available space left of mic button ── */}
+              {showAudioRecorder && (
+                <AudioMessageRecorder
+                  ref={audioRecorderRef}
+                  onRequestClose={() => setShowAudioRecorder(false)}
+                  onRecordingComplete={(audioBlob) => {
+                    const file = new File([audioBlob], `sable-audio-message-${Date.now()}.ogg`, {
+                      type: audioBlob.type,
+                    });
+                    // Set ref synchronously BEFORE handleFiles so the Jotai render
+                    // that follows immediately sees it and skips UploadCardRenderer.
+                    pendingAudioFileRef.current = file;
+                    setPendingAudioUrl(URL.createObjectURL(audioBlob));
+                    handleFiles([file]);
+                    setShowAudioRecorder(false);
+                  }}
+                  onAudioLengthUpdate={(len) => setAudioMsgLength(len)}
+                  onWaveformUpdate={(w) => setAudioMsgWaveform(w)}
+                />
+              )}
+
+              {/* ── Mic button — always present; icon swaps to Stop while recording ── */}
+              <IconButton
+                ref={micBtnRef}
+                variant={showAudioRecorder ? 'Critical' : 'SurfaceVariant'}
+                size="300"
+                radii="300"
+                title={showAudioRecorder ? 'Stop recording' : 'Record audio message'}
+                aria-label={showAudioRecorder ? 'Stop recording' : 'Record audio message'}
+                aria-pressed={showAudioRecorder}
+                onClick={() => {
+                  if (mobileOrTablet()) return; // mobile handled via pointerdown/up
+                  if (showAudioRecorder) {
+                    audioRecorderRef.current?.stop();
+                  } else {
+                    setShowAudioRecorder(true);
+                  }
+                }}
+                onPointerDown={() => {
+                  if (!mobileOrTablet()) return;
+                  if (showAudioRecorder) return; // already recording — onClick will stop it
+                  micHoldStartRef.current = Date.now();
+                  setShowAudioRecorder(true);
+
+                  // One-shot global listeners: the mic button stays mounted now but
+                  // the ref is already populated by the time pointerup fires.
+                  const cleanup = () => {
+                    window.removeEventListener('pointerup', onUp);
+                    window.removeEventListener('pointercancel', onCancel);
+                  };
+                  const onUp = () => {
+                    cleanup();
+                    const held = Date.now() - micHoldStartRef.current;
+                    if (held >= HOLD_THRESHOLD_MS) {
+                      audioRecorderRef.current?.stop();
+                    }
+                    // Short tap → recorder stays open; tap stop-icon to finish
+                  };
+                  const onCancel = () => {
+                    cleanup();
+                    audioRecorderRef.current?.cancel();
+                  };
+                  window.addEventListener('pointerup', onUp);
+                  window.addEventListener('pointercancel', onCancel);
+                }}
+              >
+                <Icon
+                  src={Icons.Mic}
+                  {...(showAudioRecorder ? { style: { color: color.Critical.Main } } : {})}
+                />
+              </IconButton>
+
+              {/* ── Toolbar toggle — always visible ── */}
               <IconButton
                 variant="SurfaceVariant"
                 size="300"
@@ -1070,47 +1187,6 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
               >
                 <Icon src={toolbar ? Icons.AlphabetUnderline : Icons.Alphabet} />
               </IconButton>
-              <IconButton
-                ref={micBtnRef}
-                variant="SurfaceVariant"
-                size="300"
-                radii="300"
-                title="record audio message"
-                aria-pressed={showAudioRecorder}
-                onClick={() => setShowAudioRecorder(!showAudioRecorder)}
-              >
-                <Icon src={Icons.Mic} />
-              </IconButton>
-              {showAudioRecorder && (
-                <PopOut
-                  anchor={micBtnRef.current?.getBoundingClientRect() ?? undefined}
-                  offset={8}
-                  position="Top"
-                  align="End"
-                  alignOffset={-44}
-                  content={
-                    <AudioMessageRecorder
-                      onRequestClose={() => {
-                        setShowAudioRecorder(false);
-                      }}
-                      onRecordingComplete={(audioBlob) => {
-                        const file = new File(
-                          [audioBlob],
-                          `sable-audio-message-${Date.now()}.ogg`,
-                          {
-                            type: audioBlob.type,
-                          }
-                        );
-                        handleFiles([file]);
-                        // Close the recorder after handling the file, to give some feedback that the recording was successful
-                        setShowAudioRecorder(false);
-                      }}
-                      onAudioLengthUpdate={(len) => setAudioMsgLength(len)}
-                      onWaveformUpdate={(w) => setAudioMsgWaveform(w)}
-                    />
-                  }
-                />
-              )}
               <UseStateProvider initial={undefined}>
                 {(emojiBoardTab: EmojiBoardTab | undefined, setEmojiBoardTab) => (
                   <PopOut
