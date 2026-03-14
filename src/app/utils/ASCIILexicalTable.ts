@@ -164,7 +164,7 @@ export class ASCIILexicalTable {
 
     prev += String.fromCharCode(lastCode - 1);
     while (prev.length < this.maxStrWidth) {
-      prev += String.fromCharCode(this.endCode);
+      prev += String.fromCodePoint(this.endCode);
     }
     return prev;
   }
