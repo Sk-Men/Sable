@@ -1,5 +1,5 @@
 ---
-sable: minor
+default: minor
 ---
 
 add voice message composing
