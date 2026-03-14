@@ -9,6 +9,15 @@ import type {
 const BAR_COUNT = 40;
 const WAVEFORM_POINT_COUNT = 100;
 
+let sharedAudioContext: AudioContext | null = null;
+
+function getSharedAudioContext(): AudioContext {
+  if (!sharedAudioContext || sharedAudioContext.state === 'closed') {
+    sharedAudioContext = new AudioContext();
+  }
+  return sharedAudioContext;
+}
+
 // downsample an array of samples to a target count by averaging blocks of samples together
 function downsampleWaveform(samples: number[], targetCount: number): number[] {
   if (samples.length === 0) return Array.from({ length: targetCount }, () => 0);
@@ -86,7 +95,9 @@ export function useVoiceRecorder(options: UseVoiceRecorderOptions = {}): UseVoic
     }
     frameCountRef.current = 0;
     if (audioContextRef.current) {
-      audioContextRef.current.close().catch(() => {});
+      if (audioContextRef.current.state !== 'closed') {
+        audioContextRef.current.suspend().catch(() => {});
+      }
       audioContextRef.current = null;
     }
     analyserRef.current = null;
@@ -188,7 +199,7 @@ export function useVoiceRecorder(options: UseVoiceRecorderOptions = {}): UseVoic
 
   const setupAudioGraph = useCallback(
     (stream: MediaStream) => {
-      const audioContext = new AudioContext();
+      const audioContext = getSharedAudioContext();
       audioContextRef.current = audioContext;
       const source = audioContext.createMediaStreamSource(stream);
       const analyser = audioContext.createAnalyser();
@@ -199,7 +210,9 @@ export function useVoiceRecorder(options: UseVoiceRecorderOptions = {}): UseVoic
       analyserRef.current = analyser;
       dataArrayRef.current = dataArray;
       source.connect(analyser);
-      audioContext.resume().catch(() => {});
+      if (audioContext.state === 'suspended') {
+        audioContext.resume().catch(() => {});
+      }
       animateLevels();
     },
     [animateLevels]
@@ -207,7 +220,7 @@ export function useVoiceRecorder(options: UseVoiceRecorderOptions = {}): UseVoic
 
   const setupPlaybackGraph = useCallback(
     (audio: HTMLAudioElement) => {
-      const audioContext = new AudioContext();
+      const audioContext = getSharedAudioContext();
       audioContextRef.current = audioContext;
       const source = audioContext.createMediaElementSource(audio);
       const analyser = audioContext.createAnalyser();
@@ -219,7 +232,9 @@ export function useVoiceRecorder(options: UseVoiceRecorderOptions = {}): UseVoic
       dataArrayRef.current = dataArray;
       source.connect(analyser);
       analyser.connect(audioContext.destination);
-      audioContext.resume().catch(() => {});
+      if (audioContext.state === 'suspended') {
+        audioContext.resume().catch(() => {});
+      }
       animateLevels();
     },
     [animateLevels]

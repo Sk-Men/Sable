@@ -1,7 +1,23 @@
-import { forwardRef, useCallback, useImperativeHandle, useRef } from 'react';
+import {
+  forwardRef,
+  useCallback,
+  useEffect,
+  useImperativeHandle,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { useVoiceRecorder } from '$plugins/voice-recorder-kit';
 import type { VoiceRecorderStopPayload } from '$plugins/voice-recorder-kit';
-import { Box, Text, color, config, toRem } from 'folds';
+import { mobileOrTablet } from '$utils/user-agent';
+import { Box, Text, IconButton, Icon, Icons } from 'folds';
+import * as css from './AudioMessageRecorder.css';
+
+export type AudioRecordingCompletePayload = {
+  audioBlob: Blob;
+  waveform: number[];
+  audioLength: number;
+};
 
 export type AudioMessageRecorderHandle = {
   stop: () => void;
@@ -9,7 +25,7 @@ export type AudioMessageRecorderHandle = {
 };
 
 type AudioMessageRecorderProps = {
-  onRecordingComplete: (audioBlob: Blob) => void;
+  onRecordingComplete: (payload: AudioRecordingCompletePayload) => void;
   onRequestClose: () => void;
   onWaveformUpdate: (waveform: number[]) => void;
   onAudioLengthUpdate: (length: number) => void;
@@ -21,33 +37,20 @@ function formatTime(seconds: number): string {
   return `${m}:${s.toString().padStart(2, '0')}`;
 }
 
-const KEYFRAMES = `
-@keyframes recDotPulse {
-  0%, 100% { opacity: 1; }
-  50%       { opacity: 0.25; }
-}
-`;
-if (typeof document !== 'undefined') {
-  const styleId = '__audio-recorder-keyframes';
-  if (!document.getElementById(styleId)) {
-    const style = document.createElement('style');
-    style.id = styleId;
-    style.textContent = KEYFRAMES;
-    document.head.appendChild(style);
-  }
-}
-
 export const AudioMessageRecorder = forwardRef<
   AudioMessageRecorderHandle,
   AudioMessageRecorderProps
 >(({ onRecordingComplete, onRequestClose, onWaveformUpdate, onAudioLengthUpdate }, ref) => {
   const isDismissedRef = useRef(false);
-  // Guard against React Strict Mode's double-invoke of the autoStart effect,
-  // which fires onstop with a ~110-byte blob before the user does anything.
   const userRequestedStopRef = useRef(false);
+  const [isCanceling, setIsCanceling] = useState(false);
+  const [isShaking, setIsShaking] = useState(false);
+  const [swipeX, setSwipeX] = useState(0);
+  const [showCancelHint, setShowCancelHint] = useState(false);
+  const [announcedTime, setAnnouncedTime] = useState(0);
+  const touchStartXRef = useRef(0);
+  const isSwipingRef = useRef(false);
 
-  // Keep stable refs for prop callbacks so useVoiceRecorder's internal
-  // useCallbacks never need to be recreated (which would reset the timer).
   const onRecordingCompleteRef = useRef(onRecordingComplete);
   onRecordingCompleteRef.current = onRecordingComplete;
   const onRequestCloseRef = useRef(onRequestClose);
@@ -57,24 +60,24 @@ export const AudioMessageRecorder = forwardRef<
   const onAudioLengthUpdateRef = useRef(onAudioLengthUpdate);
   onAudioLengthUpdateRef.current = onAudioLengthUpdate;
 
-  // Stable stop handler — empty dep array intentional; live values via refs.
-
   const stableOnStop = useCallback((payload: VoiceRecorderStopPayload) => {
     if (!userRequestedStopRef.current) return;
     if (isDismissedRef.current) return;
-    onRecordingCompleteRef.current(payload.audioFile);
+    onRecordingCompleteRef.current({
+      audioBlob: payload.audioFile,
+      waveform: payload.waveform,
+      audioLength: payload.audioLength,
+    });
     onWaveformUpdateRef.current(payload.waveform);
     onAudioLengthUpdateRef.current(payload.audioLength);
   }, []);
-
-  // Stable delete handler — empty dep array intentional; live values via refs.
 
   const stableOnDelete = useCallback(() => {
     isDismissedRef.current = true;
     onRequestCloseRef.current();
   }, []);
 
-  const { levels, seconds, handleStop, handleDelete } = useVoiceRecorder({
+  const { levels, seconds, error, handleStop, handleDelete } = useVoiceRecorder({
     autoStart: true,
     onStop: stableOnStop,
     onDelete: stableOnDelete,
@@ -88,75 +91,140 @@ export const AudioMessageRecorder = forwardRef<
 
   const doCancel = useCallback(() => {
     if (isDismissedRef.current) return;
-    isDismissedRef.current = true;
-    handleDelete();
+    setIsCanceling(true);
+    setTimeout(() => {
+      isDismissedRef.current = true;
+      handleDelete();
+    }, 180);
   }, [handleDelete]);
 
   useImperativeHandle(ref, () => ({ stop: doStop, cancel: doCancel }), [doStop, doCancel]);
 
-  const BAR_COUNT = 28;
-  const step = Math.max(1, levels.length / BAR_COUNT);
-  const bars = Array.from(
-    { length: BAR_COUNT },
-    (_, i) => levels[Math.min(Math.floor(i * step), levels.length - 1)] ?? 0.15
+  useEffect(() => {
+    if (seconds > 0 && seconds % 30 === 0 && seconds !== announcedTime) {
+      setAnnouncedTime(seconds);
+    }
+  }, [seconds, announcedTime]);
+
+  const CANCEL_THRESHOLD = 80;
+
+  const handlePointerDown = useCallback((e: React.PointerEvent) => {
+    if (!mobileOrTablet()) return;
+    touchStartXRef.current = e.clientX;
+    isSwipingRef.current = true;
+    (e.target as HTMLElement).setPointerCapture(e.pointerId);
+  }, []);
+
+  const handlePointerMove = useCallback((e: React.PointerEvent) => {
+    if (!isSwipingRef.current || !mobileOrTablet()) return;
+    const deltaX = e.clientX - touchStartXRef.current;
+    if (deltaX < 0) {
+      setSwipeX(Math.max(deltaX, -CANCEL_THRESHOLD - 20));
+      setShowCancelHint(deltaX < -30);
+    } else {
+      setSwipeX(0);
+      setShowCancelHint(false);
+    }
+  }, []);
+
+  const handlePointerUp = useCallback(
+    (e: React.PointerEvent) => {
+      if (!isSwipingRef.current || !mobileOrTablet()) return;
+      isSwipingRef.current = false;
+      (e.target as HTMLElement).releasePointerCapture(e.pointerId);
+
+      const deltaX = e.clientX - touchStartXRef.current;
+      if (deltaX < -CANCEL_THRESHOLD) {
+        doCancel();
+      } else if (deltaX < -30) {
+        setIsShaking(true);
+        setTimeout(() => setIsShaking(false), 300);
+      }
+      setSwipeX(0);
+      setShowCancelHint(false);
+    },
+    [doCancel]
   );
 
-  return (
-    <Box
-      grow="Yes"
-      alignItems="Center"
-      gap="200"
-      style={{ minWidth: 0, overflow: 'hidden', padding: `0 ${config.space.S200}` }}
-    >
-      {/* Pulsing red dot */}
-      <div
-        aria-hidden
-        style={{
-          width: 7,
-          height: 7,
-          borderRadius: '50%',
-          backgroundColor: color.Critical.Main,
-          flexShrink: 0,
-          animation: 'recDotPulse 1.4s ease-in-out infinite',
-        }}
-      />
+  const BAR_COUNT = 28;
+  const bars = useMemo(() => {
+    const step = Math.max(1, levels.length / BAR_COUNT);
+    return Array.from(
+      { length: BAR_COUNT },
+      (_, i) => levels[Math.min(Math.floor(i * step), levels.length - 1)] ?? 0.15
+    );
+  }, [levels]);
 
-      {/* Live waveform bars */}
+  const containerClassName = [
+    css.Container,
+    isCanceling ? css.ContainerCanceling : null,
+    isShaking ? css.ContainerShake : null,
+  ]
+    .filter(Boolean)
+    .join(' ');
+
+  return (
+    <>
+      {error && (
+        <Text size="T200" style={{ color: 'var(--color-critical-main)' }}>
+          {error}
+        </Text>
+      )}
       <Box
         grow="Yes"
         alignItems="Center"
-        gap="25"
-        style={{ height: 22, overflow: 'hidden', minWidth: 0 }}
+        gap="200"
+        className={containerClassName}
+        style={{ transform: swipeX !== 0 ? `translateX(${swipeX}px)` : undefined }}
+        onPointerDown={handlePointerDown}
+        onPointerMove={handlePointerMove}
+        onPointerUp={handlePointerUp}
+        onPointerCancel={handlePointerUp}
       >
-        {bars.map((level, i) => (
-          <div
-            // eslint-disable-next-line react/no-array-index-key
-            key={i}
-            style={{
-              width: 2,
-              height: Math.max(3, Math.round(level * 20)),
-              borderRadius: 1,
-              backgroundColor: color.Primary.Main,
-              transition: 'height 70ms ease-out',
-              flexShrink: 0,
-            }}
-          />
-        ))}
-      </Box>
+        <div aria-hidden className={css.RecDot} />
 
-      {/* Timer */}
-      <Text
-        size="T200"
-        style={{
-          fontVariantNumeric: 'tabular-nums',
-          color: color.Critical.Main,
-          minWidth: toRem(28),
-          flexShrink: 0,
-          fontWeight: 600,
-        }}
-      >
-        {formatTime(seconds)}
-      </Text>
-    </Box>
+        <Box grow="Yes" alignItems="Center" gap="100" className={css.WaveformContainer}>
+          {bars.map((level, i) => (
+            <div
+              // eslint-disable-next-line react/no-array-index-key
+              key={i}
+              className={css.WaveformBar}
+              style={{ height: Math.max(3, Math.round(level * 20)) }}
+            />
+          ))}
+        </Box>
+
+        <Text size="T200" className={css.Timer} aria-live="polite" aria-atomic="true">
+          {formatTime(seconds)}
+        </Text>
+        {announcedTime > 0 && announcedTime === seconds && (
+          <span className={css.SrOnly} aria-live="polite">
+            Recording duration: {formatTime(announcedTime)}
+          </span>
+        )}
+
+        <IconButton
+          variant="SurfaceVariant"
+          size="400"
+          radii="300"
+          title="Cancel recording"
+          aria-label="Cancel recording"
+          onClick={doCancel}
+          style={{ flexShrink: 0 }}
+        >
+          <Icon src={Icons.Cross} size="50" />
+        </IconButton>
+
+        {showCancelHint && (
+          <div
+            role="status"
+            aria-live="polite"
+            className={[css.CancelHint, css.CancelHintVisible].join(' ')}
+          >
+            Release to cancel
+          </div>
+        )}
+      </Box>
+    </>
   );
 });

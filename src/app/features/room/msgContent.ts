@@ -148,13 +148,9 @@ export type AudioMsgContent = IContent & {
   audioLength?: number;
 };
 
-export const getAudioMsgContent = (
-  item: TUploadItem,
-  mxc: string,
-  waveform?: number[],
-  audioLength?: number
-): AudioMsgContent => {
-  const { file, encInfo } = item;
+export const getAudioMsgContent = (item: TUploadItem, mxc: string): AudioMsgContent => {
+  const { file, encInfo, metadata } = item;
+  const { waveform, audioDuration, markedAsSpoiler } = metadata;
   const content: IContent = {
     msgtype: MsgType.Audio,
     filename: file.name,
@@ -166,8 +162,8 @@ export const getAudioMsgContent = (
       size: file.size,
     },
     'org.matrix.msc1767.audio': {
-      waveform: waveform?.map((v) => Math.round(v * 1024)), // scale waveform values to fit in 10 bits (0-1024) for more efficient storage, as per MSC1767 spec
-      duration: item.metadata.markedAsSpoiler || !audioLength ? 0 : audioLength * 1000, // if marked as spoiler, set duration to 0 to hide it in clients that support msc1767
+      waveform: waveform?.map((v) => Math.round(v * 1024)),
+      duration: markedAsSpoiler || !audioDuration ? 0 : audioDuration * 1000,
     },
   };
   if (encInfo) {
