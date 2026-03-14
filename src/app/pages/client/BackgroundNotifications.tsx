@@ -535,9 +535,10 @@ export function BackgroundNotifications() {
     });
 
     return () => {
+      const cleanupMap = clientCleanupRef.current;
       current.forEach((mx, userId) => {
-        clientCleanupRef.current.get(userId)?.();
-        clientCleanupRef.current.delete(userId);
+        cleanupMap.get(userId)?.();
+        cleanupMap.delete(userId);
         stopClient(mx);
       });
       current.clear();

@@ -354,9 +354,8 @@ const disposeSlidingSync = (mx: MatrixClient): void => {
   slidingSyncByClient.delete(mx);
 };
 
-export const getSlidingSyncManager = (mx: MatrixClient): SlidingSyncManager | undefined => {
-  return slidingSyncByClient.get(mx);
-};
+export const getSlidingSyncManager = (mx: MatrixClient): SlidingSyncManager | undefined =>
+  slidingSyncByClient.get(mx);
 
 export const startClient = async (mx: MatrixClient, config?: StartClientConfig): Promise<void> => {
   debugLog.info('sync', 'Starting Matrix client', { userId: mx.getUserId() });

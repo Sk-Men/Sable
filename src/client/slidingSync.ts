@@ -368,7 +368,7 @@ export class SlidingSyncManager {
 
     this.onLifecycle = (state, resp, err) => {
       const syncStartTime = performance.now();
-      this.syncCount++;
+      this.syncCount += 1;
 
       debugLog.info('sync', `Sliding sync lifecycle: ${state} (cycle #${this.syncCount})`, {
         state,

@@ -717,7 +717,8 @@ export function RoomTimeline({
     return () => {
       debugLog.info('timeline', 'Timeline unmounted', { roomId: room.roomId });
     };
-  }, [room.roomId, eventId]); // Only log on mount/unmount
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [room.roomId, eventId]); // Only log on mount/unmount - intentionally capturing initial values
 
   // Log live timeline linking state changes
   useEffect(() => {
@@ -806,7 +807,7 @@ export function RoomTimeline({
       setTimeline(getInitialTimeline(room));
       scrollToBottomRef.current.count += 1;
       scrollToBottomRef.current.smooth = false;
-    }, [alive, room])
+    }, [alive, room, room.roomId])
   );
 
   useLiveEventArrive(
