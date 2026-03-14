@@ -424,13 +424,21 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
 
       await Promise.all(
         contents.map((content) =>
-          mx.sendMessage(roomId, content as any)
+          mx
+            .sendMessage(roomId, content as any)
             .then((res) => {
-              debugLog.info('message', 'Uploaded file message sent', { roomId, eventId: res.event_id, msgtype: content.msgtype });
+              debugLog.info('message', 'Uploaded file message sent', {
+                roomId,
+                eventId: res.event_id,
+                msgtype: content.msgtype,
+              });
               return res;
             })
             .catch((error: unknown) => {
-              debugLog.error('message', 'Failed to send uploaded file message', { roomId, error: error instanceof Error ? error.message : String(error) });
+              debugLog.error('message', 'Failed to send uploaded file message', {
+                roomId,
+                error: error instanceof Error ? error.message : String(error),
+              });
               log.error('failed to send uploaded message', { roomId }, error);
               throw error;
             })
@@ -577,14 +585,20 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
       } else if (editingScheduledDelayId) {
         try {
           await cancelDelayedEvent(mx, editingScheduledDelayId);
-          debugLog.info('message', 'Sending message after cancelling scheduled event', { roomId, scheduledDelayId: editingScheduledDelayId });
+          debugLog.info('message', 'Sending message after cancelling scheduled event', {
+            roomId,
+            scheduledDelayId: editingScheduledDelayId,
+          });
           const res = await mx.sendMessage(roomId, content as any);
           debugLog.info('message', 'Message sent successfully', { roomId, eventId: res.event_id });
           invalidate();
           setEditingScheduledDelayId(null);
           resetInput();
         } catch (error) {
-          debugLog.error('message', 'Failed to send message after cancelling scheduled event', { roomId, error: error instanceof Error ? error.message : String(error) });
+          debugLog.error('message', 'Failed to send message after cancelling scheduled event', {
+            roomId,
+            error: error instanceof Error ? error.message : String(error),
+          });
           // Cancel failed — leave state intact for retry
         }
       } else {
@@ -592,10 +606,16 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
         debugLog.info('message', 'Sending message', { roomId, msgtype: (content as any).msgtype });
         mx.sendMessage(roomId, content as any)
           .then((res) => {
-            debugLog.info('message', 'Message sent successfully', { roomId, eventId: res.event_id });
+            debugLog.info('message', 'Message sent successfully', {
+              roomId,
+              eventId: res.event_id,
+            });
           })
           .catch((error: unknown) => {
-            debugLog.error('message', 'Failed to send message', { roomId, error: error instanceof Error ? error.message : String(error) });
+            debugLog.error('message', 'Failed to send message', {
+              roomId,
+              error: error instanceof Error ? error.message : String(error),
+            });
             log.error('failed to send message', { roomId }, error);
           });
       }

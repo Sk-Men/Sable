@@ -131,7 +131,7 @@ export class CallEmbed {
     initialControlState?: CallControlState
   ) {
     debugLog.info('call', 'Initializing call embed', { roomId: room.roomId });
-    
+
     const iframe = CallEmbed.getIframe(
       widget.getCompleteUrl({ currentUserId: mx.getSafeUserId() })
     );

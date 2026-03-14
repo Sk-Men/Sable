@@ -152,7 +152,10 @@ const waitForClientReady = (mx: MatrixClient, timeoutMs: number): Promise<void> 
     let timer = 0;
     let finish = () => {};
     const onSync = (state: string) => {
-      debugLog.info('sync', `Sync state changed: ${state}`, { state, ready: isClientReadyForUi(state) });
+      debugLog.info('sync', `Sync state changed: ${state}`, {
+        state,
+        ready: isClientReadyForUi(state),
+      });
       if (isClientReadyForUi(state)) finish();
     };
 
@@ -266,7 +269,10 @@ const buildClient = async (session: Session): Promise<MatrixClient> => {
 
 export const initClient = async (session: Session): Promise<MatrixClient> => {
   const storeName = getSessionStoreName(session);
-  debugLog.info('sync', 'Initializing Matrix client', { userId: session.userId, baseUrl: session.baseUrl });
+  debugLog.info('sync', 'Initializing Matrix client', {
+    userId: session.userId,
+    baseUrl: session.baseUrl,
+  });
 
   const isMismatch = (err: unknown): boolean => {
     const msg = err instanceof Error ? err.message : String(err);
@@ -352,11 +358,7 @@ export const getSlidingSyncManager = (mx: MatrixClient): SlidingSyncManager | un
   return slidingSyncByClient.get(mx);
 };
 
-
-export const startClient = async (
-  mx: MatrixClient,
-  config?: StartClientConfig
-): Promise<void> => {
+export const startClient = async (mx: MatrixClient, config?: StartClientConfig): Promise<void> => {
   debugLog.info('sync', 'Starting Matrix client', { userId: mx.getUserId() });
   disposeSlidingSync(mx);
   const slidingConfig = config?.slidingSync;

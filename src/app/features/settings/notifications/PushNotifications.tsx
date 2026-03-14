@@ -1,6 +1,6 @@
 import { MatrixClient } from '$types/matrix-sdk';
-import { ClientConfig } from '../../../hooks/useClientConfig';
 import { createDebugLogger } from '$utils/debugLogger';
+import { ClientConfig } from '../../../hooks/useClientConfig';
 
 const debugLog = createDebugLogger('PushNotifications');
 
@@ -20,7 +20,9 @@ export async function requestBrowserNotificationPermission(): Promise<Notificati
     debugLog.info('notification', 'Notification permission result', { permission });
     return permission;
   } catch (error) {
-    debugLog.error('notification', 'Failed to request notification permission', { error: error instanceof Error ? error.message : String(error) });
+    debugLog.error('notification', 'Failed to request notification permission', {
+      error: error instanceof Error ? error.message : String(error),
+    });
     return 'denied';
   }
 }
@@ -31,7 +33,10 @@ export async function enablePushNotifications(
   pushSubscriptionAtom: PushSubscriptionState
 ): Promise<void> {
   if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
-    debugLog.error('notification', 'Push messaging not supported - missing serviceWorker or PushManager');
+    debugLog.error(
+      'notification',
+      'Push messaging not supported - missing serviceWorker or PushManager'
+    );
     throw new Error('Push messaging is not supported in this browser.');
   }
   debugLog.info('notification', 'Enabling push notifications');
@@ -43,7 +48,9 @@ export async function enablePushNotifications(
      only when necessary. This prevents us from needing an external call to get back the web push info.
   */
   if (currentBrowserSub && pushSubAtom && currentBrowserSub.endpoint === pushSubAtom.endpoint) {
-    debugLog.info('notification', 'Push subscription already exists and is valid - reusing', { endpoint: pushSubAtom.endpoint });
+    debugLog.info('notification', 'Push subscription already exists and is valid - reusing', {
+      endpoint: pushSubAtom.endpoint,
+    });
     const { keys } = pushSubAtom;
     if (!keys?.p256dh || !keys.auth) return;
     const pusherData = {
@@ -83,7 +90,9 @@ export async function enablePushNotifications(
     applicationServerKey: clientConfig.pushNotificationDetails?.vapidPublicKey,
   });
 
-  debugLog.info('notification', 'Push subscription created successfully', { endpoint: newSubscription.endpoint });
+  debugLog.info('notification', 'Push subscription created successfully', {
+    endpoint: newSubscription.endpoint,
+  });
   setPushSubscription(newSubscription);
 
   const subJson = newSubscription.toJSON();

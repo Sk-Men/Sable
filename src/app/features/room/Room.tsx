@@ -15,11 +15,11 @@ import { useRoomMembers } from '$hooks/useRoomMembers';
 import { CallView } from '$features/call/CallView';
 import { WidgetsDrawer } from '$features/widgets/WidgetsDrawer';
 import { callChatAtom } from '$state/callEmbed';
+import { createDebugLogger } from '$utils/debugLogger';
 import { RoomViewHeader } from './RoomViewHeader';
 import { MembersDrawer } from './MembersDrawer';
 import { RoomView } from './RoomView';
 import { CallChatView } from './CallChatView';
-import { createDebugLogger } from '$utils/debugLogger';
 
 const debugLog = createDebugLogger('Room');
 
@@ -47,7 +47,10 @@ export function Room() {
   }, [isDrawer, room.roomId]);
 
   useEffect(() => {
-    debugLog.debug('ui', 'Widgets drawer state changed', { roomId: room.roomId, isOpen: isWidgetDrawerOpen });
+    debugLog.debug('ui', 'Widgets drawer state changed', {
+      roomId: room.roomId,
+      isOpen: isWidgetDrawerOpen,
+    });
   }, [isWidgetDrawerOpen, room.roomId]);
   const powerLevels = usePowerLevels(room);
   const members = useRoomMembers(mx, room.roomId);

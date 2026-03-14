@@ -107,7 +107,10 @@ export const login = async (
       });
     }
 
-    debugLog.error('general', 'Login failed - unknown error', { error: err.message, httpStatus: err.httpStatus });
+    debugLog.error('general', 'Login failed - unknown error', {
+      error: err.message,
+      httpStatus: err.httpStatus,
+    });
     throw new MatrixError({
       errcode: LoginError.Unknown,
     });

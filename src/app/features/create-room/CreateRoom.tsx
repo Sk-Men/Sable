@@ -41,8 +41,8 @@ import {
 import { RoomType } from '$types/matrix/room';
 import { CreateRoomTypeSelector } from '$components/create-room/CreateRoomTypeSelector';
 import { getRoomIconSrc } from '$utils/room';
-import { ErrorCode } from '../../cs-errorcode';
 import { createDebugLogger } from '$utils/debugLogger';
+import { ErrorCode } from '../../cs-errorcode';
 
 const debugLog = createDebugLogger('CreateRoom');
 

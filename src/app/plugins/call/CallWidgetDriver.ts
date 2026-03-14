@@ -71,7 +71,11 @@ export class CallWidgetDriver extends WidgetDriver {
       throw new Error('Not in a room or not attached to a client');
     }
 
-    debugLog.info('call', 'Sending call event', { eventType, roomId, hasStateKey: stateKey !== null });
+    debugLog.info('call', 'Sending call event', {
+      eventType,
+      roomId,
+      hasStateKey: stateKey !== null,
+    });
 
     let r: { event_id: string } | null;
     if (typeof stateKey === 'string') {

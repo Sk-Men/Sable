@@ -3,11 +3,7 @@ import { useAtom, useAtomValue, useSetAtom } from 'jotai';
 import { Box, Text, Button, color, config, Badge, Menu, MenuItem, PopOut, RectCords } from 'folds';
 import { SequenceCard } from '$components/sequence-card';
 
-import {
-  debugLoggerEnabledAtom,
-  debugLogsAtom,
-  clearDebugLogsAtom,
-} from '$state/debugLogger';
+import { debugLoggerEnabledAtom, debugLogsAtom, clearDebugLogsAtom } from '$state/debugLogger';
 import { LogEntry, getDebugLogger, LogLevel, LogCategory } from '$utils/debugLogger';
 import { SequenceCardStyle } from '$features/settings/styles.css';
 
@@ -225,9 +221,10 @@ export function DebugLogViewer() {
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      const filterSuffix = filtered && (filterLevel !== 'all' || filterCategory !== 'all')
-        ? `-${filterCategory !== 'all' ? filterCategory : 'all'}-${filterLevel !== 'all' ? filterLevel : 'all'}`
-        : '';
+      const filterSuffix =
+        filtered && (filterLevel !== 'all' || filterCategory !== 'all')
+          ? `-${filterCategory !== 'all' ? filterCategory : 'all'}-${filterLevel !== 'all' ? filterLevel : 'all'}`
+          : '';
       a.download = `sable-debug-logs${filterSuffix}-${new Date().toISOString()}.json`;
       document.body.appendChild(a);
       a.click();
@@ -422,9 +419,7 @@ export function DebugLogViewer() {
               size="300"
               radii="300"
             >
-              <Text size="B300">
-                Category: {filterCategory === 'all' ? 'All' : filterCategory}
-              </Text>
+              <Text size="B300">Category: {filterCategory === 'all' ? 'All' : filterCategory}</Text>
             </Button>
           </PopOut>
 
@@ -501,9 +496,7 @@ export function DebugLogViewer() {
               size="300"
               radii="300"
             >
-              <Text size="B300">
-                Level: {filterLevel === 'all' ? 'All' : filterLevel}
-              </Text>
+              <Text size="B300">Level: {filterLevel === 'all' ? 'All' : filterLevel}</Text>
             </Button>
           </PopOut>
 
@@ -551,9 +544,7 @@ export function DebugLogViewer() {
             onClick={() => handleExportLogs(true)}
             disabled={filteredLogs.length === 0}
           >
-            <Text size="B300">
-              Export Filtered ({filteredLogs.length})
-            </Text>
+            <Text size="B300">Export Filtered ({filteredLogs.length})</Text>
           </Button>
           <Button
             variant="Secondary"

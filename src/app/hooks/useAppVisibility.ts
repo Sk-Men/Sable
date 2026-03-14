@@ -21,7 +21,11 @@ export function useAppVisibility(mx: MatrixClient | undefined) {
   useEffect(() => {
     const handleVisibilityChange = () => {
       const isVisible = document.visibilityState === 'visible';
-      debugLog.info('general', `App visibility changed: ${isVisible ? 'visible (foreground)' : 'hidden (background)'}`, { visibilityState: document.visibilityState });
+      debugLog.info(
+        'general',
+        `App visibility changed: ${isVisible ? 'visible (foreground)' : 'hidden (background)'}`,
+        { visibilityState: document.visibilityState }
+      );
       appEvents.onVisibilityChange?.(isVisible);
       if (!isVisible) {
         appEvents.onVisibilityHidden?.();

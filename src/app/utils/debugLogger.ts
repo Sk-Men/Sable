@@ -31,8 +31,11 @@ type LogListener = (entry: LogEntry) => void;
 
 class DebugLoggerService {
   private logs: LogEntry[] = [];
+
   private maxLogs = 1000; // Circular buffer size
+
   private enabled = false;
+
   private listeners: Set<LogListener> = new Set();
 
   constructor() {
@@ -107,13 +110,11 @@ class DebugLoggerService {
     return [...this.logs];
   }
 
-  public getFilteredLogs(
-    filters?: {
-      level?: LogLevel;
-      category?: LogCategory;
-      since?: number;
-    }
-  ): LogEntry[] {
+  public getFilteredLogs(filters?: {
+    level?: LogLevel;
+    category?: LogCategory;
+    since?: number;
+  }): LogEntry[] {
     let filtered = [...this.logs];
 
     if (filters?.level) {
@@ -125,7 +126,7 @@ class DebugLoggerService {
     }
 
     if (filters?.since) {
-      const since = filters.since;
+      const { since } = filters;
       filtered = filtered.filter((log) => log.timestamp >= since);
     }
 
