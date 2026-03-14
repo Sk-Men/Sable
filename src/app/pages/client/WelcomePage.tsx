@@ -72,15 +72,6 @@ export function WelcomePage() {
                   Features
                 </Text>
               </Button>
-              <Button
-                fill="Soft"
-                onClick={() => navigate(THREAD_MOCKUP_PATH)}
-                before={<Icon size="200" src={Icons.Thread} />}
-              >
-                <Text as="span" size="B400" truncate>
-                  Thread UI Mockups
-                </Text>
-              </Button>
             </Box>
           </PageHero>
         </PageHeroSection>
