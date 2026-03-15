@@ -261,6 +261,7 @@ export const VideoContent = as<'div', VideoContentProps>(
                 radii="300"
                 fill="Soft"
                 variant="Secondary"
+                title={blurred ? 'Reveal Image' : 'Hide Image'}
                 onClick={(e) => {
                   e.preventDefault();
                   if (srcState.status === AsyncStatus.Idle) {

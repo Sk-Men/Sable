@@ -291,6 +291,7 @@ export const ImageContent = as<'div', ImageContentProps>(
                 radii="300"
                 fill="Soft"
                 variant="Secondary"
+                title={blurred ? 'Reveal Image' : 'Hide Image'}
                 onClick={(e) => {
                   e.preventDefault();
                   if (srcState.status === AsyncStatus.Idle) {
