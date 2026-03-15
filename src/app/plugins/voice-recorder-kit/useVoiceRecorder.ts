@@ -32,8 +32,20 @@ function downsampleWaveform(samples: number[], targetCount: number): number[] {
   return result;
 }
 
+/**
+ * Custom React hook for recording voice messages using the MediaRecorder API.
+ * It manages the recording state, audio data, and provides functions to control the recording process (start, pause, stop, resume, play, etc.).
+ * It also handles audio visualization by analyzing the audio stream and generating levels for a visualizer.
+ * The hook supports multiple audio codecs and generates appropriate file extensions based on the supported codec.
+ */
 export function useVoiceRecorder(options: UseVoiceRecorderOptions = {}): UseVoiceRecorderReturn {
   const { autoStart = true, onStop, onDelete } = options;
+
+  /**
+   * The audio codec we will use
+   * we will choose depending on the browser support
+   */
+  const audioCodec = getSupportedAudioCodec();
 
   const [isRecording, setIsRecording] = useState(false);
   const [isStopped, setIsStopped] = useState(false);
@@ -68,9 +80,17 @@ export function useVoiceRecorder(options: UseVoiceRecorderOptions = {}): UseVoic
   const isRestartingRef = useRef(false);
   const isTemporaryStopRef = useRef(false);
   const temporaryPreviewUrlRef = useRef<string | null>(null);
-  // waveform samples collected during recording, used to generate waveform on stop. We collect all samples and downsample at the end to get a more accurate waveform, especially for short recordings. We use a ref to avoid causing re-renders on every sample.
+  /**
+   * waveform samples collected during recording, used to generate waveform on stop.
+   * We collect all samples and downsample at the end to get a more accurate waveform, especially for short recordings.
+   * We use a ref to avoid causing re-renders on every sample.
+   */
   const waveformSamplesRef = useRef<number[]>([]);
-  // Flag to indicate whether we should be collecting waveform samples. We need this because there can be a short delay between starting recording and the audio graph being set up, during which we might get some samples that we don't want to include in the waveform.
+  /**
+   * Flag to indicate whether we should be collecting waveform samples.
+   * We need this because there can be a short delay between starting recording
+   * and the audio graph being set up, during which we might get some samples that we don't want to include in the waveform.
+   */
   const isCollectingWaveformRef = useRef(false);
 
   const cleanupStream = useCallback(() => {
@@ -456,7 +476,7 @@ export function useVoiceRecorder(options: UseVoiceRecorderOptions = {}): UseVoic
         chunksRef.current.length > 0 ? chunksRef.current : previousChunksRef.current;
 
       if (allChunks.length > 0) {
-        const blob = new Blob(allChunks, { type: 'audio/ogg' });
+        const blob = new Blob(allChunks, { type: getSupportedAudioCodec() || 'audio/webm' });
         urlToPlay = URL.createObjectURL(blob);
         temporaryPreviewUrlRef.current = urlToPlay;
       }
@@ -602,7 +622,7 @@ export function useVoiceRecorder(options: UseVoiceRecorderOptions = {}): UseVoic
 
         if (chunksRef.current.length === 0) return;
 
-        const blob = new Blob(chunksRef.current, { type: 'audio/webm' });
+        const blob = new Blob(chunksRef.current, { type: audioCodec || 'audio/webm' });
         if (lastUrlRef.current) {
           URL.revokeObjectURL(lastUrlRef.current);
         }
@@ -610,7 +630,11 @@ export function useVoiceRecorder(options: UseVoiceRecorderOptions = {}): UseVoic
         lastUrlRef.current = url;
         setAudioUrl(url);
 
-        const file = new File([blob], `voice-${Date.now()}.webm`, { type: 'audio/webm' });
+        const file = new File(
+          [blob],
+          `voice-${Date.now()}.${getSupportedAudioExtension(blob.type)}`,
+          { type: blob.type }
+        );
         setAudioFile(file);
 
         const waveformData = downsampleWaveform(waveformSamplesRef.current, WAVEFORM_POINT_COUNT);
@@ -649,6 +673,7 @@ export function useVoiceRecorder(options: UseVoiceRecorderOptions = {}): UseVoic
       isResumingRef.current = false;
     }
   }, [
+    audioCodec,
     cleanupAudioContext,
     cleanupStream,
     emitStopPayload,
