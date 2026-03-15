@@ -8,7 +8,6 @@ import { useMatrixClient } from '$hooks/useMatrixClient';
 import { mDirectAtom } from '$state/mDirectList';
 import { allRoomsAtom } from '$state/room-list/roomList';
 import { roomToUnreadAtom } from '$state/room/roomToUnread';
-import { useSidebarDirectRoomIds } from './useSidebarDirectRoomIds';
 import { getDirectPath, joinPathComponent } from '$pages/pathUtils';
 import { useRoomsUnread } from '$state/hooks/unread';
 import {
@@ -26,6 +25,7 @@ import { stopPropagation } from '$utils/keyboard';
 import { settingsAtom } from '$state/settings';
 import { useSetting } from '$state/hooks/settings';
 import { useDirectRooms } from '$pages/client/direct/useDirectRooms';
+import { useSidebarDirectRoomIds } from './useSidebarDirectRoomIds';
 
 type DirectMenuProps = {
   requestClose: () => void;

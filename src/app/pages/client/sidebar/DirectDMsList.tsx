@@ -23,6 +23,7 @@ import { useSelectedRoom } from '$hooks/router/useSelectedRoom';
 import { useGroupDMMembers } from '$hooks/useGroupDMMembers';
 import { useSidebarDirectRoomIds } from './useSidebarDirectRoomIds';
 import * as css from './DirectDMsList.css';
+
 const MAX_GROUP_MEMBERS = 3;
 
 type DMItemProps = {
