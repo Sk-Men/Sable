@@ -793,6 +793,10 @@ export function RoomTimeline({
   const imagePackRooms: Room[] = useImagePackRooms(room.roomId, roomToParents);
 
   const [unreadInfo, setUnreadInfo] = useState(() => getRoomUnreadInfo(room, true));
+  // Stable ref so listeners that only need to *read* unreadInfo don't force
+  // effect re-registration (and listener churn) every time a new message arrives.
+  const unreadInfoRef = useRef(unreadInfo);
+  unreadInfoRef.current = unreadInfo;
   const readUptoEventIdRef = useRef<string>();
   if (unreadInfo) {
     readUptoEventIdRef.current = unreadInfo.readUptoEventId;
@@ -991,14 +995,17 @@ export function RoomTimeline({
         // otherwise we update timeline without paginating
         // so timeline can be updated with evt like: edits, reactions etc
         if (atBottomRef.current && atLiveEndRef.current) {
-          if (document.hasFocus() && (!unreadInfo || mEvt.getSender() === mx.getUserId())) {
+          if (
+            document.hasFocus() &&
+            (!unreadInfoRef.current || mEvt.getSender() === mx.getUserId())
+          ) {
             // Check if the document is in focus (user is actively viewing the app),
             // and either there are no unread messages or the latest message is from the current user.
             // If either condition is met, trigger the markAsRead function to send a read receipt.
             requestAnimationFrame(() => markAsRead(mx, mEvt.getRoomId()!, hideReads));
           }
 
-          if (!document.hasFocus() && !unreadInfo) {
+          if (!document.hasFocus() && !unreadInfoRef.current) {
             setUnreadInfo(getRoomUnreadInfo(room));
           }
 
@@ -1017,11 +1024,11 @@ export function RoomTimeline({
           return;
         }
         setTimeline((ct) => ({ ...ct }));
-        if (!unreadInfo) {
+        if (!unreadInfoRef.current) {
           setUnreadInfo(getRoomUnreadInfo(room));
         }
       },
-      [mx, room, unreadInfo, hideReads]
+      [mx, room, hideReads]
     )
   );
 
@@ -1032,7 +1039,7 @@ export function RoomTimeline({
     ) => {
       if (eventRoom?.roomId !== room.roomId) return;
       setTimeline((ct) => ({ ...ct }));
-      if (!unreadInfo) {
+      if (!unreadInfoRef.current) {
         setUnreadInfo(getRoomUnreadInfo(room));
       }
     };
@@ -1041,7 +1048,7 @@ export function RoomTimeline({
     return () => {
       room.removeListener(RoomEvent.LocalEchoUpdated, handleLocalEchoUpdated);
     };
-  }, [room, unreadInfo, setTimeline, setUnreadInfo]);
+  }, [room, setTimeline, setUnreadInfo]);
 
   const handleOpenEvent = useCallback(
     async (
