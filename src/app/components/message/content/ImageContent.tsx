@@ -130,7 +130,6 @@ export const ImageContent = as<'div', ImageContentProps>(
         onPointerEnter={() => setIsHovered(true)}
         onPointerLeave={() => setIsHovered(false)}
       >
-        {' '}
         {srcState.status === AsyncStatus.Success && (
           <Overlay open={viewer} backdrop={<OverlayBackdrop />}>
             <OverlayCenter>
@@ -251,7 +250,12 @@ export const ImageContent = as<'div', ImageContentProps>(
             </Box>
           )}
         {(error || srcState.status === AsyncStatus.Error) && (
-          <Box className={css.AbsoluteContainer} alignItems="Center" justifyContent="Center">
+          <Box
+            className={css.AbsoluteContainer}
+            alignItems="Center"
+            justifyContent="Center"
+            onClick={handleRetry}
+          >
             <TooltipProvider
               tooltip={
                 <Tooltip variant="Critical">
@@ -285,7 +289,7 @@ export const ImageContent = as<'div', ImageContentProps>(
                 size="300"
                 after={<Icon size="200" src={blurred ? Icons.Eye : Icons.EyeBlind} />}
                 radii="300"
-                fill="None"
+                fill="Soft"
                 variant="Secondary"
                 onClick={(e) => {
                   e.preventDefault();
