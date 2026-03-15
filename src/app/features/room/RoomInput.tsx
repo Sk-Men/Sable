@@ -209,7 +209,7 @@ const getReplyContent = (replyDraft: IReplyDraft | undefined, room?: Room): IEve
     } else {
       // Regular thread message — per spec, include fallback m.in_reply_to pointing to the
       // most recent thread message so unthreaded clients can display it as a reply chain
-      const threadRootId = replyDraft.relation.event_id;
+      const threadRootId = replyDraft.relation.event_id ?? replyDraft.eventId;
       const latestEventId = room ? getLatestThreadEventId(room, threadRootId) : threadRootId;
       relatesTo['m.in_reply_to'] = {
         event_id: latestEventId,
