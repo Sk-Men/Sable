@@ -1,17 +1,25 @@
 /** Codecs to test for */
 const codecs = [
-  'audio/ogg;codecs=speex',
+  // silly webkit-prefixed codecs for Safari support, because safari, apparently lies when asked what it supports
+  'audio/mp4;codecs=mp4a.40.2',
+  'audio/mp4;codecs=mp4a.40.5',
+  'audio/aac',
+  // Firefox
   'audio/ogg;codecs=opus',
   'audio/ogg;codecs=vorbis',
   'audio/ogg',
+  // Chromium / Firefox
   'audio/webm;codecs=opus',
-  'audio/webm;codecs=vorbis',
   'audio/webm',
+  // fallback
+  'audio/wav;codecs=1',
+  'audio/wav',
+  // other Codecs
+  'audio/ogg;codecs=speex',
+  'audio/webm;codecs=vorbis',
   'audio/mp4;codecs=aac',
   'audio/mp4',
   'audio/mpeg',
-  'audio/wav;codecs=1',
-  'audio/wav',
 ];
 
 /**
@@ -19,6 +27,11 @@ const codecs = [
  * If no supported codec is found, it returns null.
  */
 export function getSupportedAudioCodec(): string | null {
+  const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+
+  if (isSafari && MediaRecorder.isTypeSupported('audio/mp4')) {
+    return 'audio/mp4';
+  }
   const supportedCodec = codecs.find((codec) => MediaRecorder.isTypeSupported(codec));
   return supportedCodec || null;
 }
@@ -39,12 +52,18 @@ export function getSupportedAudioExtension(codec: string): string {
       return 'webm';
     case 'audio/mp4':
     case 'audio/mp4;codecs=aac':
-      return 'mp4';
+      return 'm4a';
     case 'audio/mpeg':
       return 'mp3';
     case 'audio/wav;codecs=1':
     case 'audio/wav':
       return 'wav';
+    // silly webkit stuff
+    case 'audio/mp4;codecs=mp4a.40.2':
+    case 'audio/mp4;codecs=mp4a.40.5':
+      return 'm4a';
+    case 'audio/aac':
+      return 'aac';
     default:
       return 'dat'; // default extension for unknown codecs
   }
