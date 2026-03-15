@@ -1,4 +1,4 @@
-import { MouseEventHandler, forwardRef, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { MouseEventHandler, ReactSVGElement, forwardRef, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useAtom, useAtomValue } from 'jotai';
 import {
   Avatar,
@@ -520,13 +520,16 @@ export function Space() {
     return allCollapsed;
   };
 
+  const DEPTH_LIMIT = 3;
+
   const hierarchy = useSpaceJoinedHierarchy(
     space.roomId,
     getRoom,
     useCallback(
       (parentId, roomId, depth) => {
-        if (depth >= 4)
+        if (depth >= DEPTH_LIMIT)
         {
+          // we will exclude items above this depth
           return true;
         }
         if (!getInClosedCategories(space.roomId, parentId, roomId)) {
@@ -552,6 +555,74 @@ export function Space() {
     getScrollElement: () => scrollRef.current,
     estimateSize: () => 32,
     overscan: 10,
+  });
+
+  const virtualizedItems = virtualizer.getVirtualItems();
+
+  var connectorStack: { end: number, paddingLeft: number}[] = [];
+  const connectorSVG: any[] = [];
+  const DEPTH_START = 2;
+  const PADDING_LEFT_DEPTH_OFFSET = 15.75;
+  const PADDING_LEFT_DEPTH_OFFSET_START = -15.75;
+  virtualizedItems.forEach((vItem) => {
+    const { roomId, depth } = hierarchy[vItem.index] ?? {};
+    const room = getRoom(roomId);
+    const renderDepth = room?.isSpaceRoom() ? depth : depth + 1;
+    if (renderDepth < DEPTH_START) { return; } // for the root item, we are not doing anything with it.
+    if (renderDepth == DEPTH_START - 1 && !room?.isSpaceRoom() && connectorStack.length == 0) { 
+      // for nearly root level text/call rooms, we will not be drawing any arcs.
+      return; 
+    }
+
+    if (renderDepth == DEPTH_START) {
+      // for the sub-root items, we will not draw any arcs from root to it.
+      // however, we should capture the end point and paddingLeft to draw starter arcs for next depths..
+      connectorStack = [{ end: vItem.end, paddingLeft: PADDING_LEFT_DEPTH_OFFSET * DEPTH_START + PADDING_LEFT_DEPTH_OFFSET_START }];
+      return;
+    }
+    // adjust the stack to be at the correct depth, which is the parent of the current.
+    while (connectorStack.length + DEPTH_START > renderDepth) {
+      connectorStack.pop();
+    }
+    if (connectorStack.length == 0) {
+      // Fixes crash in case the top level virtual item is unrendered.
+      connectorStack = [{ end: 0, paddingLeft: Math.round((renderDepth) * PADDING_LEFT_DEPTH_OFFSET) }]
+    }
+
+    const RADIUS = 5;
+
+    const lastConnector = connectorStack[connectorStack.length - 1];
+
+    // aX: numeric x where the vertical connector starts
+    // For depth 2+, you probably want something like:
+    const aX = lastConnector.paddingLeft;
+
+    // aY: end of parent (already numeric)
+    const aY = lastConnector.end;
+
+    // bY: center of current item
+    const bX = Math.round((renderDepth - 0.5) * PADDING_LEFT_DEPTH_OFFSET + PADDING_LEFT_DEPTH_OFFSET_START);
+    const bY = vItem.end - vItem.size / 2;
+
+    const pathString = (
+      `M ${aX} ${aY} ` +
+      `L ${aX} ${bY - RADIUS} ` +
+      `A ${RADIUS} ${RADIUS} 0 0 0 ${aX + RADIUS} ${bY} ` +
+      `L ${bX} ${bY}` 
+    );
+
+    connectorSVG.push(
+      <path
+        d={pathString}
+        fill="none"
+        stroke={color.Surface.ContainerLine} // TODO make this the accent color
+        stroke-width="2"
+        display="block"
+      />
+    )
+
+    // add this item to the connector stack, in case the next item's depth is higher.
+    connectorStack.push({ end: vItem.end, paddingLeft: Math.round((renderDepth) * PADDING_LEFT_DEPTH_OFFSET) + PADDING_LEFT_DEPTH_OFFSET_START })
   });
 
   const handleCategoryClick = useCategoryHandler(setClosedCategories, (categoryId) => {
@@ -638,18 +709,19 @@ export function Space() {
                 position: 'relative',
               }}
             >
-              {virtualizer.getVirtualItems().map((vItem) => {
+              {virtualizedItems.map((vItem) => {
                 const { roomId, depth } = hierarchy[vItem.index] ?? {};
                 const room = mx.getRoom(roomId);
+                const renderDepth = room?.isSpaceRoom() ? depth - 2 : depth - 1;
                 if (!room) return null;
-                if (depth == 4 && room.isSpaceRoom()) {
+                if (depth == DEPTH_LIMIT && room.isSpaceRoom()) {
                   return (
                     <VirtualTile
                       virtualItem={vItem}
                       key={vItem.index}
                       ref={virtualizer.measureElement}
                     >
-                      <div style={{ paddingLeft: `calc(${depth-2} * ${config.space.S200})` }}>
+                      <div style={{ paddingLeft: `calc(${renderDepth} * ${config.space.S400})` }}>
                         <SpaceNavItem
                           room={room}
                           selected={selectedRoomId === roomId}
@@ -661,11 +733,11 @@ export function Space() {
                 }
                 
                 const paddingTop = getCategoryPadding(depth)
-                const paddingLeft = `calc(${depth-1} * ${config.space.S200})`
 
                 if (room.isSpaceRoom()) {
                   const categoryId = makeNavCategoryId(space.roomId, roomId);
                   const closedViaCategory = getInClosedCategories(space.roomId, roomId);
+                  const paddingLeft = `calc(${renderDepth} * ${config.space.S400})`
 
                   return (
                     <VirtualTile
@@ -687,6 +759,8 @@ export function Space() {
                     </VirtualTile>
                   );
                 }
+
+                const paddingLeft = `calc(${renderDepth} * ${config.space.S400})`
 
                 return (
                   <VirtualTile
@@ -710,6 +784,15 @@ export function Space() {
                   </VirtualTile>
                 );
               })}
+              <svg style={{
+                position: 'absolute',
+                inset: 0,
+                width: '100%',
+                height: '100%',
+                pointerEvents: 'none'
+              }}>
+                {connectorSVG}
+              </svg>
             </NavCategory>
           </Box>
         </PageNavContent>
