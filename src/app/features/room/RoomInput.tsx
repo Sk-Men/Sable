@@ -180,9 +180,7 @@ const getLatestThreadEventId = (room: Room, threadRootId: string): string => {
     .getEvents()
     .filter(
       (ev) =>
-        ev.threadRootId === threadRootId &&
-        ev.getId() !== threadRootId &&
-        !reactionOrEditEvent(ev)
+        ev.threadRootId === threadRootId && ev.getId() !== threadRootId && !reactionOrEditEvent(ev)
     );
   if (liveEvents.length > 0) {
     return liveEvents[liveEvents.length - 1].getId() ?? threadRootId;
@@ -497,7 +495,8 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
       const contents = fulfilledPromiseSettledResult(await Promise.allSettled(contentsPromises));
 
       if (contents.length > 0) {
-        const replyContent = plainText?.length === 0 ? getReplyContent(replyDraft, room) : undefined;
+        const replyContent =
+          plainText?.length === 0 ? getReplyContent(replyDraft, room) : undefined;
         if (replyContent) contents[0]['m.relates_to'] = replyContent;
         if (threadRootId) {
           setReplyDraft({
