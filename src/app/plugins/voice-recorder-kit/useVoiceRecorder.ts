@@ -396,6 +396,7 @@ export function useVoiceRecorder(options: UseVoiceRecorderOptions = {}): UseVoic
         mediaRecorder.requestData();
       }
       mediaRecorder.stop();
+      cleanupStream();
 
       setIsStopped(true);
       setIsTemporaryStopped(false);
@@ -434,6 +435,7 @@ export function useVoiceRecorder(options: UseVoiceRecorderOptions = {}): UseVoic
       previousChunksRef.current = [...chunksRef.current];
       isTemporaryStopRef.current = false;
       mediaRecorder.stop();
+      cleanupStream();
       setIsStopped(true);
       setIsTemporaryStopped(false);
       setIsPaused(false);
@@ -476,7 +478,7 @@ export function useVoiceRecorder(options: UseVoiceRecorderOptions = {}): UseVoic
         chunksRef.current.length > 0 ? chunksRef.current : previousChunksRef.current;
 
       if (allChunks.length > 0) {
-        const blob = new Blob(allChunks, { type: getSupportedAudioCodec() || 'audio/webm' });
+        const blob = new Blob(allChunks, { type: audioCodec || 'audio/webm' });
         urlToPlay = URL.createObjectURL(blob);
         temporaryPreviewUrlRef.current = urlToPlay;
       }
@@ -531,12 +533,13 @@ export function useVoiceRecorder(options: UseVoiceRecorderOptions = {}): UseVoic
     }
   }, [
     audioUrl,
-    cleanupAudioContext,
-    isPlaying,
     isPaused,
+    isPlaying,
+    audioCodec,
+    stopTimer,
+    cleanupAudioContext,
     setupPlaybackGraph,
     startPlaybackTimer,
-    stopTimer,
   ]);
 
   const handlePlay = useCallback(() => {
