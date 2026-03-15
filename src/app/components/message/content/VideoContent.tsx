@@ -179,37 +179,24 @@ export const VideoContent = as<'div', VideoContentProps>(
               }
             }}
           >
-            {typeof spoilerReason === 'string' && spoilerReason.length > 0 ? (
-              <Chip
-                variant="Secondary"
-                radii="Pill"
-                size="500"
-                outlined
-                onClick={() => {
-                  setBlurred(false);
-                  if (srcState.status === AsyncStatus.Idle) {
-                    loadSrc();
-                  }
-                }}
-              >
-                <Text size="B300">Spoiler reason: {spoilerReason}</Text>
-              </Chip>
-            ) : (
-              <Chip
-                variant="Secondary"
-                radii="Pill"
-                size="500"
-                outlined
-                onClick={() => {
-                  setBlurred(false);
-                  if (srcState.status === AsyncStatus.Idle) {
-                    loadSrc();
-                  }
-                }}
-              >
-                <Text size="B300">Spoilered</Text>
-              </Chip>
-            )}
+            <Chip
+              variant="Secondary"
+              radii="Pill"
+              size="500"
+              outlined
+              onClick={() => {
+                setBlurred(false);
+                if (srcState.status === AsyncStatus.Idle) {
+                  loadSrc();
+                }
+              }}
+            >
+              <Text size="B300">
+                {typeof spoilerReason === 'string' && spoilerReason.length > 0
+                  ? `Spoiler reason: ${spoilerReason}`
+                  : `Spoilered`}
+              </Text>
+            </Chip>
           </Box>
         )}
         {(srcState.status === AsyncStatus.Loading || srcState.status === AsyncStatus.Success) &&
