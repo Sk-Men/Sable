@@ -149,6 +149,7 @@ import { usePowerLevelsContext } from '$hooks/usePowerLevels';
 import { useRoomCreators } from '$hooks/useRoomCreators';
 import { useRoomPermissions } from '$hooks/useRoomPermissions';
 import { AutocompleteNotice } from '$components/editor/autocomplete/AutocompleteNotice';
+import { getSupportedAudioExtension } from '$plugins/voice-recorder-kit/supportedCodec';
 import { SchedulePickerDialog } from './schedule-send';
 import * as css from './schedule-send/SchedulePickerDialog.css';
 import {
@@ -159,7 +160,6 @@ import {
 } from './msgContent';
 import { CommandAutocomplete } from './CommandAutocomplete';
 import { AudioMessageRecorder } from './AudioMessageRecorder';
-import { getSupportedAudioExtension } from '$plugins/voice-recorder-kit/supportedCodec';
 
 const getReplyContent = (replyDraft: IReplyDraft | undefined): IEventRelation => {
   if (!replyDraft) return {};

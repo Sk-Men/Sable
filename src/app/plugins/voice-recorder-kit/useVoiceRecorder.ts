@@ -143,6 +143,7 @@ export function useVoiceRecorder(options: UseVoiceRecorderOptions = {}): UseVoic
         audioUrl: url,
         waveform: waveformData,
         audioLength,
+        audioCodec: file.type,
       };
       onStop(payload);
     },
