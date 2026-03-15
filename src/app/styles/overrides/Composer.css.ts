@@ -1,7 +1,7 @@
 import { style, globalStyle } from '@vanilla-extract/css';
 
 export const floatingEditor = style({
-  minWidth: '100%',
+  minWidth: '1%',
 });
 
 export const floatingToolbar = style({
