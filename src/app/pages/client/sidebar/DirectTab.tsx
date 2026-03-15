@@ -1,4 +1,4 @@
-import { MouseEventHandler, forwardRef, useState } from 'react';
+import { MouseEventHandler, forwardRef, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Box, Icon, Icons, Menu, MenuItem, PopOut, RectCords, Text, config, toRem } from 'folds';
 import FocusTrap from 'focus-trap-react';
@@ -8,6 +8,7 @@ import { useMatrixClient } from '$hooks/useMatrixClient';
 import { mDirectAtom } from '$state/mDirectList';
 import { allRoomsAtom } from '$state/room-list/roomList';
 import { roomToUnreadAtom } from '$state/room/roomToUnread';
+import { useSidebarDirectRoomIds } from './useSidebarDirectRoomIds';
 import { getDirectPath, joinPathComponent } from '$pages/pathUtils';
 import { useRoomsUnread } from '$state/hooks/unread';
 import {
@@ -68,7 +69,14 @@ export function DirectTab() {
 
   const mDirects = useAtomValue(mDirectAtom);
   const directs = useDirects(mx, allRoomsAtom, mDirects);
-  const directUnread = useRoomsUnread(directs, roomToUnreadAtom);
+  const sidebarRoomIds = useSidebarDirectRoomIds();
+  // Only count unread for DMs not already shown as individual avatars in the
+  // sidebar — prevents double-badging (issue #235).
+  const overflowDirects = useMemo(() => {
+    const sidebarSet = new Set(sidebarRoomIds);
+    return directs.filter((id) => !sidebarSet.has(id));
+  }, [directs, sidebarRoomIds]);
+  const directUnread = useRoomsUnread(overflowDirects, roomToUnreadAtom);
   const [menuAnchor, setMenuAnchor] = useState<RectCords>();
 
   const directSelected = useDirectSelected();
