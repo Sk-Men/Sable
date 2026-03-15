@@ -159,6 +159,7 @@ import {
 } from './msgContent';
 import { CommandAutocomplete } from './CommandAutocomplete';
 import { AudioMessageRecorder } from './AudioMessageRecorder';
+import { getSupportedAudioExtension } from '$plugins/voice-recorder-kit/supportedCodec';
 
 const getReplyContent = (replyDraft: IReplyDraft | undefined): IEventRelation => {
   if (!replyDraft) return {};
@@ -1096,7 +1097,7 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
                       onRecordingComplete={(audioBlob) => {
                         const file = new File(
                           [audioBlob],
-                          `sable-audio-message-${Date.now()}.ogg`,
+                          `sable-audio-message-${Date.now()}.${getSupportedAudioExtension(audioBlob.type)}`,
                           {
                             type: audioBlob.type,
                           }

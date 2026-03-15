@@ -5,6 +5,7 @@ import type {
   RecorderState,
   VoiceRecorderStopPayload,
 } from './types';
+import { getSupportedAudioCodec, getSupportedAudioExtension } from './supportedCodec';
 
 const BAR_COUNT = 40;
 const WAVEFORM_POINT_COUNT = 100;
@@ -237,6 +238,12 @@ export function useVoiceRecorder(options: UseVoiceRecorderOptions = {}): UseVoic
 
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const codec = getSupportedAudioCodec();
+      if (!codec) {
+        setError('No supported audio codec found for recording.');
+        cleanupStream();
+        return;
+      }
       streamRef.current = stream;
       chunksRef.current = [];
       previousChunksRef.current = [];
@@ -245,7 +252,7 @@ export function useVoiceRecorder(options: UseVoiceRecorderOptions = {}): UseVoic
       setupAudioGraph(stream);
       startRecordingTimer();
 
-      const mediaRecorder = new MediaRecorder(stream);
+      const mediaRecorder = new MediaRecorder(stream, { mimeType: codec });
       mediaRecorderRef.current = mediaRecorder;
 
       mediaRecorder.ondataavailable = (event: BlobEvent) => {
@@ -278,7 +285,7 @@ export function useVoiceRecorder(options: UseVoiceRecorderOptions = {}): UseVoic
 
         if (chunksRef.current.length === 0) return;
 
-        const blob = new Blob(chunksRef.current, { type: 'audio/ogg' });
+        const blob = new Blob(chunksRef.current, { type: codec });
         if (lastUrlRef.current) {
           URL.revokeObjectURL(lastUrlRef.current);
         }
@@ -286,7 +293,9 @@ export function useVoiceRecorder(options: UseVoiceRecorderOptions = {}): UseVoic
         lastUrlRef.current = url;
         setAudioUrl(url);
 
-        const file = new File([blob], `voice-${Date.now()}.ogg`, { type: 'audio/ogg' });
+        const file = new File([blob], `voice-${Date.now()}.${getSupportedAudioExtension(codec)}`, {
+          type: codec,
+        });
         setAudioFile(file);
 
         const waveformData = downsampleWaveform(waveformSamplesRef.current, WAVEFORM_POINT_COUNT);
