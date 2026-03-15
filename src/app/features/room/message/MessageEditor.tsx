@@ -195,7 +195,7 @@ export const MessageEditor = as<'div', MessageEditorProps>(
           content['m.new_content'].info = oldContent.info;
 
           if (oldContent.file !== undefined) content['m.new_content'].file = oldContent.file;
-          else if (oldContent.url !== undefined) content['m.new_content'].url = oldContent.url;
+          if (oldContent.url !== undefined) content['m.new_content'].url = oldContent.url;
 
           if (oldContent['page.codeberg.everypizza.msc4193.spoiler'] !== undefined) {
             content['page.codeberg.everypizza.msc4193.spoiler'] =

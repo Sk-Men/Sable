@@ -42,8 +42,8 @@ export function MessageSourceInternal({ room, mEvent, onClose }: MessageSourceIn
   const getContent = (evt: MatrixEvent) =>
     evt.isEncrypted()
       ? {
-          [`<== DECRYPTED_EVENT ==>`]: evt.getOriginalContent(),
-          //  [`<== ORIGINAL_EVENT ==>`]: evt.event,
+          [`<== DECRYPTED_EVENT ==>`]: evt.getEffectiveEvent(),
+          [`<== ORIGINAL_EVENT ==>`]: evt.event,
         }
       : evt.event;
 
