@@ -50,7 +50,7 @@ export function AudioMessageRecorder({
             borderRadius: config.radii.R400,
             boxShadow: config.shadow.E200,
             padding: config.space.S400,
-            minWidth: 300,
+            width: 300,
           }}
         >
           <Text size="H4">Audio Message Recorder</Text>
