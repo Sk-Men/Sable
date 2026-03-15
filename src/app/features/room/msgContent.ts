@@ -177,6 +177,8 @@ export const getAudioMsgContent = (
       duration: !audioLength ? 0 : audioLength,
       waveform: waveform?.map((v) => Math.round(v * 1024)),
     },
+    // for element compat
+    'org.matrix.msc3245.voice': {},
   };
   if (encInfo) {
     content.file = {
