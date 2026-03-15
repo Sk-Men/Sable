@@ -95,6 +95,7 @@ export interface Settings {
   autoplayStickers: boolean;
   autoplayEmojis: boolean;
   saveStickerEmojiBandwidth: boolean;
+  subspaceHierarchyLimit: number;
 
   // furry stuff
   renderAnimals: boolean;
@@ -173,6 +174,7 @@ const defaultSettings: Settings = {
   autoplayStickers: true,
   autoplayEmojis: true,
   saveStickerEmojiBandwidth: false,
+  subspaceHierarchyLimit: 3,
 
   // furry stuff
   renderAnimals: true,
