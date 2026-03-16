@@ -266,6 +266,7 @@ export type CommandRecord = Record<Command, CommandContent>;
 export const useCommands = (mx: MatrixClient, room: Room): CommandRecord => {
   const { navigateRoom } = useRoomNavigate();
   const [developerTools] = useSetting(settingsAtom, 'developerTools');
+  const [enableMSC4268CMD] = useSetting(settingsAtom, 'enableMSC4268CMD');
   const profile = useUserProfile(mx.getSafeUserId());
   const openBugReport = useOpenBugReportModal();
 
@@ -1186,6 +1187,14 @@ export const useCommands = (mx: MatrixClient, room: Room): CommandRecord => {
         exe: async (payload) => {
           const targetUserId = payload.trim();
           const { roomId } = room;
+          if (!enableMSC4268CMD) {
+            sendFeedback(
+              'This command is disabled. Enable it under experimental settings to use it.',
+              room,
+              mx.getSafeUserId()
+            );
+            return;
+          }
           if (!targetUserId) {
             sendFeedback('Usage: /sharee2eehistory @user:example.org', room, mx.getSafeUserId());
             return;
@@ -1296,7 +1305,16 @@ export const useCommands = (mx: MatrixClient, room: Room): CommandRecord => {
         },
       },
     }),
-    [mx, navigateRoom, room, profile.displayName, profile.avatarUrl, developerTools, openBugReport]
+    [
+      mx,
+      navigateRoom,
+      room,
+      profile.displayName,
+      profile.avatarUrl,
+      developerTools,
+      enableMSC4268CMD,
+      openBugReport,
+    ]
   );
 
   return commands;

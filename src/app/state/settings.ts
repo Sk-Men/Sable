@@ -64,6 +64,7 @@ export interface Settings {
   dateFormatString: string;
 
   developerTools: boolean;
+  enableMSC4268CMD: boolean;
 
   // Cosmetics!
   jumboEmojiSize: JumboEmojiSize;
@@ -128,6 +129,8 @@ const defaultSettings: Settings = {
   showTombstoneEvents: false,
   legacyUsernameColor: false,
   allowPipVideos: false,
+
+  enableMSC4268CMD: false,
 
   // Push notifications (SW/Sygnal): default on for mobile, opt-in on desktop.
   // In-app pill banner: default on for mobile (primary foreground alert), opt-in on desktop.
