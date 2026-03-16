@@ -60,27 +60,18 @@ export function getSupportedAudioCodec(): string | null {
  * This is used to ensure that the recorded audio file has the correct extension based on the codec used for recording.
  */
 export function getSupportedAudioExtension(codec: string): string {
-  switch (codec) {
-    case 'audio/ogg;codecs=opus':
-    case 'audio/ogg;codecs=vorbis':
-    case 'audio/ogg;codecs=speex':
+  const baseType = codec.split(';')[0].trim();
+  switch (baseType) {
     case 'audio/ogg':
       return 'ogg';
-    case 'audio/webm;codecs=opus':
     case 'audio/webm':
       return 'webm';
     case 'audio/mp4':
-    case 'audio/mp4;codecs=aac':
       return 'm4a';
     case 'audio/mpeg':
       return 'mp3';
-    case 'audio/wav;codecs=1':
     case 'audio/wav':
       return 'wav';
-    // silly webkit stuff
-    case 'audio/mp4;codecs=mp4a.40.2':
-    case 'audio/mp4;codecs=mp4a.40.5':
-      return 'm4a';
     case 'audio/aac':
       return 'aac';
     default:
