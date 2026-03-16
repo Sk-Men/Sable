@@ -90,7 +90,12 @@ export const RoomViewFollowing = as<'div', RoomViewFollowingProps>(
                 {names.length === 1 && (
                   <>
                     <b style={{ WebkitTextFillColor: 'inherit' }}>{names[0]}</b>
-                    <Text as="span" size="Inherit" priority="300" style={{ WebkitTextFillColor: 'currentColor' }}>
+                    <Text
+                      as="span"
+                      size="Inherit"
+                      priority="300"
+                      style={{ WebkitTextFillColor: 'currentColor' }}
+                    >
                       {' is following the conversation.'}
                     </Text>
                   </>
@@ -98,11 +103,21 @@ export const RoomViewFollowing = as<'div', RoomViewFollowingProps>(
                 {names.length === 2 && (
                   <>
                     <b style={{ WebkitTextFillColor: 'inherit' }}>{names[0]}</b>
-                    <Text as="span" size="Inherit" priority="300" style={{ WebkitTextFillColor: 'currentColor' }}>
+                    <Text
+                      as="span"
+                      size="Inherit"
+                      priority="300"
+                      style={{ WebkitTextFillColor: 'currentColor' }}
+                    >
                       {' and '}
                     </Text>
                     <b style={{ WebkitTextFillColor: 'inherit' }}>{names[1]}</b>
-                    <Text as="span" size="Inherit" priority="300" style={{ WebkitTextFillColor: 'currentColor' }}>
+                    <Text
+                      as="span"
+                      size="Inherit"
+                      priority="300"
+                      style={{ WebkitTextFillColor: 'currentColor' }}
+                    >
                       {' are following the conversation.'}
                     </Text>
                   </>
@@ -110,15 +125,30 @@ export const RoomViewFollowing = as<'div', RoomViewFollowingProps>(
                 {names.length === 3 && (
                   <>
                     <b style={{ WebkitTextFillColor: 'inherit' }}>{names[0]}</b>
-                    <Text as="span" size="Inherit" priority="300" style={{ WebkitTextFillColor: 'currentColor' }}>
+                    <Text
+                      as="span"
+                      size="Inherit"
+                      priority="300"
+                      style={{ WebkitTextFillColor: 'currentColor' }}
+                    >
                       {', '}
                     </Text>
                     <b style={{ WebkitTextFillColor: 'inherit' }}>{names[1]}</b>
-                    <Text as="span" size="Inherit" priority="300" style={{ WebkitTextFillColor: 'currentColor' }}>
+                    <Text
+                      as="span"
+                      size="Inherit"
+                      priority="300"
+                      style={{ WebkitTextFillColor: 'currentColor' }}
+                    >
                       {' and '}
                     </Text>
                     <b style={{ WebkitTextFillColor: 'inherit' }}>{names[2]}</b>
-                    <Text as="span" size="Inherit" priority="300" style={{ WebkitTextFillColor: 'currentColor' }}>
+                    <Text
+                      as="span"
+                      size="Inherit"
+                      priority="300"
+                      style={{ WebkitTextFillColor: 'currentColor' }}
+                    >
                       {' are following the conversation.'}
                     </Text>
                   </>
@@ -126,19 +156,39 @@ export const RoomViewFollowing = as<'div', RoomViewFollowingProps>(
                 {names.length > 3 && (
                   <>
                     <b style={{ WebkitTextFillColor: 'inherit' }}>{names[0]}</b>
-                    <Text as="span" size="Inherit" priority="300" style={{ WebkitTextFillColor: 'currentColor' }}>
+                    <Text
+                      as="span"
+                      size="Inherit"
+                      priority="300"
+                      style={{ WebkitTextFillColor: 'currentColor' }}
+                    >
                       {', '}
                     </Text>
                     <b style={{ WebkitTextFillColor: 'inherit' }}>{names[1]}</b>
-                    <Text as="span" size="Inherit" priority="300" style={{ WebkitTextFillColor: 'currentColor' }}>
+                    <Text
+                      as="span"
+                      size="Inherit"
+                      priority="300"
+                      style={{ WebkitTextFillColor: 'currentColor' }}
+                    >
                       {', '}
                     </Text>
                     <b style={{ WebkitTextFillColor: 'inherit' }}>{names[2]}</b>
-                    <Text as="span" size="Inherit" priority="300" style={{ WebkitTextFillColor: 'currentColor' }}>
+                    <Text
+                      as="span"
+                      size="Inherit"
+                      priority="300"
+                      style={{ WebkitTextFillColor: 'currentColor' }}
+                    >
                       {' and '}
                     </Text>
                     <b style={{ WebkitTextFillColor: 'inherit' }}>{names.length - 3} others</b>
-                    <Text as="span" size="Inherit" priority="300" style={{ WebkitTextFillColor: 'currentColor' }}>
+                    <Text
+                      as="span"
+                      size="Inherit"
+                      priority="300"
+                      style={{ WebkitTextFillColor: 'currentColor' }}
+                    >
                       {' are following the conversation.'}
                     </Text>
                   </>
