@@ -747,6 +747,13 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
           !isComposing(evt)
         ) {
           evt.preventDefault();
+          if (autocompleteQuery) {
+            const firstItem = document.querySelector<HTMLButtonElement>(
+              '[data-autocomplete-menu] button'
+            );
+            firstItem?.click();
+            return;
+          }
           submit().catch((error) => {
             log.error('submit failed', { roomId }, error);
           });
