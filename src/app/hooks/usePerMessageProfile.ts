@@ -27,6 +27,23 @@ type PerMessageProfileIndex = {
   profileIds: string[];
 };
 
+type PerMessageProfileRoomAssociation = {
+  /**
+   * the id of the profile to use for messages in this room. This is used to apply a profile to all messages in a room without having to set the profile for each message individually.
+   */
+  profileId: string;
+  /**
+   * the id of the room this association applies to.
+   * This is used to apply a profile to all messages in a room without having to set the profile for each message individually.
+   */
+  roomId: string;
+  validUntil?: number; // timestamp in ms until which this association is valid, after which it should be ignored and removed. If not set, the association is valid indefinitely until changed or removed.
+};
+
+type PerMessageProfileRoomAssociationWrapper = {
+  associations: PerMessageProfileRoomAssociation[];
+};
+
 export function getPerMessageProfileById(
   mx: MatrixClient,
   id: string
@@ -62,4 +79,68 @@ export function addOrUpdatePerMessageProfile(mx: MatrixClient, profile: PerMessa
 
 export function deletePerMessageProfile(mx: MatrixClient, id: string) {
   return mx.setAccountData(`fyi.cisnt.permessageprofile.${id}` as any, {});
+}
+
+/**
+ * gets the per message profile to be used for messages in a room
+ * @param mx matrix client
+ * @param roomId the room id you are querying for
+ * @returns the profile to be used
+ */
+export function getCurrentlyUsedPerMessageProfileIdForRoom(
+  mx: MatrixClient,
+  roomId: string
+): PerMessageProfile | undefined {
+  const accountData = mx.getAccountData(`fyi.cisnt.permessageprofile.roomassociation` as any);
+  const content = accountData?.getContent()?.associations as
+    | PerMessageProfileRoomAssociation[]
+    | undefined;
+
+  if (!Array.isArray(content)) {
+    // If content is not an array, return undefined
+    return undefined;
+  }
+
+  const profileId = content
+    .filter(
+      (assoc: PerMessageProfileRoomAssociation) =>
+        !assoc.validUntil || assoc.validUntil > Date.now()
+    )
+    .find((assoc: PerMessageProfileRoomAssociation) => assoc.roomId === roomId)?.profileId;
+
+  console.warn('getCurrentlyUsedPerMessageProfileIdForRoom', { profileId, roomId });
+  return profileId ? getPerMessageProfileById(mx, profileId) : undefined;
+}
+
+/**
+ * sets the per message profile to be used for messages in a room. This is done by setting account data with a list of room associations, which is then checked when sending a message to apply the profile to the message if the room matches an association. The associations can also have an optional expiration time, after which they will be ignored and removed.
+ * @param mx matrix client
+ * @param roomId the room id your querying for
+ * @param profileId the profile id you are querying for
+ * @param validUntil the timestamp until the pmp association is valid
+ * @param reset if true, the association for the room will be removed, if false and profileId is undefined, the association will be set to undefined but not removed, meaning it will still be visible in the list of associations but won't have any effect. This is useful for resetting the association without losing the information of which profile was associated before.
+ * @returns promose that resolves when the association has been set
+ */
+export function setCurrentlyUsedPerMessageProfileIdForRoom(
+  mx: MatrixClient,
+  roomId: string,
+  profileId: string | undefined,
+  validUntil?: number,
+  reset?: boolean
+) {
+  const accountData = mx.getAccountData(`fyi.cisnt.permessageprofile.roomassociation` as any);
+  const content = accountData?.getContent();
+
+  const associations: PerMessageProfileRoomAssociation[] = Array.isArray(content) ? content : [];
+
+  if (profileId) {
+    associations.push({ roomId, profileId, validUntil } satisfies PerMessageProfileRoomAssociation);
+  } else if (reset) {
+    associations.filter((assoc) => assoc.roomId !== roomId);
+  }
+
+  const wrapper: PerMessageProfileRoomAssociationWrapper = {
+    associations,
+  };
+  return mx.setAccountData(`fyi.cisnt.permessageprofile.roomassociation` as any, wrapper as any);
 }
