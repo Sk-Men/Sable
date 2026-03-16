@@ -468,7 +468,7 @@ function SpaceTab({
             <SidebarItemBadge
               hasCount={unread.total > 0}
               style={{
-                left: unread.total > 0 ? toRem(-6) : toRem(-2),
+                left: unread.total > 0 ? toRem(-6) : toRem(-4),
                 right: 'auto',
               }}
             >
@@ -609,7 +609,7 @@ function ClosedSpaceFolder({
             <SidebarItemBadge
               hasCount={unread.total > 0}
               style={{
-                left: unread.total > 0 ? toRem(-6) : toRem(-2),
+                left: unread.total > 0 ? toRem(-6) : toRem(-4),
                 right: 'auto',
               }}
             >
