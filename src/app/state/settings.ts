@@ -96,6 +96,7 @@ export interface Settings {
   autoplayStickers: boolean;
   autoplayEmojis: boolean;
   saveStickerEmojiBandwidth: boolean;
+  alwaysShowCallButton: boolean;
 
   // furry stuff
   renderAnimals: boolean;
@@ -176,6 +177,7 @@ const defaultSettings: Settings = {
   autoplayStickers: true,
   autoplayEmojis: true,
   saveStickerEmojiBandwidth: false,
+  alwaysShowCallButton: false,
 
   // furry stuff
   renderAnimals: true,
