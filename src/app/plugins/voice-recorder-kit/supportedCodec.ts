@@ -1,25 +1,37 @@
-/** Codecs to test for */
-const codecs = [
-  // silly webkit-prefixed codecs for Safari support, because safari, apparently lies when asked what it supports
+const safariPreferredCodecs = [
+  // Safari works best with MP4/AAC but fails when strict codecs are defined on iOS.
+  // Prioritize the plain container to avoid NotSupportedError during MediaRecorder initialization.
+  'audio/mp4',
   'audio/mp4;codecs=mp4a.40.2',
   'audio/mp4;codecs=mp4a.40.5',
+  'audio/mp4;codecs=aac',
   'audio/aac',
+  // Fallbacks
+  'audio/wav;codecs=1',
+  'audio/wav',
+  'audio/mpeg',
+];
+
+const defaultPreferredCodecs = [
+  // Chromium / Firefox stable path.
+  'audio/webm;codecs=opus',
+  'audio/webm',
   // Firefox
   'audio/ogg;codecs=opus',
   'audio/ogg;codecs=vorbis',
   'audio/ogg',
-  // Chromium / Firefox
-  'audio/webm;codecs=opus',
-  'audio/webm',
-  // fallback
+  // Fallbacks
   'audio/wav;codecs=1',
   'audio/wav',
-  // other Codecs
-  'audio/ogg;codecs=speex',
-  'audio/webm;codecs=vorbis',
+  'audio/mpeg',
+  // Keep MP4/AAC as late fallback for non-Safari browsers.
+  'audio/mp4;codecs=mp4a.40.2',
+  'audio/mp4;codecs=mp4a.40.5',
   'audio/mp4;codecs=aac',
   'audio/mp4',
-  'audio/mpeg',
+  'audio/aac',
+  'audio/ogg;codecs=speex',
+  'audio/webm;codecs=vorbis',
 ];
 
 /**
@@ -27,12 +39,19 @@ const codecs = [
  * If no supported codec is found, it returns null.
  */
 export function getSupportedAudioCodec(): string | null {
-  const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
-
-  if (isSafari && MediaRecorder.isTypeSupported('audio/mp4')) {
-    return 'audio/mp4';
+  if (!('MediaRecorder' in globalThis) || !globalThis.MediaRecorder) {
+    return null;
   }
-  const supportedCodec = codecs.find((codec) => MediaRecorder.isTypeSupported(codec));
+
+  const userAgent = globalThis.navigator?.userAgent ?? '';
+  const isIOS =
+    /iPad|iPhone|iPod/.test(userAgent) ||
+    // eslint-disable-next-line @typescript-eslint/no-deprecated
+    (globalThis.navigator?.platform === 'MacIntel' && globalThis.navigator?.maxTouchPoints > 1);
+  const isSafari = /^((?!chrome|android|crios|fxios|edgios).)*safari/i.test(userAgent) || isIOS;
+
+  const preferredCodecs = isSafari ? safariPreferredCodecs : defaultPreferredCodecs;
+  const supportedCodec = preferredCodecs.find((codec) => MediaRecorder.isTypeSupported(codec));
   return supportedCodec || null;
 }
 
