@@ -42,10 +42,12 @@ import { useSessionProfiles } from '$hooks/useSessionProfiles';
 import { Settings } from '$features/settings';
 import { Modal500 } from '$components/Modal500';
 import { createLogger } from '$utils/debug';
+import { createDebugLogger } from '$utils/debugLogger';
 import { useClientConfig } from '$hooks/useClientConfig';
 import { UnreadBadge, UnreadBadgeCenter } from '$components/unread-badge';
 
 const log = createLogger('AccountSwitcherTab');
+const debugLog = createDebugLogger('AccountSwitcherTab');
 
 function AccountRow({
   session,
@@ -152,9 +154,10 @@ export function AccountSwitcherTab() {
   const totalBackgroundUnread = Object.entries(backgroundUnreads)
     .filter(([uid]) => uid !== (activeSessionId ?? sessions[0]?.userId))
     .reduce((acc, [, u]) => acc + u.total, 0);
-  const anyBackgroundHighlight = Object.entries(backgroundUnreads)
+  const totalBackgroundHighlight = Object.entries(backgroundUnreads)
     .filter(([uid]) => uid !== (activeSessionId ?? sessions[0]?.userId))
-    .some(([, u]) => u.highlight > 0);
+    .reduce((acc, [, u]) => acc + u.highlight, 0);
+  const anyBackgroundHighlight = totalBackgroundHighlight > 0;
 
   const [menuAnchor, setMenuAnchor] = useState<RectCords>();
   const [busyUserIds, setBusyUserIds] = useState<Set<string>>(new Set());
@@ -245,6 +248,9 @@ export function AccountSwitcherTab() {
   };
 
   const handleOpenSettings = () => {
+    debugLog.info('ui', 'Settings button clicked', {
+      userId: activeSession?.userId,
+    });
     setMenuAnchor(undefined);
     setSettingsOpen(true);
   };
@@ -274,9 +280,12 @@ export function AccountSwitcherTab() {
           </SidebarAvatar>
         )}
       </SidebarItemTooltip>
-      {totalBackgroundUnread > 0 && (
-        <SidebarItemBadge hasCount>
-          <UnreadBadge highlight={anyBackgroundHighlight} count={totalBackgroundUnread} />
+      {(totalBackgroundUnread > 0 || anyBackgroundHighlight) && (
+        <SidebarItemBadge hasCount style={{ left: toRem(-6), right: 'auto' }}>
+          <UnreadBadge
+            highlight={anyBackgroundHighlight}
+            count={anyBackgroundHighlight ? totalBackgroundHighlight : totalBackgroundUnread}
+          />
         </SidebarItemBadge>
       )}
 

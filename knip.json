@@ -5,7 +5,11 @@
     "interface": true,
     "type": true
   },
-  "ignoreDependencies": ["buffer", "@sableclient/sable-call-embedded", "workbox-precaching"],
+  "ignoreDependencies": [
+    "buffer",
+    "@sableclient/sable-call-embedded",
+    "@matrix-org/matrix-sdk-crypto-wasm"
+  ],
   "ignoreBinaries": ["knope"],
   "rules": {
     "exports": "off",

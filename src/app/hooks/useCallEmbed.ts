@@ -16,6 +16,7 @@ import { callEmbedAtom } from '../state/callEmbed';
 import { useResizeObserver } from './useResizeObserver';
 import { CallControlState } from '../plugins/call/CallControlState';
 import { useCallMembersChange, useCallSession } from './useCall';
+import { CallPreferences } from '../state/callPreferences';
 
 const CallEmbedContext = createContext<CallEmbed | undefined>(undefined);
 
@@ -43,7 +44,7 @@ export const createCallEmbed = (
   dm: boolean,
   themeKind: ElementCallThemeKind,
   container: HTMLElement,
-  controlState?: CallControlState
+  pref?: CallPreferences
 ): CallEmbed => {
   const rtcSession = mx.matrixRTC.getRoomSession(room);
   const ongoing =
@@ -51,6 +52,8 @@ export const createCallEmbed = (
 
   const intent = CallEmbed.getIntent(dm, ongoing);
   const widget = CallEmbed.getWidget(mx, room, intent, themeKind);
+  const controlState = pref && new CallControlState(pref.microphone, pref.video, pref.sound);
+
   const embed = new CallEmbed(mx, room, widget, container, controlState);
 
   return embed;
@@ -63,12 +66,12 @@ export const useCallStart = (dm = false) => {
   const callEmbedRef = useCallEmbedRef();
 
   const startCall = useCallback(
-    (room: Room, controlState?: CallControlState) => {
+    (room: Room, pref?: CallPreferences) => {
       const container = callEmbedRef.current;
       if (!container) {
         throw new Error('Failed to start call, No embed container element found!');
       }
-      const callEmbed = createCallEmbed(mx, room, dm, theme.kind, container, controlState);
+      const callEmbed = createCallEmbed(mx, room, dm, theme.kind, container, pref);
 
       setCallEmbed(callEmbed);
     },
@@ -141,14 +144,23 @@ export const useCallEmbedPlacementSync = (containerViewRef: RefObject<HTMLDivEle
     const container = containerViewRef.current;
     if (!embedEl || !container) return;
 
-    embedEl.style.top = `${container.offsetTop}px`;
-    embedEl.style.left = `${container.offsetLeft}px`;
-    embedEl.style.width = `${container.clientWidth}px`;
-    embedEl.style.height = `${container.clientHeight}px`;
+    const rect = container.getBoundingClientRect();
+
+    embedEl.style.position = 'fixed';
+    embedEl.style.top = `${rect.top}px`;
+    embedEl.style.left = `${rect.left}px`;
+    embedEl.style.width = `${rect.width}px`;
+    embedEl.style.height = `${rect.height}px`;
   }, [callEmbedRef, containerViewRef]);
 
   useResizeObserver(
     syncCallEmbedPlacement,
     useCallback(() => containerViewRef.current, [containerViewRef])
   );
+
+  useEffect(() => {
+    syncCallEmbedPlacement();
+    window.addEventListener('scroll', syncCallEmbedPlacement, true);
+    return () => window.removeEventListener('scroll', syncCallEmbedPlacement, true);
+  }, [syncCallEmbedPlacement]);
 };

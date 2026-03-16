@@ -81,6 +81,10 @@ import { MessageDeleteItem } from '$components/message/modals/MessageDelete';
 import { MessageReportItem } from '$components/message/modals/MessageReport';
 import { filterPronounsByLanguage } from '$utils/pronouns';
 import { useMentionClickHandler } from '$hooks/useMentionClickHandler';
+import {
+  addStickerToDefaultPack,
+  doesStickerExistInDefaultPack,
+} from '$utils/addStickerToDefaultStickerPack';
 import { MessageEditor } from './MessageEditor';
 import * as css from './styles.css';
 
@@ -207,6 +211,13 @@ export type ForwardedMessageProps = {
   originalEventPrivate: boolean;
 };
 
+export type MSC2723ForwardedMessageProps = {
+  event_id: string;
+  room_id: string;
+  sender: string | null;
+  origin_server_ts: number;
+};
+
 export type MessageProps = {
   room: Room;
   mEvent: MatrixEvent;
@@ -244,6 +255,7 @@ export type MessageProps = {
   onResend?: (event: MatrixEvent) => void;
   onDeleteFailedSend?: (event: MatrixEvent) => void;
   messageForwardedProps?: ForwardedMessageProps;
+  msc2723ForwardedMessageProps?: MSC2723ForwardedMessageProps;
 };
 
 function useMobileDoubleTap(callback: () => void, delay = 300) {
@@ -345,6 +357,7 @@ function MessageInternal(
     onResend,
     onDeleteFailedSend,
     messageForwardedProps,
+    msc2723ForwardedMessageProps,
     ...props
   }: MessageProps & { className?: string; children?: ReactNode },
   ref: any
@@ -505,6 +518,32 @@ function MessageInternal(
   // handle clicks on mentions in the message body (e.g. jump to original message from a forwarded message notice)
   const mentionClickHandler = useMentionClickHandler(room.roomId);
 
+  const forwardedNotice = useMemo(() => {
+    if (messageForwardedProps?.isForwarded) {
+      return {
+        label: messageForwardedProps.originalEventPrivate
+          ? 'Forwarded private message'
+          : 'Forwarded from another room',
+        roomId: messageForwardedProps.originalRoomId,
+        eventId: messageForwardedProps.originalEventId,
+        ts: messageForwardedProps.originalTimestamp ?? 0,
+        showLink: !messageForwardedProps.originalEventPrivate,
+      };
+    }
+
+    if (msc2723ForwardedMessageProps) {
+      return {
+        label: 'Forwarded from another room',
+        roomId: msc2723ForwardedMessageProps.room_id,
+        eventId: msc2723ForwardedMessageProps.event_id,
+        ts: msc2723ForwardedMessageProps.origin_server_ts ?? 0,
+        showLink: true,
+      };
+    }
+
+    return null;
+  }, [messageForwardedProps, msc2723ForwardedMessageProps]);
+
   const handleResendClick: MouseEventHandler<HTMLButtonElement> = useCallback(
     (evt) => {
       evt.preventDefault();
@@ -535,27 +574,26 @@ function MessageInternal(
         [css.MessageFailed]: isFailedSend,
       })}
     >
-      {messageForwardedProps?.isForwarded && (
+      {forwardedNotice && (
         <Chip as="div" variant="SurfaceVariant" radii="Pill">
           <Text size="T200" priority="300">
-            Forwarded{' '}
-            {messageForwardedProps.originalEventPrivate ? 'private message' : 'from another room'}{' '}
-            {!messageForwardedProps.originalEventPrivate && (
-              <a
-                href={getMatrixToRoomEvent(
-                  messageForwardedProps.originalRoomId,
-                  messageForwardedProps.originalEventId
-                )}
-                rel="noreferrer noopener"
-                data-mention-id={messageForwardedProps.originalRoomId}
-                data-mention-event-id={messageForwardedProps.originalEventId}
-                onClick={mentionClickHandler}
-              >
-                jump to original
-              </a>
+            {forwardedNotice.label}
+            {forwardedNotice.showLink && (
+              <>
+                {' '}
+                <a
+                  href={getMatrixToRoomEvent(forwardedNotice.roomId, forwardedNotice.eventId)}
+                  rel="noreferrer noopener"
+                  data-mention-id={forwardedNotice.roomId}
+                  data-mention-event-id={forwardedNotice.eventId}
+                  onClick={mentionClickHandler}
+                >
+                  jump to original
+                </a>
+              </>
             )}
             <Time
-              ts={messageForwardedProps?.originalTimestamp ?? 0}
+              ts={forwardedNotice.ts}
               compact={messageLayout === MessageLayout.Compact}
               hour24Clock={hour24Clock}
               dateFormatString={dateFormatString}
@@ -669,6 +707,7 @@ function MessageInternal(
   });
 
   const isThreadedMessage = mEvent.threadRootId !== undefined;
+  const isStickerMessage = mEvent.getType() === 'm.sticker';
 
   const evtId = mEvent.getId()!;
   const evtTimeline = room.getTimelineForEvent(evtId);
@@ -820,6 +859,35 @@ function MessageInternal(
                             </Text>
                           </MenuItem>
                         )}
+                        {/* Only show "Add to User Sticker Pack" if the sticker isn't already in the default pack and isn't encrypted */}
+                        {isStickerMessage &&
+                          mEvent.getContent().url &&
+                          !doesStickerExistInDefaultPack(mx, mEvent.getContent().url) && (
+                            <MenuItem
+                              size="300"
+                              after={<Icon size="100" src={Icons.Star} />}
+                              radii="300"
+                              onClick={() => {
+                                addStickerToDefaultPack(
+                                  mx,
+                                  `sticker-${mEvent.getId()}`,
+                                  mEvent.getContent().url ?? mEvent.getContent().file?.url ?? '',
+                                  mEvent.getContent().body,
+                                  mEvent.getContent().info
+                                );
+                                closeMenu();
+                              }}
+                            >
+                              <Text
+                                className={css.MessageMenuItemText}
+                                as="span"
+                                size="T300"
+                                truncate
+                              >
+                                Add to User Sticker Pack
+                              </Text>
+                            </MenuItem>
+                          )}
                         {relations && <MessageAllReactionItem room={room} relations={relations} />}
                         <MenuItem
                           size="300"
@@ -880,7 +948,13 @@ function MessageInternal(
                         {!hideReadReceipts && (
                           <MessageReadReceiptItem room={room} eventId={mEvent.getId() ?? ''} />
                         )}
-                        {isEdited && <MessageEditHistoryItem room={room} mEvent={mEvent} />}
+                        {isEdited && (
+                          <MessageEditHistoryItem
+                            room={room}
+                            mEvent={mEvent}
+                            closeMenu={closeMenu}
+                          />
+                        )}
                         {showDeveloperTools && (
                           <MessageSourceCodeItem room={room} mEvent={mEvent} />
                         )}
@@ -1185,7 +1259,13 @@ export const Event = as<'div', EventProps>(
                             {!hideReadReceipts && (
                               <MessageReadReceiptItem room={room} eventId={mEvent.getId() ?? ''} />
                             )}
-                            {isEdited && <MessageEditHistoryItem room={room} mEvent={mEvent} />}
+                            {isEdited && (
+                              <MessageEditHistoryItem
+                                room={room}
+                                mEvent={mEvent}
+                                closeMenu={closeMenu}
+                              />
+                            )}
                             {showDeveloperTools && (
                               <MessageSourceCodeItem room={room} mEvent={mEvent} />
                             )}

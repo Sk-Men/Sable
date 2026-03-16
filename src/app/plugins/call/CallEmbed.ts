@@ -25,6 +25,9 @@ import {
 } from './types';
 import { CallControl } from './CallControl';
 import { CallControlState } from './CallControlState';
+import { createDebugLogger } from '../../utils/debugLogger';
+
+const debugLog = createDebugLogger('CallEmbed');
 
 export class CallEmbed {
   private mx: MatrixClient;
@@ -127,6 +130,8 @@ export class CallEmbed {
     container: HTMLElement,
     initialControlState?: CallControlState
   ) {
+    debugLog.info('call', 'Initializing call embed', { roomId: room.roomId });
+
     const iframe = CallEmbed.getIframe(
       widget.getCompleteUrl({ currentUserId: mx.getSafeUserId() })
     );
@@ -146,7 +151,7 @@ export class CallEmbed {
 
     let initialMediaEvent = true;
     this.disposables.push(
-      this.listenEvent<ElementMediaStateDetail>(ElementWidgetActions.DeviceMute, (evt) => {
+      this.listenAction<ElementMediaStateDetail>(ElementWidgetActions.DeviceMute, (evt) => {
         if (initialMediaEvent) {
           initialMediaEvent = false;
           this.control.applyState();
@@ -174,21 +179,32 @@ export class CallEmbed {
   }
 
   public hangup() {
+    debugLog.info('call', 'Hanging up call', { roomId: this.roomId });
     return this.call.transport.send(ElementWidgetActions.HangupCall, {});
   }
 
-  public listenEvent<T>(type: string, callback: (event: CustomEvent<T>) => void) {
-    this.call.on(`action:${type}`, callback);
-    return () => {
-      this.call.off(`action:${type}`, callback);
-    };
+  public onPreparing(callback: () => void) {
+    return this.listenEvent('preparing', callback);
+  }
+
+  public onPreparingError(callback: (error: any) => void) {
+    return this.listenEvent('error:preparing', callback);
+  }
+
+  public onReady(callback: () => void) {
+    return this.listenEvent('ready', callback);
+  }
+
+  public onCapabilitiesNotified(callback: () => void) {
+    return this.listenEvent('capabilitiesNotified', callback);
   }
 
   private start() {
+    debugLog.info('call', 'Starting call widget', { roomId: this.roomId });
     // Room widgets get locked to the room they were added in
     this.call.setViewedRoomId(this.roomId);
     this.disposables.push(
-      this.listenEvent(ElementWidgetActions.JoinCall, this.onCallJoined.bind(this))
+      this.listenAction(ElementWidgetActions.JoinCall, this.onCallJoined.bind(this))
     );
 
     // Populate the map of "read up to" events for this widget with the current event in every room.
@@ -202,11 +218,24 @@ export class CallEmbed {
       this.readUpToMap[room.roomId] = roomEvent.getId()!;
     });
 
-    // Attach listeners for feeding events - the underlying widget classes handle permissions for us
-    this.mx.on(ClientEvent.Event, this.onEvent.bind(this));
-    this.mx.on(MatrixEventEvent.Decrypted, this.onEventDecrypted.bind(this));
-    this.mx.on(RoomStateEvent.Events, this.onStateUpdate.bind(this));
-    this.mx.on(ClientEvent.ToDeviceEvent, this.onToDeviceEvent.bind(this));
+    // Attach listeners for feeding events - the underlying widget classes handle permissions for us.
+    // Bind once and store via disposables so the same function reference is used for removal.
+    // Using .bind(this) at call-site would create a new function every time, making .off() a no-op
+    // and causing MaxListeners warnings when the embed is recreated during sync retries.
+    const boundOnEvent = this.onEvent.bind(this);
+    const boundOnEventDecrypted = this.onEventDecrypted.bind(this);
+    const boundOnStateUpdate = this.onStateUpdate.bind(this);
+    const boundOnToDeviceEvent = this.onToDeviceEvent.bind(this);
+    this.mx.on(ClientEvent.Event, boundOnEvent);
+    this.mx.on(MatrixEventEvent.Decrypted, boundOnEventDecrypted);
+    this.mx.on(RoomStateEvent.Events, boundOnStateUpdate);
+    this.mx.on(ClientEvent.ToDeviceEvent, boundOnToDeviceEvent);
+    this.disposables.push(() => {
+      this.mx.off(ClientEvent.Event, boundOnEvent);
+      this.mx.off(MatrixEventEvent.Decrypted, boundOnEventDecrypted);
+      this.mx.off(RoomStateEvent.Events, boundOnStateUpdate);
+      this.mx.off(ClientEvent.ToDeviceEvent, boundOnToDeviceEvent);
+    });
   }
 
   /**
@@ -215,24 +244,38 @@ export class CallEmbed {
    * @param opts
    */
   public dispose(): void {
+    debugLog.info('call', 'Disposing call widget', { roomId: this.roomId });
     this.disposables.forEach((disposable) => {
       disposable();
     });
     this.call.stop();
     this.container.removeChild(this.iframe);
+    this.control.dispose();
 
-    this.mx.off(ClientEvent.Event, this.onEvent.bind(this));
-    this.mx.off(MatrixEventEvent.Decrypted, this.onEventDecrypted.bind(this));
-    this.mx.off(RoomStateEvent.Events, this.onStateUpdate.bind(this));
-    this.mx.off(ClientEvent.ToDeviceEvent, this.onToDeviceEvent.bind(this));
-
+    // Listener removal is handled by the disposables pushed in start().
     // Clear internal state
     this.readUpToMap = {};
     this.eventsToFeed = new WeakSet<MatrixEvent>();
   }
 
   private onCallJoined(): void {
+    debugLog.info('call', 'Call joined', { roomId: this.roomId });
     this.joined = true;
+    this.applyStyles();
+    this.control.startObserving();
+  }
+
+  private applyStyles(): void {
+    const doc = this.document;
+    if (!doc) return;
+
+    doc.body.style.setProperty('background', 'none', 'important');
+    const controls = doc.body.querySelector('[data-testid="incall_leave"]')?.parentElement
+      ?.parentElement;
+    if (controls) {
+      controls.style.setProperty('position', 'absolute');
+      controls.style.setProperty('visibility', 'hidden');
+    }
   }
 
   private onEvent(ev: MatrixEvent): void {
@@ -358,5 +401,16 @@ export class CallEmbed {
         });
       }
     }
+  }
+
+  public listenAction<T>(type: string, callback: (event: CustomEvent<T>) => void) {
+    return this.listenEvent(`action:${type}`, callback);
+  }
+
+  public listenEvent<T>(type: string, callback: (event: T) => void) {
+    this.call.on(type, callback);
+    return () => {
+      this.call.off(type, callback);
+    };
   }
 }

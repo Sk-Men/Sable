@@ -1,9 +1,10 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import {
   ClientEvent,
   createClient,
   MatrixClient,
   MatrixEvent,
+  MatrixEventEvent,
   Room,
   RoomEvent,
   SyncState,
@@ -26,9 +27,12 @@ import {
   getNotificationType,
   getStateEvent,
   isNotificationEvent,
+  getMDirects,
+  isDMRoom,
 } from '$utils/room';
 import { NotificationType, StateEvent } from '$types/matrix/room';
 import { createLogger } from '$utils/debug';
+import { createDebugLogger } from '$utils/debugLogger';
 import LogoSVG from '$public/res/svg/cinny.svg';
 import { nicknamesAtom } from '$state/nicknames';
 import {
@@ -40,6 +44,7 @@ import { useClientConfig } from '$hooks/useClientConfig';
 import { mobileOrTablet } from '$utils/user-agent';
 
 const log = createLogger('BackgroundNotifications');
+const debugLog = createDebugLogger('BackgroundNotifications');
 const isClientReadyForNotifications = (state: SyncState | string | null): boolean =>
   state === SyncState.Prepared || state === SyncState.Syncing || state === SyncState.Catchup;
 
@@ -65,21 +70,29 @@ const startBackgroundClient = async (
 /**
  * Wait for the background client to finish its initial sync so that
  * push rules and account data are available before processing events.
+ * Rejects after 30 seconds so callers can handle a stalled client instead
+ * of blocking indefinitely.
  */
 const waitForSync = (mx: MatrixClient): Promise<void> =>
-  new Promise((resolve) => {
+  new Promise((resolve, reject) => {
     const state = mx.getSyncState();
     if (isClientReadyForNotifications(state)) {
       resolve();
       return;
     }
+    let syncTimer: ReturnType<typeof setTimeout> | undefined;
     const onSync = (newState: SyncState) => {
       if (isClientReadyForNotifications(newState)) {
+        if (syncTimer !== undefined) clearTimeout(syncTimer);
         mx.removeListener(ClientEvent.Sync, onSync);
         resolve();
       }
     };
     mx.on(ClientEvent.Sync, onSync);
+    syncTimer = setTimeout(() => {
+      mx.removeListener(ClientEvent.Sync, onSync);
+      reject(new Error('background client sync timed out'));
+    }, 30_000);
   });
 
 export function BackgroundNotifications() {
@@ -117,10 +130,18 @@ export function BackgroundNotifications() {
   setBackgroundUnreadsRef.current = setBackgroundUnreads;
   const setInAppBannerRef = useRef(setInAppBanner);
   setInAppBannerRef.current = setInAppBanner;
+  // Per-client listener teardown callbacks, so we can explicitly remove event
+  // listeners before stopping a background client.
+  const clientCleanupRef = useRef<Map<string, () => void>>(new Map());
 
-  const inactiveSessions = sessions.filter(
-    (s) => s.userId !== (activeSessionId ?? sessions[0]?.userId)
+  const inactiveSessions = useMemo(
+    () => sessions.filter((s) => s.userId !== (activeSessionId ?? sessions[0]?.userId)),
+    [sessions, activeSessionId]
   );
+  // Ref so retry setTimeout callbacks can access the current session list
+  // without stale closures.
+  const inactiveSessionsRef = useRef(inactiveSessions);
+  inactiveSessionsRef.current = inactiveSessions;
 
   interface NotifyOptions {
     /** Title shown in the notification banner. */
@@ -143,7 +164,9 @@ export function BackgroundNotifications() {
   }
 
   useEffect(() => {
-    if (!shouldRunBackgroundNotifications) return undefined;
+    if (!shouldRunBackgroundNotifications) {
+      return undefined;
+    }
 
     const { current } = clientsRef;
     const activeIds = new Set(inactiveSessions.map((s) => s.userId));
@@ -187,7 +210,8 @@ export function BackgroundNotifications() {
 
     current.forEach((mx, userId) => {
       if (!activeIds.has(userId)) {
-        log.log('stopping background client for', userId);
+        clientCleanupRef.current.get(userId)?.();
+        clientCleanupRef.current.delete(userId);
         stopClient(mx);
         current.delete(userId);
         // Clear the background unread badge when this session is no longer a background account.
@@ -199,18 +223,56 @@ export function BackgroundNotifications() {
       }
     });
 
-    inactiveSessions.forEach((session) => {
-      if (current.has(session.userId)) return;
-
-      log.log('starting background client for', session.userId);
+    // startSession handles init, listener teardown tracking, and retry-on-failure.
+    // Using a named function (vs. inline .then) lets the .catch() schedule a
+    // fresh retry referencing the latest session from inactiveSessionsRef.
+    const startSession = (session: Session, attempt = 0): void => {
+      let sessionMx: MatrixClient | undefined;
       startBackgroundClient(session, clientConfig.slidingSync)
         .then(async (mx) => {
+          sessionMx = mx;
           current.set(session.userId, mx);
 
           await waitForSync(mx);
-          log.log('background client synced for', session.userId);
+
+          // Wait for m.direct account data to load. This is critical for DM detection.
+          // Without it, rooms in /direct/ won't be recognized as DMs, causing notifications to fail.
+          let mDirectsSet: Set<string> | undefined;
+          const mDirectEvent = mx.getAccountData('m.direct' as any);
+          if (mDirectEvent) {
+            mDirectsSet = getMDirects(mDirectEvent);
+          } else {
+            // Account data not loaded yet; wait for it
+            await new Promise<void>((resolve) => {
+              const handler = (event: MatrixEvent) => {
+                if (event.getType() === 'm.direct') {
+                  mDirectsSet = getMDirects(event);
+                  mx.off(ClientEvent.AccountData as any, handler);
+                  resolve();
+                }
+              };
+              mx.on(ClientEvent.AccountData as any, handler);
+              // Timeout after 5s to avoid blocking forever if m.direct never arrives
+              setTimeout(() => {
+                mx.off(ClientEvent.AccountData as any, handler);
+                resolve();
+              }, 5000);
+            });
+          }
 
           const pushProcessor = new PushProcessor(mx);
+
+          // Keep mDirectsSet updated when m.direct account data changes
+          const handleAccountData = (event: MatrixEvent) => {
+            if (event.getType() === 'm.direct') {
+              mDirectsSet = getMDirects(event);
+            }
+          };
+          mx.on(ClientEvent.AccountData as any, handleAccountData);
+
+          // Track encrypted events that are being decrypted to avoid re-checking the
+          // encryption guard when the Decrypted callback fires.
+          const decryptingEvents = new Set<string>();
 
           const handleTimeline = (
             mEvent: MatrixEvent,
@@ -220,22 +282,100 @@ export function BackgroundNotifications() {
             data: { liveEvent: boolean }
           ) => {
             if (!isClientReadyForNotifications(mx.getSyncState())) return;
-            if (!room || !data?.liveEvent || room.isSpaceRoom()) return;
-            if (!isNotificationEvent(mEvent)) return;
+            if (!room || room.isSpaceRoom()) return;
 
-            const notifType = getNotificationType(mx, room.roomId);
-            if (notifType === NotificationType.Mute) return;
-
+            // Allow recent events even if liveEvent is false (e.g., after decryption)
+            // Historical filter: event is old (>60s before start) AND already read
             const eventId = mEvent.getId();
             if (!eventId) return;
+
+            const eventType = mEvent.getType();
+            const isEncryptedType = eventType === 'm.room.encrypted';
+
+            // For encrypted events that haven't been decrypted yet, wait for decryption
+            // before processing the notification. The SDK's Timeline re-emission after
+            // decryption comes with data.liveEvent=false which would wrongly block it.
+            // Check this BEFORE the liveEvent check so we can attach the listener early.
+            if (
+              eventId &&
+              !decryptingEvents.has(eventId) &&
+              mEvent.isEncrypted() &&
+              isEncryptedType
+            ) {
+              decryptingEvents.add(eventId);
+              const handleDecrypted = () => {
+                // After decryption, run the notification logic with the decrypted event.
+                // Force liveEvent=true since the SDK's re-emission sets it to false.
+                handleTimeline(mEvent, room, toStartOfTimeline, removed, { liveEvent: true });
+                // Clean up the tracking flag
+                decryptingEvents.delete(eventId);
+              };
+              mEvent.once(MatrixEventEvent.Decrypted, handleDecrypted);
+              return;
+            }
+
+            // Trust the SDK's liveEvent flag for non-encrypted events.
+            // Encrypted events are handled above via the Decrypted listener.
+            if (!data?.liveEvent) {
+              return;
+            }
+
+            if (!isNotificationEvent(mEvent)) {
+              return;
+            }
+
+            const notificationType = getNotificationType(mx, room.roomId);
+            if (notificationType === NotificationType.Mute) {
+              debugLog.debug('notification', 'Room is muted - skipping notification', {
+                roomId: room.roomId,
+                eventId,
+              });
+              return;
+            }
+
             const dedupeId = `${session.userId}:${eventId}`;
-            if (notifiedEventsRef.current.has(dedupeId)) return;
+            if (notifiedEventsRef.current.has(dedupeId)) {
+              return;
+            }
 
             const sender = mEvent.getSender();
-            if (!sender || sender === mx.getUserId()) return;
+            if (!sender || sender === mx.getUserId()) {
+              return;
+            }
+
+            // Check if this is a DM using multiple signals for robustness
+            // Use the mDirectsSet that was loaded during initialization
+            const isDM = isDMRoom(room, mDirectsSet);
 
             const pushActions = pushProcessor.actionsForEvent(mEvent);
-            if (!pushActions?.notify) return;
+            // For DMs with "All Messages" or "Default" notification settings:
+            // Always notify even if push rules fail to match due to sliding sync limitations.
+            // For "Mention & Keywords": respect the push rule (only notify if it matches).
+            const shouldForceDMNotification =
+              isDM && notificationType !== NotificationType.MentionsAndKeywords;
+            const shouldNotify = pushActions?.notify || shouldForceDMNotification;
+
+            if (!shouldNotify) {
+              debugLog.debug('notification', 'Event filtered - no push action match', {
+                eventId,
+                roomId: room.roomId,
+                eventType,
+                isDM,
+              });
+              return;
+            }
+
+            const loudByRule = Boolean(pushActions.tweaks?.sound);
+            const isHighlight = Boolean(pushActions.tweaks?.highlight);
+
+            debugLog.info('notification', 'Processing notification event', {
+              eventId,
+              roomId: room.roomId,
+              eventType,
+              isDM,
+              isHighlight,
+              loud: loudByRule,
+            });
 
             const senderName =
               getMemberDisplayName(room, sender, nicknamesRef.current) ??
@@ -248,10 +388,7 @@ export function BackgroundNotifications() {
               ? (mxcUrlToHttp(mx, avatarMxc, false, 96, 96, 'crop') ?? undefined)
               : LogoSVG;
 
-            const loudByRule = Boolean(pushActions.tweaks?.sound);
-
             // Track background unread count for every notifiable event (loud or silent).
-            const isHighlight = Boolean(pushActions.tweaks?.highlight);
             setBackgroundUnreadsRef.current((prev) => {
               const cur = prev[session.userId] ?? { total: 0, highlight: 0 };
               return {
@@ -264,7 +401,13 @@ export function BackgroundNotifications() {
             });
 
             // Silent-rule events: unread badge updated above; no OS notification or sound.
-            if (!loudByRule && !isHighlight) return;
+            if (!loudByRule && !isHighlight) {
+              debugLog.debug('notification', 'Silent notification - badge updated only', {
+                eventId,
+                roomId: room.roomId,
+              });
+              return;
+            }
 
             const isEncryptedRoom = !!getStateEvent(room, StateEvent.RoomEncryption);
 
@@ -274,15 +417,6 @@ export function BackgroundNotifications() {
               const first = notifiedEventsRef.current.values().next().value;
               if (first) notifiedEventsRef.current.delete(first);
             }
-
-            // This component handles ONLY background (inactive) accounts.
-            // SW push covers the active account when the app is backgrounded.
-            // When the page is hidden, iOS suspends JS entirely — nothing to do here.
-            // Only show an in-app notification when the user is actively looking at the app.
-            if (document.visibilityState !== 'visible') return;
-
-            // Respect in-app notification setting (read from ref to avoid stale closure)
-            if (!mobileOrTablet() || !showNotificationsRef.current) return;
 
             const notificationPayload = buildRoomMessageNotification({
               roomName: room.name ?? room.getCanonicalAlias() ?? room.roomId,
@@ -314,8 +448,19 @@ export function BackgroundNotifications() {
               setPending({ roomId: room.roomId, eventId, targetSessionId: session.userId });
             };
 
-            if (document.visibilityState === 'visible') {
+            // Show in-app banner when app is visible, mobile, and in-app notifications enabled
+            const canShowInAppBanner =
+              document.visibilityState === 'visible' &&
+              mobileOrTablet() &&
+              showNotificationsRef.current;
+
+            if (canShowInAppBanner) {
               // App is in the foreground on a different account — show the themed in-app banner.
+              debugLog.info('notification', 'Showing in-app banner', {
+                eventId,
+                roomId: room.roomId,
+                title: notificationPayload.title,
+              });
               setInAppBannerRef.current({
                 id: dedupeId,
                 title: notificationPayload.title,
@@ -326,9 +471,14 @@ export function BackgroundNotifications() {
                 onClick: notifOnClick,
               });
             } else if (loudByRule) {
-              // App is backgrounded — fire an OS notification only for loud (sound-tweak) rules.
-              // Highlight-only events are silently counted in the badge; OS noise is left to the
-              // user's own push rules for that account.
+              // App is backgrounded or in-app notifications disabled — fire an OS notification.
+              // Only send for loud (sound-tweak) rules; highlight-only events are silently counted.
+              debugLog.info('notification', 'Sending OS notification', {
+                eventId,
+                roomId: room.roomId,
+                title: notificationPayload.title,
+                hasSound: !notificationPayload.options.silent,
+              });
               sendNotification({
                 title: notificationPayload.title,
                 icon: notificationPayload.options.icon,
@@ -342,14 +492,58 @@ export function BackgroundNotifications() {
           };
 
           mx.on(RoomEvent.Timeline, handleTimeline as unknown as (...args: unknown[]) => void);
+
+          // Register teardown so these listeners are removed when this client is stopped.
+          clientCleanupRef.current.set(session.userId, () => {
+            mx.off(ClientEvent.AccountData as any, handleAccountData);
+            mx.off(RoomEvent.Timeline, handleTimeline as unknown as (...args: unknown[]) => void);
+          });
         })
         .catch((err) => {
           log.error('failed to start background client for', session.userId, err);
+          debugLog.error('notification', 'Failed to start background client', {
+            userId: session.userId,
+            error: err,
+          });
+
+          // Remove the stuck/failed client from current so future runs (or the
+          // retry below) can attempt a fresh start.
+          if (sessionMx && current.get(session.userId) === sessionMx) {
+            clientCleanupRef.current.get(session.userId)?.();
+            clientCleanupRef.current.delete(session.userId);
+            current.delete(session.userId);
+            stopClient(sessionMx);
+          }
+
+          // Retry with exponential backoff, up to 5 attempts (5s, 10s, 20s, 40s, 60s cap).
+          if (attempt < 5) {
+            const retryDelay = Math.min(5_000 * 2 ** attempt, 60_000);
+            setTimeout(() => {
+              const latestSession = inactiveSessionsRef.current.find(
+                (s) => s.userId === session.userId
+              );
+              if (latestSession && !current.has(session.userId)) {
+                startSession(latestSession, attempt + 1);
+              }
+            }, retryDelay);
+          }
         });
+    };
+
+    inactiveSessions.forEach((session) => {
+      if (!current.has(session.userId)) startSession(session);
     });
 
     return () => {
-      current.forEach((mx) => stopClient(mx));
+      // Reading ref.current in cleanup is intentional - we want cleanup functions
+      // that were registered during async startBackgroundClient operations
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+      const cleanupMap = clientCleanupRef.current;
+      current.forEach((mx, userId) => {
+        cleanupMap.get(userId)?.();
+        cleanupMap.delete(userId);
+        stopClient(mx);
+      });
       current.clear();
     };
   }, [

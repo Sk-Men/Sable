@@ -1,5 +1,5 @@
 /// <reference lib="WebWorker" />
-// eslint-disable-next-line import-x/no-extraneous-dependencies
+
 import { precacheAndRoute, cleanupOutdatedCaches } from 'workbox-precaching';
 
 import { createPushNotifications } from './sw/pushNotification';
@@ -91,9 +91,11 @@ async function cleanupDeadClients() {
 function setSession(clientId: string, accessToken: unknown, baseUrl: unknown) {
   if (typeof accessToken === 'string' && typeof baseUrl === 'string') {
     sessions.set(clientId, { accessToken, baseUrl });
+    console.debug('[SW] setSession: stored', clientId, baseUrl);
   } else {
     // Logout or invalid session
     sessions.delete(clientId);
+    console.debug('[SW] setSession: removed', clientId);
   }
 
   const resolveSession = clientToResolve.get(clientId);
@@ -124,12 +126,18 @@ async function requestSessionWithTimeout(
   timeoutMs = 3000
 ): Promise<SessionInfo | undefined> {
   const client = await self.clients.get(clientId);
-  if (!client) return undefined;
+  if (!client) {
+    console.warn('[SW] requestSessionWithTimeout: client not found', clientId);
+    return undefined;
+  }
 
   const sessionPromise = requestSession(client);
 
   const timeout = new Promise<undefined>((resolve) => {
-    setTimeout(() => resolve(undefined), timeoutMs);
+    setTimeout(() => {
+      console.warn('[SW] requestSessionWithTimeout: timed out after', timeoutMs, 'ms', clientId);
+      resolve(undefined);
+    }, timeoutMs);
   });
 
   return Promise.race([sessionPromise, timeout]);
@@ -288,6 +296,11 @@ self.addEventListener('fetch', (event: FetchEvent) => {
       if (s && validMediaRequest(url, s.baseUrl)) {
         return fetch(url, { ...fetchConfig(s.accessToken), redirect });
       }
+      console.warn(
+        '[SW fetch] No valid session for media request',
+        { url, clientId, hasSession: !!s },
+        'falling back to unauthenticated fetch'
+      );
       return fetch(event.request);
     })
   );
@@ -372,6 +385,8 @@ self.addEventListener('notificationclick', (event: NotificationEvent) => {
     scope,
   });
 
+  const isCall = data?.isCall === true;
+
   // Build a canonical deep-link URL.
   //
   // Room messages: /to/:user_id/:room_id/:event_id?
@@ -387,9 +402,10 @@ self.addEventListener('notificationclick', (event: NotificationEvent) => {
     if (pushUserId) u.searchParams.set('uid', pushUserId);
     targetUrl = u.href;
   } else if (pushUserId && pushRoomId) {
+    const callParam = isCall ? '?joinCall=true' : '';
     const segments = pushEventId
-      ? `to/${encodeURIComponent(pushUserId)}/${encodeURIComponent(pushRoomId)}/${encodeURIComponent(pushEventId)}/`
-      : `to/${encodeURIComponent(pushUserId)}/${encodeURIComponent(pushRoomId)}/`;
+      ? `to/${encodeURIComponent(pushUserId)}/${encodeURIComponent(pushRoomId)}/${encodeURIComponent(pushEventId)}/${callParam}`
+      : `to/${encodeURIComponent(pushUserId)}/${encodeURIComponent(pushRoomId)}/${callParam}`;
     targetUrl = new URL(segments, scope).href;
   } else {
     // Fallback: no room ID or no user ID in payload.
@@ -424,6 +440,7 @@ self.addEventListener('notificationclick', (event: NotificationEvent) => {
             roomId: pushRoomId,
             eventId: pushEventId,
             isInvite,
+            isCall,
           });
           // eslint-disable-next-line no-await-in-loop
           await wc.focus();

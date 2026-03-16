@@ -23,10 +23,14 @@ const slideOut = keyframes({
   },
 });
 
-// Floats at the top of the viewport, spanning full width on all platforms.
+// Positions at the top of the viewport, spanning full width.
+// Uses fixed positioning with safe-area-inset to handle iOS keyboard correctly.
+// On iOS, the banner stays at the top of the visual viewport even when keyboard is open.
 export const BannerContainer = style({
   position: 'fixed',
-  top: 0,
+  // Use env(safe-area-inset-top) to respect device-specific safe areas (notches, etc)
+  // This also helps position correctly on iOS when the keyboard is open
+  top: 'env(safe-area-inset-top, 0)',
   left: 0,
   right: 0,
   zIndex: 9999,
@@ -35,7 +39,17 @@ export const BannerContainer = style({
   gap: config.space.S200,
   padding: config.space.S400,
   pointerEvents: 'none',
-  alignItems: 'stretch',
+  alignItems: 'flex-end',
+
+  // On iOS, when keyboard opens, ensure banner stays visible at top of visual viewport
+  '@supports': {
+    '(-webkit-touch-callout: none)': {
+      // iOS-specific: Position relative to the visible viewport when keyboard is open
+      position: 'fixed',
+      // Support both old and new safe area syntax
+      top: 'max(env(safe-area-inset-top, 0px), constant(safe-area-inset-top, 0px))',
+    },
+  },
 });
 
 export const Banner = style({
@@ -53,6 +67,7 @@ export const Banner = style({
   boxShadow: `0 ${toRem(8)} ${toRem(32)} rgba(0, 0, 0, 0.45), 0 ${toRem(2)} ${toRem(8)} rgba(0, 0, 0, 0.3)`,
   cursor: 'pointer',
   width: '100%',
+  maxWidth: '50em',
   animationName: slideIn,
   animationDuration: '260ms',
   animationTimingFunction: 'cubic-bezier(0.22, 0.8, 0.6, 1)',

@@ -2,6 +2,8 @@
 
 A Matrix client built to enhance the user experience with quality-of-life features, cosmetics, utilities, and sheer usability. See the [changelog](https://github.com/SableClient/Sable/blob/dev/CHANGELOG.md).
 
+Soon to be replaced desktop apps can be downloaded [here](https://github.com/7w1/sable/releases/tag/1.0.0). They auto-update by pulling the website.
+
 Join our matrix space [here](https://matrix.to/#/#sable:sable.moe) to discuss features, issues, or meowing.
 
 Forked from [Cinny](https://github.com/cinnyapp/cinny/).
@@ -52,8 +54,8 @@ services:
 To build and serve Sable yourself with nginx, clone this repo and build it:
 
 ```sh
-npm ci # Installs all dependencies
-npm run build # Compiles the app into the dist/ directory
+pnpm i # Installs all dependencies
+pnpm run build # Compiles the app into the dist/ directory
 ```
 
 After that, you can copy the dist/ directory to your server and serve it.
@@ -69,13 +71,16 @@ After that, you can copy the dist/ directory to your server and serve it.
 
 Execute the following commands to start a development server:
 ```sh
-npm ci # Installs all dependencies
-npm run dev # Serve a development version
+fnm use --corepack-enabled # Activates the Node version and enables corepack
+# If you not using fnm, install corepack manually: npm install --global corepack@latest
+corepack install # Installs the pnpm version specified in package.json
+pnpm i # Installs all dependencies
+pnpm run dev # Serve a development version
 ```
 
 To build the app:
 ```sh
-npm run build # Compiles the app into the dist/ directory
+pnpm run build # Compiles the app into the dist/ directory
 ```
 
 ## Deployment and infrastructure

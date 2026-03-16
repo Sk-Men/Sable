@@ -14,6 +14,7 @@ import { isKeyHotkey } from 'is-hotkey';
 import {
   EventType,
   IContent,
+  MatrixEvent,
   MsgType,
   RelationType,
   Room,
@@ -114,6 +115,7 @@ import { settingsAtom } from '$state/settings';
 import {
   getMemberDisplayName,
   getMentionContent,
+  reactionOrEditEvent,
   trimReplyFromBody,
   trimReplyFromFormattedBody,
 } from '$utils/room';
@@ -128,6 +130,7 @@ import { useImagePackRooms } from '$hooks/useImagePackRooms';
 import { useComposingCheck } from '$hooks/useComposingCheck';
 import { useSableCosmetics } from '$hooks/useSableCosmetics';
 import { createLogger } from '$utils/debug';
+import { createDebugLogger } from '$utils/debugLogger';
 import FocusTrap from 'focus-trap-react';
 import { useQueryClient } from '@tanstack/react-query';
 import {
@@ -157,25 +160,74 @@ import {
   getVideoMsgContent,
 } from './msgContent';
 import { CommandAutocomplete } from './CommandAutocomplete';
+import { AudioMessageRecorder } from './AudioMessageRecorder';
 
-const getReplyContent = (replyDraft: IReplyDraft | undefined): IEventRelation => {
+// Returns the event ID of the most recent non-reaction/non-edit event in a thread,
+// falling back to the thread root if no replies exist yet.
+const getLatestThreadEventId = (room: Room, threadRootId: string): string => {
+  const thread = room.getThread(threadRootId);
+  const threadEvents: MatrixEvent[] = thread?.events ?? [];
+  const filtered = threadEvents.filter(
+    (ev) => ev.getId() !== threadRootId && !reactionOrEditEvent(ev)
+  );
+  if (filtered.length > 0) {
+    return filtered[filtered.length - 1].getId() ?? threadRootId;
+  }
+  // Fall back to the live timeline if the Thread object hasn't been registered yet
+  const liveEvents = room
+    .getUnfilteredTimelineSet()
+    .getLiveTimeline()
+    .getEvents()
+    .filter(
+      (ev) =>
+        ev.threadRootId === threadRootId && ev.getId() !== threadRootId && !reactionOrEditEvent(ev)
+    );
+  if (liveEvents.length > 0) {
+    return liveEvents[liveEvents.length - 1].getId() ?? threadRootId;
+  }
+  return threadRootId;
+};
+
+const getReplyContent = (replyDraft: IReplyDraft | undefined, room?: Room): IEventRelation => {
   if (!replyDraft) return {};
 
   const relatesTo: IEventRelation = {};
 
-  relatesTo['m.in_reply_to'] = {
-    event_id: replyDraft.eventId,
-  };
-
+  // If this is a thread relation
   if (replyDraft.relation?.rel_type === RelationType.Thread) {
     relatesTo.event_id = replyDraft.relation.event_id;
     relatesTo.rel_type = RelationType.Thread;
-    relatesTo.is_falling_back = false;
+
+    // Check if this is a reply to a specific message in the thread
+    // (replyDraft.body being empty means it's just a seeded thread draft)
+    if (replyDraft.body && replyDraft.eventId !== replyDraft.relation.event_id) {
+      // Explicit reply to a specific message — per spec, is_falling_back must be false
+      relatesTo['m.in_reply_to'] = {
+        event_id: replyDraft.eventId,
+      };
+      relatesTo.is_falling_back = false;
+    } else {
+      // Regular thread message — per spec, include fallback m.in_reply_to pointing to the
+      // most recent thread message so unthreaded clients can display it as a reply chain
+      const threadRootId = replyDraft.relation.event_id ?? replyDraft.eventId;
+      const latestEventId = room ? getLatestThreadEventId(room, threadRootId) : threadRootId;
+      relatesTo['m.in_reply_to'] = {
+        event_id: latestEventId,
+      };
+      relatesTo.is_falling_back = true;
+    }
+  } else {
+    // Regular reply (not in a thread)
+    relatesTo['m.in_reply_to'] = {
+      event_id: replyDraft.eventId,
+    };
   }
+
   return relatesTo;
 };
 
 const log = createLogger('RoomInput');
+const debugLog = createDebugLogger('RoomInput');
 interface ReplyEventContent {
   'm.relates_to'?: IEventRelation;
 }
@@ -185,9 +237,13 @@ interface RoomInputProps {
   fileDropContainerRef: RefObject<HTMLElement>;
   roomId: string;
   room: Room;
+  threadRootId?: string;
 }
 export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
-  ({ editor, fileDropContainerRef, roomId, room }, ref) => {
+  ({ editor, fileDropContainerRef, roomId, room, threadRootId }, ref) => {
+    // When in thread mode, isolate drafts by thread root ID so thread replies
+    // don't clobber the main room draft (and vice versa).
+    const draftKey = threadRootId ?? roomId;
     const mx = useMatrixClient();
     const useAuthentication = useMediaAuthentication();
     const [enterForNewline] = useSetting(settingsAtom, 'enterForNewline');
@@ -195,6 +251,7 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
     const [hideActivity] = useSetting(settingsAtom, 'hideActivity');
     const commands = useCommands(mx, room);
     const emojiBtnRef = useRef<HTMLButtonElement>(null);
+    const micBtnRef = useRef<HTMLButtonElement>(null);
     const roomToParents = useAtomValue(roomToParentsAtom);
     const nicknames = useAtomValue(nicknamesAtom);
 
@@ -203,8 +260,8 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
     const permissions = useRoomPermissions(creators, powerLevels);
     const canSendReaction = permissions.event(MessageEvent.Reaction, mx.getSafeUserId());
 
-    const [msgDraft, setMsgDraft] = useAtom(roomIdToMsgDraftAtomFamily(roomId));
-    const [replyDraft, setReplyDraft] = useAtom(roomIdToReplyDraftAtomFamily(roomId));
+    const [msgDraft, setMsgDraft] = useAtom(roomIdToMsgDraftAtomFamily(draftKey));
+    const [replyDraft, setReplyDraft] = useAtom(roomIdToReplyDraftAtomFamily(draftKey));
     const replyUserID = replyDraft?.userId;
 
     const { color: replyUsernameColor, font: replyUsernameFont } = useSableCosmetics(
@@ -213,7 +270,7 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
     );
 
     const [uploadBoard, setUploadBoard] = useState(true);
-    const [selectedFiles, setSelectedFiles] = useAtom(roomIdToUploadItemsAtomFamily(roomId));
+    const [selectedFiles, setSelectedFiles] = useAtom(roomIdToUploadItemsAtomFamily(draftKey));
     const uploadFamilyObserverAtom = createUploadFamilyObserverAtom(
       roomUploadAtomFamily,
       selectedFiles.map((f) => f.file)
@@ -225,6 +282,9 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
     const imagePackRooms: Room[] = useImagePackRooms(roomId, roomToParents);
 
     const [toolbar, setToolbar] = useSetting(settingsAtom, 'editorToolbar');
+    const [showAudioRecorder, setShowAudioRecorder] = useState(false);
+    const [audioMsgWaveform, setAudioMsgWaveform] = useState<number[] | undefined>(undefined);
+    const [audioMsgLength, setAudioMsgLength] = useState<number | undefined>(undefined);
     const [autocompleteQuery, setAutocompleteQuery] =
       useState<AutocompleteQuery<AutocompletePrefix>>();
     const [isQuickTextReact, setQuickTextReact] = useState(false);
@@ -285,11 +345,12 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
     );
     const [scheduleMenuAnchor, setScheduleMenuAnchor] = useState<RectCords>();
     const [showSchedulePicker, setShowSchedulePicker] = useState(false);
+    const [silentReply, setSilentReply] = useState(false);
     const [hour24Clock] = useSetting(settingsAtom, 'hour24Clock');
     const isEncrypted = room.hasEncryptionStateEvent();
 
     useElementSizeObserver(
-      useCallback(() => document.body, []),
+      useCallback(() => fileDropContainerRef.current, [fileDropContainerRef]),
       useCallback((width) => setHideStickerBtn(width < 500), [])
     );
 
@@ -311,10 +372,11 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
 
     if (htmlBody) {
       const strippedHtml = trimReplyFromFormattedBody(htmlBody)
-        .replace(/<br\s*\/?>/gi, ' ')
-        .replace(/<\/p>\s*<p[^>]*>/gi, ' ')
-        .replace(/<\/?p[^>]*>/gi, '')
-        .replace(/(?:\r\n|\r|\n)/g, ' ');
+        .replaceAll(/<br\s*\/?>/gi, ' ')
+        .replaceAll(/<\/p>\s*<p[^>]*>/gi, ' ')
+        .replaceAll(/<\/?p[^>]*>/gi, '')
+        .replaceAll(/(?:\r\n|\r|\n)/g, ' ')
+        .trim();
       const parserOpts = getReactCustomHtmlParser(mx, roomId, {
         linkifyOpts: LINKIFY_OPTS,
         useAuthentication,
@@ -322,9 +384,29 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
       });
       replyBodyJSX = parse(strippedHtml, parserOpts);
     } else if (plainBody) {
-      const strippedBody = trimReplyFromBody(plainBody).replace(/(?:\r\n|\r|\n)/g, ' ');
+      const strippedBody = trimReplyFromBody(plainBody).replaceAll(/(?:\r\n|\r|\n)/g, ' ');
       replyBodyJSX = scaleSystemEmoji(strippedBody);
     }
+
+    // Seed the reply draft with the thread relation whenever we're in thread
+    // mode (e.g. on first render or when the thread root changes). We use the
+    // current user's ID as userId so that the mention logic skips it.
+    useEffect(() => {
+      if (!threadRootId) return;
+      setReplyDraft((prev) => {
+        if (
+          prev?.relation?.rel_type === RelationType.Thread &&
+          prev.relation.event_id === threadRootId
+        )
+          return prev;
+        return {
+          userId: mx.getUserId() ?? '',
+          eventId: threadRootId,
+          body: '',
+          relation: { rel_type: RelationType.Thread, event_id: threadRootId },
+        };
+      });
+    }, [threadRootId, setReplyDraft, mx]);
 
     useEffect(() => {
       Transforms.insertFragment(editor, msgDraft);
@@ -332,17 +414,23 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
 
     useEffect(
       () => () => {
-        if (!isEmptyEditor(editor)) {
-          const parsedDraft = JSON.parse(JSON.stringify(editor.children));
-          setMsgDraft(parsedDraft);
-        } else {
+        if (isEmptyEditor(editor)) {
           setMsgDraft([]);
+        } else {
+          const parsedDraft = structuredClone(editor.children);
+          setMsgDraft(parsedDraft);
         }
         resetEditor(editor);
         resetEditorHistory(editor);
       },
-      [roomId, editor, setMsgDraft]
+      [draftKey, editor, setMsgDraft]
     );
+
+    useEffect(() => {
+      if (replyDraft !== undefined) {
+        setSilentReply(replyDraft.userId === mx.getUserId());
+      }
+    }, [mx, replyDraft]);
 
     const handleFileMetadata = useCallback(
       (fileItem: TUploadItem, metadata: TUploadMetadata) => {
@@ -399,7 +487,7 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
           return getVideoMsgContent(mx, fileItem, upload.mxc);
         }
         if (fileItem.file.type.startsWith('audio')) {
-          return getAudioMsgContent(fileItem, upload.mxc);
+          return getAudioMsgContent(fileItem, upload.mxc, audioMsgWaveform, audioMsgLength);
         }
         return getFileMsgContent(fileItem, upload.mxc);
       });
@@ -407,17 +495,41 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
       const contents = fulfilledPromiseSettledResult(await Promise.allSettled(contentsPromises));
 
       if (contents.length > 0) {
-        const replyContent = plainText?.length === 0 ? getReplyContent(replyDraft) : undefined;
+        const replyContent =
+          plainText?.length === 0 ? getReplyContent(replyDraft, room) : undefined;
         if (replyContent) contents[0]['m.relates_to'] = replyContent;
-        setReplyDraft(undefined);
+        if (threadRootId) {
+          setReplyDraft({
+            userId: mx.getUserId() ?? '',
+            eventId: threadRootId,
+            body: '',
+            relation: { rel_type: RelationType.Thread, event_id: threadRootId },
+          });
+        } else {
+          setReplyDraft(undefined);
+        }
       }
 
       await Promise.all(
         contents.map((content) =>
-          mx.sendMessage(roomId, content as any).catch((error: unknown) => {
-            log.error('failed to send uploaded message', { roomId }, error);
-            throw error;
-          })
+          mx
+            .sendMessage(roomId, threadRootId ?? null, content as any)
+            .then((res) => {
+              debugLog.info('message', 'Uploaded file message sent', {
+                roomId,
+                eventId: res.event_id,
+                msgtype: content.msgtype,
+              });
+              return res;
+            })
+            .catch((error: unknown) => {
+              debugLog.error('message', 'Failed to send uploaded file message', {
+                roomId,
+                error: error instanceof Error ? error.message : String(error),
+              });
+              log.error('failed to send uploaded message', { roomId }, error);
+              throw error;
+            })
         )
       );
     };
@@ -517,7 +629,7 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
         body,
       };
 
-      if (replyDraft && replyDraft.userId !== mx.getUserId()) {
+      if (replyDraft && !silentReply) {
         mentionData.users.add(replyDraft.userId);
       }
 
@@ -528,7 +640,7 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
         content.formatted_body = formattedBody;
       }
       if (replyDraft) {
-        content['m.relates_to'] = getReplyContent(replyDraft);
+        content['m.relates_to'] = getReplyContent(replyDraft, room);
       }
       const invalidate = () =>
         queryClient.invalidateQueries({ queryKey: ['delayedEvents', roomId] });
@@ -537,7 +649,17 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
         resetEditor(editor);
         resetEditorHistory(editor);
         setInputKey((prev) => prev + 1);
-        setReplyDraft(undefined);
+        if (threadRootId) {
+          // Re-seed the thread reply draft so the next message also goes to the thread.
+          setReplyDraft({
+            userId: mx.getUserId() ?? '',
+            eventId: threadRootId,
+            body: '',
+            relation: { rel_type: RelationType.Thread, event_id: threadRootId },
+          });
+        } else {
+          setReplyDraft(undefined);
+        }
         sendTypingStatus(false);
       };
       if (scheduledTime) {
@@ -561,18 +683,39 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
       } else if (editingScheduledDelayId) {
         try {
           await cancelDelayedEvent(mx, editingScheduledDelayId);
-          mx.sendMessage(roomId, content as any);
+          debugLog.info('message', 'Sending message after cancelling scheduled event', {
+            roomId,
+            scheduledDelayId: editingScheduledDelayId,
+          });
+          const res = await mx.sendMessage(roomId, threadRootId ?? null, content as any);
+          debugLog.info('message', 'Message sent successfully', { roomId, eventId: res.event_id });
           invalidate();
           setEditingScheduledDelayId(null);
           resetInput();
-        } catch {
+        } catch (error) {
+          debugLog.error('message', 'Failed to send message after cancelling scheduled event', {
+            roomId,
+            error: error instanceof Error ? error.message : String(error),
+          });
           // Cancel failed — leave state intact for retry
         }
       } else {
         resetInput();
-        mx.sendMessage(roomId, content as any).catch((error: unknown) => {
-          log.error('failed to send message', { roomId }, error);
-        });
+        debugLog.info('message', 'Sending message', { roomId, msgtype: (content as any).msgtype });
+        mx.sendMessage(roomId, threadRootId ?? null, content as any)
+          .then((res) => {
+            debugLog.info('message', 'Message sent successfully', {
+              roomId,
+              eventId: res.event_id,
+            });
+          })
+          .catch((error: unknown) => {
+            debugLog.error('message', 'Failed to send message', {
+              roomId,
+              error: error instanceof Error ? error.message : String(error),
+            });
+            log.error('failed to send message', { roomId }, error);
+          });
       }
     }, [
       editor,
@@ -580,7 +723,9 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
       canSendReaction,
       mx,
       roomId,
+      threadRootId,
       replyDraft,
+      silentReply,
       scheduledTime,
       editingScheduledDelayId,
       handleQuickReact,
@@ -682,8 +827,17 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
         info,
       };
       if (replyDraft) {
-        content['m.relates_to'] = getReplyContent(replyDraft);
-        setReplyDraft(undefined);
+        content['m.relates_to'] = getReplyContent(replyDraft, room);
+        if (threadRootId) {
+          setReplyDraft({
+            userId: mx.getUserId() ?? '',
+            eventId: threadRootId,
+            body: '',
+            relation: { rel_type: RelationType.Thread, event_id: threadRootId },
+          });
+        } else {
+          setReplyDraft(undefined);
+        }
       }
       mx.sendEvent(roomId, EventType.Sticker, content);
     };
@@ -828,6 +982,7 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
                       variant="SurfaceVariant"
                       size="300"
                       radii="300"
+                      title="schedule message send"
                     >
                       <Icon src={Icons.Cross} size="50" />
                     </IconButton>
@@ -841,7 +996,7 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
                   </Box>
                 </div>
               )}
-              {replyDraft && (
+              {replyDraft && (!threadRootId || replyDraft.body) && (
                 <div>
                   <Box
                     alignItems="Center"
@@ -849,31 +1004,76 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
                     style={{ padding: `${config.space.S200} ${config.space.S300} 0` }}
                   >
                     <IconButton
-                      onClick={() => setReplyDraft(undefined)}
+                      onClick={() => {
+                        if (threadRootId) {
+                          setReplyDraft({
+                            userId: mx.getUserId() ?? '',
+                            eventId: threadRootId,
+                            body: '',
+                            relation: { rel_type: RelationType.Thread, event_id: threadRootId },
+                          });
+                        } else {
+                          setReplyDraft(undefined);
+                        }
+                      }}
                       variant="SurfaceVariant"
                       size="300"
                       radii="300"
+                      aria-label="Cancel reply"
+                      title="Cancel reply"
                     >
                       <Icon src={Icons.Cross} size="50" />
                     </IconButton>
-                    <Box direction="Row" gap="200" alignItems="Center">
-                      {replyDraft.relation?.rel_type === RelationType.Thread && <ThreadIndicator />}
-                      <ReplyLayout
-                        userColor={replyUsernameColor}
-                        username={
-                          <Text size="T300" truncate style={{ fontFamily: replyUsernameFont }}>
-                            <b>
-                              {getMemberDisplayName(room, replyDraft.userId, nicknames) ??
-                                getMxIdLocalPart(replyDraft.userId) ??
-                                replyDraft.userId}
-                            </b>
-                          </Text>
-                        }
+                    <Box
+                      direction="Row"
+                      gap="200"
+                      alignItems="Center"
+                      grow="Yes"
+                      style={{ minWidth: 0 }}
+                    >
+                      <Box
+                        direction="Row"
+                        gap="200"
+                        alignItems="Center"
+                        grow="Yes"
+                        style={{ minWidth: 0 }}
                       >
-                        <Text size="T300" truncate>
-                          {replyBodyJSX}
-                        </Text>
-                      </ReplyLayout>
+                        {replyDraft.relation?.rel_type === RelationType.Thread && (
+                          <ThreadIndicator />
+                        )}
+                        <ReplyLayout
+                          userColor={replyUsernameColor}
+                          username={
+                            <Text size="T300" truncate style={{ fontFamily: replyUsernameFont }}>
+                              <b>
+                                {getMemberDisplayName(room, replyDraft.userId, nicknames) ??
+                                  getMxIdLocalPart(replyDraft.userId) ??
+                                  replyDraft.userId}
+                              </b>
+                            </Text>
+                          }
+                        >
+                          <Text size="T300" truncate>
+                            {replyBodyJSX}
+                          </Text>
+                        </ReplyLayout>
+                      </Box>
+                      <IconButton
+                        variant="SurfaceVariant"
+                        size="300"
+                        radii="300"
+                        title={
+                          silentReply ? 'Unmute reply notifications' : 'Mute reply notifications'
+                        }
+                        aria-pressed={silentReply}
+                        aria-label={
+                          silentReply ? 'Unmute reply notifications' : 'Mute reply notifications'
+                        }
+                        onClick={() => setSilentReply(!silentReply)}
+                      >
+                        {!silentReply && <Icon src={Icons.BellPing} />}
+                        {silentReply && <Icon src={Icons.BellMute} />}
+                      </IconButton>
                     </Box>
                   </Box>
                 </div>
@@ -886,6 +1086,8 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
               variant="SurfaceVariant"
               size="300"
               radii="300"
+              title="Upload File"
+              aria-label="Upload and attach a File"
             >
               <Icon src={Icons.PlusCircle} />
             </IconButton>
@@ -896,10 +1098,54 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
                 variant="SurfaceVariant"
                 size="300"
                 radii="300"
+                title={toolbar ? 'Hide Toolbar' : 'Show Toolbar'}
+                aria-pressed={toolbar}
+                aria-label={toolbar ? 'Hide Toolbar' : 'Show Toolbar'}
                 onClick={() => setToolbar(!toolbar)}
               >
                 <Icon src={toolbar ? Icons.AlphabetUnderline : Icons.Alphabet} />
               </IconButton>
+              <IconButton
+                ref={micBtnRef}
+                variant="SurfaceVariant"
+                size="300"
+                radii="300"
+                title="record audio message"
+                aria-pressed={showAudioRecorder}
+                onClick={() => setShowAudioRecorder(!showAudioRecorder)}
+              >
+                <Icon src={Icons.Mic} />
+              </IconButton>
+              {showAudioRecorder && (
+                <PopOut
+                  anchor={micBtnRef.current?.getBoundingClientRect() ?? undefined}
+                  offset={8}
+                  position="Top"
+                  align="End"
+                  alignOffset={-44}
+                  content={
+                    <AudioMessageRecorder
+                      onRequestClose={() => {
+                        setShowAudioRecorder(false);
+                      }}
+                      onRecordingComplete={(audioBlob) => {
+                        const file = new File(
+                          [audioBlob],
+                          `sable-audio-message-${Date.now()}.ogg`,
+                          {
+                            type: audioBlob.type,
+                          }
+                        );
+                        handleFiles([file]);
+                        // Close the recorder after handling the file, to give some feedback that the recording was successful
+                        setShowAudioRecorder(false);
+                      }}
+                      onAudioLengthUpdate={(len) => setAudioMsgLength(len)}
+                      onWaveformUpdate={(w) => setAudioMsgWaveform(w)}
+                    />
+                  }
+                />
+              )}
               <UseStateProvider initial={undefined}>
                 {(emojiBoardTab: EmojiBoardTab | undefined, setEmojiBoardTab) => (
                   <PopOut
@@ -940,6 +1186,8 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
                         variant="SurfaceVariant"
                         size="300"
                         radii="300"
+                        title="open sticker picker"
+                        aria-label="Open sticker picker"
                       >
                         <Icon
                           src={Icons.Sticker}
@@ -956,6 +1204,8 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
                       variant="SurfaceVariant"
                       size="300"
                       radii="300"
+                      title="open emoji picker"
+                      aria-label="Open emoji picker"
                     >
                       <Icon
                         src={Icons.Smile}
@@ -1012,6 +1262,8 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
               />
               <Box display="Flex" alignItems="Center">
                 <IconButton
+                  title="Send Message"
+                  aria-label="Send your composed Message"
                   onClick={() => {
                     if (isLongPress.current) {
                       isLongPress.current = false;
@@ -1053,6 +1305,8 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
                     onClick={(evt: MouseEvent<HTMLButtonElement>) => {
                       setScheduleMenuAnchor(evt.currentTarget.getBoundingClientRect());
                     }}
+                    title="Schedule Message"
+                    aria-label="Schedule message send"
                     variant={scheduledTime ? 'Primary' : 'SurfaceVariant'}
                     size="300"
                     radii="0"
