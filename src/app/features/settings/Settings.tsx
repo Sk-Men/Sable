@@ -36,10 +36,12 @@ import { General } from './general';
 import { Cosmetics } from './cosmetics/Cosmetics';
 import { Experimental } from './experimental/Experimental';
 import { KeyboardShortcuts } from './keyboard-shortcuts';
+import { PerMessageProfilePage } from './PerMessageProfiles/PerMessageProfilesPage';
 
 export enum SettingsPages {
   GeneralPage,
   AccountPage,
+  PerMessageProfilesPage, // Renamed to avoid conflict
   NotificationPage,
   DevicesPage,
   EmojisStickersPage,
@@ -68,6 +70,11 @@ const useSettingsMenuItems = (): SettingsMenuItem[] =>
       {
         page: SettingsPages.AccountPage,
         name: 'Account',
+        icon: Icons.User,
+      },
+      {
+        page: SettingsPages.PerMessageProfilesPage,
+        name: 'Per-Message Profiles',
         icon: Icons.User,
       },
       {
@@ -246,6 +253,9 @@ export function Settings({ initialPage, requestClose }: SettingsProps) {
       )}
       {activePage === SettingsPages.AccountPage && (
         <Account requestClose={handlePageRequestClose} />
+      )}
+      {activePage === SettingsPages.PerMessageProfilesPage && (
+        <PerMessageProfilePage requestClose={handlePageRequestClose} />
       )}
       {activePage === SettingsPages.CosmeticsPage && (
         <Cosmetics requestClose={handlePageRequestClose} />
