@@ -509,7 +509,21 @@ export const useCommands = (mx: MatrixClient, room: Room): CommandRecord => {
             name: name || '',
             avatarUrl,
           };
-          await addOrUpdatePerMessageProfile(mx, pmp);
+          await addOrUpdatePerMessageProfile(mx, pmp)
+            .then(() => {
+              sendFeedback(
+                `Per message profile "${profileId}" added/updated in account.`,
+                room,
+                mx.getSafeUserId()
+              );
+            })
+            .catch(() => {
+              sendFeedback(
+                `Failed to add/update per message profile "${profileId}" in account.`,
+                room,
+                mx.getSafeUserId()
+              );
+            });
         },
       },
       [Command.DeletePerMessageProfileFromAccount]: {
@@ -519,9 +533,24 @@ export const useCommands = (mx: MatrixClient, room: Room): CommandRecord => {
           const [profileId] = splitWithSpace(payload);
           if (profileId === 'index') {
             // "index" is reserved for the profile index, reject it as a profile id
+            sendFeedback('Cannot delete reserved profile ID "index".', room, mx.getSafeUserId());
             return;
           }
-          await deletePerMessageProfile(mx, profileId);
+          await deletePerMessageProfile(mx, profileId)
+            .then(() => {
+              sendFeedback(
+                `Per message profile "${profileId}" deleted from account.`,
+                room,
+                mx.getSafeUserId()
+              );
+            })
+            .catch(() => {
+              sendFeedback(
+                `Failed to delete per message profile "${profileId}" from account.`,
+                room,
+                mx.getSafeUserId()
+              );
+            });
         },
       },
       [Command.UsePerMessageProfile]: {
@@ -533,23 +562,17 @@ export const useCommands = (mx: MatrixClient, room: Room): CommandRecord => {
           const profileId: string = splitWithSpace(payload)[0];
           const durationStr: string | undefined = splitWithSpace(payload)[1];
           let validUntil: number | undefined;
-          const sendFeedback = (msg: string) => {
-            const localNotice = new MatrixEvent({
-              type: 'm.room.message',
-              content: { msgtype: 'm.notice', body: msg },
-              event_id: `~nullptr-widget-${Date.now()}`,
-              room_id: room.roomId,
-              sender: mx.getSafeUserId(),
-            });
-            (room as any).addLiveEvents([localNotice], { duplicateStrategy: 'ignore' } as any);
-          };
           if (durationStr === 'reset') {
             setCurrentlyUsedPerMessageProfileIdForRoom(mx, room.roomId, undefined, undefined, true)
               .then(() => {
-                sendFeedback('Per message profile reset for this room.');
+                sendFeedback('Per message profile reset for this room.', room, mx.getSafeUserId());
               })
               .catch(() => {
-                sendFeedback('Failed to reset per message profile for this room.');
+                sendFeedback(
+                  'Failed to reset per message profile for this room.',
+                  room,
+                  mx.getSafeUserId()
+                );
               });
             return;
           }
@@ -558,11 +581,17 @@ export const useCommands = (mx: MatrixClient, room: Room): CommandRecord => {
               sendFeedback(
                 `Per message profile "${profileId}" will be used for messages in this room for the until ${
                   durationStr ?? 'reset'
-                }.`
+                }. Use \`/usepmp reset\` to reset it at any time.`,
+                room,
+                mx.getSafeUserId()
               );
             })
             .catch(() => {
-              sendFeedback('Failed to set per message profile for this room.');
+              sendFeedback(
+                'Failed to set per message profile for this room.',
+                room,
+                mx.getSafeUserId()
+              );
             });
         },
       },
