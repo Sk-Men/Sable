@@ -641,17 +641,16 @@ function HandleDecryptPushEvent() {
       const roomId = rawEvent.room_id as string;
 
       try {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const mxEvent = new MatrixEvent(rawEvent as any);
         await mx.decryptEventIfNeeded(mxEvent);
 
         const room = mx.getRoom(roomId);
         const sender = mxEvent.getSender();
-        const senderName = sender
-          ? (room
-              ? getMemberDisplayName(room, sender) ?? getMxIdLocalPart(sender)
-              : getMxIdLocalPart(sender))
-          : 'Someone';
+        let senderName = 'Someone';
+        if (sender) {
+          senderName = getMxIdLocalPart(sender) ?? sender;
+          if (room) senderName = getMemberDisplayName(room, sender) ?? senderName;
+        }
 
         navigator.serviceWorker.controller?.postMessage({
           type: 'pushDecryptResult',

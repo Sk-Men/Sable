@@ -200,10 +200,7 @@ async function fetchRawEvent(
  * don't have a client ID, e.g. when the app is backgrounded but still loaded).
  */
 function getAnyStoredSession(): SessionInfo | undefined {
-  for (const session of sessions.values()) {
-    return session;
-  }
-  return undefined;
+  return sessions.values().next().value;
 }
 
 /**
@@ -223,32 +220,36 @@ async function requestDecryptionFromClient(
 ): Promise<DecryptionResult | undefined> {
   const eventId = rawEvent.event_id as string;
 
-  for (const client of windowClients) {
-    const promise = new Promise<DecryptionResult>((resolve) => {
-      decryptionPendingMap.set(eventId, resolve);
-    });
+  // Chain clients sequentially using reduce to avoid await-in-loop and for-of.
+  return Array.from(windowClients).reduce(
+    async (prevPromise, client) => {
+      const prev = await prevPromise;
+      if (prev?.success) return prev;
 
-    const timeout = new Promise<undefined>((resolve) => {
-      setTimeout(() => {
+      const promise = new Promise<DecryptionResult>((resolve) => {
+        decryptionPendingMap.set(eventId, resolve);
+      });
+
+      const timeout = new Promise<undefined>((resolve) => {
+        setTimeout(() => {
+          decryptionPendingMap.delete(eventId);
+          console.warn('[SW decryptRelay] timed out waiting for client', client.id);
+          resolve(undefined);
+        }, 5000);
+      });
+
+      try {
+        (client as WindowClient).postMessage({ type: 'decryptPushEvent', rawEvent });
+      } catch (err) {
         decryptionPendingMap.delete(eventId);
-        console.warn('[SW decryptRelay] timed out waiting for client', client.id);
-        resolve(undefined);
-      }, 5000);
-    });
+        console.warn('[SW decryptRelay] postMessage error', err);
+        return undefined;
+      }
 
-    try {
-      (client as WindowClient).postMessage({ type: 'decryptPushEvent', rawEvent });
-    } catch (err) {
-      decryptionPendingMap.delete(eventId);
-      console.warn('[SW decryptRelay] postMessage error', err);
-      continue;
-    }
-
-    const result = await Promise.race([promise, timeout]);
-    if (result?.success) return result;
-  }
-
-  return undefined;
+      return Promise.race([promise, timeout]);
+    },
+    Promise.resolve(undefined) as Promise<DecryptionResult | undefined>
+  );
 }
 
 /**
@@ -303,9 +304,10 @@ async function handleMinimalPushPayload(
 
   if (eventType === 'm.room.encrypted') {
     // Try to relay decryption to an open tab
-    const result = windowClients.length > 0
-      ? await requestDecryptionFromClient(windowClients, rawEvent)
-      : undefined;
+    const result =
+      windowClients.length > 0
+        ? await requestDecryptionFromClient(windowClients, rawEvent)
+        : undefined;
 
     if (result) {
       // Use decrypted content — reconstruct a pushData object
@@ -498,6 +500,14 @@ self.addEventListener('fetch', (event: FetchEvent) => {
   );
 });
 
+// Detect a minimal (event_id_only) payload: has room_id + event_id but no
+// event type field — meaning the homeserver stripped the event content.
+function isMinimalPushPayload(data: unknown): data is { room_id: string; event_id: string } {
+  if (!data || typeof data !== 'object') return false;
+  const d = data as Record<string, unknown>;
+  return typeof d.room_id === 'string' && typeof d.event_id === 'string' && !d.type;
+}
+
 const onPushNotification = async (event: PushEvent) => {
   if (!event?.data) return;
 
@@ -566,14 +576,6 @@ const onPushNotification = async (event: PushEvent) => {
 // ---------------------------------------------------------------------------
 // Push handler
 // ---------------------------------------------------------------------------
-
-// Detect a minimal (event_id_only) payload: has room_id + event_id but no
-// event type field — meaning the homeserver stripped the event content.
-function isMinimalPushPayload(data: unknown): data is { room_id: string; event_id: string } {
-  if (!data || typeof data !== 'object') return false;
-  const d = data as Record<string, unknown>;
-  return typeof d.room_id === 'string' && typeof d.event_id === 'string' && !d.type;
-}
 
 self.addEventListener('push', (event: PushEvent) => event.waitUntil(onPushNotification(event)));
 
