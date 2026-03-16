@@ -483,17 +483,28 @@ export const useCommands = (mx: MatrixClient, room: Room): CommandRecord => {
       [Command.AddPerMessageProfileToAccount]: {
         name: Command.AddPerMessageProfileToAccount,
         description:
-          'Add or update a per message profile to your account. Example: /addpmp profileId name=Profile Name avatarUrl=mxc://xyzabc',
+          'Add or update a per message profile to your account. Example: /addpmp profileId name=Profile Name avatar=mxc://xyzabc',
         exe: async (payload) => {
-          const [profileId, ...profileParts] = splitWithSpace(payload);
-          if (profileId === 'index') {
-            // "index" is reserved for the profile index, reject it as a profile id
-            return;
-          }
+          // Parse key=value pairs
+          const parts = payload.split(' ');
+          let avatarUrl: string | undefined;
+          let name: string | undefined;
+          parts.forEach((part) => {
+            const [key, value] = part.split('=');
+            if (key && value) {
+              if (key === 'name' || key === 'avatar') {
+                if (key === 'name') name = value;
+                if (key === 'avatar') avatarUrl = value;
+              }
+            }
+          });
+
+          const profileId = parts[0]; // profileId is positional (before any key=)
+
           const pmp: PerMessageProfile = {
             id: profileId,
-            name: profileParts.find((p) => p.startsWith('name='))?.substring(5) || '',
-            avatarUrl: profileParts.find((p) => p.startsWith('avatarUrl='))?.substring(10),
+            name: name || '',
+            avatarUrl,
           };
           await addOrUpdatePerMessageProfile(mx, pmp);
         },
