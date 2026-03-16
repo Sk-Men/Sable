@@ -1,4 +1,4 @@
-import { ReactNode } from 'react';
+import { ReactNode, useRef } from 'react';
 import FocusTrap from 'focus-trap-react';
 import { isKeyHotkey } from 'is-hotkey';
 import { Header, Menu, Scroll, config } from 'folds';
@@ -15,6 +15,7 @@ type AutocompleteMenuProps = {
 };
 export function AutocompleteMenu({ headerContent, requestClose, children }: AutocompleteMenuProps) {
   const alive = useAlive();
+  const itemsRef = useRef<HTMLDivElement>(null);
 
   const handleDeactivate = () => {
     if (alive()) {
@@ -27,7 +28,7 @@ export function AutocompleteMenu({ headerContent, requestClose, children }: Auto
     <BaseAutocompleteMenu>
       <FocusTrap
         focusTrapOptions={{
-          initialFocus: false,
+          initialFocus: () => itemsRef.current?.querySelector<HTMLButtonElement>('button') ?? false,
           onPostDeactivate: handleDeactivate,
           returnFocusOnDeactivate: false,
           clickOutsideDeactivates: true,
@@ -42,7 +43,7 @@ export function AutocompleteMenu({ headerContent, requestClose, children }: Auto
             {headerContent}
           </Header>
           <Scroll style={{ flexGrow: 1 }} onKeyDown={preventScrollWithArrowKey}>
-            <div className={css.AutocompleteMenuItems} style={{ padding: config.space.S200 }}>
+            <div ref={itemsRef} style={{ padding: config.space.S200 }}>
               {children}
             </div>
           </Scroll>
