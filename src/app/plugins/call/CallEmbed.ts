@@ -9,9 +9,11 @@ import {
 } from 'matrix-js-sdk';
 import {
   ClientWidgetApi,
+  type IWidgetApiRequest,
   IRoomEvent,
   IWidget,
   Widget,
+  WidgetApiFromWidgetAction,
   WidgetApiToWidgetAction,
   WidgetDriver,
 } from 'matrix-widget-api';
@@ -148,6 +150,14 @@ export class CallEmbed {
 
     const controlState = initialControlState ?? new CallControlState(true, false, true);
     this.control = new CallControl(controlState, call, iframe);
+
+    // acknowledge always on screen request to silence error
+    this.disposables.push(
+      this.listenAction(WidgetApiFromWidgetAction.UpdateAlwaysOnScreen, (evt) => {
+        evt.preventDefault();
+        this.call.transport.reply(evt.detail as IWidgetApiRequest, { success: true });
+      })
+    );
 
     let initialMediaEvent = true;
     this.disposables.push(

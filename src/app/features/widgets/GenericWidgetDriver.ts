@@ -164,6 +164,18 @@ export class GenericWidgetDriver extends WidgetDriver {
     await this.mxClient._unstable_updateDelayedEvent(delayId, action);
   }
 
+  public async cancelScheduledDelayedEvent(delayId: string): Promise<void> {
+    await this.updateDelayedEvent(delayId, UpdateDelayedEventAction.Cancel);
+  }
+
+  public async restartScheduledDelayedEvent(delayId: string): Promise<void> {
+    await this.updateDelayedEvent(delayId, UpdateDelayedEventAction.Restart);
+  }
+
+  public async sendScheduledDelayedEvent(delayId: string): Promise<void> {
+    await this.updateDelayedEvent(delayId, UpdateDelayedEventAction.Send);
+  }
+
   public async sendToDevice(
     eventType: string,
     encrypted: boolean,
