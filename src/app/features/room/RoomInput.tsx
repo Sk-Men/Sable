@@ -151,6 +151,7 @@ import { usePowerLevelsContext } from '$hooks/usePowerLevels';
 import { useRoomCreators } from '$hooks/useRoomCreators';
 import { useRoomPermissions } from '$hooks/useRoomPermissions';
 import { AutocompleteNotice } from '$components/editor/autocomplete/AutocompleteNotice';
+import { getCurrentlyUsedPerMessageProfileForRoom } from '$hooks/usePerMessageProfile';
 import { SchedulePickerDialog } from './schedule-send';
 import * as css from './schedule-send/SchedulePickerDialog.css';
 import {
@@ -268,6 +269,12 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
       replyUserID ?? '',
       room
     );
+
+    const permessageprofile = useCallback(async () => {
+      const profile = await getCurrentlyUsedPerMessageProfileForRoom(mx, roomId);
+      console.debug('Fetched per-message profile:', { profile, roomId });
+      return profile;
+    }, [mx, roomId]);
 
     const [uploadBoard, setUploadBoard] = useState(true);
     const [selectedFiles, setSelectedFiles] = useAtom(roomIdToUploadItemsAtomFamily(draftKey));
@@ -624,10 +631,26 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
       const formattedBody = customHtml;
       const mentionData = getMentions(mx, roomId, editor);
 
+      const perMessageProfile = await permessageprofile();
+
       const content: IContent = {
         msgtype: msgType,
         body,
       };
+
+      if (perMessageProfile) {
+        console.warn(
+          'Using per-message profile:',
+          perMessageProfile.id,
+          perMessageProfile.name,
+          perMessageProfile.avatarUrl
+        );
+        content['com.beeper.per_message_profile'] = {
+          id: perMessageProfile.id,
+          displayname: perMessageProfile.name,
+          avatar_url: perMessageProfile.avatarUrl,
+        };
+      }
 
       if (replyDraft && !silentReply) {
         mentionData.users.add(replyDraft.userId);
@@ -723,7 +746,7 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
       canSendReaction,
       mx,
       roomId,
-      threadRootId,
+      permessageprofile,
       replyDraft,
       silentReply,
       scheduledTime,
@@ -731,12 +754,13 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
       handleQuickReact,
       commands,
       sendTypingStatus,
+      room,
       queryClient,
+      threadRootId,
       setReplyDraft,
       isEncrypted,
       setEditingScheduledDelayId,
       setScheduledTime,
-      room,
     ]);
 
     const handleKeyDown: KeyboardEventHandler = useCallback(

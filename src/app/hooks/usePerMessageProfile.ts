@@ -44,20 +44,19 @@ type PerMessageProfileRoomAssociationWrapper = {
   associations: PerMessageProfileRoomAssociation[];
 };
 
-export function getPerMessageProfileById(
+export async function getPerMessageProfileById(
   mx: MatrixClient,
   id: string
-): PerMessageProfile | undefined {
-  const profile = mx.getAccountData(`fyi.cisnt.permessageprofile.${id}` as any);
-  return profile ? (profile as unknown as PerMessageProfile) : undefined;
+): Promise<PerMessageProfile | undefined> {
+  const profile = await mx.getAccountData(`fyi.cisnt.permessageprofile.${id}` as any);
+  return profile ? (profile.getContent() as unknown as PerMessageProfile) : undefined;
 }
 
-export function getAllPerMessageProfiles(mx: MatrixClient): PerMessageProfile[] {
-  const profileData = mx.getAccountData('fyi.cisnt.permessageprofile.index' as any);
+export async function getAllPerMessageProfiles(mx: MatrixClient): Promise<PerMessageProfile[]> {
+  const profileData = await mx.getAccountData('fyi.cisnt.permessageprofile.index' as any);
   const profileIds = (profileData?.getContent() as PerMessageProfileIndex)?.profileIds || [];
-  return profileIds
-    .map((id) => getPerMessageProfileById(mx, id))
-    .filter((profile): profile is PerMessageProfile => profile !== undefined);
+  const profiles = await Promise.all(profileIds.map((id) => getPerMessageProfileById(mx, id)));
+  return profiles.filter((profile): profile is PerMessageProfile => profile !== undefined);
 }
 
 export function addOrUpdatePerMessageProfile(mx: MatrixClient, profile: PerMessageProfile) {
@@ -87,10 +86,10 @@ export function deletePerMessageProfile(mx: MatrixClient, id: string) {
  * @param roomId the room id you are querying for
  * @returns the profile to be used
  */
-export function getCurrentlyUsedPerMessageProfileIdForRoom(
+export async function getCurrentlyUsedPerMessageProfileForRoom(
   mx: MatrixClient,
   roomId: string
-): PerMessageProfile | undefined {
+): Promise<PerMessageProfile | undefined> {
   const accountData = mx.getAccountData(`fyi.cisnt.permessageprofile.roomassociation` as any);
   const content = accountData?.getContent()?.associations as
     | PerMessageProfileRoomAssociation[]
@@ -108,8 +107,15 @@ export function getCurrentlyUsedPerMessageProfileIdForRoom(
     )
     .find((assoc: PerMessageProfileRoomAssociation) => assoc.roomId === roomId)?.profileId;
 
-  console.warn('getCurrentlyUsedPerMessageProfileIdForRoom', { profileId, roomId });
-  return profileId ? getPerMessageProfileById(mx, profileId) : undefined;
+  const pmp = profileId ? await getPerMessageProfileById(mx, profileId) : undefined;
+  console.warn('getCurrentlyUsedPerMessageProfileIdForRoom', {
+    accountData,
+    content,
+    roomId,
+    profileId,
+    pmp,
+  });
+  return profileId ? pmp : undefined;
 }
 
 /**
