@@ -28,6 +28,38 @@ const sentryEnabled = localStorage.getItem('sable_sentry_enabled') !== 'false';
 const replayEnabled = localStorage.getItem('sable_sentry_replay_enabled') === 'true';
 
 /**
+ * Scrub Matrix entity IDs from a plain string value (not a URL path).
+ * Handles the sigil-prefixed forms: !roomId:server, @userId:server, $eventId.
+ * Used for structured log attribute values and breadcrumb data fields.
+ */
+function scrubMatrixIds(value: string): string {
+  return value
+    .replace(
+      /(access_token|password|token|refresh_token|session_id|sync_token|next_batch)([=:\s]+)([^\s&]+)/gi,
+      '$1$2[REDACTED]'
+    )
+    .replace(/@[^\s:@]+:[^\s,'"(){}[\]]+/g, '@[USER_ID]')
+    .replace(/![^\s:]+:[^\s,'"(){}[\]]+/g, '![ROOM_ID]')
+    .replace(/#[^\s:@]+:[^\s,'"(){}[\]]+/g, '#[ROOM_ALIAS]')
+    .replace(/\$[A-Za-z0-9_+/-]{10,}/g, '$[EVENT_ID]');
+}
+
+/**
+ * Recursively scrub Matrix entity IDs from all string values in a plain object.
+ * Handles one level of nesting (objects and arrays of primitives).
+ */
+function scrubDataObject(data: unknown): unknown {
+  if (typeof data === 'string') return scrubMatrixIds(data);
+  if (Array.isArray(data)) return data.map(scrubDataObject);
+  if (data !== null && typeof data === 'object') {
+    return Object.fromEntries(
+      Object.entries(data as Record<string, unknown>).map(([k, v]) => [k, scrubDataObject(v)])
+    );
+  }
+  return data;
+}
+
+/**
  * Scrub Matrix-specific identifiers from URLs that appear in Sentry spans, breadcrumbs,
  * transaction names, and page URLs. Covers both Matrix API paths and client-side app routes.
  * Room IDs, user IDs, event IDs, media paths, and deep-link parameters are replaced with
@@ -60,15 +92,27 @@ function scrubMatrixUrl(url: string): string {
         '$1[SERVER]/[MEDIA_ID]'
       )
       // ── App route path segments ─────────────────────────────────────────────────────
-      // Bare Matrix room/space IDs in URL segments: /!roomId:server/
-      .replace(/\/![^/?#\s:]+:[^/?#\s]*/g, '/![ROOM_ID]')
-      // Bare Matrix user IDs in URL segments: /@user:server/
-      .replace(/\/@[^/?#\s:]+:[^/?#\s]*/g, '/@[USER_ID]')
-      // ── Deep-link push notification URLs (percent-encoded) ─────────────────────────
+      // Bare/partially-decoded Matrix IDs in URL path segments.
+      // Browsers decode %21→! and %40→@ for display but often keep %3A encoded,
+      // so we see hybrid forms like /!localpart%3Aserver/ or /!localpart:server/.
+      // Each pattern accepts either a literal colon or the %3A encoding.
+      // Bare room IDs: /!localpart:server/ or /!localpart%3Aserver/
+      .replace(/\/![^/?#\s:%]+(?:%3A|:)[^/?#\s]*/gi, '/![ROOM_ID]')
+      // Bare user IDs: /@user:server/ or /@user%3Aserver/
+      .replace(/\/@[^/?#\s:%]+(?:%3A|:)[^/?#\s]*/gi, '/@[USER_ID]')
+      // Bare room aliases: /#alias:server/ or /#alias%3Aserver/
+      .replace(/\/#[^/?#\s:%]+(?:%3A|:)[^/?#\s]*/gi, '/[ROOM_ALIAS]')
+      // ── Deep-link / app-route URLs (percent-encoded via encodeURIComponent) ─────────
       // URL-encoded user IDs: /%40user%3Aserver  (%40 = @)
       .replace(/\/%40[^/?#\s]*/gi, '/[USER_ID]')
       // URL-encoded room IDs: /%21room%3Aserver  (%21 = !)
       .replace(/\/%21[^/?#\s]*/gi, '/![ROOM_ID]')
+      // URL-encoded room aliases: /%23alias%3Aserver  (%23 = #)
+      // App routes like /:spaceIdOrAlias/ use encodeURIComponent() so #alias:server
+      // appears as %23alias%3Aserver in the URL path / Sentry transaction name.
+      .replace(/\/%23[^/?#\s]*/gi, '/[ROOM_ALIAS]')
+      // URL-encoded event IDs as bare path segments: /%24eventId  (%24 = $)
+      .replace(/\/%24[^/?#\s]*/gi, '/[EVENT_ID]')
       // ── Preview URL endpoint ────────────────────────────────────────────────────────
       // The ?url= query parameter on preview_url contains the full external URL being
       // previewed — strip the entire query string so browsing habits cannot be inferred.
@@ -140,17 +184,16 @@ if (dsn && sentryEnabled) {
     beforeSendLog(log) {
       // Drop debug-level logs in production to reduce noise and quota usage
       if (log.level === 'debug' && environment === 'production') return null;
-      // Redact Matrix IDs and tokens from log messages
+      // Redact Matrix IDs and tokens from the log message string
       if (typeof log.message === 'string') {
         // eslint-disable-next-line no-param-reassign
-        log.message = log.message
-          .replace(
-            /(access_token|password|token|refresh_token|session_id|sync_token|next_batch)([=:\s]+)([^\s&]+)/gi,
-            '$1$2[REDACTED]'
-          )
-          .replace(/@[^:]+:[^\s]+/g, '@[USER_ID]')
-          .replace(/![^:]+:[^\s]+/g, '![ROOM_ID]')
-          .replace(/\$[^:\s]+/g, '$[EVENT_ID]');
+        log.message = scrubMatrixIds(log.message);
+      }
+      // Redact Matrix IDs from any string-valued log attributes (e.g. roomId, userId)
+      // These are flattened from the structured data object and sent as searchable attributes.
+      if (log.attributes && typeof log.attributes === 'object') {
+        // eslint-disable-next-line no-param-reassign
+        log.attributes = scrubDataObject(log.attributes) as typeof log.attributes;
       }
       return log;
     },
@@ -166,24 +209,39 @@ if (dsn && sentryEnabled) {
         event.transaction = scrubMatrixUrl(event.transaction);
       }
 
-      // Scrub Matrix identifiers from HTTP span descriptions and data URLs
+      // Scrub Matrix identifiers from HTTP span descriptions and data URLs.
+      // We scrub ALL string values in span.data rather than a single known key because
+      // Sentry / OTel HTTP instrumentation has used multiple attribute names across versions:
+      //   http.url  (OTel semconv < 1.23, Sentry classic)
+      //   url.full  (OTel semconv ≥ 1.23)
+      //   http.target, server.address, url, etc.
+      // For each string value: apply URL scrubbing when the value starts with "http",
+      // then apply ID scrubbing to catch any remaining bare Matrix IDs.
       if (event.spans) {
         // eslint-disable-next-line no-param-reassign
         event.spans = event.spans.map((span) => {
           const newDesc = span.description ? scrubMatrixUrl(span.description) : span.description;
           const spanData = span.data as Record<string, unknown> | undefined;
-          const spanHttpUrl = spanData?.['http.url'];
-          const rawHttpUrl = typeof spanHttpUrl === 'string' ? spanHttpUrl : undefined;
-          const newHttpUrl = rawHttpUrl ? scrubMatrixUrl(rawHttpUrl) : undefined;
+          const newData = spanData
+            ? Object.fromEntries(
+                Object.entries(spanData).map(([k, v]) => [
+                  k,
+                  typeof v === 'string'
+                    ? scrubMatrixIds(v.startsWith('http') ? scrubMatrixUrl(v) : v)
+                    : v,
+                ])
+              )
+            : undefined;
 
           const descChanged = newDesc !== span.description;
-          const urlChanged = newHttpUrl !== undefined && newHttpUrl !== rawHttpUrl;
+          const dataChanged =
+            newData !== undefined && JSON.stringify(newData) !== JSON.stringify(spanData);
 
-          if (!descChanged && !urlChanged) return span;
+          if (!descChanged && !dataChanged) return span;
           return {
             ...span,
             ...(descChanged ? { description: newDesc } : {}),
-            ...(urlChanged ? { data: { ...spanData, 'http.url': newHttpUrl } } : {}),
+            ...(dataChanged ? { data: newData as typeof span.data } : {}),
           };
         });
       }
@@ -207,28 +265,23 @@ if (dsn && sentryEnabled) {
       const fromChanged = scrubbedFrom !== undefined && scrubbedFrom !== rawFrom;
       const toChanged = scrubbedTo !== undefined && scrubbedTo !== rawTo;
 
+      // Scrub Matrix IDs from all remaining string values in the breadcrumb data object.
+      // debugLog passes structured data (e.g. { roomId, targetEventId }) that would otherwise
+      // bypass the URL-specific scrubbers above.
+      const scrubbedData = bData ? (scrubDataObject(bData) as Record<string, unknown>) : undefined;
+
       // Scrub message text — token values and Matrix entity IDs
-      // Do NOT use single-character patterns like '@', '!', '$' as they are far too broad.
-      const message = breadcrumb.message
-        ? breadcrumb.message
-            .replace(
-              /(access_token|password|refresh_token|device_id|session_id|sync_token|next_batch)([=:\s]+)([^\s&"']+)/gi,
-              '$1$2[REDACTED]'
-            )
-            .replace(/@[^\s:@]+:[^\s,'"(){}[\]]+/g, '@[USER_ID]')
-            .replace(/![^\s:]+:[^\s,'"(){}[\]]+/g, '![ROOM_ID]')
-            .replace(/\$[A-Za-z0-9_+/-]{10,}/g, '$[EVENT_ID]')
-        : breadcrumb.message;
+      const message = breadcrumb.message ? scrubMatrixIds(breadcrumb.message) : breadcrumb.message;
       const messageChanged = message !== breadcrumb.message;
 
-      if (!messageChanged && !urlChanged && !fromChanged && !toChanged) return breadcrumb;
+      if (!messageChanged && !scrubbedData) return breadcrumb;
       return {
         ...breadcrumb,
         ...(messageChanged ? { message } : {}),
-        ...(urlChanged || fromChanged || toChanged
+        ...(scrubbedData
           ? {
               data: {
-                ...bData,
+                ...scrubbedData,
                 ...(urlChanged ? { url: scrubbedUrl } : {}),
                 ...(fromChanged ? { from: scrubbedFrom } : {}),
                 ...(toChanged ? { to: scrubbedTo } : {}),
@@ -260,26 +313,10 @@ if (dsn && sentryEnabled) {
         event.fingerprint = ['{{ default }}', errcode];
       }
 
-      // Scrub sensitive data from error messages
+      // Scrub sensitive data from error messages and exception values using shared helpers
       if (event.message) {
-        if (
-          event.message.includes('access_token') ||
-          event.message.includes('password') ||
-          event.message.includes('token')
-        ) {
-          // eslint-disable-next-line no-param-reassign
-          event.message = event.message.replace(
-            /(access_token|password|token|refresh_token|session_id|sync_token|next_batch)([=:]\s*)([^\s&]+)/gi,
-            '$1$2[REDACTED]'
-          );
-        }
-        // Redact Matrix IDs to protect user privacy
         // eslint-disable-next-line no-param-reassign
-        event.message = event.message.replace(/@[^:]+:[^\s]+/g, '@[USER_ID]');
-        // eslint-disable-next-line no-param-reassign
-        event.message = event.message.replace(/![^:]+:[^\s]+/g, '![ROOM_ID]');
-        // eslint-disable-next-line no-param-reassign
-        event.message = event.message.replace(/\$[^:\s]+/g, '$[EVENT_ID]');
+        event.message = scrubMatrixIds(event.message);
       }
 
       // Scrub sensitive data from exception values
@@ -287,24 +324,16 @@ if (dsn && sentryEnabled) {
         event.exception.values.forEach((exception) => {
           if (exception.value) {
             // eslint-disable-next-line no-param-reassign
-            exception.value = exception.value.replace(
-              /(access_token|password|token|refresh_token|session_id|sync_token|next_batch)([=:]\s*)([^\s&]+)/gi,
-              '$1$2[REDACTED]'
-            );
-            // Redact Matrix IDs
-            // eslint-disable-next-line no-param-reassign
-            exception.value = exception.value.replace(/@[^:]+:[^\s]+/g, '@[USER_ID]');
-            // eslint-disable-next-line no-param-reassign
-            exception.value = exception.value.replace(/![^:]+:[^\s]+/g, '![ROOM_ID]');
-            // eslint-disable-next-line no-param-reassign
-            exception.value = exception.value.replace(/\$[^:\s]+/g, '$[EVENT_ID]');
-            // Scrub Matrix URL patterns embedded in error message strings
-            // (e.g. MatrixError: "Got error 403 (https://.../preview_url?url=https://...)"
-            // or paths containing room/user/event IDs)
-            // eslint-disable-next-line no-param-reassign
-            exception.value = scrubMatrixUrl(exception.value);
+            exception.value = scrubMatrixUrl(scrubMatrixIds(exception.value));
           }
         });
+      }
+
+      // Scrub contexts (e.g. debugLog context from captureMessage in debugLogger.ts,
+      // which can carry structured data fields like roomId, targetEventId, etc.)
+      if (event.contexts) {
+        // eslint-disable-next-line no-param-reassign
+        event.contexts = scrubDataObject(event.contexts) as typeof event.contexts;
       }
 
       // Scrub request data

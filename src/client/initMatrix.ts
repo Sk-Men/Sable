@@ -4,6 +4,8 @@ import {
   MatrixClient,
   IndexedDBStore,
   IndexedDBCryptoStore,
+  SyncState,
+  ISyncStateData,
 } from '$types/matrix-sdk';
 
 import { clearNavToActivePathStore } from '$state/navToActivePath';
@@ -25,6 +27,10 @@ import { SlidingSyncConfig, SlidingSyncDiagnostics, SlidingSyncManager } from '.
 const log = createLogger('initMatrix');
 const debugLog = createDebugLogger('initMatrix');
 const slidingSyncByClient = new WeakMap<MatrixClient, SlidingSyncManager>();
+const classicSyncObserverByClient = new WeakMap<
+  MatrixClient,
+  (state: SyncState, prevState: SyncState | null, data?: ISyncStateData) => void
+>();
 const FAST_SYNC_POLL_TIMEOUT_MS = 10000;
 const SLIDING_SYNC_POLL_TIMEOUT_MS = 20000;
 type SyncTransport = 'classic' | 'sliding';
@@ -424,6 +430,59 @@ export const startClient = async (mx: MatrixClient, config?: StartClientConfig):
       lazyLoadMembers: true,
       pollTimeout: FAST_SYNC_POLL_TIMEOUT_MS,
     });
+    // Attach an ongoing classic-sync observer — equivalent to SlidingSyncManager's
+    // onLifecycle listener. Tracks state transitions, initial-sync timing, and errors.
+    let classicSyncCount = 0;
+    const classicSyncStartMs = performance.now();
+    let classicInitialSyncDone = false;
+    const classicSyncListener = (
+      state: SyncState,
+      prevState: SyncState | null,
+      data?: ISyncStateData
+    ) => {
+      classicSyncCount += 1;
+      Sentry.metrics.count('sable.sync.cycle', 1, { attributes: { transport: 'classic', state } });
+      debugLog.info('sync', `Classic sync state: ${state}`, {
+        state,
+        prevState: prevState ?? 'null',
+        syncNumber: classicSyncCount,
+        error: data?.error?.message,
+      });
+      if (state === SyncState.Error || state === SyncState.Reconnecting) {
+        debugLog.warn('sync', `Classic sync problem: ${state}`, {
+          state,
+          prevState: prevState ?? 'null',
+          errorMessage: data?.error?.message,
+          syncNumber: classicSyncCount,
+        });
+        Sentry.metrics.count('sable.sync.error', 1, {
+          attributes: { transport: 'classic', state },
+        });
+        Sentry.addBreadcrumb({
+          category: 'sync.classic',
+          message: `Classic sync problem: ${state}`,
+          level: 'warning',
+          data: { state, prevState, error: data?.error?.message, syncNumber: classicSyncCount },
+        });
+      }
+      if (
+        !classicInitialSyncDone &&
+        (state === SyncState.Syncing || state === SyncState.Prepared)
+      ) {
+        classicInitialSyncDone = true;
+        const elapsed = performance.now() - classicSyncStartMs;
+        debugLog.info('sync', 'Classic sync initial ready', {
+          state,
+          syncNumber: classicSyncCount,
+          elapsed: `${elapsed.toFixed(0)}ms`,
+        });
+        Sentry.metrics.distribution('sable.sync.initial_ms', elapsed, {
+          attributes: { transport: 'classic' },
+        });
+      }
+    };
+    classicSyncObserverByClient.set(mx, classicSyncListener);
+    mx.on(ClientEvent.Sync, classicSyncListener);
   };
 
   const shouldBootstrapClassicOnColdCache = async (): Promise<boolean> => {
@@ -542,6 +601,11 @@ export const stopClient = (mx: MatrixClient): void => {
   log.log('stopClient', mx.getUserId());
   debugLog.info('sync', 'Stopping client', { userId: mx.getUserId() });
   disposeSlidingSync(mx);
+  const classicSyncListener = classicSyncObserverByClient.get(mx);
+  if (classicSyncListener) {
+    mx.removeListener(ClientEvent.Sync, classicSyncListener);
+    classicSyncObserverByClient.delete(mx);
+  }
   mx.stopClient();
   syncTransportByClient.delete(mx);
 };

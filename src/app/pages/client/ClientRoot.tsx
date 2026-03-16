@@ -327,10 +327,10 @@ export function ClientRoot({ children }: ClientRootProps) {
         .map((b) => b.toString(16).padStart(2, '0'))
         .join('')
         .slice(0, 16);
-      // Include the homeserver domain as `username` — it is not PII (it is the server
-      // domain, not a personal identifier) and helps segment issues by deployment.
+      // Include the homeserver domain as a custom attribute — it is not PII (it is the
+      // server domain, not a personal identifier) and helps segment issues by deployment.
       const serverDomain = matrixUserId.split(':')[1] ?? 'unknown';
-      Sentry.setUser({ id: hashHex, username: serverDomain });
+      Sentry.setUser({ id: hashHex, homeserver: serverDomain });
     })();
     return () => {
       Sentry.setUser(null);

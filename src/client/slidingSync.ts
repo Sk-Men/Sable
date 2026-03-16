@@ -5,6 +5,7 @@ import {
   ExtensionState,
   MatrixClient,
   MSC3575List,
+  MSC3575RoomData,
   MSC3575RoomSubscription,
   MSC3575_WILDCARD,
   SlidingSync,
@@ -325,6 +326,16 @@ export class SlidingSyncManager {
 
   private previousListCounts: Map<string, number> = new Map();
 
+  /**
+   * One-shot RoomData listeners keyed by roomId, used to measure the latency
+   * between subscribeToRoom() and the first data arriving for that room.
+   * Cleaned up automatically after first fire or on unsubscribe/dispose.
+   */
+  private readonly pendingRoomDataListeners = new Map<
+    string,
+    (roomId: string, data: MSC3575RoomData) => void
+  >();
+
   /** Wall-clock time recorded in attach() — used to compute true initial-sync latency. */
   private attachTime: number | null = null;
 
@@ -568,6 +579,10 @@ export class SlidingSyncManager {
       syncCount: this.syncCount,
       initialSyncCompleted: this.initialSyncCompleted,
     });
+
+    // Clean up pending room-data latency listeners before marking disposed.
+    // SlidingSync.stop() will removeAllListeners anyway, but this keeps the Map tidy.
+    this.pendingRoomDataListeners.clear();
 
     this.disposed = true;
     this.slidingSync.removeListener(SlidingSyncEvent.Lifecycle, this.onLifecycle);
@@ -925,7 +940,8 @@ export class SlidingSyncManager {
   public subscribeToRoom(roomId: string): void {
     if (this.disposed) return;
     const room = this.mx.getRoom(roomId);
-    if (room && !this.mx.isRoomEncrypted(roomId)) {
+    const isEncrypted = this.mx.isRoomEncrypted(roomId);
+    if (room && !isEncrypted) {
       // Only use the unencrypted (lazy-load) subscription when we are certain
       // the room is unencrypted.  Unknown rooms fall through to the safer
       // encrypted default.
@@ -937,6 +953,40 @@ export class SlidingSyncManager {
       attributes: { transport: 'sliding' },
     });
     log.log(`Sliding Sync active room subscription added: ${roomId}`);
+    debugLog.info('sync', 'Room subscription requested (sliding)', {
+      encrypted: isEncrypted,
+      unknownRoom: !room,
+      activeSubscriptions: this.activeRoomSubscriptions.size,
+      syncCycle: this.syncCount,
+    });
+    Sentry.addBreadcrumb({
+      category: 'sync.sliding',
+      message: 'Subscribed to room (active)',
+      level: 'info',
+      data: { encrypted: isEncrypted, activeSubscriptions: this.activeRoomSubscriptions.size },
+    });
+    // One-shot listener: measure latency from subscription request to first room data.
+    // Clean up any stale listener for the same roomId first.
+    const existingListener = this.pendingRoomDataListeners.get(roomId);
+    if (existingListener) {
+      this.slidingSync.removeListener(SlidingSyncEvent.RoomData, existingListener);
+    }
+    const subscribeMs = performance.now();
+    const onFirstRoomData = (dataRoomId: string) => {
+      if (dataRoomId !== roomId) return;
+      const latencyMs = Math.round(performance.now() - subscribeMs);
+      debugLog.info('sync', 'Room subscription: first data received (sliding)', {
+        latencyMs,
+        syncCycle: this.syncCount,
+      });
+      Sentry.metrics.distribution('sable.sync.room_sub_latency_ms', latencyMs, {
+        attributes: { transport: 'sliding' },
+      });
+      this.slidingSync.removeListener(SlidingSyncEvent.RoomData, onFirstRoomData);
+      this.pendingRoomDataListeners.delete(roomId);
+    };
+    this.pendingRoomDataListeners.set(roomId, onFirstRoomData);
+    this.slidingSync.on(SlidingSyncEvent.RoomData, onFirstRoomData);
   }
 
   /**
@@ -946,12 +996,22 @@ export class SlidingSyncManager {
    */
   public unsubscribeFromRoom(roomId: string): void {
     if (this.disposed) return;
+    // Clean up any pending first-data latency listener for this room.
+    const pendingListener = this.pendingRoomDataListeners.get(roomId);
+    if (pendingListener) {
+      this.slidingSync.removeListener(SlidingSyncEvent.RoomData, pendingListener);
+      this.pendingRoomDataListeners.delete(roomId);
+    }
     this.activeRoomSubscriptions.delete(roomId);
     this.slidingSync.modifyRoomSubscriptions(new Set(this.activeRoomSubscriptions));
     Sentry.metrics.gauge('sable.sync.active_subscriptions', this.activeRoomSubscriptions.size, {
       attributes: { transport: 'sliding' },
     });
     log.log(`Sliding Sync active room subscription removed: ${roomId}`);
+    debugLog.info('sync', 'Room subscription removed (sliding)', {
+      remainingSubscriptions: this.activeRoomSubscriptions.size,
+      syncCycle: this.syncCount,
+    });
   }
 
   public static async probe(
