@@ -65,6 +65,8 @@ async function loadPersistedSettings() {
 type SessionInfo = {
   accessToken: string;
   baseUrl: string;
+  /** Matrix user ID of the account, used to identify which account a push belongs to. */
+  userId?: string;
 };
 
 /**
@@ -88,9 +90,13 @@ async function cleanupDeadClients() {
   });
 }
 
-function setSession(clientId: string, accessToken: unknown, baseUrl: unknown) {
+function setSession(clientId: string, accessToken: unknown, baseUrl: unknown, userId?: unknown) {
   if (typeof accessToken === 'string' && typeof baseUrl === 'string') {
-    sessions.set(clientId, { accessToken, baseUrl });
+    sessions.set(clientId, {
+      accessToken,
+      baseUrl,
+      userId: typeof userId === 'string' ? userId : undefined,
+    });
     console.debug('[SW] setSession: stored', clientId, baseUrl);
   } else {
     // Logout or invalid session
@@ -143,6 +149,195 @@ async function requestSessionWithTimeout(
   return Promise.race([sessionPromise, timeout]);
 }
 
+// ---------------------------------------------------------------------------
+// Encrypted push — decryption relay
+// ---------------------------------------------------------------------------
+
+/**
+ * The shape returned by the client tab after decrypting an encrypted push event.
+ * Also used as a partial pushData object for handlePushNotificationPushData.
+ */
+type DecryptionResult = {
+  eventId: string;
+  success: boolean;
+  eventType?: string;
+  content?: unknown;
+  sender_display_name?: string;
+  room_name?: string;
+};
+
+/** Pending decryption requests keyed by event_id. */
+const decryptionPendingMap = new Map<string, (result: DecryptionResult) => void>();
+
+/**
+ * Fetch a single raw Matrix event from the homeserver.
+ * Returns undefined on error (e.g. network failure, auth error, redacted event).
+ */
+async function fetchRawEvent(
+  baseUrl: string,
+  accessToken: string,
+  roomId: string,
+  eventId: string
+): Promise<Record<string, unknown> | undefined> {
+  try {
+    const url = `${baseUrl}/_matrix/client/v3/rooms/${encodeURIComponent(roomId)}/event/${encodeURIComponent(eventId)}`;
+    const res = await fetch(url, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+    if (!res.ok) {
+      console.warn('[SW fetchRawEvent] HTTP', res.status, 'for', eventId);
+      return undefined;
+    }
+    return (await res.json()) as Record<string, unknown>;
+  } catch (err) {
+    console.warn('[SW fetchRawEvent] error', err);
+    return undefined;
+  }
+}
+
+/**
+ * Return the first any-session we have stored (used for push fetches where we
+ * don't have a client ID, e.g. when the app is backgrounded but still loaded).
+ */
+function getAnyStoredSession(): SessionInfo | undefined {
+  for (const session of sessions.values()) {
+    return session;
+  }
+  return undefined;
+}
+
+/**
+ * Extract the MXID localpart (@user:server → user) for fallback display names.
+ */
+function mxidLocalpart(userId: string): string {
+  return userId.match(/^@([^:]+):/)?.[1] ?? userId;
+}
+
+/**
+ * Post a decryptPushEvent request to one of the open window clients and wait
+ * up to 5 s for the pushDecryptResult reply.
+ */
+async function requestDecryptionFromClient(
+  windowClients: readonly Client[],
+  rawEvent: Record<string, unknown>
+): Promise<DecryptionResult | undefined> {
+  const eventId = rawEvent.event_id as string;
+
+  for (const client of windowClients) {
+    const promise = new Promise<DecryptionResult>((resolve) => {
+      decryptionPendingMap.set(eventId, resolve);
+    });
+
+    const timeout = new Promise<undefined>((resolve) => {
+      setTimeout(() => {
+        decryptionPendingMap.delete(eventId);
+        console.warn('[SW decryptRelay] timed out waiting for client', client.id);
+        resolve(undefined);
+      }, 5000);
+    });
+
+    try {
+      (client as WindowClient).postMessage({ type: 'decryptPushEvent', rawEvent });
+    } catch (err) {
+      decryptionPendingMap.delete(eventId);
+      console.warn('[SW decryptRelay] postMessage error', err);
+      continue;
+    }
+
+    const result = await Promise.race([promise, timeout]);
+    if (result?.success) return result;
+  }
+
+  return undefined;
+}
+
+/**
+ * Handle a minimal push payload (event_id_only format).
+ * Fetches the event from the homeserver and shows a notification.
+ * For encrypted events, attempts to relay decryption to an open app tab.
+ */
+async function handleMinimalPushPayload(
+  roomId: string,
+  eventId: string,
+  windowClients: readonly Client[]
+): Promise<void> {
+  const session = getAnyStoredSession();
+
+  if (!session) {
+    // App is fully closed — no session in memory. Show a minimal actionable notification
+    // so the user can tap through to the room.
+    console.debug('[SW push] minimal payload: no session, showing generic notification');
+    await self.registration.showNotification('New Message', {
+      body: undefined,
+      icon: '/public/res/apple/apple-touch-icon-180x180.png',
+      badge: '/public/res/apple/apple-touch-icon-72x72.png',
+      tag: `room-${roomId}`,
+      renotify: true,
+      data: { room_id: roomId, event_id: eventId },
+    } as NotificationOptions);
+    return;
+  }
+
+  const rawEvent = await fetchRawEvent(session.baseUrl, session.accessToken, roomId, eventId);
+
+  if (!rawEvent) {
+    await self.registration.showNotification('New Message', {
+      body: undefined,
+      icon: '/public/res/apple/apple-touch-icon-180x180.png',
+      badge: '/public/res/apple/apple-touch-icon-72x72.png',
+      tag: `room-${roomId}`,
+      renotify: true,
+      data: { room_id: roomId, event_id: eventId, user_id: session.userId },
+    } as NotificationOptions);
+    return;
+  }
+
+  const eventType = rawEvent.type as string | undefined;
+  const sender = rawEvent.sender as string | undefined;
+  const senderDisplay = sender ? mxidLocalpart(sender) : 'Someone';
+  const baseData = {
+    room_id: roomId,
+    event_id: eventId,
+    user_id: session.userId,
+  };
+
+  if (eventType === 'm.room.encrypted') {
+    // Try to relay decryption to an open tab
+    const result = windowClients.length > 0
+      ? await requestDecryptionFromClient(windowClients, rawEvent)
+      : undefined;
+
+    if (result) {
+      // Use decrypted content — reconstruct a pushData object
+      await handlePushNotificationPushData({
+        ...baseData,
+        type: result.eventType,
+        content: result.content,
+        sender_display_name: result.sender_display_name ?? senderDisplay,
+        room_name: result.room_name ?? '',
+      });
+    } else {
+      // Fallback: show generic "Encrypted message"
+      await handlePushNotificationPushData({
+        ...baseData,
+        type: 'm.room.encrypted',
+        content: {},
+        sender_display_name: senderDisplay,
+        room_name: '',
+      });
+    }
+  } else {
+    // Unencrypted event — we have the plaintext, show it
+    await handlePushNotificationPushData({
+      ...baseData,
+      type: eventType,
+      content: rawEvent.content,
+      sender_display_name: senderDisplay,
+      room_name: '',
+    });
+  }
+}
+
 self.addEventListener('install', (event: ExtendableEvent) => {
   event.waitUntil(self.skipWaiting());
 });
@@ -165,11 +360,22 @@ self.addEventListener('message', (event: ExtendableMessageEvent) => {
 
   const { data } = event;
   if (!data || typeof data !== 'object') return;
-  const { type, accessToken, baseUrl } = data as Record<string, unknown>;
+  const { type, accessToken, baseUrl, userId } = data as Record<string, unknown>;
 
   if (type === 'setSession') {
-    setSession(client.id, accessToken, baseUrl);
+    setSession(client.id, accessToken, baseUrl, userId);
     event.waitUntil(cleanupDeadClients());
+  }
+  if (type === 'pushDecryptResult') {
+    // Resolve a pending decryption request from handleMinimalPushPayload
+    const { eventId } = data as { eventId?: string };
+    if (typeof eventId === 'string') {
+      const resolve = decryptionPendingMap.get(eventId);
+      if (resolve) {
+        decryptionPendingMap.delete(eventId);
+        resolve(data as DecryptionResult);
+      }
+    }
   }
   if (type === 'setAppVisible') {
     if (typeof (data as { visible?: unknown }).visible === 'boolean') {
@@ -346,8 +552,28 @@ const onPushNotification = async (event: PushEvent) => {
     // Badging API absent (Firefox/Gecko) — continue to show the notification.
   }
 
+  // event_id_only format: fetch the event ourselves and (for E2EE rooms) try
+  // to relay decryption to an open app tab.
+  if (isMinimalPushPayload(pushData)) {
+    console.debug('[SW push] minimal payload detected — fetching event', pushData.event_id);
+    await handleMinimalPushPayload(pushData.room_id, pushData.event_id, clients);
+    return;
+  }
+
   await handlePushNotificationPushData(pushData);
 };
+
+// ---------------------------------------------------------------------------
+// Push handler
+// ---------------------------------------------------------------------------
+
+// Detect a minimal (event_id_only) payload: has room_id + event_id but no
+// event type field — meaning the homeserver stripped the event content.
+function isMinimalPushPayload(data: unknown): data is { room_id: string; event_id: string } {
+  if (!data || typeof data !== 'object') return false;
+  const d = data as Record<string, unknown>;
+  return typeof d.room_id === 'string' && typeof d.event_id === 'string' && !d.type;
+}
 
 self.addEventListener('push', (event: PushEvent) => event.waitUntil(onPushNotification(event)));
 

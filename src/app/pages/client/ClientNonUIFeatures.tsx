@@ -2,6 +2,7 @@ import { useAtomValue, useSetAtom } from 'jotai';
 import { ReactNode, useCallback, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
+  MatrixEvent,
   MatrixEventEvent,
   PushProcessor,
   RoomEvent,
@@ -619,6 +620,65 @@ function SlidingSyncActiveRoomSubscriber() {
   return null;
 }
 
+/**
+ * Listens for decryptPushEvent messages from the service worker, decrypts the
+ * event using the local Olm/Megolm session, then replies with pushDecryptResult
+ * so the SW can show a notification with the real message content.
+ * Falls back gracefully (success: false) on any error or if keys are missing.
+ */
+function HandleDecryptPushEvent() {
+  const mx = useMatrixClient();
+
+  useEffect(() => {
+    if (!('serviceWorker' in navigator)) return undefined;
+
+    const handleMessage = async (ev: MessageEvent) => {
+      const { data } = ev;
+      if (!data || data.type !== 'decryptPushEvent') return;
+
+      const { rawEvent } = data as { rawEvent: Record<string, unknown> };
+      const eventId = rawEvent.event_id as string;
+      const roomId = rawEvent.room_id as string;
+
+      try {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const mxEvent = new MatrixEvent(rawEvent as any);
+        await mx.decryptEventIfNeeded(mxEvent);
+
+        const room = mx.getRoom(roomId);
+        const sender = mxEvent.getSender();
+        const senderName = sender
+          ? (room
+              ? getMemberDisplayName(room, sender) ?? getMxIdLocalPart(sender)
+              : getMxIdLocalPart(sender))
+          : 'Someone';
+
+        navigator.serviceWorker.controller?.postMessage({
+          type: 'pushDecryptResult',
+          eventId,
+          success: true,
+          eventType: mxEvent.getType(),
+          content: mxEvent.getContent(),
+          sender_display_name: senderName,
+          room_name: room?.name ?? '',
+        });
+      } catch (err) {
+        console.warn('[app] HandleDecryptPushEvent: failed to decrypt push event', err);
+        navigator.serviceWorker.controller?.postMessage({
+          type: 'pushDecryptResult',
+          eventId,
+          success: false,
+        });
+      }
+    };
+
+    navigator.serviceWorker.addEventListener('message', handleMessage);
+    return () => navigator.serviceWorker.removeEventListener('message', handleMessage);
+  }, [mx]);
+
+  return null;
+}
+
 function PresenceFeature() {
   const mx = useMatrixClient();
   const [sendPresence] = useSetting(settingsAtom, 'sendPresence');
@@ -646,6 +706,7 @@ export function ClientNonUIFeatures({ children }: ClientNonUIFeaturesProps) {
       <MessageNotifications />
       <BackgroundNotifications />
       <SyncNotificationSettingsWithServiceWorker />
+      <HandleDecryptPushEvent />
       <NotificationBanner />
       <SlidingSyncActiveRoomSubscriber />
       <PresenceFeature />
