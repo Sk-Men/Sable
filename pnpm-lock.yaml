@@ -216,8 +216,8 @@ importers:
         specifier: ^6.2.2
         version: 6.2.2(rollup@4.59.0)
       '@sableclient/sable-call-embedded':
-        specifier: 1.1.0
-        version: 1.1.0
+        specifier: 1.1.2
+        version: 1.1.2
       '@types/chroma-js':
         specifier: ^3.1.2
         version: 3.1.2
@@ -2319,8 +2319,8 @@ packages:
   '@rtsao/scc@1.1.0':
     resolution: {integrity: sha512-zt6OdqaDoOnJ1ZYsCYGt9YmWzDXl4vQdKTyJev62gFhRGKdx7mcT54V9KIjg+d2wi9EXsPvAPKe7i7WjfVWB8g==}
 
-  '@sableclient/sable-call-embedded@1.1.0':
-    resolution: {integrity: sha512-MiMfCtYhFQNjF5H8tDC3CpX004Cmg05sms1QgGYE00aoQsxQKUpuMhkU3utj9kXVl6Xxs/7qZ6to+a6Hhsic/A==}
+  '@sableclient/sable-call-embedded@1.1.2':
+    resolution: {integrity: sha512-Gr7spm+pZHkGGT/oR+f+Sam3CkDhn6pXjsiKPyfwSBu2ZCSdpDGzxMiEDcVRXvUjc3VV2TdRn+xB/xCdF3mv7A==}
 
   '@sindresorhus/is@7.2.0':
     resolution: {integrity: sha512-P1Cz1dWaFfR4IR+U13mqqiGsLFf1KbayybWwdd2vfctdV6hDpUkgCY0nKOLLTMSoRd/jJNjtbqzf13K8DCCXQw==}
@@ -7482,7 +7482,7 @@ snapshots:
 
   '@rtsao/scc@1.1.0': {}
 
-  '@sableclient/sable-call-embedded@1.1.0': {}
+  '@sableclient/sable-call-embedded@1.1.2': {}
 
   '@sindresorhus/is@7.2.0': {}
 
