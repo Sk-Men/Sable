@@ -24,6 +24,10 @@ const { handlePushNotificationPushData } = createPushNotifications(self, () => (
 const SW_SETTINGS_CACHE = 'sable-sw-settings-v1';
 const SW_SETTINGS_URL = '/sw-settings-meta';
 
+/** Cache key used to persist the active session so push-event fetches work after SW restart. */
+const SW_SESSION_CACHE = 'sable-sw-session-v1';
+const SW_SESSION_URL = '/sw-session-meta';
+
 async function persistSettings() {
   try {
     const cache = await self.caches.open(SW_SETTINGS_CACHE);
@@ -62,6 +66,46 @@ async function loadPersistedSettings() {
   }
 }
 
+async function persistSession(session: SessionInfo): Promise<void> {
+  try {
+    const cache = await self.caches.open(SW_SESSION_CACHE);
+    await cache.put(
+      SW_SESSION_URL,
+      new Response(JSON.stringify(session), { headers: { 'Content-Type': 'application/json' } })
+    );
+  } catch {
+    // Ignore — caches may be unavailable in some environments.
+  }
+}
+
+async function clearPersistedSession(): Promise<void> {
+  try {
+    const cache = await self.caches.open(SW_SESSION_CACHE);
+    await cache.delete(SW_SESSION_URL);
+  } catch {
+    // Ignore.
+  }
+}
+
+async function loadPersistedSession(): Promise<SessionInfo | undefined> {
+  try {
+    const cache = await self.caches.open(SW_SESSION_CACHE);
+    const response = await cache.match(SW_SESSION_URL);
+    if (!response) return undefined;
+    const s = await response.json();
+    if (typeof s.accessToken === 'string' && typeof s.baseUrl === 'string') {
+      return {
+        accessToken: s.accessToken,
+        baseUrl: s.baseUrl,
+        userId: typeof s.userId === 'string' ? s.userId : undefined,
+      };
+    }
+    return undefined;
+  } catch {
+    return undefined;
+  }
+}
+
 type SessionInfo = {
   accessToken: string;
   baseUrl: string;
@@ -92,16 +136,20 @@ async function cleanupDeadClients() {
 
 function setSession(clientId: string, accessToken: unknown, baseUrl: unknown, userId?: unknown) {
   if (typeof accessToken === 'string' && typeof baseUrl === 'string') {
-    sessions.set(clientId, {
+    const info: SessionInfo = {
       accessToken,
       baseUrl,
       userId: typeof userId === 'string' ? userId : undefined,
-    });
+    };
+    sessions.set(clientId, info);
     console.debug('[SW] setSession: stored', clientId, baseUrl);
+    // Persist so push-event fetches work after iOS restarts the SW.
+    persistSession(info).catch(() => undefined);
   } else {
     // Logout or invalid session
     sessions.delete(clientId);
     console.debug('[SW] setSession: removed', clientId);
+    clearPersistedSession().catch(() => undefined);
   }
 
   const resolveSession = clientToResolve.get(clientId);
@@ -262,11 +310,14 @@ async function handleMinimalPushPayload(
   eventId: string,
   windowClients: readonly Client[]
 ): Promise<void> {
-  const session = getAnyStoredSession();
+  // On iOS the SW is killed and restarted for every push, clearing the in-memory sessions
+  // Map.  Fall back to the Cache Storage copy that was written when the user last opened
+  // the app (same pattern as settings persistence).
+  const session = getAnyStoredSession() ?? (await loadPersistedSession());
 
   if (!session) {
-    // App is fully closed — no session in memory. Show a minimal actionable notification
-    // so the user can tap through to the room.
+    // No session anywhere — app was never opened since install, or the user logged out.
+    // Show a minimal actionable notification so the user can tap through to the room.
     console.debug('[SW push] minimal payload: no session, showing generic notification');
     await self.registration.showNotification('New Message', {
       body: undefined,
@@ -514,8 +565,9 @@ const onPushNotification = async (event: PushEvent) => {
   // The SW may have been restarted by the OS (iOS is aggressive about this),
   // so in-memory settings would be at their defaults.  Reload from cache and
   // match active clients in parallel — they are independent operations.
-  const [, clients] = await Promise.all([
+  const [, , clients] = await Promise.all([
     loadPersistedSettings(),
+    loadPersistedSession(),
     self.clients.matchAll({ type: 'window', includeUncontrolled: true }),
   ]);
 
