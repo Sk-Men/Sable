@@ -719,6 +719,7 @@ export function ThreadDrawer({ room, threadRootId, onClose, overlay }: ThreadDra
           hideTrack={false}
           style={{
             maxHeight: '200px',
+            height: 'fit-content',
             flexShrink: 0,
           }}
         >
