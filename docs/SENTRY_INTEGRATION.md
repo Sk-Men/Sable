@@ -86,7 +86,7 @@ New Sentry settings panel in Developer Tools:
 - **Export debug logs**: Download the in-memory log buffer as JSON for offline analysis
 - **Attach debug logs**: Manually attach recent logs to next error
 
-Access via: Settings → Developer Tools → Error Tracking (Sentry)
+Access via: Settings → General → Diagnostics & Privacy
 
 ## Configuration
 
@@ -112,6 +112,76 @@ SENTRY_AUTH_TOKEN=your-sentry-auth-token
 SENTRY_ORG=your-org-slug
 SENTRY_PROJECT=your-project-slug
 ```
+
+### Self-Hosting with Docker
+
+Sable is compiled at build time, so `VITE_*` variables must be passed as Docker
+**build arguments** — they cannot be injected at container runtime via a plain
+`docker run -e` flag. The easiest way for self-hosters to supply them is with
+a `.env` file and `docker-compose`.
+
+#### 1. Create a `.env` file
+
+```env
+# .env  — never commit this file
+VITE_SENTRY_DSN=https://your-key@oXXXXX.ingest.sentry.io/XXXXXXX
+VITE_SENTRY_ENVIRONMENT=production
+```
+
+The `VITE_SENTRY_ENVIRONMENT` value controls sampling rates (see table below).
+Leave it as `production` for a live deployment.
+
+#### 2. Reference it in `docker-compose.yml`
+
+The `args` block forwards the variables from `.env` into the Docker build
+stage so Vite can embed them in the bundle:
+
+```yaml
+services:
+  sable:
+    build:
+      context: .
+      args:
+        - VITE_SENTRY_DSN=${VITE_SENTRY_DSN}
+        - VITE_SENTRY_ENVIRONMENT=${VITE_SENTRY_ENVIRONMENT}
+    ports:
+      - '8080:8080'
+```
+
+Then build and start with:
+
+```bash
+docker compose --env-file .env up --build
+```
+
+#### 3. Verify it worked
+
+Open the browser console after loading your instance — you should see:
+
+```
+[Sentry] Initialized for production environment
+[Sentry] DSN configured: https://your-key@o...
+```
+
+If you see `[Sentry] Disabled - no DSN provided`, the build arg was not
+picked up — double-check the `args` block and that your `.env` file is in the
+same directory as `docker-compose.yml`.
+
+#### Building without Compose
+
+If you use plain `docker build`, pass build args directly:
+
+```bash
+docker build \
+  --build-arg VITE_SENTRY_DSN="https://your-key@oXXXXX.ingest.sentry.io/XXXXXXX" \
+  --build-arg VITE_SENTRY_ENVIRONMENT="production" \
+  -t sable .
+```
+
+> **Security note:** DSN values embedded in the JavaScript bundle are visible
+> to any user who opens DevTools. This is normal and expected for Sentry DSNs —
+> they are designed to be public-facing ingest keys. Rate-limiting and origin
+> restrictions on the Sentry project side are the correct controls.
 
 ### Deployment Configuration
 
@@ -161,7 +231,7 @@ localStorage.setItem('sable_sentry_enabled', 'false');
 localStorage.setItem('sable_sentry_replay_enabled', 'false');
 ```
 
-Or use the UI in Settings → Developer Tools → Error Tracking (Sentry).
+Or use the UI in Settings → General → Diagnostics & Privacy.
 
 ## Custom Instrumentation
 
@@ -169,15 +239,15 @@ Beyond automatic error capture, Sable has hand-crafted monitoring at key
 lifecycle points. See [SENTRY_PRIVACY.md](./SENTRY_PRIVACY.md) for the full
 metrics reference. Key areas:
 
-| Area | What's tracked |
-|------|----------------|
-| **Auth** | Login failures (by `errcode`), forced server logouts |
-| **Sync** | Transport type, degraded states, cycle stats, time-to-ready |
-| **Cryptography** | Decryption failures (by failure reason), key backup errors, store wipes, E2E verification outcomes |
-| **Messaging** | Send latency, send errors, local-echo `NOT_SENT` events |
-| **Timeline** | Opens, virtual window size, jump-load latency, re-initialisations |
-| **Media** | Upload latency, upload size, cache stats |
-| **Background clients** | Per-account notification client count, startup failures |
+| Area                   | What's tracked                                                                                     |
+| ---------------------- | -------------------------------------------------------------------------------------------------- |
+| **Auth**               | Login failures (by `errcode`), forced server logouts                                               |
+| **Sync**               | Transport type, degraded states, cycle stats, time-to-ready                                        |
+| **Cryptography**       | Decryption failures (by failure reason), key backup errors, store wipes, E2E verification outcomes |
+| **Messaging**          | Send latency, send errors, local-echo `NOT_SENT` events                                            |
+| **Timeline**           | Opens, virtual window size, jump-load latency, re-initialisations                                  |
+| **Media**              | Upload latency, upload size, cache stats                                                           |
+| **Background clients** | Per-account notification client count, startup failures                                            |
 
 Fatal errors that are caught by `useAsyncCallback` state (and therefore never
 reach React's ErrorBoundary) are explicitly forwarded with `captureException`:
@@ -301,7 +371,7 @@ No message content, room conversations, or personal information is ever sent to 
 To test the integration:
 
 1. **Test error reporting**:
-   - Go to Settings → Developer Tools → Error Tracking
+   - Go to Settings → General → Diagnostics & Privacy
    - Check that Sentry is enabled and `VITE_SENTRY_DSN` is set
    - Open the browser console and run: `window.Sentry?.captureMessage('Test message')`
    - Check the Sentry dashboard for the event

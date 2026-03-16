@@ -676,8 +676,8 @@ function SentryRoomContextFeature() {
   useEffect(() => {
     if (!roomId) {
       Sentry.setContext('room', null);
-      Sentry.setTag('room_type', '');
-      Sentry.setTag('room_encrypted', '');
+      Sentry.setTag('room_type', 'none');
+      Sentry.setTag('room_encrypted', 'none');
       return;
     }
     const room = mx.getRoom(roomId);
@@ -688,11 +688,12 @@ function SentryRoomContextFeature() {
     const memberCount = room.getJoinedMemberCount();
     // Bucket member count so we can correlate issues with room scale
     // without leaking precise membership numbers of private rooms.
-    const memberCountRange =
-      memberCount <= 2 ? '1-2' :
-      memberCount <= 10 ? '3-10' :
-      memberCount <= 50 ? '11-50' :
-      memberCount <= 200 ? '51-200' : '200+';
+    let memberCountRange: string;
+    if (memberCount <= 2) memberCountRange = '1-2';
+    else if (memberCount <= 10) memberCountRange = '3-10';
+    else if (memberCount <= 50) memberCountRange = '11-50';
+    else if (memberCount <= 200) memberCountRange = '51-200';
+    else memberCountRange = '200+';
 
     Sentry.setContext('room', {
       type: isDm ? 'dm' : 'group',

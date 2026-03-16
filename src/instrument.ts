@@ -27,6 +27,55 @@ const SESSION_ERROR_LIMIT = 50;
 const sentryEnabled = localStorage.getItem('sable_sentry_enabled') !== 'false';
 const replayEnabled = localStorage.getItem('sable_sentry_replay_enabled') === 'true';
 
+/**
+ * Scrub Matrix-specific identifiers from URLs that appear in Sentry spans, breadcrumbs,
+ * transaction names, and page URLs. Covers both Matrix API paths and client-side app routes.
+ * Room IDs, user IDs, event IDs, media paths, and deep-link parameters are replaced with
+ * safe placeholders so no PII leaks into Sentry.
+ */
+function scrubMatrixUrl(url: string): string {
+  return (
+    url
+      // ── Matrix Client-Server API paths ──────────────────────────────────────────────
+      // /rooms/!roomId:server/...
+      .replace(/\/rooms\/![^/?#\s]*/g, '/rooms/![ROOM_ID]')
+      // /event/$eventId and /relations/$eventId
+      .replace(/\/event\/(?:\$|%24)[^/?#\s]*/g, '/event/$[EVENT_ID]')
+      .replace(/\/relations\/(?:\$|%24)[^/?#\s]*/g, '/relations/$[EVENT_ID]')
+      // /profile/@user:server  or  /profile/%40user%3Aserver
+      .replace(/\/profile\/(?:%40|@)[^/?#\s]*/gi, '/profile/[USER_ID]')
+      // /user/@user:server/...  and  /presence/@user:server/status
+      .replace(/\/(user|presence)\/(?:%40|@)[^/?#\s]*/gi, '/$1/[USER_ID]')
+      // /room_keys/keys/{version}/{roomId}/{sessionId}
+      .replace(/\/room_keys\/keys\/[^/?#\s]*/gi, '/room_keys/keys/[REDACTED]')
+      // /sendToDevice/{eventType}/{txnId}
+      .replace(/\/sendToDevice\/([^/?#\s]+)\/[^/?#\s]+/gi, '/sendToDevice/$1/[TXN_ID]')
+      // Media – MSC3916 (/media/thumbnail|download/{server}/{mediaId}) and legacy (v1/v3)
+      .replace(
+        /(\/media\/(?:thumbnail|download)\/)(?:[^/?#\s]+)\/(?:[^/?#\s]+)/gi,
+        '$1[SERVER]/[MEDIA_ID]'
+      )
+      .replace(
+        /(\/media\/v\d+\/(?:thumbnail|download)\/)(?:[^/?#\s]+)\/(?:[^/?#\s]+)/gi,
+        '$1[SERVER]/[MEDIA_ID]'
+      )
+      // ── App route path segments ─────────────────────────────────────────────────────
+      // Bare Matrix room/space IDs in URL segments: /!roomId:server/
+      .replace(/\/![^/?#\s:]+:[^/?#\s]*/g, '/![ROOM_ID]')
+      // Bare Matrix user IDs in URL segments: /@user:server/
+      .replace(/\/@[^/?#\s:]+:[^/?#\s]*/g, '/@[USER_ID]')
+      // ── Deep-link push notification URLs (percent-encoded) ─────────────────────────
+      // URL-encoded user IDs: /%40user%3Aserver  (%40 = @)
+      .replace(/\/%40[^/?#\s]*/gi, '/[USER_ID]')
+      // URL-encoded room IDs: /%21room%3Aserver  (%21 = !)
+      .replace(/\/%21[^/?#\s]*/gi, '/![ROOM_ID]')
+      // ── Preview URL endpoint ────────────────────────────────────────────────────────
+      // The ?url= query parameter on preview_url contains the full external URL being
+      // previewed — strip the entire query string so browsing habits cannot be inferred.
+      .replace(/(\/preview_url)\?[^#\s]*/gi, '$1')
+  );
+}
+
 // Only initialize if DSN is provided and user hasn't opted out
 if (dsn && sentryEnabled) {
   Sentry.init({
@@ -67,7 +116,8 @@ if (dsn && sentryEnabled) {
     tracesSampleRate: environment === 'development' || environment === 'preview' ? 1.0 : 0.1,
 
     // Browser profiling — profiles every sampled session (requires Document-Policy: js-profiling response header)
-    profileSessionSampleRate: environment === 'development' || environment === 'preview' ? 1.0 : 0.1,
+    profileSessionSampleRate:
+      environment === 'development' || environment === 'preview' ? 1.0 : 0.1,
 
     // Control which URLs get distributed tracing headers
     tracePropagationTargets: [
@@ -108,27 +158,84 @@ if (dsn && sentryEnabled) {
     // Rate limiting: cap error events per page-load session to avoid quota exhaustion.
     // Separate counters for errors and transactions so perf traces do not drain the error budget.
     beforeSendTransaction(event) {
+      // Scrub Matrix identifiers from the transaction name (the matched route or page URL).
+      // React Router normally parameterises routes (e.g. /home/:roomIdOrAlias/) but falls
+      // back to the raw URL when matching fails, so we scrub defensively here.
+      if (event.transaction) {
+        // eslint-disable-next-line no-param-reassign
+        event.transaction = scrubMatrixUrl(event.transaction);
+      }
+
+      // Scrub Matrix identifiers from HTTP span descriptions and data URLs
+      if (event.spans) {
+        // eslint-disable-next-line no-param-reassign
+        event.spans = event.spans.map((span) => {
+          const newDesc = span.description ? scrubMatrixUrl(span.description) : span.description;
+          const spanData = span.data as Record<string, unknown> | undefined;
+          const spanHttpUrl = spanData?.['http.url'];
+          const rawHttpUrl = typeof spanHttpUrl === 'string' ? spanHttpUrl : undefined;
+          const newHttpUrl = rawHttpUrl ? scrubMatrixUrl(rawHttpUrl) : undefined;
+
+          const descChanged = newDesc !== span.description;
+          const urlChanged = newHttpUrl !== undefined && newHttpUrl !== rawHttpUrl;
+
+          if (!descChanged && !urlChanged) return span;
+          return {
+            ...span,
+            ...(descChanged ? { description: newDesc } : {}),
+            ...(urlChanged ? { data: { ...spanData, 'http.url': newHttpUrl } } : {}),
+          };
+        });
+      }
       return event;
     },
 
-    // Sanitize sensitive data from all breadcrumb messages before sending to Sentry
+    // Sanitize sensitive data from all breadcrumb messages and HTTP data URLs before sending to Sentry
     beforeBreadcrumb(breadcrumb) {
-      if (!breadcrumb.message) return breadcrumb;
-      // Always apply redaction — both token values and Matrix entity IDs.
+      // Scrub Matrix paths from HTTP breadcrumb data.url (captures full request URLs)
+      const bData = breadcrumb.data as Record<string, unknown> | undefined;
+      const rawUrl = typeof bData?.url === 'string' ? bData.url : undefined;
+      const scrubbedUrl = rawUrl ? scrubMatrixUrl(rawUrl) : undefined;
+      const urlChanged = scrubbedUrl !== undefined && scrubbedUrl !== rawUrl;
+
+      // Scrub Matrix paths from navigation breadcrumb data.from / data.to (page URLs that
+      // may contain room IDs or user IDs as path segments in the app's client-side routes)
+      const rawFrom = typeof bData?.from === 'string' ? bData.from : undefined;
+      const rawTo = typeof bData?.to === 'string' ? bData.to : undefined;
+      const scrubbedFrom = rawFrom ? scrubMatrixUrl(rawFrom) : undefined;
+      const scrubbedTo = rawTo ? scrubMatrixUrl(rawTo) : undefined;
+      const fromChanged = scrubbedFrom !== undefined && scrubbedFrom !== rawFrom;
+      const toChanged = scrubbedTo !== undefined && scrubbedTo !== rawTo;
+
+      // Scrub message text — token values and Matrix entity IDs
       // Do NOT use single-character patterns like '@', '!', '$' as they are far too broad.
-      const redacted = breadcrumb.message
-        // Redact token key=value pairs (e.g. access_token=abc123)
-        .replace(
-          /(access_token|password|refresh_token|device_id|session_id|sync_token|next_batch)([=:\s]+)([^\s&"']+)/gi,
-          '$1$2[REDACTED]'
-        )
-        // Redact full Matrix user IDs: @localpart:server.tld
-        .replace(/@[^\s:@]+:[^\s,'"(){}\[\]]+/g, '@[USER_ID]')
-        // Redact full Matrix room IDs: !opaque:server.tld
-        .replace(/![^\s:]+:[^\s,'"(){}\[\]]+/g, '![ROOM_ID]')
-        // Redact Matrix event IDs: $base64Url (at least 10 chars to avoid false positives)
-        .replace(/\$[A-Za-z0-9\-_+/]{10,}/g, '$[EVENT_ID]');
-      return redacted === breadcrumb.message ? breadcrumb : { ...breadcrumb, message: redacted };
+      const message = breadcrumb.message
+        ? breadcrumb.message
+            .replace(
+              /(access_token|password|refresh_token|device_id|session_id|sync_token|next_batch)([=:\s]+)([^\s&"']+)/gi,
+              '$1$2[REDACTED]'
+            )
+            .replace(/@[^\s:@]+:[^\s,'"(){}[\]]+/g, '@[USER_ID]')
+            .replace(/![^\s:]+:[^\s,'"(){}[\]]+/g, '![ROOM_ID]')
+            .replace(/\$[A-Za-z0-9_+/-]{10,}/g, '$[EVENT_ID]')
+        : breadcrumb.message;
+      const messageChanged = message !== breadcrumb.message;
+
+      if (!messageChanged && !urlChanged && !fromChanged && !toChanged) return breadcrumb;
+      return {
+        ...breadcrumb,
+        ...(messageChanged ? { message } : {}),
+        ...(urlChanged || fromChanged || toChanged
+          ? {
+              data: {
+                ...bData,
+                ...(urlChanged ? { url: scrubbedUrl } : {}),
+                ...(fromChanged ? { from: scrubbedFrom } : {}),
+                ...(toChanged ? { to: scrubbedTo } : {}),
+              },
+            }
+          : {}),
+      };
     },
 
     beforeSend(event, hint) {
@@ -191,6 +298,11 @@ if (dsn && sentryEnabled) {
             exception.value = exception.value.replace(/![^:]+:[^\s]+/g, '![ROOM_ID]');
             // eslint-disable-next-line no-param-reassign
             exception.value = exception.value.replace(/\$[^:\s]+/g, '$[EVENT_ID]');
+            // Scrub Matrix URL patterns embedded in error message strings
+            // (e.g. MatrixError: "Got error 403 (https://.../preview_url?url=https://...)"
+            // or paths containing room/user/event IDs)
+            // eslint-disable-next-line no-param-reassign
+            exception.value = scrubMatrixUrl(exception.value);
           }
         });
       }
@@ -198,10 +310,19 @@ if (dsn && sentryEnabled) {
       // Scrub request data
       if (event.request?.url) {
         // eslint-disable-next-line no-param-reassign
-        event.request.url = event.request.url.replace(
-          /(access_token|password|token)([=:]\s*)([^\s&]+)/gi,
-          '$1$2[REDACTED]'
+        event.request.url = scrubMatrixUrl(
+          event.request.url.replace(
+            /(access_token|password|token)([=:]\s*)([^\s&]+)/gi,
+            '$1$2[REDACTED]'
+          )
         );
+      }
+
+      // Scrub the transaction name on error events (set when the error occurred during a
+      // page-load or navigation transaction — raw URL leaks here when route matching fails)
+      if (event.transaction) {
+        // eslint-disable-next-line no-param-reassign
+        event.transaction = scrubMatrixUrl(event.transaction);
       }
 
       if (event.request?.headers) {

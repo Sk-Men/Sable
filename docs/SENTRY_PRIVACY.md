@@ -9,7 +9,7 @@ configuration details see [SENTRY_INTEGRATION.md](./SENTRY_INTEGRATION.md).
 ## What Is Collected
 
 Sentry is **disabled by default when no DSN is configured** and can be **opted
-out by users** at any time via Settings → Developer Tools → Error Tracking.
+out by users** at any time via Settings → General → Diagnostics & Privacy.
 
 When enabled, the following categories of data are sent:
 
@@ -48,14 +48,14 @@ browser.
 In addition to automatic navigation/console breadcrumbs, the following named
 events are explicitly recorded as breadcrumbs:
 
-| Event | Category | Level | Source |
-|-------|----------|-------|--------|
-| Session forcibly logged out by server | `auth` | warning | `ClientRoot.tsx` |
-| Sync state changed to Reconnecting/Error | `sync` | warning/error | `SyncStatus.tsx` |
-| Sliding sync first run completed | `sync` | info | `initMatrix.ts` |
-| Crypto store mismatch — wiping local stores | `crypto` | warning | `initMatrix.ts` |
-| Key backup failed | `crypto` | error | `useKeyBackup.ts` |
-| High media inflight request count | `media` | warning | `ClientNonUIFeatures.tsx` |
+| Event                                       | Category | Level         | Source                    |
+| ------------------------------------------- | -------- | ------------- | ------------------------- |
+| Session forcibly logged out by server       | `auth`   | warning       | `ClientRoot.tsx`          |
+| Sync state changed to Reconnecting/Error    | `sync`   | warning/error | `SyncStatus.tsx`          |
+| Sliding sync first run completed            | `sync`   | info          | `initMatrix.ts`           |
+| Crypto store mismatch — wiping local stores | `crypto` | warning       | `initMatrix.ts`           |
+| Key backup failed                           | `crypto` | error         | `useKeyBackup.ts`         |
+| High media inflight request count           | `media`  | warning       | `ClientNonUIFeatures.tsx` |
 
 **Code:** `src/app/pages/client/ClientRoot.tsx`, `src/app/pages/client/SyncStatus.tsx`,
 `src/client/initMatrix.ts`, `src/app/hooks/useKeyBackup.ts`,
@@ -66,10 +66,10 @@ events are explicitly recorded as breadcrumbs:
 The following failure paths use explicit `captureException` because they are
 caught by state management hooks and never propagate to React's ErrorBoundary:
 
-| Failure | Tag | Source |
-|---------|-----|--------|
-| Client failed to load (fetch/init) | `phase: load` | `ClientRoot.tsx` |
-| Client failed to start (sync start) | `phase: start` | `ClientRoot.tsx` |
+| Failure                                        | Tag                                  | Source                        |
+| ---------------------------------------------- | ------------------------------------ | ----------------------------- |
+| Client failed to load (fetch/init)             | `phase: load`                        | `ClientRoot.tsx`              |
+| Client failed to start (sync start)            | `phase: start`                       | `ClientRoot.tsx`              |
 | Background notification client failed to start | `component: BackgroundNotifications` | `BackgroundNotifications.tsx` |
 
 **Code:** `src/app/pages/client/ClientRoot.tsx`,
@@ -84,21 +84,21 @@ caught by state management hooks and never propagate to React's ErrorBoundary:
 Performance data contains **no message content, no room names, and no user
 identifiers**. Spans are labelled with operation names only.
 
-| Span name | Operation | Source |
-|-----------|-----------|--------|
-| `auth.login` | `auth` | `loginUtil.ts` |
-| `decrypt.event` | `matrix.crypto` | `EncryptedContent.tsx` |
-| `decrypt.bulk` | `matrix.crypto` | `room.ts` |
-| `timeline.jump_load` | `matrix.timeline` | `RoomTimeline.tsx` |
-| `message.send` | `matrix.message` | `RoomInput.tsx` |
-| Sliding sync processing | `matrix.sync` | `slidingSync.ts` |
+| Span name               | Operation         | Source                 |
+| ----------------------- | ----------------- | ---------------------- |
+| `auth.login`            | `auth`            | `loginUtil.ts`         |
+| `decrypt.event`         | `matrix.crypto`   | `EncryptedContent.tsx` |
+| `decrypt.bulk`          | `matrix.crypto`   | `room.ts`              |
+| `timeline.jump_load`    | `matrix.timeline` | `RoomTimeline.tsx`     |
+| `message.send`          | `matrix.message`  | `RoomInput.tsx`        |
+| Sliding sync processing | `matrix.sync`     | `slidingSync.ts`       |
 
 **Sample rates:**
 
-| Environment         | Traces | Profiles |
-|---------------------|--------|----------|
-| `production`        | 10%    | 10%      |
-| `preview` / `development` | 100% | 100% |
+| Environment               | Traces | Profiles |
+| ------------------------- | ------ | -------- |
+| `production`              | 10%    | 10%      |
+| `preview` / `development` | 100%   | 100%     |
 
 **Code:** `src/instrument.ts` — `tracesSampleRate`, `profilesSampleRate`  
 **Code:** `src/app/features/room/RoomInput.tsx` — message send span  
@@ -112,22 +112,22 @@ or numeric measurements.
 
 #### Authentication
 
-| Metric | Type | Attributes | What it tracks |
-|--------|------|-----------|----------------|
-| `sable.auth.login_failed` | count | `errcode` | Login attempt failures by error code |
+| Metric                    | Type  | Attributes | What it tracks                       |
+| ------------------------- | ----- | ---------- | ------------------------------------ |
+| `sable.auth.login_failed` | count | `errcode`  | Login attempt failures by error code |
 
 **Code:** `src/app/pages/auth/login/loginUtil.ts`
 
 #### Cryptography
 
-| Metric | Type | Attributes | What it tracks |
-|--------|------|-----------|----------------|
-| `sable.decryption.failure` | count | `reason` | Unable-to-decrypt events by failure reason |
-| `sable.decryption.event_ms` | distribution | — | Per-event decryption latency |
-| `sable.decryption.bulk_latency_ms` | distribution | `event_count` | Bulk re-decryption time on room open |
-| `sable.crypto.key_backup_failures` | count | `errcode` | Key backup errors by code |
-| `sable.crypto.store_wipe` | count | — | Crypto store mismatch wipe-and-retry occurrences |
-| `sable.crypto.verification_outcome` | count | `outcome` (`completed`/`cancelled`) | E2E device verification outcomes |
+| Metric                              | Type         | Attributes                          | What it tracks                                   |
+| ----------------------------------- | ------------ | ----------------------------------- | ------------------------------------------------ |
+| `sable.decryption.failure`          | count        | `reason`                            | Unable-to-decrypt events by failure reason       |
+| `sable.decryption.event_ms`         | distribution | —                                   | Per-event decryption latency                     |
+| `sable.decryption.bulk_latency_ms`  | distribution | `event_count`                       | Bulk re-decryption time on room open             |
+| `sable.crypto.key_backup_failures`  | count        | `errcode`                           | Key backup errors by code                        |
+| `sable.crypto.store_wipe`           | count        | —                                   | Crypto store mismatch wipe-and-retry occurrences |
+| `sable.crypto.verification_outcome` | count        | `outcome` (`completed`/`cancelled`) | E2E device verification outcomes                 |
 
 **Code:** `src/app/features/room/message/EncryptedContent.tsx`,
 `src/app/utils/room.ts`, `src/app/hooks/useKeyBackup.ts`,
@@ -135,70 +135,70 @@ or numeric measurements.
 
 #### Messaging
 
-| Metric | Type | Attributes | What it tracks |
-|--------|------|-----------|----------------|
-| `sable.message.send_latency_ms` | distribution | `encrypted` | Message send round-trip time |
-| `sable.message.send_error` | count | — | Send errors from message composer |
-| `sable.message.send_failed` | count | — | Local-echo `NOT_SENT` status events |
+| Metric                          | Type         | Attributes  | What it tracks                      |
+| ------------------------------- | ------------ | ----------- | ----------------------------------- |
+| `sable.message.send_latency_ms` | distribution | `encrypted` | Message send round-trip time        |
+| `sable.message.send_error`      | count        | —           | Send errors from message composer   |
+| `sable.message.send_failed`     | count        | —           | Local-echo `NOT_SENT` status events |
 
 **Code:** `src/app/features/room/RoomInput.tsx`,
 `src/app/features/room/RoomTimeline.tsx`
 
 #### Timeline
 
-| Metric | Type | Attributes | What it tracks |
-|--------|------|-----------|----------------|
-| `sable.timeline.open` | count | `mode` | Timeline render initiations |
-| `sable.timeline.render_window` | distribution | `mode` | Initial virtual window size |
-| `sable.timeline.jump_load_ms` | distribution | — | Event-jump timeline load latency |
-| `sable.timeline.reinit` | count | — | Full timeline re-initialisations |
-| `sable.pagination.error` | count | `direction` | Pagination errors by direction |
+| Metric                         | Type         | Attributes  | What it tracks                   |
+| ------------------------------ | ------------ | ----------- | -------------------------------- |
+| `sable.timeline.open`          | count        | `mode`      | Timeline render initiations      |
+| `sable.timeline.render_window` | distribution | `mode`      | Initial virtual window size      |
+| `sable.timeline.jump_load_ms`  | distribution | —           | Event-jump timeline load latency |
+| `sable.timeline.reinit`        | count        | —           | Full timeline re-initialisations |
+| `sable.pagination.error`       | count        | `direction` | Pagination errors by direction   |
 
 **Code:** `src/app/features/room/RoomTimeline.tsx`
 
 #### Sync
 
-| Metric | Type | Attributes | What it tracks |
-|--------|------|-----------|----------------|
-| `sable.sync.transport` | count | `type` (`sliding`/`classic`) | Sync transport type used |
-| `sable.sync.cycle` | count | (various) | Completed sliding sync cycles |
-| `sable.sync.error` | count | `errcode` | Sliding sync errors |
-| `sable.sync.initial_ms` | distribution | — | Initial sync completion time |
-| `sable.sync.processing_ms` | distribution | — | Per-cycle sync processing time |
-| `sable.sync.lists_loaded_ms` | distribution | — | Time for room lists to fully load |
-| `sable.sync.total_rooms` | gauge | `sync_type` | Total rooms known at list load |
-| `sable.sync.active_subscriptions` | gauge | — | Active room subscription count |
-| `sable.sync.client_ready_ms` | distribution | `type` | Time from init to client ready |
-| `sable.sync.time_to_ready_ms` | distribution | — | Wall-clock time to first sync ready |
-| `sable.sync.degraded` | count | `state` | Sync reconnect/error state transitions |
+| Metric                            | Type         | Attributes                   | What it tracks                         |
+| --------------------------------- | ------------ | ---------------------------- | -------------------------------------- |
+| `sable.sync.transport`            | count        | `type` (`sliding`/`classic`) | Sync transport type used               |
+| `sable.sync.cycle`                | count        | (various)                    | Completed sliding sync cycles          |
+| `sable.sync.error`                | count        | `errcode`                    | Sliding sync errors                    |
+| `sable.sync.initial_ms`           | distribution | —                            | Initial sync completion time           |
+| `sable.sync.processing_ms`        | distribution | —                            | Per-cycle sync processing time         |
+| `sable.sync.lists_loaded_ms`      | distribution | —                            | Time for room lists to fully load      |
+| `sable.sync.total_rooms`          | gauge        | `sync_type`                  | Total rooms known at list load         |
+| `sable.sync.active_subscriptions` | gauge        | —                            | Active room subscription count         |
+| `sable.sync.client_ready_ms`      | distribution | `type`                       | Time from init to client ready         |
+| `sable.sync.time_to_ready_ms`     | distribution | —                            | Wall-clock time to first sync ready    |
+| `sable.sync.degraded`             | count        | `state`                      | Sync reconnect/error state transitions |
 
 **Code:** `src/client/initMatrix.ts`, `src/client/slidingSync.ts`,
 `src/app/pages/client/ClientRoot.tsx`, `src/app/pages/client/SyncStatus.tsx`
 
 #### Media
 
-| Metric | Type | Attributes | What it tracks |
-|--------|------|-----------|----------------|
+| Metric                          | Type         | Attributes | What it tracks               |
+| ------------------------------- | ------------ | ---------- | ---------------------------- |
 | `sable.media.upload_latency_ms` | distribution | `mimetype` | Media upload round-trip time |
-| `sable.media.upload_bytes` | distribution | `mimetype` | Upload size distribution |
-| `sable.media.upload_error` | count | `reason` | Upload failures by reason |
-| `sable.media.blob_cache_size` | gauge | — | Blob URL cache entry count |
-| `sable.media.inflight_requests` | gauge | — | Concurrent media requests |
+| `sable.media.upload_bytes`      | distribution | `mimetype` | Upload size distribution     |
+| `sable.media.upload_error`      | count        | `reason`   | Upload failures by reason    |
+| `sable.media.blob_cache_size`   | gauge        | —          | Blob URL cache entry count   |
+| `sable.media.inflight_requests` | gauge        | —          | Concurrent media requests    |
 
 **Code:** `src/app/utils/matrix.ts`, `src/app/pages/client/ClientNonUIFeatures.tsx`
 
 #### Background clients & debug telemetry
 
-| Metric | Type | Attributes | What it tracks |
-|--------|------|-----------|----------------|
-| `sable.background.client_count` | gauge | — | Active background notification clients |
-| `sable.errors` | count | `category` | Error-level debug log entries |
-| `sable.warnings` | count | `category` | Warning-level debug log entries |
+| Metric                          | Type  | Attributes | What it tracks                         |
+| ------------------------------- | ----- | ---------- | -------------------------------------- |
+| `sable.background.client_count` | gauge | —          | Active background notification clients |
+| `sable.errors`                  | count | `category` | Error-level debug log entries          |
+| `sable.warnings`                | count | `category` | Warning-level debug log entries        |
 
 **Code:** `src/app/pages/client/BackgroundNotifications.tsx`,
 `src/app/utils/debugLogger.ts`
 
-### Session Replay *(opt-in, disabled by default)*
+### Session Replay _(opt-in, disabled by default)_
 
 When session replay is explicitly enabled by the user, Sentry records UI
 interactions to help reproduce bugs. **All content is masked at the browser
@@ -213,15 +213,15 @@ media are ever visible in a replay**.
 
 Sample rates for replay:
 
-| Trigger               | Production | Preview / Dev |
-|-----------------------|------------|---------------|
-| Regular sessions      | 10%        | 100%          |
-| Sessions with errors  | 100%       | 100%          |
+| Trigger              | Production | Preview / Dev |
+| -------------------- | ---------- | ------------- |
+| Regular sessions     | 10%        | 100%          |
+| Sessions with errors | 100%       | 100%          |
 
 **Code:** `src/instrument.ts` — `replayIntegration` call with `maskAllText`,
 `blockAllMedia`, `maskAllInputs`
 
-### Bug Reports *(manual, opt-in per report)*
+### Bug Reports _(manual, opt-in per report)_
 
 When a user submits a bug report via `/bugreport` or the "Bug Report" button:
 
@@ -272,11 +272,11 @@ Regex: `/(access_token|password|token|refresh_token|session_id|sync_token|next_b
 
 Matrix IDs are replaced with placeholder tokens before sending:
 
-| Original form     | Replaced with |
-|-------------------|---------------|
-| `@user:server`    | `@[USER_ID]`  |
-| `!room:server`    | `![ROOM_ID]`  |
-| `$event_id`       | `$[EVENT_ID]` |
+| Original form  | Replaced with |
+| -------------- | ------------- |
+| `@user:server` | `@[USER_ID]`  |
+| `!room:server` | `![ROOM_ID]`  |
+| `$event_id`    | `$[EVENT_ID]` |
 
 **Code:** `src/instrument.ts` — `beforeSend` callback (applied to `event.message`
 and all `event.exception.values`)
@@ -287,11 +287,11 @@ and all `event.exception.values`)
 
 Users can adjust Sentry behaviour without restarting the app:
 
-| Setting | Location | `localStorage` key | Default |
-|---------|----------|--------------------|---------|
-| Disable Sentry entirely | Settings → Developer Tools → Error Tracking | `sable_sentry_enabled` | Enabled |
-| Enable session replay | Settings → Developer Tools → Error Tracking | `sable_sentry_replay_enabled` | Disabled (opt-in) |
-| Disable breadcrumb categories | Settings → Developer Tools → Error Tracking → Breadcrumb Categories | `sable_sentry_breadcrumb_disabled` | All enabled |
+| Setting                       | Location                                                                     | `localStorage` key                 | Default           |
+| ----------------------------- | ---------------------------------------------------------------------------- | ---------------------------------- | ----------------- |
+| Disable Sentry entirely       | Settings → General → Diagnostics & Privacy                                   | `sable_sentry_enabled`             | Enabled           |
+| Enable session replay         | Settings → General → Diagnostics & Privacy                                   | `sable_sentry_replay_enabled`      | Disabled (opt-in) |
+| Disable breadcrumb categories | Settings → Developer Tools → Error Tracking (Sentry) → Breadcrumb Categories | `sable_sentry_breadcrumb_disabled` | All enabled       |
 
 **Rate limiting:** A maximum of 50 error events are forwarded to Sentry per page load (session).
 Subsequent errors are silently dropped, protecting against quota exhaustion without affecting

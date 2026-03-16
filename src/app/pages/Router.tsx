@@ -164,59 +164,59 @@ export const createRouter = (clientConfig: ClientConfig, screenSize: ScreenSize)
             beforeCapture={(scope) => scope.setTag('section', 'client')}
           >
             <AuthRouteThemeManager>
-            {/* HandleNotificationClick must live outside ClientRoot's loading gate so
+              {/* HandleNotificationClick must live outside ClientRoot's loading gate so
                 SW notification-click postMessages are never dropped during client
                 reloads (e.g., account switches). It only needs navigate + Jotai atoms. */}
-            <HandleNotificationClick />
-            <ClientRoot>
-              <ClientInitStorageAtom>
-                <ClientRoomsNotificationPreferences>
-                  <ClientBindAtoms>
-                    <ClientNonUIFeatures>
-                      <NotificationJumper />
-                      <CallEmbedProvider>
-                        <ClientLayout
-                          nav={
-                            <MobileFriendlyClientNav>
-                              <SidebarNav />
-                            </MobileFriendlyClientNav>
-                          }
-                        >
-                          <Outlet />
-                        </ClientLayout>
-                        <CallStatusRenderer />
-                      </CallEmbedProvider>
-                      <SearchModalRenderer />
-                      <UserRoomProfileRenderer />
-                      <CreateRoomModalRenderer />
-                      <CreateSpaceModalRenderer />
-                      <BugReportModalRenderer />
-                      <RoomSettingsRenderer />
-                      <SpaceSettingsRenderer />
-                      <GlobalKeyboardShortcuts />
-                      {/* Screen reader live region — populated by announce() in utils/announce.ts */}
-                      <div
-                        id="sable-announcements"
-                        role="status"
-                        aria-live="polite"
-                        aria-atomic="true"
-                        style={{
-                          position: 'absolute',
-                          width: '1px',
-                          height: '1px',
-                          overflow: 'hidden',
-                          clip: 'rect(0,0,0,0)',
-                          whiteSpace: 'nowrap',
-                        }}
-                      />
-                      <ReceiveSelfDeviceVerification />
-                      <AutoRestoreBackupOnVerification />
-                    </ClientNonUIFeatures>
-                  </ClientBindAtoms>
-                </ClientRoomsNotificationPreferences>
-              </ClientInitStorageAtom>
-            </ClientRoot>
-          </AuthRouteThemeManager>
+              <HandleNotificationClick />
+              <ClientRoot>
+                <ClientInitStorageAtom>
+                  <ClientRoomsNotificationPreferences>
+                    <ClientBindAtoms>
+                      <ClientNonUIFeatures>
+                        <NotificationJumper />
+                        <CallEmbedProvider>
+                          <ClientLayout
+                            nav={
+                              <MobileFriendlyClientNav>
+                                <SidebarNav />
+                              </MobileFriendlyClientNav>
+                            }
+                          >
+                            <Outlet />
+                          </ClientLayout>
+                          <CallStatusRenderer />
+                        </CallEmbedProvider>
+                        <SearchModalRenderer />
+                        <UserRoomProfileRenderer />
+                        <CreateRoomModalRenderer />
+                        <CreateSpaceModalRenderer />
+                        <BugReportModalRenderer />
+                        <RoomSettingsRenderer />
+                        <SpaceSettingsRenderer />
+                        <GlobalKeyboardShortcuts />
+                        {/* Screen reader live region — populated by announce() in utils/announce.ts */}
+                        <div
+                          id="sable-announcements"
+                          role="status"
+                          aria-live="polite"
+                          aria-atomic="true"
+                          style={{
+                            position: 'absolute',
+                            width: '1px',
+                            height: '1px',
+                            overflow: 'hidden',
+                            clip: 'rect(0,0,0,0)',
+                            whiteSpace: 'nowrap',
+                          }}
+                        />
+                        <ReceiveSelfDeviceVerification />
+                        <AutoRestoreBackupOnVerification />
+                      </ClientNonUIFeatures>
+                    </ClientBindAtoms>
+                  </ClientRoomsNotificationPreferences>
+                </ClientInitStorageAtom>
+              </ClientRoot>
+            </AuthRouteThemeManager>
           </Sentry.ErrorBoundary>
         }
       >

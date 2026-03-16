@@ -162,24 +162,25 @@ class DebugLoggerService {
     const sentryLevel: Sentry.SeverityLevel = sentryLevelMap[entry.level] ?? 'error';
 
     // Add breadcrumb for all logs (helps with debugging in Sentry), unless category is disabled
-    if (!this.disabledBreadcrumbCategories.has(entry.category)) Sentry.addBreadcrumb({
-      category: `${entry.category}.${entry.namespace}`,
-      message: entry.message,
-      level: sentryLevel,
-      data: entry.data ? { data: entry.data } : undefined,
-      timestamp: entry.timestamp / 1000, // Sentry expects seconds
-    });
+    if (!this.disabledBreadcrumbCategories.has(entry.category))
+      Sentry.addBreadcrumb({
+        category: `${entry.category}.${entry.namespace}`,
+        message: entry.message,
+        level: sentryLevel,
+        data: entry.data ? { data: entry.data } : undefined,
+        timestamp: entry.timestamp / 1000, // Sentry expects seconds
+      });
 
     // Send as structured log to the Sentry Logs product (requires enableLogs: true)
     const logMsg = `[${entry.category}:${entry.namespace}] ${entry.message}`;
     // Flatten primitive values from entry.data so they become searchable attributes in Sentry Logs
     const logDataAttrs: Record<string, string | number | boolean> = {};
     if (entry.data && typeof entry.data === 'object' && !(entry.data instanceof Error)) {
-      for (const [k, v] of Object.entries(entry.data)) {
+      Object.entries(entry.data).forEach(([k, v]) => {
         if (typeof v === 'string' || typeof v === 'number' || typeof v === 'boolean') {
           logDataAttrs[k] = v;
         }
-      }
+      });
     }
     const logAttrs = { category: entry.category, namespace: entry.namespace, ...logDataAttrs };
     if (entry.level === 'debug') Sentry.logger.debug(logMsg, logAttrs);

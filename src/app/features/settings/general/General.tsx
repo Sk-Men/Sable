@@ -1053,6 +1053,109 @@ export function Sync() {
 type GeneralProps = {
   requestClose: () => void;
 };
+
+function DiagnosticsAndPrivacy() {
+  const [sentryEnabled, setSentryEnabled] = useState(
+    localStorage.getItem('sable_sentry_enabled') !== 'false'
+  );
+  const [sessionReplayEnabled, setSessionReplayEnabled] = useState(
+    localStorage.getItem('sable_sentry_replay_enabled') === 'true'
+  );
+  const [needsRefresh, setNeedsRefresh] = useState(false);
+
+  const isSentryConfigured = Boolean(import.meta.env.VITE_SENTRY_DSN);
+
+  const handleSentryToggle = (enabled: boolean) => {
+    setSentryEnabled(enabled);
+    if (enabled) {
+      localStorage.removeItem('sable_sentry_enabled');
+    } else {
+      localStorage.setItem('sable_sentry_enabled', 'false');
+    }
+    setNeedsRefresh(true);
+  };
+
+  const handleReplayToggle = (enabled: boolean) => {
+    setSessionReplayEnabled(enabled);
+    if (enabled) {
+      localStorage.setItem('sable_sentry_replay_enabled', 'true');
+    } else {
+      localStorage.removeItem('sable_sentry_replay_enabled');
+    }
+    setNeedsRefresh(true);
+  };
+
+  return (
+    <Box direction="Column" gap="100">
+      <Text size="L400">Diagnostics & Privacy</Text>
+      {needsRefresh && (
+        <Box
+          style={{
+            padding: '12px',
+            backgroundColor: 'rgba(33, 150, 243, 0.1)',
+            borderRadius: '8px',
+          }}
+        >
+          <Text size="T300" style={{ color: 'rgb(33, 150, 243)' }}>
+            Please refresh the page for these settings to take effect.
+          </Text>
+        </Box>
+      )}
+      <SequenceCard
+        className={SequenceCardStyle}
+        variant="SurfaceVariant"
+        direction="Column"
+        gap="400"
+      >
+        <SettingTile
+          title="Error Reporting"
+          description={
+            isSentryConfigured
+              ? 'Send anonymous crash reports to help improve Sable. No messages, room names, or personal data are included.'
+              : 'Error reporting is not configured for this build.'
+          }
+          after={
+            <Switch
+              variant="Primary"
+              value={sentryEnabled}
+              onChange={handleSentryToggle}
+              disabled={!isSentryConfigured}
+            />
+          }
+        />
+        {sentryEnabled && isSentryConfigured && (
+          <SettingTile
+            title="Session Replay"
+            description="Allow recording of UI interactions to help debug errors. All text, media, and inputs are fully masked before sending."
+            after={
+              <Switch
+                variant="Primary"
+                value={sessionReplayEnabled}
+                onChange={handleReplayToggle}
+              />
+            }
+          />
+        )}
+      </SequenceCard>
+      <Box gap="200" wrap="Wrap" style={{ paddingTop: '4px' }}>
+        <Button
+          as="a"
+          href="https://github.com/SableClient/Sable/blob/dev/docs/PRIVACY_POLICY.md"
+          rel="noreferrer noopener"
+          target="_blank"
+          variant="Secondary"
+          fill="Soft"
+          size="300"
+          radii="300"
+          before={<Icon src={Icons.Shield} size="100" filled />}
+        >
+          <Text size="B300">Privacy Policy</Text>
+        </Button>
+      </Box>
+    </Box>
+  );
+}
+
 export function General({ requestClose }: GeneralProps) {
   return (
     <Page>
@@ -1078,6 +1181,7 @@ export function General({ requestClose }: GeneralProps) {
               <Gestures isMobile={mobileOrTablet()} />
               <Editor isMobile={mobileOrTablet()} />
               <Messages />
+              <DiagnosticsAndPrivacy />
             </Box>
           </PageContent>
         </Scroll>
