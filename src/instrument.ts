@@ -222,6 +222,12 @@ if (dsn && sentryEnabled) {
     'app.version': release ?? 'unknown',
   });
 
+  // Tag all events with the PR number when running in a PR preview deployment
+  const prNumber = import.meta.env.VITE_SENTRY_PR;
+  if (prNumber) {
+    Sentry.getGlobalScope().setTag('pr', prNumber);
+  }
+
   // @ts-expect-error - Adding to window for debugging
   window.Sentry = Sentry;
 
