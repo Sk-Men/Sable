@@ -3,10 +3,6 @@ import { IPreviewUrlResponse } from '$types/matrix-sdk';
 import { Box, Icon, IconButton, Icons, Scroll, Spinner, Text, as, color, config } from 'folds';
 import { AsyncStatus, useAsyncCallback } from '$hooks/useAsyncCallback';
 import { useMatrixClient } from '$hooks/useMatrixClient';
-import {
-  getIntersectionObserverEntry,
-  useIntersectionObserver,
-} from '$hooks/useIntersectionObserver';
 import { mxcUrlToHttp, downloadMedia } from '$utils/matrix';
 import { useMediaAuthentication } from '$hooks/useMediaAuthentication';
 import * as css from './UrlPreviewCard.css';
@@ -242,43 +238,34 @@ export const UrlPreviewCard = as<'div', { url: string; ts: number; mediaType?: s
 
 export const UrlPreviewHolder = as<'div'>(({ children, ...props }, ref) => {
   const scrollRef = useRef<HTMLDivElement>(null);
-  const backAnchorRef = useRef<HTMLDivElement>(null);
-  const frontAnchorRef = useRef<HTMLDivElement>(null);
-  const [backVisible, setBackVisible] = useState(true);
-  const [frontVisible, setFrontVisible] = useState(true);
+  const innerBoxRef = useRef<HTMLDivElement>(null);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(false);
 
-  const intersectionObserver = useIntersectionObserver(
-    useCallback((entries) => {
-      const backAnchor = backAnchorRef.current;
-      const frontAnchor = frontAnchorRef.current;
-      const backEntry = backAnchor && getIntersectionObserverEntry(backAnchor, entries);
-      const frontEntry = frontAnchor && getIntersectionObserverEntry(frontAnchor, entries);
-      if (backEntry) {
-        setBackVisible(backEntry.isIntersecting);
-      }
-      if (frontEntry) {
-        setFrontVisible(frontEntry.isIntersecting);
-      }
-    }, []),
-    useCallback(
-      () => ({
-        root: scrollRef.current,
-        rootMargin: '10px',
-      }),
-      []
-    )
-  );
+  const updateArrows = useCallback(() => {
+    const scroll = scrollRef.current;
+    if (!scroll) return;
+    const { scrollLeft, scrollWidth, clientWidth } = scroll;
+    setCanScrollLeft(scrollLeft > 1);
+    setCanScrollRight(scrollLeft + clientWidth < scrollWidth - 1);
+  }, []);
 
   useEffect(() => {
-    const backAnchor = backAnchorRef.current;
-    const frontAnchor = frontAnchorRef.current;
-    if (backAnchor) intersectionObserver?.observe(backAnchor);
-    if (frontAnchor) intersectionObserver?.observe(frontAnchor);
+    const scroll = scrollRef.current;
+    if (!scroll) return;
+
+    updateArrows();
+    scroll.addEventListener('scroll', updateArrows, { passive: true });
+
+    const resizeObserver = new ResizeObserver(updateArrows);
+    resizeObserver.observe(scroll);
+    if (innerBoxRef.current) resizeObserver.observe(innerBoxRef.current);
+
     return () => {
-      if (backAnchor) intersectionObserver?.unobserve(backAnchor);
-      if (frontAnchor) intersectionObserver?.unobserve(frontAnchor);
+      scroll.removeEventListener('scroll', updateArrows);
+      resizeObserver.disconnect();
     };
-  }, [intersectionObserver]);
+  }, [updateArrows]);
 
   const handleScrollBack = () => {
     const scroll = scrollRef.current;
@@ -308,8 +295,7 @@ export const UrlPreviewHolder = as<'div'>(({ children, ...props }, ref) => {
     >
       <Scroll ref={scrollRef} direction="Horizontal" size="0" visibility="Hover" hideTrack>
         <Box shrink="No" alignItems="Center">
-          <div ref={backAnchorRef} />
-          {!backVisible && (
+          {canScrollLeft && (
             <>
               <div className={css.UrlPreviewHolderGradient({ position: 'Left' })} />
               <IconButton
@@ -324,10 +310,9 @@ export const UrlPreviewHolder = as<'div'>(({ children, ...props }, ref) => {
               </IconButton>
             </>
           )}
-          <Box alignItems="Inherit" gap="200">
+          <Box ref={innerBoxRef} alignItems="Inherit" gap="200">
             {children}
-
-            {!frontVisible && (
+            {canScrollRight && (
               <>
                 <div className={css.UrlPreviewHolderGradient({ position: 'Right' })} />
                 <IconButton
@@ -342,7 +327,6 @@ export const UrlPreviewHolder = as<'div'>(({ children, ...props }, ref) => {
                 </IconButton>
               </>
             )}
-            <div ref={frontAnchorRef} />
           </Box>
         </Box>
       </Scroll>
