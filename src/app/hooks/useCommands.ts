@@ -1182,7 +1182,7 @@ export const useCommands = (mx: MatrixClient, room: Room): CommandRecord => {
       [Command.ShareE2EEHistory]: {
         name: Command.ShareE2EEHistory,
         description:
-          'Share E2EE history of this room with a user. Example: /sharee2eehistory @user:example.org',
+          'Share E2EE history (MSC4268) of this room with a user. Example: /sharee2eehistory @user:example.org',
         exe: async (payload) => {
           const targetUserId = payload.trim();
           const { roomId } = room;
@@ -1197,7 +1197,11 @@ export const useCommands = (mx: MatrixClient, room: Room): CommandRecord => {
           }
           try {
             await crypto.shareRoomHistoryWithUser(roomId, targetUserId);
-            sendFeedback(`E2EE history shared with ${targetUserId}.`, room, mx.getSafeUserId());
+            sendFeedback(
+              `E2EE history shared with ${targetUserId}. (Their client needs to support MSC4268)`,
+              room,
+              mx.getSafeUserId()
+            );
           } catch (e: any) {
             sendFeedback(`Failed to share E2EE history: ${e.message}`, room, mx.getSafeUserId());
           }
