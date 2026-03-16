@@ -1195,16 +1195,18 @@ export const useCommands = (mx: MatrixClient, room: Room): CommandRecord => {
             sendFeedback('Encryption is not enabled on this client.', room, mx.getSafeUserId());
             return;
           }
-          try {
-            await crypto.shareRoomHistoryWithUser(roomId, targetUserId);
-            sendFeedback(
-              `E2EE history shared with ${targetUserId}. (Their client needs to support MSC4268)`,
-              room,
-              mx.getSafeUserId()
-            );
-          } catch (e: any) {
-            sendFeedback(`Failed to share E2EE history: ${e.message}`, room, mx.getSafeUserId());
-          }
+          crypto
+            .shareRoomHistoryWithUser(roomId, targetUserId)
+            .then(() => {
+              sendFeedback(
+                `E2EE history shared with ${targetUserId}. (Their client needs to support MSC4268)`,
+                room,
+                mx.getSafeUserId()
+              );
+            })
+            .catch((e) => {
+              sendFeedback(`Failed to share E2EE history: ${e.message}`, room, mx.getSafeUserId());
+            });
         },
       },
       // Cute Events
