@@ -1068,7 +1068,7 @@ function DiagnosticsAndPrivacy() {
   const handleSentryToggle = (enabled: boolean) => {
     setSentryEnabled(enabled);
     if (enabled) {
-      localStorage.removeItem('sable_sentry_enabled');
+      localStorage.setItem('sable_sentry_enabled', 'true');
     } else {
       localStorage.setItem('sable_sentry_enabled', 'false');
     }

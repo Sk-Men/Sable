@@ -23,7 +23,7 @@ const release = import.meta.env.VITE_APP_VERSION;
 let sessionErrorCount = 0;
 const SESSION_ERROR_LIMIT = 50;
 
-// Check user preferences
+// Default on: Sentry runs unless the user has opted out via the banner or Settings.
 const sentryEnabled = localStorage.getItem('sable_sentry_enabled') !== 'false';
 const replayEnabled = localStorage.getItem('sable_sentry_replay_enabled') === 'true';
 
