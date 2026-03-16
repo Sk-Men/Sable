@@ -492,11 +492,17 @@ export const useCommands = (mx: MatrixClient, room: Room): CommandRecord => {
           const parts = payload.split(' ');
           let avatarUrl: string | undefined;
           let name: string | undefined;
-          parts.forEach((part) => {
+          parts.forEach((part, index) => {
             const [key, value] = part.split('=');
             if (key && value) {
               if (key === 'name' || key === 'avatar') {
-                if (key === 'name') name = value;
+                if (key === 'name') {
+                  name = parts
+                    .slice(index)
+                    .map((p) => p.split('=')[1])
+                    .join(' ');
+                  return;
+                }
                 if (key === 'avatar') avatarUrl = value;
               }
             }

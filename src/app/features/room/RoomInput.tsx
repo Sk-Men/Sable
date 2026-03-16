@@ -151,7 +151,10 @@ import { usePowerLevelsContext } from '$hooks/usePowerLevels';
 import { useRoomCreators } from '$hooks/useRoomCreators';
 import { useRoomPermissions } from '$hooks/useRoomPermissions';
 import { AutocompleteNotice } from '$components/editor/autocomplete/AutocompleteNotice';
-import { getCurrentlyUsedPerMessageProfileForRoom } from '$hooks/usePerMessageProfile';
+import {
+  getCurrentlyUsedPerMessageProfileForRoom,
+  PerMessageProfile,
+} from '$hooks/usePerMessageProfile';
 import { getSupportedAudioExtension } from '$plugins/voice-recorder-kit/supportedCodec';
 import { SchedulePickerDialog } from './schedule-send';
 import * as css from './schedule-send/SchedulePickerDialog.css';
@@ -271,10 +274,18 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
       room
     );
 
-    const permessageprofile = useCallback(async () => {
-      const profile = await getCurrentlyUsedPerMessageProfileForRoom(mx, roomId);
-      console.debug('Fetched per-message profile:', { profile, roomId });
-      return profile;
+    // Add state to cache the profile
+    const [perMessageProfile, setPerMessageProfile] = useState<PerMessageProfile | null>(null);
+
+    // Fetch and cache the profile when the roomId changes
+    useEffect(() => {
+      const fetchPmP = async () => {
+        const profile = await getCurrentlyUsedPerMessageProfileForRoom(mx, roomId);
+        console.debug('Fetched per-message profile:', { profile, roomId });
+        setPerMessageProfile(profile ?? null); // Convert undefined to null
+      };
+
+      fetchPmP();
     }, [mx, roomId]);
 
     const [uploadBoard, setUploadBoard] = useState(true);
@@ -632,8 +643,6 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
       const formattedBody = customHtml;
       const mentionData = getMentions(mx, roomId, editor);
 
-      const perMessageProfile = await permessageprofile();
-
       const content: IContent = {
         msgtype: msgType,
         body,
@@ -747,7 +756,7 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
       canSendReaction,
       mx,
       roomId,
-      permessageprofile,
+      perMessageProfile,
       replyDraft,
       silentReply,
       scheduledTime,
