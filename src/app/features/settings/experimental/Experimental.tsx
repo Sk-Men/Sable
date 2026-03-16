@@ -9,7 +9,7 @@ import { MSC4268HistoryShare } from './MSC4268HistoryShare';
 type ExperimentalProps = {
   requestClose: () => void;
 };
-export function Experimental({ requestClose }: ExperimentalProps) {
+export function Experimental({ requestClose }: Readonly<ExperimentalProps>) {
   return (
     <Page>
       <PageHeader outlined={false}>
@@ -34,8 +34,8 @@ export function Experimental({ requestClose }: ExperimentalProps) {
               variant="Warning"
               description={
                 <>
-                  The features listed below may be unstable or incomplete,
-                  <strong> use at your own risk</strong>.
+                  The features listed below may be unstable or incomplete,{' '}
+                  <strong>use at your own risk</strong>.
                   <br />
                   Please report any new issues potentially caused by these features!
                 </>

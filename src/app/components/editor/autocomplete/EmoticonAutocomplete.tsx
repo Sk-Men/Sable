@@ -57,13 +57,10 @@ export function EmoticonAutocomplete({
 
   const [emojiThreshold] = useSetting(settingsAtom, 'emojiSuggestThreshold');
 
-  const searchList = useMemo(() => {
-    const list: Array<EmoticonSearchItem> = [];
-    return list.concat(
-      imagePacks.flatMap((pack) => pack.getImages(ImageUsage.Emoticon)),
-      emojis
-    );
-  }, [imagePacks]);
+  const searchList = useMemo<Array<EmoticonSearchItem>>(
+    () => [...imagePacks.flatMap((pack) => pack.getImages(ImageUsage.Emoticon)), ...emojis],
+    [imagePacks]
+  );
 
   const [result, search, resetSearch] = useAsyncSearch(
     searchList,
