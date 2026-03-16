@@ -8,7 +8,8 @@
   "ignoreDependencies": [
     "buffer",
     "@sableclient/sable-call-embedded",
-    "@matrix-org/matrix-sdk-crypto-wasm"
+    "@matrix-org/matrix-sdk-crypto-wasm",
+    "@testing-library/user-event"
   ],
   "ignoreBinaries": ["knope"],
   "rules": {

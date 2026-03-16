@@ -407,6 +407,8 @@ export function Search({ requestClose }: SearchProps) {
               <Text size="T200" priority="300">
                 Type <b>#</b> for rooms, <b>@</b> for DMs and <b>*</b> for spaces. Hotkey:{' '}
                 <b>{isMacOS() ? KeySymbol.Command : 'Ctrl'} + k</b>
+                {' / '}
+                <b>{isMacOS() ? KeySymbol.Command : 'Ctrl'} + f</b>
               </Text>
             </Box>
           </Modal>
@@ -423,7 +425,7 @@ export function SearchModalRenderer() {
     window,
     useCallback(
       (event) => {
-        if (isKeyHotkey('mod+k', event)) {
+        if (isKeyHotkey('mod+k', event) || isKeyHotkey('mod+f', event)) {
           event.preventDefault();
           if (opened) {
             setOpen(false);

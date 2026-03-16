@@ -19,7 +19,7 @@ export function RenderBody({
   highlightRegex,
   htmlReactParserOptions,
   linkifyOpts,
-}: RenderBodyProps) {
+}: Readonly<RenderBodyProps>) {
   if (body === '') return <MessageEmptyContent />;
   if (customBody) {
     if (customBody === '') return <MessageEmptyContent />;

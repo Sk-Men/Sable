@@ -45,7 +45,7 @@ type CreatePackTileProps = {
   packs: ImagePack[];
   roomId: string;
 };
-function CreatePackTile({ packs, roomId }: CreatePackTileProps) {
+function CreatePackTile({ packs, roomId }: Readonly<CreatePackTileProps>) {
   const mx = useMatrixClient();
   const alive = useAlive();
 
@@ -75,9 +75,9 @@ function CreatePackTile({ packs, roomId }: CreatePackTileProps) {
     const name = nameInput?.value.trim();
     if (!name) return;
 
-    let packKey = name.replace(/\s/g, '-');
+    let packKey = name.replaceAll(/\s/g, '-');
 
-    const hasPack = (k: string): boolean => !!packs.find((pack) => pack.address?.stateKey === k);
+    const hasPack = (k: string): boolean => packs.some((pack) => pack.address?.stateKey === k);
     if (hasPack(packKey)) {
       packKey = suffixRename(packKey, hasPack);
     }
@@ -141,7 +141,7 @@ function CreatePackTile({ packs, roomId }: CreatePackTileProps) {
 type RoomPacksProps = {
   onViewPack: (imagePack: ImagePack) => void;
 };
-export function RoomPacks({ onViewPack }: RoomPacksProps) {
+export function RoomPacks({ onViewPack }: Readonly<RoomPacksProps>) {
   const mx = useMatrixClient();
   const useAuthentication = useMediaAuthentication();
   const room = useRoom();
@@ -193,7 +193,7 @@ export function RoomPacks({ onViewPack }: RoomPacksProps) {
     const avatarUrl = avatarMxc ? mxcUrlToHttp(mx, avatarMxc, useAuthentication) : undefined;
     const { address } = pack;
     if (!address) return null;
-    const removed = !!removedPacks.find((addr) => packAddressEqual(addr, address));
+    const removed = removedPacks.some((addr) => packAddressEqual(addr, address));
 
     return (
       <SequenceCard

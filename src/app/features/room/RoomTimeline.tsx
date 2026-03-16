@@ -205,7 +205,9 @@ export const timelineToEventsCount = (t: EventTimeline) => {
 export const getTimelinesEventsCount = (timelines: EventTimeline[]): number => {
   const timelineEventCountReducer = (count: number, tm: EventTimeline) =>
     count + timelineToEventsCount(tm);
-  return (timelines || []).filter(Boolean).reduce(timelineEventCountReducer, 0);
+  return (timelines || [])
+    .filter(Boolean)
+    .reduce((accumulator, element) => timelineEventCountReducer(accumulator, element), 0);
 };
 
 export const getTimelineAndBaseIndex = (
@@ -604,7 +606,12 @@ type ThreadReplyChipProps = {
   onToggle: () => void;
 };
 
-function ThreadReplyChip({ room, mEventId, openThreadId, onToggle }: ThreadReplyChipProps) {
+function ThreadReplyChip({
+  room,
+  mEventId,
+  openThreadId,
+  onToggle,
+}: Readonly<ThreadReplyChipProps>) {
   const mx = useMatrixClient();
   const useAuthentication = useMediaAuthentication();
   const nicknames = useAtomValue(nicknamesAtom);
@@ -630,7 +637,7 @@ function ThreadReplyChip({ room, mEventId, openThreadId, onToggle }: ThreadReply
     }
   });
 
-  const latestReply = replyEvents[replyEvents.length - 1];
+  const latestReply = replyEvents.at(-1);
   const latestSenderId = latestReply?.getSender() ?? '';
   const latestSenderName =
     getMemberDisplayName(room, latestSenderId, nicknames) ??
@@ -734,7 +741,7 @@ export function RoomTimeline({
   roomInputRef,
   editor,
   onEditorReset,
-}: RoomTimelineProps) {
+}: Readonly<RoomTimelineProps>) {
   const mx = useMatrixClient();
   const useAuthentication = useMediaAuthentication();
   const pushProcessor = useMemo(() => new PushProcessor(mx), [mx]);
@@ -804,6 +811,7 @@ export function RoomTimeline({
 
   const atBottomAnchorRef = useRef<HTMLElement>(null);
 
+  // TODO: The return value of "useState" should be destructured and named symmetrically (typescript:S6754)
   const [atBottom, setAtBottomState] = useState<boolean>(true);
   const atBottomRef = useRef(atBottom);
   const setAtBottom = useCallback((val: boolean) => {
