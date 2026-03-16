@@ -152,6 +152,7 @@ import { useRoomCreators } from '$hooks/useRoomCreators';
 import { useRoomPermissions } from '$hooks/useRoomPermissions';
 import { AutocompleteNotice } from '$components/editor/autocomplete/AutocompleteNotice';
 import { getCurrentlyUsedPerMessageProfileForRoom } from '$hooks/usePerMessageProfile';
+import { getSupportedAudioExtension } from '$plugins/voice-recorder-kit/supportedCodec';
 import { SchedulePickerDialog } from './schedule-send';
 import * as css from './schedule-send/SchedulePickerDialog.css';
 import {
@@ -1155,7 +1156,7 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
                       onRecordingComplete={(audioBlob) => {
                         const file = new File(
                           [audioBlob],
-                          `sable-audio-message-${Date.now()}.ogg`,
+                          `sable-audio-message-${Date.now()}.${getSupportedAudioExtension(audioBlob.type)}`,
                           {
                             type: audioBlob.type,
                           }

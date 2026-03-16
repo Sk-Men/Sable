@@ -134,8 +134,8 @@ export const SidebarItemBadge = recipe({
         left: toRem(-6),
       },
       false: {
-        top: toRem(-2),
-        left: toRem(-2),
+        top: toRem(-4),
+        left: toRem(-4),
       },
     },
   },
@@ -167,9 +167,9 @@ export const SidebarItemBadge = recipe({
       style: {
         selectors: {
           'div:has(> button[data-id]) &': {
-            top: toRem(2),
+            top: toRem(0),
             left: 'auto',
-            right: toRem(2),
+            right: toRem(0),
           },
         },
       },

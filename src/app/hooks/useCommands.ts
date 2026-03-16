@@ -10,7 +10,6 @@ import {
   Visibility,
   RoomServerAclEventContent,
   MsgType,
-  MatrixEvent,
 } from '$types/matrix-sdk';
 import { useMemo } from 'react';
 import { Membership, StateEvent } from '$types/matrix/room';
@@ -32,6 +31,7 @@ import { settingsAtom } from '$state/settings';
 import { useOpenBugReportModal } from '$state/hooks/bugReportModal';
 import { createRoomEncryptionState } from '$components/create-room';
 import { parsePronounsInput } from '$utils/pronouns';
+import { sendFeedback } from '$utils/sendFeedbackToUser';
 import { useRoomNavigate } from './useRoomNavigate';
 import { enrichWidgetUrl } from './useRoomWidgets';
 import { useUserProfile } from './useUserProfile';
@@ -42,16 +42,16 @@ import {
   setCurrentlyUsedPerMessageProfileIdForRoom,
 } from './usePerMessageProfile';
 
-export const SHRUG = '¯\\_(ツ)_/¯';
+export const SHRUG = String.raw`¯\_(ツ)_/¯`;
 export const TABLEFLIP = '(╯°□°)╯︵ ┻━┻';
 export const UNFLIP = '┬─┬ノ( º_ºノ)';
 
-const FLAG_PAT = '(?:^|\\s)-(\\w+)\\b';
+const FLAG_PAT = String.raw`(?:^|\s)-(\w+)\b`;
 const FLAG_REG = new RegExp(FLAG_PAT);
 const FLAG_REG_G = new RegExp(FLAG_PAT, 'g');
 
 export const splitPayloadContentAndFlags = (payload: string): [string, string | undefined] => {
-  const flagMatch = payload.match(FLAG_REG);
+  const flagMatch = new RegExp(FLAG_REG).exec(payload);
 
   if (!flagMatch) {
     return [payload, undefined];
@@ -122,7 +122,7 @@ export const parseTimestampFlag = (input: string): number | undefined => {
     return undefined;
   }
 
-  const value = parseFloat(match[1]); // supports decimal values
+  const value = Number.parseFloat(match[1]); // supports decimal values
   const unit = match[2];
 
   const now = Date.now(); // in milliseconds
@@ -260,6 +260,8 @@ export enum Command {
   Headpat = 'headpat',
   // Meta
   Report = 'bugreport',
+  // Experimental
+  ShareE2EEHistory = 'sharehistory',
 }
 
 export type CommandContent = {
@@ -273,6 +275,7 @@ export type CommandRecord = Record<Command, CommandContent>;
 export const useCommands = (mx: MatrixClient, room: Room): CommandRecord => {
   const { navigateRoom } = useRoomNavigate();
   const [developerTools] = useSetting(settingsAtom, 'developerTools');
+  const [enableMSC4268CMD] = useSetting(settingsAtom, 'enableMSC4268CMD');
   const profile = useUserProfile(mx.getSafeUserId());
   const openBugReport = useOpenBugReportModal();
 
@@ -291,7 +294,7 @@ export const useCommands = (mx: MatrixClient, room: Room): CommandRecord => {
       },
       [Command.Shrug]: {
         name: Command.Shrug,
-        description: 'Send ¯\\_(ツ)_/¯ as message',
+        description: String.raw`Send ¯\_(ツ)_/¯ as message`,
         exe: async () => undefined,
       },
       [Command.TableFlip]: {
@@ -651,8 +654,7 @@ export const useCommands = (mx: MatrixClient, room: Room): CommandRecord => {
               room.roomId,
               token,
               20,
-              Direction.Forward,
-              undefined
+              Direction.Forward
             );
             const { end, chunk } = response;
             // remove until the latest event;
@@ -733,17 +735,6 @@ export const useCommands = (mx: MatrixClient, room: Room): CommandRecord => {
           const input = payload.trim().toLowerCase();
           const userId = mx.getSafeUserId();
 
-          const sendFeedback = (msg: string) => {
-            const localNotice = new MatrixEvent({
-              type: 'm.room.message',
-              content: { msgtype: 'm.notice', body: msg },
-              event_id: `~sable-${Date.now()}`,
-              room_id: room.roomId,
-              sender: userId,
-            });
-            (room as any).addLiveEvents([localNotice], { duplicateStrategy: 'ignore' } as any);
-          };
-
           try {
             if (input === 'reset' || input === 'clear') {
               await mx.sendStateEvent(
@@ -752,7 +743,7 @@ export const useCommands = (mx: MatrixClient, room: Room): CommandRecord => {
                 {},
                 userId
               );
-              sendFeedback('Room color has been reset.');
+              sendFeedback('Room color has been reset.', room, userId);
               return;
             }
 
@@ -763,14 +754,16 @@ export const useCommands = (mx: MatrixClient, room: Room): CommandRecord => {
                 { color: input },
                 userId
               );
-              sendFeedback(`Room color set to ${input}.`);
+              sendFeedback(`Room color set to ${input}.`, room, userId);
             } else {
-              sendFeedback('Invalid format. Use #RRGGBB.');
+              sendFeedback('Invalid format. Use #RRGGBB.', room, userId);
             }
           } catch (e: any) {
             if (e.errcode === 'M_FORBIDDEN') {
               sendFeedback(
-                'Permission Denied. An admin must enable "Room Colors" in Settings > Cosmetics in app.sable.moe or another supported client.'
+                'Permission Denied. An admin must enable "Room Colors" in Settings > Cosmetics in app.sable.moe or another supported client.',
+                room,
+                userId
               );
             }
           }
@@ -783,17 +776,6 @@ export const useCommands = (mx: MatrixClient, room: Room): CommandRecord => {
         exe: async (payload) => {
           const input = payload.trim().toLowerCase();
           const userId = mx.getSafeUserId();
-
-          const sendFeedback = (msg: string) => {
-            const localNotice = new MatrixEvent({
-              type: 'm.room.message',
-              content: { msgtype: 'm.notice', body: msg },
-              event_id: `~sable-g-${Date.now()}`,
-              room_id: room.roomId,
-              sender: userId,
-            });
-            (room as any).addLiveEvents([localNotice], { duplicateStrategy: 'ignore' } as any);
-          };
 
           const parents = room
             .getLiveTimeline()
@@ -811,7 +793,7 @@ export const useCommands = (mx: MatrixClient, room: Room): CommandRecord => {
                 {},
                 userId
               );
-              sendFeedback('Global space color reset.');
+              sendFeedback('Global space color reset.', room, userId);
               return;
             }
 
@@ -822,14 +804,16 @@ export const useCommands = (mx: MatrixClient, room: Room): CommandRecord => {
                 { color: input },
                 userId
               );
-              sendFeedback(`Global space color set to ${input}.`);
+              sendFeedback(`Global space color set to ${input}.`, room, userId);
             } else {
-              sendFeedback('Invalid format. Use #RRGGBB.');
+              sendFeedback('Invalid format. Use #RRGGBB.', room, userId);
             }
           } catch (e: any) {
             if (e.errcode === 'M_FORBIDDEN') {
               sendFeedback(
-                'Permission Denied. An admin must enable "Space-Wide Colors" in Settings > Cosmetics in app.sable.moe or another supported client.'
+                'Permission Denied. An admin must enable "Space-Wide Colors" in Settings > Cosmetics in app.sable.moe or another supported client.',
+                room,
+                userId
               );
             }
           }
@@ -841,25 +825,14 @@ export const useCommands = (mx: MatrixClient, room: Room): CommandRecord => {
         exe: async (payload) => {
           const input = payload
             .trim()
-            .replace(/[;{}<>]/g, '')
+            .replaceAll(/[;{}<>]/g, '')
             .slice(0, 32);
           const userId = mx.getSafeUserId();
-
-          const sendFeedback = (msg: string) => {
-            const localNotice = new MatrixEvent({
-              type: 'm.room.message',
-              content: { msgtype: 'm.notice', body: msg },
-              event_id: `~font-${Date.now()}`,
-              room_id: room.roomId,
-              sender: userId,
-            });
-            (room as any).addLiveEvents([localNotice], { duplicateStrategy: 'ignore' } as any);
-          };
 
           try {
             if (input.toLowerCase() === 'reset' || input === '') {
               await mx.sendStateEvent(room.roomId, StateEvent.RoomCosmeticsFont as any, {}, userId);
-              sendFeedback('Room font reset.');
+              sendFeedback('Room font reset.', room, userId);
               return;
             }
 
@@ -869,11 +842,13 @@ export const useCommands = (mx: MatrixClient, room: Room): CommandRecord => {
               { font: input },
               userId
             );
-            sendFeedback(`Room font set to "${input}".`);
+            sendFeedback(`Room font set to "${input}".`, room, userId);
           } catch (e: any) {
             if (e.errcode === 'M_FORBIDDEN') {
               sendFeedback(
-                'Permission Denied. An admin must enable "Room Fonts" in Settings > Cosmetics in app.sable.moe or another supported client.'
+                'Permission Denied. An admin must enable "Room Fonts" in Settings > Cosmetics in app.sable.moe or another supported client.',
+                room,
+                userId
               );
             }
           }
@@ -885,20 +860,9 @@ export const useCommands = (mx: MatrixClient, room: Room): CommandRecord => {
         exe: async (payload) => {
           const input = payload
             .trim()
-            .replace(/[;{}<>]/g, '')
+            .replaceAll(/[;{}<>]/g, '')
             .slice(0, 32);
           const userId = mx.getSafeUserId();
-
-          const sendFeedback = (msg: string) => {
-            const localNotice = new MatrixEvent({
-              type: 'm.room.message',
-              content: { msgtype: 'm.notice', body: msg },
-              event_id: `~sfont-${Date.now()}`,
-              room_id: room.roomId,
-              sender: userId,
-            });
-            (room as any).addLiveEvents([localNotice], { duplicateStrategy: 'ignore' } as any);
-          };
 
           const parents = room
             .getLiveTimeline()
@@ -916,7 +880,7 @@ export const useCommands = (mx: MatrixClient, room: Room): CommandRecord => {
                 {},
                 userId
               );
-              sendFeedback('Space font reset.');
+              sendFeedback('Space font reset.', room, userId);
               return;
             }
 
@@ -926,11 +890,13 @@ export const useCommands = (mx: MatrixClient, room: Room): CommandRecord => {
               { font: input },
               userId
             );
-            sendFeedback(`Space font set to "${input}".`);
+            sendFeedback(`Space font set to "${input}".`, room, userId);
           } catch (e: any) {
             if (e.errcode === 'M_FORBIDDEN') {
               sendFeedback(
-                'Permission Denied. An admin must enable "Space-Wide Fonts" in Settings > Cosmetics in app.sable.moe or another supported client.'
+                'Permission Denied. An admin must enable "Space-Wide Fonts" in Settings > Cosmetics in app.sable.moe or another supported client.',
+                room,
+                userId
               );
             }
           }
@@ -942,23 +908,12 @@ export const useCommands = (mx: MatrixClient, room: Room): CommandRecord => {
         exe: async (payload) => {
           const userId = mx.getSafeUserId();
 
-          const sendFeedback = (msg: string) => {
-            const localNotice = new MatrixEvent({
-              type: 'm.room.message',
-              content: { msgtype: 'm.notice', body: msg },
-              event_id: `~nullptr-widget-${Date.now()}`,
-              room_id: room.roomId,
-              sender: userId,
-            });
-            (room as any).addLiveEvents([localNotice], { duplicateStrategy: 'ignore' } as any);
-          };
-
           const parts = payload.trim().split(/\s+/);
           const url = parts[0];
           const name = parts.slice(1).join(' ') || 'Widget';
 
           if (!url) {
-            sendFeedback('Usage: /addwidget <url> [name]');
+            sendFeedback('Usage: /addwidget <url> [name]', room, userId);
             return;
           }
 
@@ -966,7 +921,7 @@ export const useCommands = (mx: MatrixClient, room: Room): CommandRecord => {
           try {
             parsedUrl = new URL(url);
           } catch {
-            sendFeedback('Invalid URL. Please provide a valid widget URL.');
+            sendFeedback('Invalid URL. Please provide a valid widget URL.', room, userId);
             return;
           }
 
@@ -984,14 +939,16 @@ export const useCommands = (mx: MatrixClient, room: Room): CommandRecord => {
               } as any,
               widgetId
             );
-            sendFeedback(`Widget "${name}" added.`);
+            sendFeedback(`Widget "${name}" added.`, room, userId);
           } catch (e: any) {
             if (e.errcode === 'M_FORBIDDEN') {
               sendFeedback(
-                'Permission denied. You need permission to manage widgets in this room.'
+                'Permission denied. You need permission to manage widgets in this room.',
+                room,
+                userId
               );
             } else {
-              sendFeedback(`Failed to add widget: ${e.message || 'Unknown error'}`);
+              sendFeedback(`Failed to add widget: ${e.message || 'Unknown error'}`, room, userId);
             }
           }
         },
@@ -1005,17 +962,6 @@ export const useCommands = (mx: MatrixClient, room: Room): CommandRecord => {
           const rawInput = match ? match[1].trim() : payload.trim();
           const userId = mx.getSafeUserId();
 
-          const sendFeedback = (msg: string) => {
-            const localNotice = new MatrixEvent({
-              type: 'm.room.message',
-              content: { msgtype: 'm.notice', body: msg },
-              event_id: `~pronoun-${Date.now()}`,
-              room_id: room.roomId,
-              sender: userId,
-            });
-            (room as any).addLiveEvents([localNotice], { duplicateStrategy: 'ignore' } as any);
-          };
-
           try {
             if (['reset', 'clear', ''].includes(rawInput.toLowerCase())) {
               await mx.sendStateEvent(
@@ -1024,7 +970,7 @@ export const useCommands = (mx: MatrixClient, room: Room): CommandRecord => {
                 {},
                 userId
               );
-              sendFeedback('Room pronouns have been reset.');
+              sendFeedback('Room pronouns have been reset.', room, userId);
               return;
             }
 
@@ -1041,10 +987,10 @@ export const useCommands = (mx: MatrixClient, room: Room): CommandRecord => {
               .map((p) => (p.language ? `for ${p.language} "${p.summary}" was set` : p.summary))
               .join(', ');
 
-            sendFeedback(`Room pronouns set: ${feedbackString}`);
+            sendFeedback(`Room pronouns set: ${feedbackString}`, room, userId);
           } catch (e: any) {
             if (e.errcode === 'M_FORBIDDEN') {
-              sendFeedback('Permission Denied. Could not update room pronouns.');
+              sendFeedback('Permission Denied. Could not update room pronouns.', room, userId);
             }
           }
         },
@@ -1057,17 +1003,6 @@ export const useCommands = (mx: MatrixClient, room: Room): CommandRecord => {
           const match = payload.trim().match(/^"(.*)"$/);
           const rawInput = match ? match[1].trim() : payload.trim();
           const userId = mx.getSafeUserId();
-
-          const sendFeedback = (msg: string) => {
-            const localNotice = new MatrixEvent({
-              type: 'm.room.message',
-              content: { msgtype: 'm.notice', body: msg },
-              event_id: `~gpronoun-${Date.now()}`,
-              room_id: room.roomId,
-              sender: userId,
-            });
-            (room as any).addLiveEvents([localNotice], { duplicateStrategy: 'ignore' } as any);
-          };
 
           const parents = room
             .getLiveTimeline()
@@ -1085,7 +1020,7 @@ export const useCommands = (mx: MatrixClient, room: Room): CommandRecord => {
                 {},
                 userId
               );
-              sendFeedback('Global space pronouns reset.');
+              sendFeedback('Global space pronouns reset.', room, userId);
               return;
             }
 
@@ -1102,10 +1037,10 @@ export const useCommands = (mx: MatrixClient, room: Room): CommandRecord => {
               .map((p) => (p.language ? `for ${p.language} "${p.summary}" was set` : p.summary))
               .join(', ');
 
-            sendFeedback(`Global space pronouns set: ${feedbackString}`);
+            sendFeedback(`Global space pronouns set: ${feedbackString}`, room, userId);
           } catch (e: any) {
             if (e.errcode === 'M_FORBIDDEN') {
-              sendFeedback('Permission Denied. Could not update space pronouns.');
+              sendFeedback('Permission Denied. Could not update space pronouns.', room, userId);
             }
           }
         },
@@ -1131,25 +1066,15 @@ export const useCommands = (mx: MatrixClient, room: Room): CommandRecord => {
           '[Dev only] Send raw message event. Example: /rawmsg {"msgtype":"m.text", "body":"hello"}',
         exe: async (payload) => {
           const userId = mx.getSafeUserId();
-          const sendFeedback = (msg: string) => {
-            const localNotice = new MatrixEvent({
-              type: 'm.room.message',
-              content: { msgtype: 'm.notice', body: msg },
-              event_id: `~rawmsg-${Date.now()}`,
-              room_id: room.roomId,
-              sender: userId,
-            });
-            (room as any).addLiveEvents([localNotice], { duplicateStrategy: 'ignore' } as any);
-          };
           if (!developerTools) {
-            sendFeedback('Command available in Developer Mode only.');
+            sendFeedback('Command available in Developer Mode only.', room, userId);
             return;
           }
           try {
             const content = JSON.parse(payload);
             await mx.sendMessage(room.roomId, content);
           } catch (e: any) {
-            sendFeedback(`Invalid JSON: ${e.message}`);
+            sendFeedback(`Invalid JSON: ${e.message}`, room, userId);
           }
         },
       },
@@ -1158,19 +1083,9 @@ export const useCommands = (mx: MatrixClient, room: Room): CommandRecord => {
         description: '[Dev only] Send any raw event. Usage: /raw <type> <json> [-s stateKey]',
         exe: async (payload) => {
           const userId = mx.getSafeUserId();
-          const sendFeedback = (msg: string) => {
-            const localNotice = new MatrixEvent({
-              type: 'm.room.message',
-              content: { msgtype: 'm.notice', body: msg },
-              event_id: `~rawevent-${Date.now()}`,
-              room_id: room.roomId,
-              sender: userId,
-            });
-            room.addLiveEvents([localNotice], { duplicateStrategy: 'ignore' } as any);
-          };
 
           if (!developerTools) {
-            sendFeedback('Command available in Developer Mode only.');
+            sendFeedback('Command available in Developer Mode only.', room, userId);
             return;
           }
 
@@ -1182,7 +1097,7 @@ export const useCommands = (mx: MatrixClient, room: Room): CommandRecord => {
           const jsonString = mainPayload.trim().substring(eventType.length).trim();
 
           if (!eventType || !jsonString) {
-            sendFeedback('Usage: /rawevent <type> <json> [-s stateKey]');
+            sendFeedback('Usage: /rawevent <type> <json> [-s stateKey]', room, userId);
             return;
           }
 
@@ -1191,13 +1106,17 @@ export const useCommands = (mx: MatrixClient, room: Room): CommandRecord => {
 
             if (typeof stateKey === 'string') {
               await mx.sendStateEvent(room.roomId, eventType as any, content, stateKey);
-              sendFeedback(`State event "${eventType}" sent with state key "${stateKey}".`);
+              sendFeedback(
+                `State event "${eventType}" sent with state key "${stateKey}".`,
+                room,
+                userId
+              );
             } else {
               await mx.sendEvent(room.roomId, eventType as any, content);
-              sendFeedback(`Event "${eventType}" sent.`);
+              sendFeedback(`Event "${eventType}" sent.`, room, userId);
             }
           } catch (e: any) {
-            sendFeedback(`Error: ${e.message}`);
+            sendFeedback(`Error: ${e.message}`, room, userId);
           }
         },
       },
@@ -1206,26 +1125,16 @@ export const useCommands = (mx: MatrixClient, room: Room): CommandRecord => {
         description: '[Dev only] Merge global account data. Usage: /rawacc <type> <json>',
         exe: async (payload) => {
           const userId = mx.getSafeUserId();
-          const sendFeedback = (msg: string) => {
-            const localNotice = new MatrixEvent({
-              type: 'm.room.message',
-              content: { msgtype: 'm.notice', body: msg },
-              event_id: `~rawacc-${Date.now()}`,
-              room_id: room.roomId,
-              sender: userId,
-            });
-            (room as any).addLiveEvents([localNotice], { duplicateStrategy: 'ignore' } as any);
-          };
 
           if (!developerTools) {
-            sendFeedback('Command available in Developer Mode only.');
+            sendFeedback('Command available in Developer Mode only.', room, userId);
             return;
           }
 
           const trimmed = payload.trim();
           const firstSpaceIndex = trimmed.indexOf(' ');
           if (firstSpaceIndex === -1) {
-            sendFeedback('Usage: /rawacc <type> <json>');
+            sendFeedback('Usage: /rawacc <type> <json>', room, userId);
             return;
           }
 
@@ -1241,9 +1150,9 @@ export const useCommands = (mx: MatrixClient, room: Room): CommandRecord => {
             const mergedContent = { ...existingContent, ...newContent };
 
             await mx.setAccountData(type as any, mergedContent);
-            sendFeedback(`Account data "${type}" merged successfully.`);
+            sendFeedback(`Account data "${type}" merged successfully.`, room, userId);
           } catch (e: any) {
-            sendFeedback(`Error: ${e.message}`);
+            sendFeedback(`Error: ${e.message}`, room, userId);
           }
         },
       },
@@ -1252,38 +1161,28 @@ export const useCommands = (mx: MatrixClient, room: Room): CommandRecord => {
         description: '[Dev Only] Remove a key from account data. Usage: /delacc <type> <key>',
         exe: async (payload) => {
           const userId = mx.getSafeUserId();
-          const sendFeedback = (msg: string) => {
-            const localNotice = new MatrixEvent({
-              type: 'm.room.message',
-              content: { msgtype: 'm.notice', body: msg },
-              event_id: `~removeacc-${Date.now()}`,
-              room_id: room.roomId,
-              sender: userId,
-            });
-            room.addLiveEvents([localNotice], { duplicateStrategy: 'ignore' } as any);
-          };
           const parts = payload.trim().split(/\s+/);
           if (parts.length < 2) {
-            sendFeedback('Usage: /delacc <type> <key>');
+            sendFeedback('Usage: /delacc <type> <key>', room, userId);
             return;
           }
           const [type, key] = parts;
           try {
             const existingEvent = mx.getAccountData(type as any);
             if (!existingEvent) {
-              sendFeedback(`No account data found for type "${type}".`);
+              sendFeedback(`No account data found for type "${type}".`, room, userId);
               return;
             }
             const content = { ...existingEvent.getContent() };
             if (!(key in content)) {
-              sendFeedback(`Key "${key}" not found in "${type}".`);
+              sendFeedback(`Key "${key}" not found in "${type}".`, room, userId);
               return;
             }
             delete content[key];
             await mx.setAccountData(type as any, content as any);
-            sendFeedback(`Key "${key}" removed from "${type}".`);
+            sendFeedback(`Key "${key}" removed from "${type}".`, room, userId);
           } catch (e: any) {
-            sendFeedback(`Error: ${e.message}`);
+            sendFeedback(`Error: ${e.message}`, room, userId);
           }
         },
       },
@@ -1292,23 +1191,13 @@ export const useCommands = (mx: MatrixClient, room: Room): CommandRecord => {
         description: '[Dev Only] Set an extended profile property. Usage: /setext <key> <value>',
         exe: async (payload) => {
           const userId = mx.getSafeUserId();
-          const sendFeedback = (msg: string) => {
-            const localNotice = new MatrixEvent({
-              type: 'm.room.message',
-              content: { msgtype: 'm.notice', body: msg },
-              event_id: `~setext-${Date.now()}`,
-              room_id: room.roomId,
-              sender: userId,
-            });
-            room.addLiveEvents([localNotice], { duplicateStrategy: 'ignore' } as any);
-          };
           if (!developerTools) {
-            sendFeedback('Command available in Developer Mode only.');
+            sendFeedback('Command available in Developer Mode only.', room, userId);
             return;
           }
           const parts = payload.trim().split(/\s+/);
           if (parts.length < 2) {
-            sendFeedback('Usage: /setext <key> <value>');
+            sendFeedback('Usage: /setext <key> <value>', room, userId);
             return;
           }
           const key = parts[0];
@@ -1320,12 +1209,16 @@ export const useCommands = (mx: MatrixClient, room: Room): CommandRecord => {
           try {
             if (typeof mx.setExtendedProfileProperty === 'function') {
               await mx.setExtendedProfileProperty(key, finalValue);
-              sendFeedback(`Extended profile property "${key}" set to: ${finalValue}`);
+              sendFeedback(
+                `Extended profile property "${key}" set to: ${finalValue}`,
+                room,
+                userId
+              );
             } else {
-              sendFeedback('Error: setExtendedProfileProperty is not supported.');
+              sendFeedback('Error: setExtendedProfileProperty is not supported.', room, userId);
             }
           } catch (e: any) {
-            sendFeedback(`Failed to set extended profile: ${e.message}`);
+            sendFeedback(`Failed to set extended profile: ${e.message}`, room, userId);
           }
         },
       },
@@ -1336,36 +1229,25 @@ export const useCommands = (mx: MatrixClient, room: Room): CommandRecord => {
           const userId = mx.getSafeUserId();
           const key = payload.trim();
 
-          const sendFeedback = (msg: string) => {
-            const localNotice = new MatrixEvent({
-              type: 'm.room.message',
-              content: { msgtype: 'm.notice', body: msg },
-              event_id: `~removeext-${Date.now()}`,
-              room_id: room.roomId,
-              sender: userId,
-            });
-            room.addLiveEvents([localNotice], { duplicateStrategy: 'ignore' } as any);
-          };
-
           if (!developerTools) {
-            sendFeedback('Command available in Developer Mode only.');
+            sendFeedback('Command available in Developer Mode only.', room, userId);
             return;
           }
 
           if (!key) {
-            sendFeedback('Usage: /delext <key>');
+            sendFeedback('Usage: /delext <key>', room, userId);
             return;
           }
 
           try {
             if (typeof mx.deleteExtendedProfileProperty === 'function') {
               await mx.deleteExtendedProfileProperty(key);
-              sendFeedback(`Extended profile property "${key}" removed.`);
+              sendFeedback(`Extended profile property "${key}" removed.`, room, userId);
             } else {
-              sendFeedback('Error: setExtendedProfileProperty is not supported.');
+              sendFeedback('Error: setExtendedProfileProperty is not supported.', room, userId);
             }
           } catch (e: any) {
-            sendFeedback(`Failed to remove property: ${e.message}`);
+            sendFeedback(`Failed to remove property: ${e.message}`, room, userId);
           }
         },
       },
@@ -1374,28 +1256,57 @@ export const useCommands = (mx: MatrixClient, room: Room): CommandRecord => {
         description: 'Force discard the current outbound E2EE session in this room.',
         exe: async () => {
           const userId = mx.getSafeUserId();
-          const sendFeedback = (msg: string) => {
-            const localNotice = new MatrixEvent({
-              type: 'm.room.message',
-              content: { msgtype: 'm.notice', body: msg },
-              event_id: `~discard-${Date.now()}`,
-              room_id: room.roomId,
-              sender: userId,
-            });
-            room.addLiveEvents([localNotice], { duplicateStrategy: 'ignore' } as any);
-          };
 
           try {
             const crypto = mx.getCrypto();
             if (!crypto) {
-              sendFeedback('Encryption is not enabled on this client.');
+              sendFeedback('Encryption is not enabled on this client.', room, userId);
               return;
             }
             await crypto.forceDiscardSession(room.roomId);
-            sendFeedback('Outbound encryption session discarded.');
+            sendFeedback('Outbound encryption session discarded.', room, userId);
           } catch (e: any) {
-            sendFeedback(`Failed to discard session: ${e.message}`);
+            sendFeedback(`Failed to discard session: ${e.message}`, room, userId);
           }
+        },
+      },
+      // Sharing E2EE History of a room with a user
+      [Command.ShareE2EEHistory]: {
+        name: Command.ShareE2EEHistory,
+        description:
+          'Share E2EE history (MSC4268) of this room with a user. Example: /sharee2eehistory @user:example.org',
+        exe: async (payload) => {
+          const targetUserId = payload.trim();
+          const { roomId } = room;
+          if (!enableMSC4268CMD) {
+            sendFeedback(
+              'This command is disabled. Enable it under experimental settings to use it.',
+              room,
+              mx.getSafeUserId()
+            );
+            return;
+          }
+          if (!targetUserId) {
+            sendFeedback('Usage: /sharee2eehistory @user:example.org', room, mx.getSafeUserId());
+            return;
+          }
+          const crypto = mx.getCrypto();
+          if (!crypto) {
+            sendFeedback('Encryption is not enabled on this client.', room, mx.getSafeUserId());
+            return;
+          }
+          crypto
+            .shareRoomHistoryWithUser(roomId, targetUserId)
+            .then(() => {
+              sendFeedback(
+                `E2EE history shared with ${targetUserId}. (Their client needs to support MSC4268)`,
+                room,
+                mx.getSafeUserId()
+              );
+            })
+            .catch((e) => {
+              sendFeedback(`Failed to share E2EE history: ${e.message}`, room, mx.getSafeUserId());
+            });
         },
       },
       // Cute Events
@@ -1485,7 +1396,16 @@ export const useCommands = (mx: MatrixClient, room: Room): CommandRecord => {
         },
       },
     }),
-    [mx, navigateRoom, room, profile.displayName, profile.avatarUrl, developerTools, openBugReport]
+    [
+      mx,
+      navigateRoom,
+      room,
+      profile.displayName,
+      profile.avatarUrl,
+      developerTools,
+      enableMSC4268CMD,
+      openBugReport,
+    ]
   );
 
   return commands;
