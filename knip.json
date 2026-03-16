@@ -9,7 +9,6 @@
     "buffer",
     "@element-hq/element-call-embedded",
     "@matrix-org/matrix-sdk-crypto-wasm",
-    "@testing-library/react",
     "@testing-library/user-event"
   ],
   "ignoreBinaries": ["knope"],
