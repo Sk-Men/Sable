@@ -212,6 +212,8 @@ type DecryptionResult = {
   content?: unknown;
   sender_display_name?: string;
   room_name?: string;
+  /** document.visibilityState reported by the responding app tab. */
+  visibilityState?: string;
 };
 
 /** Pending decryption requests keyed by event_id. */
@@ -239,6 +241,49 @@ async function fetchRawEvent(
     return (await res.json()) as Record<string, unknown>;
   } catch (err) {
     console.warn('[SW fetchRawEvent] error', err);
+    return undefined;
+  }
+}
+
+/**
+ * Fetch the m.room.name state event from the homeserver.
+ * Returns undefined when not set (DMs and many encrypted rooms have no explicit name).
+ */
+async function fetchRoomName(
+  baseUrl: string,
+  accessToken: string,
+  roomId: string
+): Promise<string | undefined> {
+  try {
+    const url = `${baseUrl}/_matrix/client/v3/rooms/${encodeURIComponent(roomId)}/state/m.room.name`;
+    const res = await fetch(url, { headers: { Authorization: `Bearer ${accessToken}` } });
+    if (!res.ok) return undefined;
+    const data = (await res.json()) as Record<string, unknown>;
+    const { name } = data;
+    return typeof name === 'string' && name.trim() ? name.trim() : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+/**
+ * Fetch a room member's displayname from homeserver member state.
+ * Returns undefined if the member has no displayname or the request fails.
+ */
+async function fetchMemberDisplayName(
+  baseUrl: string,
+  accessToken: string,
+  roomId: string,
+  userId: string
+): Promise<string | undefined> {
+  try {
+    const url = `${baseUrl}/_matrix/client/v3/rooms/${encodeURIComponent(roomId)}/state/m.room.member/${encodeURIComponent(userId)}`;
+    const res = await fetch(url, { headers: { Authorization: `Bearer ${accessToken}` } });
+    if (!res.ok) return undefined;
+    const data = (await res.json()) as Record<string, unknown>;
+    const name = data.displayname;
+    return typeof name === 'string' && name.trim() ? name.trim() : undefined;
+  } catch {
     return undefined;
   }
 }
@@ -330,7 +375,11 @@ async function handleMinimalPushPayload(
     return;
   }
 
-  const rawEvent = await fetchRawEvent(session.baseUrl, session.accessToken, roomId, eventId);
+  // Fetch the raw event and room name state in parallel — both need only roomId.
+  const [rawEvent, roomNameFromState] = await Promise.all([
+    fetchRawEvent(session.baseUrl, session.accessToken, roomId, eventId),
+    fetchRoomName(session.baseUrl, session.accessToken, roomId),
+  ]);
 
   if (!rawEvent) {
     await self.registration.showNotification('New Message', {
@@ -346,7 +395,13 @@ async function handleMinimalPushPayload(
 
   const eventType = rawEvent.type as string | undefined;
   const sender = rawEvent.sender as string | undefined;
-  const senderDisplay = sender ? mxidLocalpart(sender) : 'Someone';
+  // Fetch sender's display name from room member state; fall back to MXID localpart.
+  const senderDisplay =
+    (sender
+      ? await fetchMemberDisplayName(session.baseUrl, session.accessToken, roomId, sender)
+      : undefined) ?? (sender ? mxidLocalpart(sender) : 'Someone');
+  // For DMs (no m.room.name state), use the sender's display name as the room name.
+  const resolvedRoomName = roomNameFromState ?? senderDisplay;
   const baseData = {
     room_id: roomId,
     event_id: eventId,
@@ -354,39 +409,44 @@ async function handleMinimalPushPayload(
   };
 
   if (eventType === 'm.room.encrypted') {
-    // Try to relay decryption to an open tab
+    // Try to relay decryption to an open app tab.
     const result =
       windowClients.length > 0
         ? await requestDecryptionFromClient(windowClients, rawEvent)
         : undefined;
 
-    if (result) {
-      // Use decrypted content — reconstruct a pushData object
+    // If the relay responded and the app is currently visible, the in-app UI is already
+    // displaying the message — skip the OS notification entirely.
+    if (result?.visibilityState === 'visible') return;
+
+    if (result?.success) {
+      // App was backgrounded but not frozen — decryption succeeded.
       await handlePushNotificationPushData({
         ...baseData,
         type: result.eventType,
         content: result.content,
         sender_display_name: result.sender_display_name ?? senderDisplay,
-        room_name: result.room_name ?? '',
+        // Prefer relay's room name (has m.direct / computed SDK name); fall back to state fetch.
+        room_name: result.room_name || resolvedRoomName,
       });
     } else {
-      // Fallback: show generic "Encrypted message"
+      // App is frozen or fully closed — show "Encrypted message" fallback.
       await handlePushNotificationPushData({
         ...baseData,
         type: 'm.room.encrypted',
         content: {},
         sender_display_name: senderDisplay,
-        room_name: '',
+        room_name: resolvedRoomName,
       });
     }
   } else {
-    // Unencrypted event — we have the plaintext, show it
+    // Unencrypted event — we have the plaintext, show it.
     await handlePushNotificationPushData({
       ...baseData,
       type: eventType,
       content: rawEvent.content,
       sender_display_name: senderDisplay,
-      room_name: '',
+      room_name: resolvedRoomName,
     });
   }
 }

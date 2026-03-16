@@ -660,6 +660,7 @@ function HandleDecryptPushEvent() {
           content: mxEvent.getContent(),
           sender_display_name: senderName,
           room_name: room?.name ?? '',
+          visibilityState: document.visibilityState,
         });
       } catch (err) {
         console.warn('[app] HandleDecryptPushEvent: failed to decrypt push event', err);
@@ -667,6 +668,7 @@ function HandleDecryptPushEvent() {
           type: 'pushDecryptResult',
           eventId,
           success: false,
+          visibilityState: document.visibilityState,
         });
       }
     };
