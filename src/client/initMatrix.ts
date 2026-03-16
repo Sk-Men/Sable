@@ -17,6 +17,7 @@ import {
 import { getLocalStorageItem } from '$state/utils/atomWithLocalStorage';
 import { createLogger } from '$utils/debug';
 import { createDebugLogger } from '$utils/debugLogger';
+import * as Sentry from '@sentry/react';
 import { pushSessionToSW } from '../sw-session';
 import { cryptoCallbacks } from './secretStorageKeys';
 import { SlidingSyncConfig, SlidingSyncDiagnostics, SlidingSyncManager } from './slidingSync';
@@ -144,12 +145,17 @@ const isClientReadyForUi = (syncState: string | null): boolean =>
 
 const waitForClientReady = (mx: MatrixClient, timeoutMs: number): Promise<void> =>
   new Promise((resolve) => {
+    const waitStart = performance.now();
     if (isClientReadyForUi(mx.getSyncState())) {
+      Sentry.metrics.distribution('sable.sync.client_ready_ms', 0, {
+        attributes: { timed_out: 'false' },
+      });
       resolve();
       return;
     }
 
     let timer = 0;
+    let timedOut = false;
     let finish = () => {};
     const onSync = (state: string) => {
       debugLog.info('sync', `Sync state changed: ${state}`, {
@@ -165,10 +171,25 @@ const waitForClientReady = (mx: MatrixClient, timeoutMs: number): Promise<void> 
       settled = true;
       mx.removeListener(ClientEvent.Sync, onSync);
       clearTimeout(timer);
+      const waitMs = performance.now() - waitStart;
+      Sentry.metrics.distribution('sable.sync.client_ready_ms', waitMs, {
+        attributes: { timed_out: String(timedOut) },
+      });
+      if (timedOut) {
+        Sentry.addBreadcrumb({
+          category: 'sync',
+          message: 'waitForClientReady timed out — client may be stuck',
+          level: 'warning',
+          data: { timeout_ms: timeoutMs },
+        });
+      }
       resolve();
     };
 
-    timer = window.setTimeout(finish, timeoutMs);
+    timer = window.setTimeout(() => {
+      timedOut = true;
+      finish();
+    }, timeoutMs);
     mx.on(ClientEvent.Sync, onSync);
   });
 
@@ -287,6 +308,12 @@ export const initClient = async (session: Session): Promise<MatrixClient> => {
   const wipeAllStores = async () => {
     log.warn('initClient: wiping all stores for', session.userId);
     debugLog.warn('sync', 'Wiping all stores due to mismatch', { userId: session.userId });
+    Sentry.addBreadcrumb({
+      category: 'crypto',
+      message: 'Crypto store mismatch — wiping local stores and retrying',
+      level: 'warning',
+    });
+    Sentry.metrics.count('sable.crypto.store_wipe', 1);
     await deleteSessionStores(storeName);
     try {
       const allDbs = await window.indexedDB.databases();
@@ -390,6 +417,9 @@ export const startClient = async (mx: MatrixClient, config?: StartClientConfig):
       fallbackFromSliding,
       reason,
     });
+    Sentry.metrics.count('sable.sync.transport', 1, {
+      attributes: { transport: 'classic', reason, fallback: String(fallbackFromSliding) },
+    });
     await mx.startClient({
       lazyLoadMembers: true,
       pollTimeout: FAST_SYNC_POLL_TIMEOUT_MS,
@@ -486,6 +516,9 @@ export const startClient = async (mx: MatrixClient, config?: StartClientConfig):
     slidingRequested,
     fallbackFromSliding: false,
     reason: 'sliding_active',
+  });
+  Sentry.metrics.count('sable.sync.transport', 1, {
+    attributes: { transport: 'sliding', reason: 'sliding_active', fallback: 'false' },
   });
 
   try {

@@ -14,7 +14,6 @@ import { isKeyHotkey } from 'is-hotkey';
 import {
   EventType,
   IContent,
-  MatrixEvent,
   MsgType,
   RelationType,
   Room,
@@ -115,7 +114,6 @@ import { settingsAtom } from '$state/settings';
 import {
   getMemberDisplayName,
   getMentionContent,
-  reactionOrEditEvent,
   trimReplyFromBody,
   trimReplyFromFormattedBody,
 } from '$utils/room';
@@ -153,6 +151,7 @@ import { useRoomPermissions } from '$hooks/useRoomPermissions';
 import { AutocompleteNotice } from '$components/editor/autocomplete/AutocompleteNotice';
 import { SchedulePickerDialog } from './schedule-send';
 import * as css from './schedule-send/SchedulePickerDialog.css';
+import * as Sentry from '@sentry/react';
 import {
   getAudioMsgContent,
   getFileMsgContent,
@@ -162,33 +161,7 @@ import {
 import { CommandAutocomplete } from './CommandAutocomplete';
 import { AudioMessageRecorder } from './AudioMessageRecorder';
 
-// Returns the event ID of the most recent non-reaction/non-edit event in a thread,
-// falling back to the thread root if no replies exist yet.
-const getLatestThreadEventId = (room: Room, threadRootId: string): string => {
-  const thread = room.getThread(threadRootId);
-  const threadEvents: MatrixEvent[] = thread?.events ?? [];
-  const filtered = threadEvents.filter(
-    (ev) => ev.getId() !== threadRootId && !reactionOrEditEvent(ev)
-  );
-  if (filtered.length > 0) {
-    return filtered[filtered.length - 1].getId() ?? threadRootId;
-  }
-  // Fall back to the live timeline if the Thread object hasn't been registered yet
-  const liveEvents = room
-    .getUnfilteredTimelineSet()
-    .getLiveTimeline()
-    .getEvents()
-    .filter(
-      (ev) =>
-        ev.threadRootId === threadRootId && ev.getId() !== threadRootId && !reactionOrEditEvent(ev)
-    );
-  if (liveEvents.length > 0) {
-    return liveEvents[liveEvents.length - 1].getId() ?? threadRootId;
-  }
-  return threadRootId;
-};
-
-const getReplyContent = (replyDraft: IReplyDraft | undefined, room?: Room): IEventRelation => {
+const getReplyContent = (replyDraft: IReplyDraft | undefined): IEventRelation => {
   if (!replyDraft) return {};
 
   const relatesTo: IEventRelation = {};
@@ -201,19 +174,13 @@ const getReplyContent = (replyDraft: IReplyDraft | undefined, room?: Room): IEve
     // Check if this is a reply to a specific message in the thread
     // (replyDraft.body being empty means it's just a seeded thread draft)
     if (replyDraft.body && replyDraft.eventId !== replyDraft.relation.event_id) {
-      // Explicit reply to a specific message — per spec, is_falling_back must be false
+      // This is a reply to a message within the thread
       relatesTo['m.in_reply_to'] = {
         event_id: replyDraft.eventId,
       };
       relatesTo.is_falling_back = false;
     } else {
-      // Regular thread message — per spec, include fallback m.in_reply_to pointing to the
-      // most recent thread message so unthreaded clients can display it as a reply chain
-      const threadRootId = replyDraft.relation.event_id ?? replyDraft.eventId;
-      const latestEventId = room ? getLatestThreadEventId(room, threadRootId) : threadRootId;
-      relatesTo['m.in_reply_to'] = {
-        event_id: latestEventId,
-      };
+      // This is just a regular thread message
       relatesTo.is_falling_back = true;
     }
   } else {
@@ -495,8 +462,7 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
       const contents = fulfilledPromiseSettledResult(await Promise.allSettled(contentsPromises));
 
       if (contents.length > 0) {
-        const replyContent =
-          plainText?.length === 0 ? getReplyContent(replyDraft, room) : undefined;
+        const replyContent = plainText?.length === 0 ? getReplyContent(replyDraft) : undefined;
         if (replyContent) contents[0]['m.relates_to'] = replyContent;
         if (threadRootId) {
           setReplyDraft({
@@ -640,7 +606,7 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
         content.formatted_body = formattedBody;
       }
       if (replyDraft) {
-        content['m.relates_to'] = getReplyContent(replyDraft, room);
+        content['m.relates_to'] = getReplyContent(replyDraft);
       }
       const invalidate = () =>
         queryClient.invalidateQueries({ queryKey: ['delayedEvents', roomId] });
@@ -700,19 +666,31 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
           // Cancel failed — leave state intact for retry
         }
       } else {
+        const msgSendStart = performance.now();
         resetInput();
         debugLog.info('message', 'Sending message', { roomId, msgtype: (content as any).msgtype });
-        mx.sendMessage(roomId, threadRootId ?? null, content as any)
+        Sentry.startSpan(
+          { name: 'message.send', op: 'matrix.message', attributes: { encrypted: String(isEncrypted) } },
+          () => mx.sendMessage(roomId, threadRootId ?? null, content as any)
+        )
           .then((res) => {
             debugLog.info('message', 'Message sent successfully', {
               roomId,
               eventId: res.event_id,
             });
+            Sentry.metrics.distribution(
+              'sable.message.send_latency_ms',
+              performance.now() - msgSendStart,
+              { attributes: { encrypted: String(isEncrypted) } }
+            );
           })
           .catch((error: unknown) => {
             debugLog.error('message', 'Failed to send message', {
               roomId,
               error: error instanceof Error ? error.message : String(error),
+            });
+            Sentry.metrics.count('sable.message.send_error', 1, {
+              attributes: { encrypted: String(isEncrypted) },
             });
             log.error('failed to send message', { roomId }, error);
           });
@@ -827,7 +805,7 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
         info,
       };
       if (replyDraft) {
-        content['m.relates_to'] = getReplyContent(replyDraft, room);
+        content['m.relates_to'] = getReplyContent(replyDraft);
         if (threadRootId) {
           setReplyDraft({
             userId: mx.getUserId() ?? '',

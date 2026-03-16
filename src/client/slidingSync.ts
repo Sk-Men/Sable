@@ -17,6 +17,7 @@ import {
 } from '$types/matrix-sdk';
 import { createLogger } from '$utils/debug';
 import { createDebugLogger } from '$utils/debugLogger';
+import * as Sentry from '@sentry/react';
 
 const log = createLogger('slidingSync');
 const debugLog = createDebugLogger('slidingSync');
@@ -324,6 +325,12 @@ export class SlidingSyncManager {
 
   private previousListCounts: Map<string, number> = new Map();
 
+  /** Wall-clock time recorded in attach() — used to compute true initial-sync latency. */
+  private attachTime: number | null = null;
+
+  /** Span covering the period from attach() to the first successful complete cycle. */
+  private initialSyncSpan: ReturnType<typeof Sentry.startInactiveSpan> | null = null;
+
   public readonly slidingSync: SlidingSync;
 
   public readonly probeTimeoutMs: number;
@@ -369,6 +376,9 @@ export class SlidingSyncManager {
     this.onLifecycle = (state, resp, err) => {
       const syncStartTime = performance.now();
       this.syncCount += 1;
+      Sentry.metrics.count('sable.sync.cycle', 1, {
+        attributes: { transport: 'sliding', state },
+      });
 
       debugLog.info('sync', `Sliding sync lifecycle: ${state} (cycle #${this.syncCount})`, {
         state,
@@ -383,6 +393,9 @@ export class SlidingSyncManager {
           errorMessage: err.message,
           syncNumber: this.syncCount,
           state,
+        });
+        Sentry.metrics.count('sable.sync.error', 1, {
+          attributes: { transport: 'sliding', state },
         });
       }
 
@@ -425,22 +438,38 @@ export class SlidingSyncManager {
         });
       }
 
+      const syncDuration = performance.now() - syncStartTime;
+
       // Mark initial sync as complete after first successful cycle
       if (!this.initialSyncCompleted) {
         this.initialSyncCompleted = true;
+        // Wall-clock ms from attach() — the actual user-perceived wait for first data.
+        const initialElapsed =
+          this.attachTime != null ? performance.now() - this.attachTime : syncDuration;
         debugLog.info('sync', 'Initial sync completed', {
           syncNumber: this.syncCount,
           totalRoomCount,
           listCounts: Object.fromEntries(
             this.listKeys.map((key) => [key, this.slidingSync.getListData(key)?.joinedCount ?? 0])
           ),
-          timeElapsed: `${(performance.now() - syncStartTime).toFixed(2)}ms`,
+          timeElapsed: `${initialElapsed.toFixed(2)}ms`,
         });
+        Sentry.metrics.distribution('sable.sync.initial_ms', initialElapsed, {
+          attributes: { transport: 'sliding' },
+        });
+        this.initialSyncSpan?.setAttributes({
+          'sync.cycles_to_ready': this.syncCount,
+          'sync.rooms_at_ready': totalRoomCount,
+        });
+        this.initialSyncSpan?.end();
+        this.initialSyncSpan = null;
       }
 
       this.expandListsToKnownCount();
 
-      const syncDuration = performance.now() - syncStartTime;
+      Sentry.metrics.distribution('sable.sync.processing_ms', syncDuration, {
+        attributes: { transport: 'sliding' },
+      });
       if (syncDuration > 1000) {
         debugLog.warn('sync', 'Slow sync cycle detected', {
           syncNumber: this.syncCount,
@@ -500,6 +529,13 @@ export class SlidingSyncManager {
       adaptiveTimeline: this.adaptiveTimeline,
       maxRooms: this.maxRooms,
       lists: this.listKeys,
+    });
+
+    this.attachTime = performance.now();
+    this.initialSyncSpan = Sentry.startInactiveSpan({
+      name: 'sync.initial',
+      op: 'matrix.sync',
+      attributes: { 'sync.transport': 'sliding', 'sync.proxy': this.proxyBaseUrl },
     });
 
     this.slidingSync.on(SlidingSyncEvent.Lifecycle, this.onLifecycle);
@@ -674,6 +710,18 @@ export class SlidingSyncManager {
     if (allListsComplete) {
       this.listsFullyLoaded = true;
       log.log(`Sliding Sync all lists fully loaded for ${this.mx.getUserId()}`);
+      const totalRooms = this.listKeys.reduce(
+        (sum, key) => sum + (this.slidingSync.getListData(key)?.joinedCount ?? 0),
+        0
+      );
+      const listsLoadedMs =
+        this.attachTime != null ? Math.round(performance.now() - this.attachTime) : 0;
+      Sentry.metrics.distribution('sable.sync.lists_loaded_ms', listsLoadedMs, {
+        attributes: { transport: 'sliding' },
+      });
+      Sentry.metrics.gauge('sable.sync.total_rooms', totalRooms, {
+        attributes: { transport: 'sliding' },
+      });
     } else if (expandedAny) {
       log.log(`Sliding Sync lists expanding... for ${this.mx.getUserId()}`);
     }
@@ -763,52 +811,64 @@ export class SlidingSyncManager {
     let endIndex = batchSize - 1;
     let hasMore = true;
     let firstTime = true;
+    let batchCount = 0;
 
-    const spideringRequiredState: MSC3575List['required_state'] = [
-      [EventType.RoomJoinRules, ''],
-      [EventType.RoomAvatar, ''],
-      [EventType.RoomTombstone, ''],
-      [EventType.RoomEncryption, ''],
-      [EventType.RoomCreate, ''],
-      [EventType.RoomTopic, ''],
-      [EventType.RoomCanonicalAlias, ''],
-      [EventType.RoomMember, MSC3575_STATE_KEY_ME],
-      ['m.space.child', MSC3575_WILDCARD],
-      ['im.ponies.room_emotes', MSC3575_WILDCARD],
-    ];
+    await Sentry.startSpan(
+      { name: 'sync.spidering', op: 'matrix.sync', attributes: { 'sync.transport': 'sliding' } },
+      async (span) => {
+        const spideringRequiredState: MSC3575List['required_state'] = [
+          [EventType.RoomJoinRules, ''],
+          [EventType.RoomAvatar, ''],
+          [EventType.RoomTombstone, ''],
+          [EventType.RoomEncryption, ''],
+          [EventType.RoomCreate, ''],
+          [EventType.RoomTopic, ''],
+          [EventType.RoomCanonicalAlias, ''],
+          [EventType.RoomMember, MSC3575_STATE_KEY_ME],
+          ['m.space.child', MSC3575_WILDCARD],
+          ['im.ponies.room_emotes', MSC3575_WILDCARD],
+        ];
 
-    while (hasMore) {
-      if (this.disposed) return;
-      const ranges: [number, number][] = [[0, endIndex]];
-      try {
-        if (firstTime) {
-          // Full setList on first call to register the list with all params.
-          this.slidingSync.setList(LIST_SEARCH, {
-            ranges,
-            sort: ['by_recency'],
-            timeline_limit: 0,
-            required_state: spideringRequiredState,
-          });
-        } else {
-          // Cheaper range-only update for subsequent pages; sticky params are preserved.
-          this.slidingSync.setListRanges(LIST_SEARCH, ranges);
+        while (hasMore) {
+          if (this.disposed) return;
+          batchCount += 1;
+          const ranges: [number, number][] = [[0, endIndex]];
+          try {
+            if (firstTime) {
+              // Full setList on first call to register the list with all params.
+              this.slidingSync.setList(LIST_SEARCH, {
+                ranges,
+                sort: ['by_recency'],
+                timeline_limit: 0,
+                required_state: spideringRequiredState,
+              });
+            } else {
+              // Cheaper range-only update for subsequent pages; sticky params are preserved.
+              this.slidingSync.setListRanges(LIST_SEARCH, ranges);
+            }
+          } catch {
+            // Swallow errors — the next iteration will retry with updated ranges.
+          } finally {
+            // eslint-disable-next-line no-await-in-loop
+            await new Promise<void>((res) => {
+              setTimeout(res, gapBetweenRequestsMs);
+            });
+          }
+
+          if (this.disposed) return;
+          const listData = this.slidingSync.getListData(LIST_SEARCH);
+          hasMore = endIndex + 1 < (listData?.joinedCount ?? 0);
+          endIndex += batchSize;
+          firstTime = false;
         }
-      } catch {
-        // Swallow errors — the next iteration will retry with updated ranges.
-      } finally {
-        // eslint-disable-next-line no-await-in-loop
-        await new Promise<void>((res) => {
-          setTimeout(res, gapBetweenRequestsMs);
+        const finalCount = this.slidingSync.getListData(LIST_SEARCH)?.joinedCount ?? 0;
+        span.setAttributes({
+          'spidering.batches': batchCount,
+          'spidering.total_rooms': finalCount,
         });
+        log.log(`Sliding Sync spidering complete for ${this.mx.getUserId()}`);
       }
-
-      if (this.disposed) return;
-      const listData = this.slidingSync.getListData(LIST_SEARCH);
-      hasMore = endIndex + 1 < (listData?.joinedCount ?? 0);
-      endIndex += batchSize;
-      firstTime = false;
-    }
-    log.log(`Sliding Sync spidering complete for ${this.mx.getUserId()}`);
+    );
   }
 
   /**
@@ -873,6 +933,9 @@ export class SlidingSyncManager {
     }
     this.activeRoomSubscriptions.add(roomId);
     this.slidingSync.modifyRoomSubscriptions(new Set(this.activeRoomSubscriptions));
+    Sentry.metrics.gauge('sable.sync.active_subscriptions', this.activeRoomSubscriptions.size, {
+      attributes: { transport: 'sliding' },
+    });
     log.log(`Sliding Sync active room subscription added: ${roomId}`);
   }
 
@@ -885,6 +948,9 @@ export class SlidingSyncManager {
     if (this.disposed) return;
     this.activeRoomSubscriptions.delete(roomId);
     this.slidingSync.modifyRoomSubscriptions(new Set(this.activeRoomSubscriptions));
+    Sentry.metrics.gauge('sable.sync.active_subscriptions', this.activeRoomSubscriptions.size, {
+      attributes: { transport: 'sliding' },
+    });
     log.log(`Sliding Sync active room subscription removed: ${roomId}`);
   }
 
@@ -893,25 +959,33 @@ export class SlidingSyncManager {
     proxyBaseUrl: string,
     probeTimeoutMs: number
   ): Promise<boolean> {
-    try {
-      const response = await mx.slidingSync(
-        {
-          lists: {
-            probe: {
-              ranges: [[0, 0]],
-              timeline_limit: 1,
-              required_state: [],
+    return Sentry.startSpan(
+      { name: 'sync.probe', op: 'matrix.sync', attributes: { 'sync.proxy': proxyBaseUrl } },
+      async (span) => {
+        try {
+          const response = await mx.slidingSync(
+            {
+              lists: {
+                probe: {
+                  ranges: [[0, 0]],
+                  timeline_limit: 1,
+                  required_state: [],
+                },
+              },
+              timeout: 0,
+              clientTimeout: probeTimeoutMs,
             },
-          },
-          timeout: 0,
-          clientTimeout: probeTimeoutMs,
-        },
-        proxyBaseUrl
-      );
+            proxyBaseUrl
+          );
 
-      return typeof response.pos === 'string' && response.pos.length > 0;
-    } catch {
-      return false;
-    }
+          const supported = typeof response.pos === 'string' && response.pos.length > 0;
+          span.setAttribute('probe.supported', supported);
+          return supported;
+        } catch {
+          span.setAttribute('probe.supported', false);
+          return false;
+        }
+      }
+    );
   }
 }

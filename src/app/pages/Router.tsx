@@ -6,8 +6,10 @@ import {
   createRoutesFromElements,
   redirect,
 } from 'react-router-dom';
+import * as Sentry from '@sentry/react';
 
 import { ClientConfig } from '$hooks/useClientConfig';
+import { ErrorPage } from '$components/DefaultErrorPage';
 import { Room } from '$features/room';
 import { Lobby } from '$features/lobby';
 import { PageRoot } from '$components/page';
@@ -117,10 +119,20 @@ export const createRouter = (clientConfig: ClientConfig, screenSize: ScreenSize)
           return null;
         }}
         element={
-          <>
-            <AuthLayout />
-            <UnAuthRouteThemeManager />
-          </>
+          <Sentry.ErrorBoundary
+            fallback={({ error, eventId }) => (
+              <ErrorPage
+                error={error instanceof Error ? error : new Error(String(error))}
+                eventId={eventId || undefined}
+              />
+            )}
+            beforeCapture={(scope) => scope.setTag('section', 'auth')}
+          >
+            <>
+              <AuthLayout />
+              <UnAuthRouteThemeManager />
+            </>
+          </Sentry.ErrorBoundary>
         }
       >
         <Route path={LOGIN_PATH} element={<Login />} />
@@ -142,7 +154,16 @@ export const createRouter = (clientConfig: ClientConfig, screenSize: ScreenSize)
           return null;
         }}
         element={
-          <AuthRouteThemeManager>
+          <Sentry.ErrorBoundary
+            fallback={({ error, eventId }) => (
+              <ErrorPage
+                error={error instanceof Error ? error : new Error(String(error))}
+                eventId={eventId || undefined}
+              />
+            )}
+            beforeCapture={(scope) => scope.setTag('section', 'client')}
+          >
+            <AuthRouteThemeManager>
             {/* HandleNotificationClick must live outside ClientRoot's loading gate so
                 SW notification-click postMessages are never dropped during client
                 reloads (e.g., account switches). It only needs navigate + Jotai atoms. */}
@@ -196,6 +217,7 @@ export const createRouter = (clientConfig: ClientConfig, screenSize: ScreenSize)
               </ClientInitStorageAtom>
             </ClientRoot>
           </AuthRouteThemeManager>
+          </Sentry.ErrorBoundary>
         }
       >
         <Route
