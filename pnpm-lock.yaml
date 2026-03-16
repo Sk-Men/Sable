@@ -134,8 +134,8 @@ importers:
         specifier: ^38.4.0
         version: 38.4.0
       matrix-widget-api:
-        specifier: 1.13.0
-        version: 1.13.0
+        specifier: ^1.16.1
+        version: 1.17.0
       millify:
         specifier: ^6.1.0
         version: 6.1.0
@@ -200,9 +200,6 @@ importers:
       '@cloudflare/vite-plugin':
         specifier: ^1.26.0
         version: 1.27.0(vite@7.3.1(@types/node@24.10.13)(jiti@2.6.1)(terser@5.46.0)(yaml@2.8.2))(workerd@1.20260310.1)(wrangler@4.72.0)
-      '@element-hq/element-call-embedded':
-        specifier: 0.16.3
-        version: 0.16.3
       '@esbuild-plugins/node-globals-polyfill':
         specifier: ^0.2.3
         version: 0.2.3(esbuild@0.27.3)
@@ -218,6 +215,9 @@ importers:
       '@rollup/plugin-wasm':
         specifier: ^6.2.2
         version: 6.2.2(rollup@4.59.0)
+      '@sableclient/sable-call-embedded':
+        specifier: 1.1.0
+        version: 1.1.0
       '@types/chroma-js':
         specifier: ^3.1.2
         version: 3.1.2
@@ -882,9 +882,6 @@ packages:
   '@cspotcode/source-map-support@0.8.1':
     resolution: {integrity: sha512-IchNf6dN4tHoMFIn/7OE8LWZ19Y6q/67Bmf6vnGREv8RSbBVb9LPJxEcnwrcwX6ixSvaiGoomAUvu4YSxXrVgw==}
     engines: {node: '>=12'}
-
-  '@element-hq/element-call-embedded@0.16.3':
-    resolution: {integrity: sha512-OViKJonDaDNVBUW9WdV9mk78/Ruh34C7XsEgt3O8D9z+64C39elbIgllHSoH5S12IRlv9RYrrV37FZLo6QWsDQ==}
 
   '@emnapi/core@1.8.1':
     resolution: {integrity: sha512-AvT9QFpxK0Zd8J0jopedNm+w/2fIzvtPKPjqyw9jwvBaReTTqPBk9Hixaz7KbjimP+QNz605/XnjFcDAL2pqBg==}
@@ -2321,6 +2318,9 @@ packages:
 
   '@rtsao/scc@1.1.0':
     resolution: {integrity: sha512-zt6OdqaDoOnJ1ZYsCYGt9YmWzDXl4vQdKTyJev62gFhRGKdx7mcT54V9KIjg+d2wi9EXsPvAPKe7i7WjfVWB8g==}
+
+  '@sableclient/sable-call-embedded@1.1.0':
+    resolution: {integrity: sha512-MiMfCtYhFQNjF5H8tDC3CpX004Cmg05sms1QgGYE00aoQsxQKUpuMhkU3utj9kXVl6Xxs/7qZ6to+a6Hhsic/A==}
 
   '@sindresorhus/is@7.2.0':
     resolution: {integrity: sha512-P1Cz1dWaFfR4IR+U13mqqiGsLFf1KbayybWwdd2vfctdV6hDpUkgCY0nKOLLTMSoRd/jJNjtbqzf13K8DCCXQw==}
@@ -4100,8 +4100,8 @@ packages:
     resolution: {integrity: sha512-Xs9/6pE1eL/F5bP11jrtsZXiPlCda+mW5UC21DifvpjHWvAZsz4rq24rXd4s5/oPrIZKJqP8Fnfcic870ben2w==}
     engines: {node: '>=22.0.0'}
 
-  matrix-widget-api@1.13.0:
-    resolution: {integrity: sha512-+LrvwkR1izL4h2euX8PDrvG/3PZZDEd6As+lmnR3jAVwbFJtU5iTnwmZGnCca9ddngCvXvAHkcpJBEPyPTZneQ==}
+  matrix-widget-api@1.17.0:
+    resolution: {integrity: sha512-5FHoo3iEP3Bdlv5jsYPWOqj+pGdFQNLWnJLiB0V7Ygne7bb+Gsj3ibyFyHWC6BVw+Z+tSW4ljHpO17I9TwStwQ==}
 
   media-query-parser@2.0.2:
     resolution: {integrity: sha512-1N4qp+jE0pL5Xv4uEcwVUhIkwdUO3S/9gML90nqKA7v7FcOS5vUtatfzok9S9U1EJU8dHWlcv95WLnKmmxZI9w==}
@@ -5873,8 +5873,6 @@ snapshots:
     dependencies:
       '@jridgewell/trace-mapping': 0.3.9
 
-  '@element-hq/element-call-embedded@0.16.3': {}
-
   '@emnapi/core@1.8.1':
     dependencies:
       '@emnapi/wasi-threads': 1.1.0
@@ -7483,6 +7481,8 @@ snapshots:
     optional: true
 
   '@rtsao/scc@1.1.0': {}
+
+  '@sableclient/sable-call-embedded@1.1.0': {}
 
   '@sindresorhus/is@7.2.0': {}
 
@@ -9462,14 +9462,14 @@ snapshots:
       jwt-decode: 4.0.0
       loglevel: 1.9.2
       matrix-events-sdk: 0.0.1
-      matrix-widget-api: 1.13.0
+      matrix-widget-api: 1.17.0
       oidc-client-ts: 3.4.1
       p-retry: 7.1.1
       sdp-transform: 2.15.0
       unhomoglyph: 1.0.6
       uuid: 13.0.0
 
-  matrix-widget-api@1.13.0:
+  matrix-widget-api@1.17.0:
     dependencies:
       '@types/events': 3.0.3
       events: 3.3.0

@@ -80,13 +80,6 @@ export function getCallCapabilities(
     WidgetEventCapability.forStateEvent(EventDirection.Receive, EventType.RoomCreate).raw
   );
 
-  capabilities.add(
-    WidgetEventCapability.forRoomEvent(
-      EventDirection.Receive,
-      'org.matrix.msc4075.rtc.notification'
-    ).raw
-  );
-
   [
     'io.element.call.encryption_keys',
     'org.matrix.rageshake_request',
@@ -94,6 +87,9 @@ export function getCallCapabilities(
     EventType.RoomRedaction,
     'io.element.call.reaction',
     'org.matrix.msc4310.rtc.decline',
+    'org.matrix.msc4075.call.notify',
+    'org.matrix.msc4075.rtc.notification',
+    'org.matrix.msc4143.rtc.member',
   ].forEach((type) => {
     capabilities.add(WidgetEventCapability.forRoomEvent(EventDirection.Send, type).raw);
     capabilities.add(WidgetEventCapability.forRoomEvent(EventDirection.Receive, type).raw);

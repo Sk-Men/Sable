@@ -30,7 +30,7 @@ import {
 
 export type CapabilityApprovalCallback = (requested: Set<Capability>) => Promise<Set<Capability>>;
 
-// Unlike SmallWidgetDriver which auto-grants all capabilities for Element Call,
+// Unlike CallWidgetDriver which auto-grants all capabilities for Element Call,
 // this driver provides a capability approval mechanism for untrusted widgets.
 export class GenericWidgetDriver extends WidgetDriver {
   private readonly mxClient: MatrixClient;
