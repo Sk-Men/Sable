@@ -71,7 +71,7 @@ Sentry handles that data under its own privacy policy:
 [**https://sentry.io/privacy/**](https://sentry.io/privacy/)
 
 Technical details about Sable's Sentry integration are documented here:  
-[**https://github.com/SableClient/Sable/blob/feat/sentry-pr/docs/SENTRY_PRIVACY.md**](https://github.com/SableClient/Sable/blob/feat/sentry-pr/docs/SENTRY_PRIVACY.md)
+[**https://github.com/SableClient/Sable/dev/docs/SENTRY_PRIVACY.md**](https://github.com/SableClient/Sable/dev/docs/SENTRY_PRIVACY.md)
 
 If a Sentry DSN is not configured, Sentry is inactive and no Sentry data is sent.
 
@@ -109,7 +109,7 @@ If you believe a child has submitted information through Sable, contact **privac
 
 We may update this Privacy Policy from time to time.
 
-When we do, we will publish the updated version at [**https://sable.moe**](https://sable.moe).
+When we do, we will publish the updated version at [**https://github.com/SableClient/Sable/blob/dev/docs/PRIVACY.md**](https://github.com/SableClient/Sable/blob/dev/docs/PRIVACY.md) and/or [**https://sable.moe**](https://sable.moe).
 
 ## Contact
 
