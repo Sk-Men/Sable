@@ -823,6 +823,31 @@ function EmojiSelectorThresholdInput() {
   );
 }
 
+function Calls() {
+  const [alwaysShowCallButton, setAlwaysShowCallButton] = useSetting(
+    settingsAtom,
+    'alwaysShowCallButton'
+  );
+
+  return (
+    <Box direction="Column" gap="100">
+      <Text size="L400">Calls</Text>
+      <SequenceCard className={SequenceCardStyle} variant="SurfaceVariant" direction="Column">
+        <SettingTile
+          title="Show Call Button for Large Rooms"
+          after={
+            <Switch
+              variant="Primary"
+              value={alwaysShowCallButton}
+              onChange={setAlwaysShowCallButton}
+            />
+          }
+        />
+      </SequenceCard>
+    </Box>
+  );
+}
+
 function Messages() {
   const [hideMembershipEvents, setHideMembershipEvents] = useSetting(
     settingsAtom,
@@ -1078,6 +1103,7 @@ export function General({ requestClose }: Readonly<GeneralProps>) {
               <Gestures isMobile={mobileOrTablet()} />
               <Editor isMobile={mobileOrTablet()} />
               <Messages />
+              <Calls />
             </Box>
           </PageContent>
         </Scroll>

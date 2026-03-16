@@ -3,6 +3,8 @@ import { Page, PageContent, PageHeader } from '$components/page';
 import { InfoCard } from '$components/info-card';
 import { LanguageSpecificPronouns } from '../cosmetics/LanguageSpecificPronouns';
 import { Sync } from '../general';
+import { BandwidthSavingEmojis } from './BandwithSavingEmojis';
+import { MSC4268HistoryShare } from './MSC4268HistoryShare';
 
 type ExperimentalProps = {
   requestClose: () => void;
@@ -42,7 +44,9 @@ export function Experimental({ requestClose }: Readonly<ExperimentalProps>) {
             <br />
             <Box direction="Column" gap="700">
               <Sync />
+              <MSC4268HistoryShare />
               <LanguageSpecificPronouns />
+              <BandwidthSavingEmojis />
             </Box>
           </PageContent>
         </Scroll>

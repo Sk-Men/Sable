@@ -47,6 +47,7 @@ type RenderMessageContentProps = {
   htmlReactParserOptions: HTMLReactParserOptions;
   linkifyOpts: Opts;
   outlineAttachment?: boolean;
+  hideCaption?: boolean;
 };
 
 const getMediaType = (url: string) => {
@@ -71,7 +72,8 @@ function RenderMessageContentInternal({
   htmlReactParserOptions,
   linkifyOpts,
   outlineAttachment,
-}: Readonly<RenderMessageContentProps>) {
+  hideCaption,
+}: RenderMessageContentProps) {
   const content = useMemo(() => getContent<any>(), [getContent]);
 
   const [autoplayGifs] = useSetting(settingsAtom, 'autoplayGifs');
@@ -121,7 +123,7 @@ function RenderMessageContentInternal({
 
   const renderCaption = () => {
     const hasCaption = content.body && content.body.trim().length > 0;
-    if (captionPosition === CaptionPosition.Hidden) return null;
+    if (captionPosition === CaptionPosition.Hidden || hideCaption) return null;
     if (hasCaption && content.filename && content.filename !== content.body) {
       if (captionPosition !== CaptionPosition.Inline)
         return (

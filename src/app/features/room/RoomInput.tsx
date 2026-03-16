@@ -14,6 +14,7 @@ import { isKeyHotkey } from 'is-hotkey';
 import {
   EventType,
   IContent,
+  MatrixEvent,
   MsgType,
   RelationType,
   Room,
@@ -114,6 +115,7 @@ import { settingsAtom } from '$state/settings';
 import {
   getMemberDisplayName,
   getMentionContent,
+  reactionOrEditEvent,
   trimReplyFromBody,
   trimReplyFromFormattedBody,
 } from '$utils/room';
@@ -149,6 +151,7 @@ import { usePowerLevelsContext } from '$hooks/usePowerLevels';
 import { useRoomCreators } from '$hooks/useRoomCreators';
 import { useRoomPermissions } from '$hooks/useRoomPermissions';
 import { AutocompleteNotice } from '$components/editor/autocomplete/AutocompleteNotice';
+import { getSupportedAudioExtension } from '$plugins/voice-recorder-kit/supportedCodec';
 import { SchedulePickerDialog } from './schedule-send';
 import * as css from './schedule-send/SchedulePickerDialog.css';
 import {
@@ -158,8 +161,35 @@ import {
   getVideoMsgContent,
 } from './msgContent';
 import { CommandAutocomplete } from './CommandAutocomplete';
+import { AudioMessageRecorder } from './AudioMessageRecorder';
 
-const getReplyContent = (replyDraft: IReplyDraft | undefined): IEventRelation => {
+// Returns the event ID of the most recent non-reaction/non-edit event in a thread,
+// falling back to the thread root if no replies exist yet.
+const getLatestThreadEventId = (room: Room, threadRootId: string): string => {
+  const thread = room.getThread(threadRootId);
+  const threadEvents: MatrixEvent[] = thread?.events ?? [];
+  const filtered = threadEvents.filter(
+    (ev) => ev.getId() !== threadRootId && !reactionOrEditEvent(ev)
+  );
+  if (filtered.length > 0) {
+    return filtered[filtered.length - 1].getId() ?? threadRootId;
+  }
+  // Fall back to the live timeline if the Thread object hasn't been registered yet
+  const liveEvents = room
+    .getUnfilteredTimelineSet()
+    .getLiveTimeline()
+    .getEvents()
+    .filter(
+      (ev) =>
+        ev.threadRootId === threadRootId && ev.getId() !== threadRootId && !reactionOrEditEvent(ev)
+    );
+  if (liveEvents.length > 0) {
+    return liveEvents[liveEvents.length - 1].getId() ?? threadRootId;
+  }
+  return threadRootId;
+};
+
+const getReplyContent = (replyDraft: IReplyDraft | undefined, room?: Room): IEventRelation => {
   if (!replyDraft) return {};
 
   const relatesTo: IEventRelation = {};
@@ -172,13 +202,19 @@ const getReplyContent = (replyDraft: IReplyDraft | undefined): IEventRelation =>
     // Check if this is a reply to a specific message in the thread
     // (replyDraft.body being empty means it's just a seeded thread draft)
     if (replyDraft.body && replyDraft.eventId !== replyDraft.relation.event_id) {
-      // This is a reply to a message within the thread
+      // Explicit reply to a specific message — per spec, is_falling_back must be false
       relatesTo['m.in_reply_to'] = {
         event_id: replyDraft.eventId,
       };
       relatesTo.is_falling_back = false;
     } else {
-      // This is just a regular thread message
+      // Regular thread message — per spec, include fallback m.in_reply_to pointing to the
+      // most recent thread message so unthreaded clients can display it as a reply chain
+      const threadRootId = replyDraft.relation.event_id ?? replyDraft.eventId;
+      const latestEventId = room ? getLatestThreadEventId(room, threadRootId) : threadRootId;
+      relatesTo['m.in_reply_to'] = {
+        event_id: latestEventId,
+      };
       relatesTo.is_falling_back = true;
     }
   } else {
@@ -216,6 +252,7 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
     const [hideActivity] = useSetting(settingsAtom, 'hideActivity');
     const commands = useCommands(mx, room);
     const emojiBtnRef = useRef<HTMLButtonElement>(null);
+    const micBtnRef = useRef<HTMLButtonElement>(null);
     const roomToParents = useAtomValue(roomToParentsAtom);
     const nicknames = useAtomValue(nicknamesAtom);
 
@@ -246,6 +283,9 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
     const imagePackRooms: Room[] = useImagePackRooms(roomId, roomToParents);
 
     const [toolbar, setToolbar] = useSetting(settingsAtom, 'editorToolbar');
+    const [showAudioRecorder, setShowAudioRecorder] = useState(false);
+    const [audioMsgWaveform, setAudioMsgWaveform] = useState<number[] | undefined>(undefined);
+    const [audioMsgLength, setAudioMsgLength] = useState<number | undefined>(undefined);
     const [autocompleteQuery, setAutocompleteQuery] =
       useState<AutocompleteQuery<AutocompletePrefix>>();
     const [isQuickTextReact, setQuickTextReact] = useState(false);
@@ -448,7 +488,7 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
           return getVideoMsgContent(mx, fileItem, upload.mxc);
         }
         if (fileItem.file.type.startsWith('audio')) {
-          return getAudioMsgContent(fileItem, upload.mxc);
+          return getAudioMsgContent(fileItem, upload.mxc, audioMsgWaveform, audioMsgLength);
         }
         return getFileMsgContent(fileItem, upload.mxc);
       });
@@ -456,7 +496,8 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
       const contents = fulfilledPromiseSettledResult(await Promise.allSettled(contentsPromises));
 
       if (contents.length > 0) {
-        const replyContent = plainText?.length === 0 ? getReplyContent(replyDraft) : undefined;
+        const replyContent =
+          plainText?.length === 0 ? getReplyContent(replyDraft, room) : undefined;
         if (replyContent) contents[0]['m.relates_to'] = replyContent;
         if (threadRootId) {
           setReplyDraft({
@@ -600,7 +641,7 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
         content.formatted_body = formattedBody;
       }
       if (replyDraft) {
-        content['m.relates_to'] = getReplyContent(replyDraft);
+        content['m.relates_to'] = getReplyContent(replyDraft, room);
       }
       const invalidate = () =>
         queryClient.invalidateQueries({ queryKey: ['delayedEvents', roomId] });
@@ -787,7 +828,7 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
         info,
       };
       if (replyDraft) {
-        content['m.relates_to'] = getReplyContent(replyDraft);
+        content['m.relates_to'] = getReplyContent(replyDraft, room);
         if (threadRootId) {
           setReplyDraft({
             userId: mx.getUserId() ?? '',
@@ -1065,6 +1106,47 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
               >
                 <Icon src={toolbar ? Icons.AlphabetUnderline : Icons.Alphabet} />
               </IconButton>
+              <IconButton
+                ref={micBtnRef}
+                variant="SurfaceVariant"
+                size="300"
+                radii="300"
+                title="record audio message"
+                aria-pressed={showAudioRecorder}
+                onClick={() => setShowAudioRecorder(!showAudioRecorder)}
+              >
+                <Icon src={Icons.Mic} />
+              </IconButton>
+              {showAudioRecorder && (
+                <PopOut
+                  anchor={micBtnRef.current?.getBoundingClientRect() ?? undefined}
+                  offset={8}
+                  position="Top"
+                  align="End"
+                  alignOffset={-44}
+                  content={
+                    <AudioMessageRecorder
+                      onRequestClose={() => {
+                        setShowAudioRecorder(false);
+                      }}
+                      onRecordingComplete={(audioBlob) => {
+                        const file = new File(
+                          [audioBlob],
+                          `sable-audio-message-${Date.now()}.${getSupportedAudioExtension(audioBlob.type)}`,
+                          {
+                            type: audioBlob.type,
+                          }
+                        );
+                        handleFiles([file]);
+                        // Close the recorder after handling the file, to give some feedback that the recording was successful
+                        setShowAudioRecorder(false);
+                      }}
+                      onAudioLengthUpdate={(len) => setAudioMsgLength(len)}
+                      onWaveformUpdate={(w) => setAudioMsgWaveform(w)}
+                    />
+                  }
+                />
+              )}
               <UseStateProvider initial={undefined}>
                 {(emojiBoardTab: EmojiBoardTab | undefined, setEmojiBoardTab) => (
                   <PopOut

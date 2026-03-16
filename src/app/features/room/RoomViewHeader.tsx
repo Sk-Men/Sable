@@ -361,6 +361,8 @@ export function RoomViewHeader({ callView }: Readonly<{ callView?: boolean }>) {
     .getLiveTimeline()
     .getState(EventTimeline.FORWARDS)
     ?.maySendStateEvent('org.matrix.msc3401.call.member', mx.getUserId()!);
+  const [alwaysShowCallButton] = useSetting(settingsAtom, 'alwaysShowCallButton');
+  const shouldShowCallButton = alwaysShowCallButton || room.getJoinedMemberCount() <= 10;
 
   const encryptionEvent = useStateEvent(room, StateEvent.RoomEncryption);
   const encryptedRoom = !!encryptionEvent;
@@ -708,7 +710,7 @@ export function RoomViewHeader({ callView }: Readonly<{ callView?: boolean }>) {
                   </IconButton>
                 )}
               </TooltipProvider>
-              {canUseCalls && <RoomCallButton room={room} />}
+              {canUseCalls && shouldShowCallButton && <RoomCallButton room={room} />}
               <PopOut
                 anchor={pinMenuAnchor}
                 position="Bottom"
