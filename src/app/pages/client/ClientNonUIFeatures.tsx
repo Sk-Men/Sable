@@ -45,12 +45,15 @@ import {
   resolveNotificationPreviewText,
 } from '$utils/notificationStyle';
 import { mobileOrTablet } from '$utils/user-agent';
+import { createDebugLogger } from '$utils/debugLogger';
 import { useSlidingSyncActiveRoom } from '$hooks/useSlidingSyncActiveRoom';
 import { getSlidingSyncManager } from '$client/initMatrix';
 import { NotificationBanner } from '$components/notification-banner';
 import { useCallSignaling } from '$hooks/useCallSignaling';
 import { getInboxInvitesPath } from '../pathUtils';
 import { BackgroundNotifications } from './BackgroundNotifications';
+
+const pushRelayLog = createDebugLogger('push-relay');
 
 function clearMediaSessionQuickly(): void {
   if (!('mediaSession' in navigator)) return;
@@ -639,6 +642,7 @@ function HandleDecryptPushEvent() {
       const { rawEvent } = data as { rawEvent: Record<string, unknown> };
       const eventId = rawEvent.event_id as string;
       const roomId = rawEvent.room_id as string;
+      const decryptStart = performance.now();
 
       try {
         const mxEvent = new MatrixEvent(rawEvent as any);
@@ -652,6 +656,14 @@ function HandleDecryptPushEvent() {
           if (room) senderName = getMemberDisplayName(room, sender) ?? senderName;
         }
 
+        const decryptMs = Math.round(performance.now() - decryptStart);
+        const visible = document.visibilityState === 'visible';
+        pushRelayLog.info('notification', 'Push relay decryption succeeded', {
+          eventType: mxEvent.getType(),
+          decryptMs,
+          appVisible: visible,
+        });
+
         navigator.serviceWorker.controller?.postMessage({
           type: 'pushDecryptResult',
           eventId,
@@ -664,6 +676,11 @@ function HandleDecryptPushEvent() {
         });
       } catch (err) {
         console.warn('[app] HandleDecryptPushEvent: failed to decrypt push event', err);
+        pushRelayLog.error(
+          'notification',
+          'Push relay decryption failed',
+          err instanceof Error ? err : new Error(String(err))
+        );
         navigator.serviceWorker.controller?.postMessage({
           type: 'pushDecryptResult',
           eventId,
