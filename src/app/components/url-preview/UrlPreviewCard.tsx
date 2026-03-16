@@ -252,7 +252,7 @@ export const UrlPreviewHolder = as<'div'>(({ children, ...props }, ref) => {
 
   useEffect(() => {
     const scroll = scrollRef.current;
-    if (!scroll) return;
+    if (!scroll) return undefined;
 
     updateArrows();
     scroll.addEventListener('scroll', updateArrows, { passive: true });
