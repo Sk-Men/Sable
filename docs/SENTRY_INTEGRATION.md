@@ -14,6 +14,35 @@ Sentry is integrated with Sable to provide:
 - **Breadcrumbs**: Track user actions leading up to errors
 - **Debug log integration**: Attach internal debug logs to error reports
 
+## Bug Fixes (found via Sentry Replay)
+
+Two non-Sentry bugs were found and fixed in the course of building this integration:
+
+### Scroll-to-bottom after list→subscription timeline expansion
+
+**Problem**: When a room with a single cached event (list subscription, `timeline_limit=1`) becomes
+fully subscribed and the SDK delivers N new events, the `TimelineReset` fires before any events land
+on the fresh timeline. The "stay at bottom" effect queues a `scrollToBottom` while the DOM is still
+empty (range `end=0`). By the time real events load, the scroll has already fired against an empty
+container and is a no-op — the user's view stalls mid-list.
+
+**Fix**: The stay-at-bottom `useEffect` now increments `scrollToBottomRef.current.count` after
+calling `setTimeline(getInitialTimeline(room))`, re-queuing the scroll for after the first batch of
+events arrives and the DOM has content.
+
+**File**: `src/app/features/room/RoomTimeline.tsx`
+
+### TS2367 redundant phase guard in `useCallSignaling`
+
+**Problem**: A `phase !== undefined` guard was always evaluating to `true` because the TypeScript
+type for `phase` had no `undefined` branch at that point in the control flow.
+
+**Fix**: Removed the dead branch. TypeScript no longer emits a TS2367 comparison error here.
+
+**File**: `src/app/hooks/useCallSignaling.ts`
+
+---
+
 ## Features
 
 ### 1. Automatic Error Tracking
@@ -77,16 +106,21 @@ Sensitive patterns automatically redacted:
 
 ### 5. Settings UI
 
-New Sentry settings panel in Developer Tools:
+Sentry controls are split across two settings locations:
 
-- **Enable/disable Sentry**: Toggle error tracking on/off
+**Settings → General → Diagnostics & Privacy** (user-facing):
+
+- **Enable/disable error reporting**: Toggle Sentry error tracking on/off
 - **Session replay control**: Enable/disable session recording (opt-in)
+- Link to the privacy policy
+
+**Settings → Developer Tools → Error Tracking (Sentry)** (power-user):
+
 - **Breadcrumb categories**: Granular control over which log categories are sent as breadcrumbs
 - **Session stats**: Live error/warning counts for the current page load
 - **Export debug logs**: Download the in-memory log buffer as JSON for offline analysis
-- **Attach debug logs**: Manually attach recent logs to next error
-
-Access via: Settings → General → Diagnostics & Privacy
+- **Attach debug logs**: Manually attach recent logs to next error report
+- **Test buttons**: Force an error, test feedback, test message capture
 
 ## Configuration
 
@@ -239,15 +273,20 @@ Beyond automatic error capture, Sable has hand-crafted monitoring at key
 lifecycle points. See [SENTRY_PRIVACY.md](./SENTRY_PRIVACY.md) for the full
 metrics reference. Key areas:
 
-| Area                   | What's tracked                                                                                     |
-| ---------------------- | -------------------------------------------------------------------------------------------------- |
-| **Auth**               | Login failures (by `errcode`), forced server logouts                                               |
-| **Sync**               | Transport type, degraded states, cycle stats, time-to-ready                                        |
-| **Cryptography**       | Decryption failures (by failure reason), key backup errors, store wipes, E2E verification outcomes |
-| **Messaging**          | Send latency, send errors, local-echo `NOT_SENT` events                                            |
-| **Timeline**           | Opens, virtual window size, jump-load latency, re-initialisations                                  |
-| **Media**              | Upload latency, upload size, cache stats                                                           |
-| **Background clients** | Per-account notification client count, startup failures                                            |
+| Area                   | What's tracked                                                                                                                     |
+| ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| **Auth**               | Login failures (by `errcode`), forced server logouts                                                                               |
+| **Sync**               | Transport type, degraded states, cycle stats, initial sync latency, time-to-ready, total rooms loaded, active subscriptions        |
+| **Cryptography**       | Decryption failures (by failure reason), key backup errors, store wipes, E2E verification outcomes, bulk decryption latency        |
+| **Messaging**          | Send latency, send errors, local-echo `NOT_SENT` events                                                                            |
+| **Timeline**           | Opens, virtual window size, jump-load latency, re-initialisations, `limited` sync resets, scroll offset at load, pagination errors |
+| **Pagination**         | Pagination latency (`sable.pagination.latency_ms`) and errors per direction                                                        |
+| **Sliding sync**       | Room subscription latency (`sable.sync.room_sub_latency_ms`), events per subscription batch (`sable.sync.room_sub_event_count`)    |
+| **Scroll / UX**        | `atBottom` transitions with rapid-flip anomaly detection, scroll-to-bottom trigger warnings when user is scrolled up               |
+| **Calls**              | `sable.call.start.attempt/error`, `sable.call.answered`, `sable.call.declined`, active/ended/timeout counters                      |
+| **Message actions**    | `sable.message.delete.*`, `sable.message.forward.*`, `sable.message.report.*`, `sable.message.reaction.toggle`                     |
+| **Media**              | Upload latency, upload size, cache stats                                                                                           |
+| **Background clients** | Per-account notification client count, startup failures                                                                            |
 
 Fatal errors that are caught by `useAsyncCallback` state (and therefore never
 reach React's ErrorBoundary) are explicitly forwarded with `captureException`:
@@ -255,6 +294,24 @@ reach React's ErrorBoundary) are explicitly forwarded with `captureException`:
 - Client load failure (`phase: load`)
 - Client start failure (`phase: start`)
 - Background notification client startup failure
+
+### Breadcrumb categories
+
+All hand-crafted breadcrumbs use structured Sentry categories that appear in
+the Sentry issue timeline and can be filtered in the developer settings panel.
+
+| Category          | Where emitted                                  | What it records                                                                |
+| ----------------- | ---------------------------------------------- | ------------------------------------------------------------------------------ |
+| `auth`            | `ClientRoot.tsx`                               | Login session start, forced logout                                             |
+| `sync`            | `initMatrix.ts`, `SyncStatus.tsx`              | Sync state transitions, degraded states, client ready                          |
+| `sync.sliding`    | `slidingSync.ts`                               | First room subscription data: latency, event count                             |
+| `timeline.sync`   | `RoomTimeline.tsx`                             | SDK-initiated `TimelineReset` (limited sync gap) — fires before events arrive  |
+| `timeline.events` | `RoomTimeline.tsx`                             | Every `eventsLength` batch: delta, batch size label, range gap, `atBottom`     |
+| `ui.scroll`       | `RoomTimeline.tsx`                             | `atBottom` true→false transitions, rapid-flip warnings, scroll-to-bottom fires |
+| `ui.timeline`     | `RoomTimeline.tsx`                             | Virtual paginator window shifts (range start/end changes)                      |
+| `call.signal`     | `useCallSignaling.ts`, `IncomingCallModal.tsx` | Call signal state changes, answer/decline                                      |
+| `crypto`          | `useKeyBackup.ts`                              | Key backup errors                                                              |
+| `media`           | `ClientNonUIFeatures.tsx`                      | Blob cache stats on blob URL creation                                          |
 
 ## Implementation Details
 

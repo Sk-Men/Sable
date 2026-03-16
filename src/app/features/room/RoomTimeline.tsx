@@ -954,7 +954,11 @@ export function RoomTimeline({
 
     const isBatch = delta > 1;
     // Classify by size: single new message vs small batch vs large catch-up load
-    const batchSize = delta === 1 ? 'single' : delta <= 20 ? 'small' : delta <= 100 ? 'medium' : 'large';
+    let batchSize: string;
+    if (delta === 1) batchSize = 'single';
+    else if (delta <= 20) batchSize = 'small';
+    else if (delta <= 100) batchSize = 'medium';
+    else batchSize = 'large';
 
     Sentry.addBreadcrumb({
       category: 'timeline.events',
@@ -983,8 +987,8 @@ export function RoomTimeline({
         tags: { feature: 'timeline', batchSize },
       });
     }
-  // atBottomRef and timeline.range.end are intentionally read at effect time, not as deps
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // atBottomRef and timeline.range.end are intentionally read at effect time, not as deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [eventsLength, liveTimelineLinked]);
 
   // Log timeline component mount/unmount
@@ -1323,6 +1327,28 @@ export function RoomTimeline({
     if ((atBottom || resetPending) && liveTimelineLinked && eventsLength > timeline.range.end) {
       if (resetPending) timelineJustResetRef.current = false;
       // More events exist than our current range shows. Adjust to the live end.
+      //
+      // IMPORTANT: also queue a scroll-to-bottom here. The scroll that was queued
+      // during TimelineReset / initial mount fires when range.end is still 0
+      // (the SDK fires Reset *before* populating the fresh timeline), so the DOM
+      // has no items yet and the scroll is a no-op. This second increment fires
+      // after setTimeline renders the full range, guaranteeing we actually land
+      // at the bottom once the events are visible.
+      const rangeGap = eventsLength - timeline.range.end;
+      scrollToBottomRef.current.count += 1;
+      scrollToBottomRef.current.smooth = false;
+      Sentry.addBreadcrumb({
+        category: 'ui.scroll',
+        message: 'Timeline: stay-at-bottom range expansion + scroll',
+        level: 'info',
+        data: {
+          eventsLength,
+          prevRangeEnd: timeline.range.end,
+          rangeGap,
+          wasReset: resetPending,
+          atBottom,
+        },
+      });
       setTimeline((ct) => ({
         ...ct,
         range: {
@@ -1606,7 +1632,7 @@ export function RoomTimeline({
         });
       }
     }
-  }, [scrollToBottomCount, reducedMotion]);
+  }, [scrollToBottomCount, reducedMotion, room.roomId]);
 
   // Remove unreadInfo on mark as read
   useEffect(() => {

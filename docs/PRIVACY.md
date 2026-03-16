@@ -10,7 +10,7 @@ It is designed to keep data collection to a minimum. Most of the app works on yo
 
 For official Sable builds distributed by the project, the data controller is **7w1**.
 
-Contact: **security@sable.moe**  
+Contact: **privacy@sable.moe**  
 Project website: [**https://sable.moe**](https://sable.moe)
 
 If you use a self-hosted, modified, or third-party build of Sable, that operator may use different diagnostics settings and may be responsible for their own privacy practices.
@@ -103,7 +103,7 @@ Sable is not directed to children under 13.
 
 We do not knowingly collect personal information from children through the app.
 
-If you believe a child has submitted information through Sable, contact **security@sable.moe** so it can be removed.
+If you believe a child has submitted information through Sable, contact **privacy@sable.moe** so it can be removed.
 
 ## Changes to this policy
 
@@ -113,4 +113,4 @@ When we do, we will publish the updated version at [**https://sable.moe**](https
 
 ## Contact
 
-If you have questions about this Privacy Policy or want to request deletion of data connected to a bug report, contact **security@sable.moe**.
+If you have questions about this Privacy Policy or want to request deletion of data connected to a bug report, contact **privacy@sable.moe**.

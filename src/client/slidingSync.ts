@@ -975,12 +975,26 @@ export class SlidingSyncManager {
     const onFirstRoomData = (dataRoomId: string) => {
       if (dataRoomId !== roomId) return;
       const latencyMs = Math.round(performance.now() - subscribeMs);
+      // Measure how many events landed on the live timeline as part of this
+      // subscription activation — this is the "page" the timeline has to absorb.
+      const subscribedRoom = this.mx.getRoom(roomId);
+      const eventCount = subscribedRoom?.getLiveTimeline().getEvents().length ?? 0;
       debugLog.info('sync', 'Room subscription: first data received (sliding)', {
         latencyMs,
         syncCycle: this.syncCount,
+        eventCount,
       });
       Sentry.metrics.distribution('sable.sync.room_sub_latency_ms', latencyMs, {
         attributes: { transport: 'sliding' },
+      });
+      Sentry.metrics.distribution('sable.sync.room_sub_event_count', eventCount, {
+        attributes: { transport: 'sliding' },
+      });
+      Sentry.addBreadcrumb({
+        category: 'sync.sliding',
+        message: `Room subscription data arrived (${eventCount} events, ${latencyMs}ms)`,
+        level: 'info',
+        data: { latencyMs, eventCount, syncCycle: this.syncCount },
       });
       this.slidingSync.removeListener(SlidingSyncEvent.RoomData, onFirstRoomData);
       this.pendingRoomDataListeners.delete(roomId);
