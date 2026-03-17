@@ -142,7 +142,7 @@ export function setCurrentlyUsedPerMessageProfileIdForRoom(
   validUntil?: number,
   reset?: boolean
 ) {
-  const accountData = mx.getAccountData(`fyi.cisnt.permessageprofile.roomassociation` as any);
+  const accountData = mx.getAccountData(`${ACCOUNT_DATA_PREFIX}.roomassociation` as any);
   const content = accountData?.getContent();
 
   const associations: PerMessageProfileRoomAssociation[] = Array.isArray(content) ? content : [];
@@ -156,5 +156,5 @@ export function setCurrentlyUsedPerMessageProfileIdForRoom(
   const wrapper: PerMessageProfileRoomAssociationWrapper = {
     associations,
   };
-  return mx.setAccountData(`fyi.cisnt.permessageprofile.roomassociation` as any, wrapper as any);
+  return mx.setAccountData(`${ACCOUNT_DATA_PREFIX}.roomassociation` as any, wrapper as any);
 }
