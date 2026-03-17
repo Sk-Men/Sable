@@ -18,3 +18,4 @@
 
         # Required for Sentry browser profiling (JS Self-Profiling API)
         header Document-Policy "js-profiling"
+}
