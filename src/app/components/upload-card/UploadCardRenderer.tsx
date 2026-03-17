@@ -226,7 +226,7 @@ function PreviewAudio({ fileItem }: PreviewAudioProps) {
       >
         {bars.map((level, i) => {
           const barRatio = i / BAR_COUNT;
-          const played = barRatio <= progress;
+          const played = progress > 0 && barRatio <= progress;
           return (
             <div
               // eslint-disable-next-line react/no-array-index-key
