@@ -55,6 +55,7 @@ export function PerMessageProfileOverview() {
           profileId={profile.id}
           avatarMxcUrl={profile.avatarUrl}
           displayName={profile.name}
+          pronouns={profile.pronouns}
           onDelete={handleDelete}
         />
       ))}

@@ -45,9 +45,18 @@ export function PerMessageProfileEditor({
   const [currentId, setCurrentId] = useState(profileId);
   const [newId, setNewId] = useState(profileId);
 
+  console.warn(pronouns);
+
   // Pronouns
   const [currentPronouns, setCurrentPronouns] = useState<PronounSet[]>(pronouns);
   const [newPronouns, setNewPronouns] = useState<PronounSet[]>(pronouns);
+  const currentPronounsString = useMemo(
+    () =>
+      Array.isArray(currentPronouns)
+        ? currentPronouns.map((p) => `${p.language ? `${p.language}:` : ''}${p.summary}`).join(', ')
+        : '',
+    [currentPronouns]
+  );
   const [newPronounsString, setNewPronounsString] = useState(() => {
     const pronounsString = Array.isArray(newPronouns)
       ? newPronouns.map((p) => `${p.language ? `${p.language}:` : ''}${p.summary}`).join(', ')
@@ -98,10 +107,17 @@ export function PerMessageProfileEditor({
   const hasChanges = useMemo(
     () =>
       newDisplayName !== (currentDisplayName ?? '') ||
-      newPronouns !== (currentPronouns ?? '') ||
+      newPronounsString !== currentPronounsString ||
       hasIdChange ||
       !!imageFile,
-    [newDisplayName, currentDisplayName, newPronouns, currentPronouns, hasIdChange, imageFile]
+    [
+      newDisplayName,
+      currentDisplayName,
+      newPronounsString,
+      currentPronounsString,
+      hasIdChange,
+      imageFile,
+    ]
   );
 
   /**
