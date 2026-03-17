@@ -659,6 +659,7 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
           id: perMessageProfile.id,
           displayname: perMessageProfile.name,
           avatar_url: perMessageProfile.avatarUrl,
+          'io.fsky.nyx.pronouns': perMessageProfile.pronouns,
         };
       }
 

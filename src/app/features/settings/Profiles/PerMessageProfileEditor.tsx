@@ -11,6 +11,7 @@ import { UserAvatar } from '$components/user-avatar';
 import { CompactUploadCardRenderer } from '$components/upload-card';
 import { addOrUpdatePerMessageProfile, deletePerMessageProfile } from '$hooks/usePerMessageProfile';
 import { SequenceCardStyle } from '../styles.css';
+import { parsePronounsStringToPronounsSetArray, PronounSet } from '$utils/pronouns';
 
 /**
  * the props we use for the per-message profile editor, which is used to edit a per-message profile. This is used in the settings page when the user wants to edit a profile.
@@ -20,6 +21,7 @@ type PerMessageProfileEditorProps = {
   profileId: string;
   avatarMxcUrl?: string;
   displayName?: string;
+  pronouns?: PronounSet[];
   onChange?: (profile: { id: string; name: string; avatarUrl?: string }) => void;
   onDelete?: (profileId: string) => void;
 };
@@ -29,11 +31,29 @@ export function PerMessageProfileEditor({
   profileId,
   avatarMxcUrl,
   displayName,
+  pronouns = Array<PronounSet>(),
   onChange,
   onDelete,
 }: Readonly<PerMessageProfileEditorProps>) {
   const useAuthentication = useMediaAuthentication();
   const [currentDisplayName, setCurrentDisplayName] = useState(displayName ?? '');
+
+  // Pronouns
+  const [currentPronouns, setCurrentPronouns] = useState<PronounSet[]>(pronouns);
+  const currentPronounsString = useMemo(() => {
+    const pronounsString = Array.isArray(currentPronouns)
+      ? currentPronouns.map((p) => `${p.language ? `${p.language}:` : ''}${p.summary}`).join(', ')
+      : '';
+    return [pronounsString] as const;
+  }, [currentPronouns]);
+  const [newPronouns, setNewPronouns] = useState<PronounSet[]>(pronouns);
+  const newPronounsString = useMemo(() => {
+    const pronounsString = Array.isArray(newPronouns)
+      ? newPronouns.map((p) => `${p.language ? `${p.language}:` : ''}${p.summary}`).join(', ')
+      : '';
+    return pronounsString;
+  }, [newPronouns]);
+
   const [newDisplayName, setNewDisplayName] = useState(currentDisplayName);
   const [imageFile, setImageFile] = useState<File | undefined>();
   const [avatarMxc, setAvatarMxc] = useState(avatarMxcUrl);
@@ -73,16 +93,20 @@ export function PerMessageProfileEditor({
   const [disableSetDisplayname, setDisableSetDisplayname] = useState(false);
 
   const hasChanges = useMemo(
-    () => newDisplayName !== (currentDisplayName ?? '') || !!imageFile,
-    [newDisplayName, currentDisplayName, imageFile]
+    () =>
+      newDisplayName !== (currentDisplayName ?? '') ||
+      newPronouns !== (currentPronouns ?? '') ||
+      !!imageFile,
+    [newDisplayName, currentDisplayName, newPronouns, currentPronouns, imageFile]
   );
 
   // Reset handler for display name
   const handleReset = useCallback(() => {
     setNewDisplayName(currentDisplayName);
+    setNewPronouns(currentPronouns);
     setChangingDisplayName(false);
     setDisableSetDisplayname(false);
-  }, [currentDisplayName]);
+  }, [currentDisplayName, currentPronouns]);
 
   const handleSave = useCallback(() => {
     addOrUpdatePerMessageProfile(mx, {
@@ -91,17 +115,23 @@ export function PerMessageProfileEditor({
       avatarUrl: avatarMxc,
     }).then(() => {
       setCurrentDisplayName(newDisplayName);
+      setCurrentPronouns(newPronouns);
     });
     setChangingDisplayName(false);
     setDisableSetDisplayname(false);
-  }, [mx, profileId, newDisplayName, avatarMxc]);
+  }, [mx, profileId, newDisplayName, avatarMxc, newPronouns]);
 
   const handleDelete = useCallback(() => {
     deletePerMessageProfile(mx, profileId).then(() => {
       setCurrentDisplayName('');
+      setCurrentPronouns([]);
       if (onDelete) onDelete(profileId);
     });
-  }, [mx, profileId]);
+  }, [mx, profileId, onDelete]);
+
+  const handlePronounsChange = useCallback(() => {
+    return setNewPronouns(parsePronounsStringToPronounsSetArray(newPronounsString));
+  }, [newPronounsString]);
 
   return (
     <Box
@@ -150,7 +180,14 @@ export function PerMessageProfileEditor({
           alignItems="Center"
           justifyContent="Center"
           gap="100"
-          style={{ minWidth: 80, maxWidth: 100, maxHeight: 100, flexShrink: 0, overflow: 'visible', marginTop: 20 }}
+          style={{
+            minWidth: 80,
+            maxWidth: 100,
+            maxHeight: 100,
+            flexShrink: 0,
+            overflow: 'visible',
+            marginTop: 20,
+          }}
           aria-label="Avatar and upload"
         >
           <Avatar
@@ -255,6 +292,52 @@ export function PerMessageProfileEditor({
                   variant="Secondary"
                   aria-label="Reset display name"
                   title="Reset display name"
+                >
+                  <Icon src={Icons.Cross} size="100" aria-label="Reset icon" />
+                </IconButton>
+              )
+            }
+          />
+          <label
+            htmlFor={`pronounsInput-${profileId}`}
+            style={{ marginBottom: config.space.S200, alignSelf: 'flex-start' }}
+          >
+            <Text size="T300" style={{ marginTop: config.space.S100 }}>
+              Pronouns:
+            </Text>
+          </label>
+          <Input
+            required
+            name="pronounsInput"
+            id={`pronounsInput-${profileId}`}
+            value={newPronounsString}
+            onChange={handlePronounsChange}
+            variant="Secondary"
+            radii="300"
+            style={{
+              flex: 1,
+              minWidth: 0,
+              width: '100%',
+              maxWidth: 'clamp(200px, 60vw, 480px)',
+              paddingRight: config.space.S200,
+              fontSize: 16,
+              height: 50,
+            }}
+            placeholder="Pronouns"
+            readOnly={changingDisplayName || disableSetDisplayname}
+            aria-label={`Pronouns for ${profileId}`}
+            title={`Pronouns for ${profileId}`}
+            after={
+              hasChanges &&
+              !changingDisplayName && (
+                <IconButton
+                  type="reset"
+                  onClick={handleReset}
+                  size="300"
+                  radii="300"
+                  variant="Secondary"
+                  aria-label="Reset pronouns"
+                  title="Reset pronouns"
                 >
                   <Icon src={Icons.Cross} size="100" aria-label="Reset icon" />
                 </IconButton>

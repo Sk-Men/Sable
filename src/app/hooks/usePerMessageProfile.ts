@@ -1,4 +1,7 @@
+import { PronounSet } from '$utils/pronouns';
 import { MatrixClient } from 'matrix-js-sdk';
+
+const ACCOUNT_DATA_PREFIX = 'fyi.cisnt.permessageprofile';
 
 /**
  * a per message profile
@@ -18,6 +21,7 @@ export type PerMessageProfile = {
    * the avatar url to use for messages using this profile.
    */
   avatarUrl?: string;
+  pronouns?: PronounSet[];
 };
 
 type PerMessageProfileIndex = {
@@ -48,36 +52,33 @@ export async function getPerMessageProfileById(
   mx: MatrixClient,
   id: string
 ): Promise<PerMessageProfile | undefined> {
-  const profile = await mx.getAccountData(`fyi.cisnt.permessageprofile.${id}` as any);
+  const profile = await mx.getAccountData(`${ACCOUNT_DATA_PREFIX}.${id}` as any);
   return profile ? (profile.getContent() as unknown as PerMessageProfile) : undefined;
 }
 
 export async function getAllPerMessageProfiles(mx: MatrixClient): Promise<PerMessageProfile[]> {
-  const profileData = await mx.getAccountData('fyi.cisnt.permessageprofile.index' as any);
+  const profileData = await mx.getAccountData(`${ACCOUNT_DATA_PREFIX}.index` as any);
   const profileIds = (profileData?.getContent() as PerMessageProfileIndex)?.profileIds || [];
   const profiles = await Promise.all(profileIds.map((id) => getPerMessageProfileById(mx, id)));
   return profiles.filter((profile): profile is PerMessageProfile => profile !== undefined);
 }
 
 export function addOrUpdatePerMessageProfile(mx: MatrixClient, profile: PerMessageProfile) {
-  const profileListIndex = mx.getAccountData('fyi.cisnt.permessageprofile.index' as any);
+  const profileListIndex = mx.getAccountData(`${ACCOUNT_DATA_PREFIX}.index` as any);
   if (profileListIndex?.getContent()?.profileIds.includes(profile.id)) {
     // profile already exists, just update it
-    return mx.setAccountData(`fyi.cisnt.permessageprofile.${profile.id}` as any, profile as any);
+    return mx.setAccountData(`${ACCOUNT_DATA_PREFIX}.${profile.id}` as any, profile as any);
   }
   // profile doesn't exist, add it to the index and then add the profile data
   const newProfileIds = [...(profileListIndex?.getContent()?.profileIds || []), profile.id];
   return Promise.all([
-    mx.setAccountData(
-      'fyi.cisnt.permessageprofile.index' as any,
-      { profileIds: newProfileIds } as any
-    ),
-    mx.setAccountData(`fyi.cisnt.permessageprofile.${profile.id}` as any, profile as any),
+    mx.setAccountData(`${ACCOUNT_DATA_PREFIX}.index` as any, { profileIds: newProfileIds } as any),
+    mx.setAccountData(`${ACCOUNT_DATA_PREFIX}.${profile.id}` as any, profile as any),
   ]);
 }
 
 export function deletePerMessageProfile(mx: MatrixClient, id: string) {
-  return mx.setAccountData(`fyi.cisnt.permessageprofile.${id}` as any, {});
+  return mx.setAccountData(`${ACCOUNT_DATA_PREFIX}.${id}` as any, {});
 }
 
 /**
@@ -90,7 +91,7 @@ export async function getCurrentlyUsedPerMessageProfileForRoom(
   mx: MatrixClient,
   roomId: string
 ): Promise<PerMessageProfile | undefined> {
-  const accountData = mx.getAccountData(`fyi.cisnt.permessageprofile.roomassociation` as any);
+  const accountData = mx.getAccountData(`${ACCOUNT_DATA_PREFIX}.roomassociation` as any);
   const content = accountData?.getContent()?.associations as
     | PerMessageProfileRoomAssociation[]
     | undefined;
