@@ -7,7 +7,7 @@
   },
   "ignoreDependencies": [
     "buffer",
-    "@element-hq/element-call-embedded",
+    "@sableclient/sable-call-embedded",
     "@matrix-org/matrix-sdk-crypto-wasm",
     "@testing-library/user-event"
   ],
