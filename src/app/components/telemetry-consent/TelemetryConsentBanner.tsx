@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Box, Button, Icon, IconButton, Icons, Text } from 'folds';
+import { Box, Button, Icon, Icons, Text } from 'folds';
 import * as css from './TelemetryConsentBanner.css';
 
 const SENTRY_KEY = 'sable_sentry_enabled';
@@ -21,15 +21,15 @@ export function TelemetryConsentBanner() {
 
   if (!visible) return null;
 
-  const handleAcknowledge = () => {
+  const handleEnable = () => {
     localStorage.setItem(SENTRY_KEY, 'true');
-    setDismissing(true);
-    dismissTimerRef.current = setTimeout(() => setVisible(false), 220);
+    window.location.reload();
   };
 
-  const handleOptOut = () => {
+  const handleDecline = () => {
     localStorage.setItem(SENTRY_KEY, 'false');
-    window.location.reload();
+    setDismissing(true);
+    dismissTimerRef.current = setTimeout(() => setVisible(false), 220);
   };
 
   return (
@@ -38,14 +38,14 @@ export function TelemetryConsentBanner() {
         className={css.Banner}
         data-dismissing={dismissing}
         role="region"
-        aria-label="Crash reporting notice"
+        aria-label="Crash reporting prompt"
       >
         <div className={css.Header}>
           <Icon src={Icons.Shield} size="400" />
           <div className={css.HeaderText}>
-            <Text size="H4">Crash reporting is enabled</Text>
+            <Text size="H4">Help improve Sable</Text>
             <Text size="T300" priority="300">
-              Sable sends anonymous crash reports to help us fix bugs faster. No messages, room
+              Optionally send anonymous crash reports to help us fix bugs faster. No messages, room
               names, or personal data are included.{' '}
               <a
                 href="https://github.com/SableClient/Sable/blob/dev/docs/PRIVACY.md"
@@ -56,23 +56,13 @@ export function TelemetryConsentBanner() {
               </a>
             </Text>
           </div>
-          <IconButton
-            size="300"
-            variant="Surface"
-            fill="None"
-            radii="300"
-            onClick={handleAcknowledge}
-            aria-label="Dismiss"
-          >
-            <Icon size="100" src={Icons.Cross} />
-          </IconButton>
         </div>
         <Box className={css.Actions}>
-          <Button variant="Secondary" fill="Soft" size="300" radii="300" onClick={handleOptOut}>
-            <Text size="B300">Opt out</Text>
+          <Button variant="Secondary" fill="Soft" size="300" radii="300" onClick={handleDecline}>
+            <Text size="B300">No thanks</Text>
           </Button>
-          <Button variant="Primary" fill="Solid" size="300" radii="300" onClick={handleAcknowledge}>
-            <Text size="B300">Got it</Text>
+          <Button variant="Primary" fill="Solid" size="300" radii="300" onClick={handleEnable}>
+            <Text size="B300">Enable</Text>
           </Button>
         </Box>
       </div>

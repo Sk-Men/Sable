@@ -24,8 +24,8 @@ const release = import.meta.env.VITE_APP_VERSION;
 let sessionErrorCount = 0;
 const SESSION_ERROR_LIMIT = 50;
 
-// Default on: Sentry runs unless the user has opted out via the banner or Settings.
-const sentryEnabled = localStorage.getItem('sable_sentry_enabled') !== 'false';
+// Default off: Sentry only runs when the user has opted in via the banner or Settings.
+const sentryEnabled = localStorage.getItem('sable_sentry_enabled') === 'true';
 const replayEnabled = localStorage.getItem('sable_sentry_replay_enabled') === 'true';
 
 // Only initialize if DSN is provided and user hasn't opted out

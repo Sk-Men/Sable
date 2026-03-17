@@ -24,7 +24,7 @@ describe('TelemetryConsentBanner', () => {
     expect(container).toBeEmptyDOMElement();
   });
 
-  it('renders nothing when the user has already acknowledged (opted in)', () => {
+  it('renders nothing when the user has already opted in', () => {
     vi.stubEnv('VITE_SENTRY_DSN', TEST_DSN);
     localStorage.setItem(SENTRY_KEY, 'true');
     const { container } = render(<TelemetryConsentBanner />);
@@ -41,8 +41,8 @@ describe('TelemetryConsentBanner', () => {
   it('renders the banner when DSN is configured and no preference is saved', () => {
     vi.stubEnv('VITE_SENTRY_DSN', TEST_DSN);
     render(<TelemetryConsentBanner />);
-    expect(screen.getByRole('region', { name: /crash reporting notice/i })).toBeInTheDocument();
-    expect(screen.getByText(/crash reporting is enabled/i)).toBeInTheDocument();
+    expect(screen.getByRole('region', { name: /crash reporting prompt/i })).toBeInTheDocument();
+    expect(screen.getByText(/help improve sable/i)).toBeInTheDocument();
   });
 
   // ── accessibility ─────────────────────────────────────────────────────────
@@ -50,9 +50,9 @@ describe('TelemetryConsentBanner', () => {
   it('has both action buttons visible', () => {
     vi.stubEnv('VITE_SENTRY_DSN', TEST_DSN);
     render(<TelemetryConsentBanner />);
-    expect(screen.getByRole('button', { name: /got it/i })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /opt out/i })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /dismiss/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /enable/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /no thanks/i })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /dismiss/i })).not.toBeInTheDocument();
   });
 
   it('includes a link to the privacy policy', () => {
@@ -61,51 +61,35 @@ describe('TelemetryConsentBanner', () => {
     expect(screen.getByRole('link', { name: /learn more/i })).toBeInTheDocument();
   });
 
-  // ── "Got it" action ───────────────────────────────────────────────────────
+  // ── "Enable" action ───────────────────────────────────────────────────────
 
-  it('"Got it" saves opted-in preference to localStorage', () => {
+  it('"Enable" saves opted-in preference to localStorage', () => {
     vi.stubEnv('VITE_SENTRY_DSN', TEST_DSN);
     render(<TelemetryConsentBanner />);
-    fireEvent.click(screen.getByRole('button', { name: /got it/i }));
+    fireEvent.click(screen.getByRole('button', { name: /enable/i }));
     expect(localStorage.getItem(SENTRY_KEY)).toBe('true');
   });
 
-  it('"Got it" does not reload the page', () => {
+  it('"Enable" reloads the page so Sentry initialises', () => {
     vi.stubEnv('VITE_SENTRY_DSN', TEST_DSN);
     render(<TelemetryConsentBanner />);
-    fireEvent.click(screen.getByRole('button', { name: /got it/i }));
-    expect(window.location.reload).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('button', { name: /enable/i }));
+    expect(window.location.reload).toHaveBeenCalledOnce();
   });
 
-  // ── dismiss (✕) action ────────────────────────────────────────────────────
+  // ── "No thanks" action ────────────────────────────────────────────────────
 
-  it('dismiss button (✕) saves opted-in preference to localStorage', () => {
+  it('"No thanks" saves opted-out preference to localStorage', () => {
     vi.stubEnv('VITE_SENTRY_DSN', TEST_DSN);
     render(<TelemetryConsentBanner />);
-    fireEvent.click(screen.getByRole('button', { name: /dismiss/i }));
-    expect(localStorage.getItem(SENTRY_KEY)).toBe('true');
-  });
-
-  it('dismiss button does not reload the page', () => {
-    vi.stubEnv('VITE_SENTRY_DSN', TEST_DSN);
-    render(<TelemetryConsentBanner />);
-    fireEvent.click(screen.getByRole('button', { name: /dismiss/i }));
-    expect(window.location.reload).not.toHaveBeenCalled();
-  });
-
-  // ── "Opt out" action ──────────────────────────────────────────────────────
-
-  it('"Opt out" saves opted-out preference to localStorage', () => {
-    vi.stubEnv('VITE_SENTRY_DSN', TEST_DSN);
-    render(<TelemetryConsentBanner />);
-    fireEvent.click(screen.getByRole('button', { name: /opt out/i }));
+    fireEvent.click(screen.getByRole('button', { name: /no thanks/i }));
     expect(localStorage.getItem(SENTRY_KEY)).toBe('false');
   });
 
-  it('"Opt out" reloads the page', () => {
+  it('"No thanks" does not reload the page', () => {
     vi.stubEnv('VITE_SENTRY_DSN', TEST_DSN);
     render(<TelemetryConsentBanner />);
-    fireEvent.click(screen.getByRole('button', { name: /opt out/i }));
-    expect(window.location.reload).toHaveBeenCalledOnce();
+    fireEvent.click(screen.getByRole('button', { name: /no thanks/i }));
+    expect(window.location.reload).not.toHaveBeenCalled();
   });
 });

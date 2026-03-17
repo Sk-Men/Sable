@@ -1081,7 +1081,7 @@ type GeneralProps = {
 
 function DiagnosticsAndPrivacy() {
   const [sentryEnabled, setSentryEnabled] = useState(
-    localStorage.getItem('sable_sentry_enabled') !== 'false'
+    localStorage.getItem('sable_sentry_enabled') === 'true'
   );
   const [sessionReplayEnabled, setSessionReplayEnabled] = useState(
     localStorage.getItem('sable_sentry_replay_enabled') === 'true'
