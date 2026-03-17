@@ -37,7 +37,6 @@ export function PerMessageProfilePage({ requestClose }: PerMessageProfilePagePro
           direction="Column"
           shrink="No"
         >
-          <Text size="H4">Per-Message Profiles</Text>
           <PerMessageProfileOverview />
         </Box>
       </PageNavContent>

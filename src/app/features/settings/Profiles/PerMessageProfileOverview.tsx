@@ -1,7 +1,11 @@
 import { useMatrixClient } from '$hooks/useMatrixClient';
-import { getAllPerMessageProfiles, PerMessageProfile } from '$hooks/usePerMessageProfile';
+import {
+  addOrUpdatePerMessageProfile,
+  getAllPerMessageProfiles,
+  PerMessageProfile,
+} from '$hooks/usePerMessageProfile';
 import { useEffect, useState } from 'react';
-import { Box } from 'folds';
+import { Box, Button, Text } from 'folds';
 import { PerMessageProfileEditor } from './PerMessageProfileEditor';
 
 /**
@@ -20,14 +24,37 @@ export function PerMessageProfileOverview() {
     fetchProfiles();
   }, [mx]);
 
+  // Handler to remove a profile from the list after deletion
+  const handleDelete = (profileId: string) => {
+    setProfiles((prevProfiles) => prevProfiles.filter((profile) => profile.id !== profileId));
+  };
+
   return (
-    <Box gap="200" direction="Column" alignItems="Start">
+    <Box gap="100" direction="Column" alignItems="Start">
+      <Box direction="Row" gap="100" alignItems="Center">
+        <Text size="H4">Per-Message Profiles</Text>
+        <Button
+          onClick={() => {
+            const newProfile: PerMessageProfile = {
+              id: crypto.randomUUID(),
+              name: 'New Profile',
+            };
+            addOrUpdatePerMessageProfile(mx, newProfile).then(() => {
+              setProfiles((prevProfiles) => [...prevProfiles, newProfile]);
+            });
+          }}
+          variant="Primary"
+        >
+          <Text size="H5">Add</Text>
+        </Button>
+      </Box>
       {profiles.map((profile) => (
         <PerMessageProfileEditor
           mx={mx}
           profileId={profile.id}
           avatarMxcUrl={profile.avatarUrl}
           displayName={profile.name}
+          onDelete={handleDelete}
         />
       ))}
     </Box>

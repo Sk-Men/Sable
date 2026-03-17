@@ -21,6 +21,7 @@ type PerMessageProfileEditorProps = {
   avatarMxcUrl?: string;
   displayName?: string;
   onChange?: (profile: { id: string; name: string; avatarUrl?: string }) => void;
+  onDelete?: (profileId: string) => void;
 };
 
 export function PerMessageProfileEditor({
@@ -29,6 +30,7 @@ export function PerMessageProfileEditor({
   avatarMxcUrl,
   displayName,
   onChange,
+  onDelete,
 }: Readonly<PerMessageProfileEditorProps>) {
   const useAuthentication = useMediaAuthentication();
   const [currentDisplayName, setCurrentDisplayName] = useState(displayName ?? '');
@@ -97,6 +99,7 @@ export function PerMessageProfileEditor({
   const handleDelete = useCallback(() => {
     deletePerMessageProfile(mx, profileId).then(() => {
       setCurrentDisplayName('');
+      if (onDelete) onDelete(profileId);
     });
   }, [mx, profileId]);
 
@@ -124,8 +127,8 @@ export function PerMessageProfileEditor({
         style={{
           width: '100%',
           minWidth: 500,
-          minHeight: 200,
-          padding: config.space.S600,
+          minHeight: 100,
+          maxHeight: 200,
           boxSizing: 'border-box',
           display: 'flex',
           flexDirection: 'row',
@@ -136,27 +139,26 @@ export function PerMessageProfileEditor({
         }}
       >
         <Text
-          size="H4"
+          size="H6"
           style={{ position: 'absolute', top: 8, left: 16 }}
           id={`profile-editor-title-${profileId}`}
         >
           Profile ID: {profileId}
         </Text>
-        {/* Linke Spalte: Avatar + Upload */}
         <Box
           direction="Column"
           alignItems="Center"
           justifyContent="Center"
           gap="100"
-          style={{ minWidth: 80, maxWidth: 100, flexShrink: 0, overflow: 'visible' }}
+          style={{ minWidth: 80, maxWidth: 100, maxHeight: 100, flexShrink: 0, overflow: 'visible', marginTop: 20 }}
           aria-label="Avatar and upload"
         >
           <Avatar
             size="300"
             radii="300"
             style={{
-              width: 'clamp(48px, 8vw, 72px)',
-              height: 'clamp(48px, 8vw, 72px)',
+              width: 'clamp(25px, 8vw, 50px)',
+              height: 'clamp(25px, 8vw, 50px)',
               minWidth: 48,
               minHeight: 48,
               maxWidth: 72,
@@ -183,7 +185,7 @@ export function PerMessageProfileEditor({
             outlined
             radii="300"
             style={{
-              width: 'clamp(56px, 10vw, 90px)',
+              width: 'clamp(30px, 6vw, 60px)',
               marginTop: config.space.S100,
               overflow: 'visible',
               fontSize: 14,
@@ -193,12 +195,11 @@ export function PerMessageProfileEditor({
           >
             <Text size="T200">Upload</Text>
           </Button>
-          {/* Upload-Bereich falls aktiv */}
           {uploadAtom && (
             <Box
               gap="100"
               direction="Column"
-              style={{ width: '100%', maxWidth: 100, overflow: 'visible' }}
+              style={{ width: '100%', maxWidth: 100, maxHeight: 100, overflow: 'visible' }}
               aria-label="Upload area"
             >
               <CompactUploadCardRenderer
@@ -209,9 +210,8 @@ export function PerMessageProfileEditor({
             </Box>
           )}
         </Box>
-        {/* Mittlere Spalte: Display Name Input */}
         <Box
-          direction="Row"
+          direction="Column"
           alignItems="Center"
           justifyContent="Center"
           style={{ flex: 1, minWidth: 0, height: '100%' }}
@@ -219,7 +219,7 @@ export function PerMessageProfileEditor({
         >
           <label
             htmlFor={`displayNameInput-${profileId}`}
-            style={{ marginRight: config.space.S200 }}
+            style={{ marginBottom: config.space.S200, alignSelf: 'flex-start' }}
           >
             <Text size="T300">Display Name:</Text>
           </label>
@@ -235,14 +235,15 @@ export function PerMessageProfileEditor({
               flex: 1,
               minWidth: 0,
               width: '100%',
-              maxWidth: 'clamp(120px, 40vw, 320px)',
+              maxWidth: 'clamp(200px, 60vw, 480px)',
               paddingRight: config.space.S200,
               fontSize: 16,
-              height: 36,
+              height: 50,
             }}
             placeholder="Display name"
             readOnly={changingDisplayName || disableSetDisplayname}
-            aria-label="Display name"
+            aria-label={`Display name for ${profileId}`}
+            title={`Display name for ${profileId}`}
             after={
               hasChanges &&
               !changingDisplayName && (
@@ -253,6 +254,7 @@ export function PerMessageProfileEditor({
                   radii="300"
                   variant="Secondary"
                   aria-label="Reset display name"
+                  title="Reset display name"
                 >
                   <Icon src={Icons.Cross} size="100" aria-label="Reset icon" />
                 </IconButton>
@@ -266,7 +268,7 @@ export function PerMessageProfileEditor({
           alignItems="Center"
           justifyContent="Center"
           style={{ minWidth: 120, maxWidth: 140, flexShrink: 0, height: '100%' }}
-          aria-label="Save button area"
+          aria-label={`Save button area for ${profileId}`}
         >
           <Button
             onClick={handleSave}
@@ -276,12 +278,13 @@ export function PerMessageProfileEditor({
             disabled={!hasChanges}
             style={{
               minWidth: 120,
-              height: 44,
+              height: 'clamp(30px, 6vw, 50px)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
             }}
-            aria-label="Save profile changes"
+            aria-label={`Save profile changes for ${profileId}`}
+            title={`Save profile changes for ${profileId}`}
           >
             <Text size="B300">Save</Text>
           </Button>
@@ -293,13 +296,14 @@ export function PerMessageProfileEditor({
             fill="None"
             style={{
               minWidth: 120,
-              height: 44,
+              height: 'clamp(30px, 6vw, 50px)',
               marginTop: config.space.S100,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
             }}
-            aria-label="Delete profile"
+            aria-label={`Delete profile ${profileId}`}
+            title={`Delete profile ${profileId}`}
           >
             <Text size="B300">Delete</Text>
           </Button>
