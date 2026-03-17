@@ -1,12 +1,14 @@
-import { ReactNode, useRef } from 'react';
+import { ReactNode, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import FocusTrap from 'focus-trap-react';
-import { isKeyHotkey } from 'is-hotkey';
 import { Header, Menu, Scroll, config } from 'folds';
 
 import { preventScrollWithArrowKey, stopPropagation } from '$utils/keyboard';
 import { useAlive } from '$hooks/useAlive';
 import * as css from './AutocompleteMenu.css';
 import { BaseAutocompleteMenu } from './BaseAutocompleteMenu';
+
+export const AUTOCOMPLETE_NAVIGATE_EVENT = 'autocomplete-navigate';
+export type AutocompleteNavigateDetail = { direction: 1 | -1 };
 
 type AutocompleteMenuProps = {
   requestClose: () => void;
@@ -16,6 +18,8 @@ type AutocompleteMenuProps = {
 export function AutocompleteMenu({ headerContent, requestClose, children }: AutocompleteMenuProps) {
   const alive = useAlive();
   const itemsRef = useRef<HTMLDivElement>(null);
+  const [selectedIndex, setSelectedIndex] = useState(0);
+  const prevButtonCountRef = useRef(-1);
 
   const handleDeactivate = () => {
     if (alive()) {
@@ -24,17 +28,51 @@ export function AutocompleteMenu({ headerContent, requestClose, children }: Auto
     }
   };
 
+  // Sync data-selected to DOM; reset to index 0 when the item list changes
+  useLayoutEffect(() => {
+    const buttons = Array.from(
+      itemsRef.current?.querySelectorAll<HTMLButtonElement>('button') ?? []
+    );
+    const count = buttons.length;
+
+    let idx = selectedIndex;
+    if (count !== prevButtonCountRef.current) {
+      prevButtonCountRef.current = count;
+      idx = 0;
+      if (selectedIndex !== 0) setSelectedIndex(0);
+    }
+
+    const safeIdx = Math.max(0, Math.min(idx, count - 1));
+    buttons.forEach((btn, i) => {
+      if (i === safeIdx) btn.dataset.selected = 'true';
+      else delete btn.dataset.selected;
+    });
+  });
+
+  // Listen for navigation events dispatched by the editor key handler
+  useEffect(() => {
+    const container = itemsRef.current?.closest('[data-autocomplete-menu]');
+    if (!container) return;
+    const handler = (e: Event) => {
+      const { direction } = (e as CustomEvent<AutocompleteNavigateDetail>).detail;
+      setSelectedIndex((prev) => {
+        const buttons = itemsRef.current?.querySelectorAll('button') ?? [];
+        return Math.max(0, Math.min(prev + direction, buttons.length - 1));
+      });
+    };
+    container.addEventListener(AUTOCOMPLETE_NAVIGATE_EVENT, handler);
+    return () => container.removeEventListener(AUTOCOMPLETE_NAVIGATE_EVENT, handler);
+  }, []);
+
   return (
     <BaseAutocompleteMenu>
       <FocusTrap
         focusTrapOptions={{
-          initialFocus: () => itemsRef.current?.querySelector<HTMLButtonElement>('button') ?? false,
+          initialFocus: false,
           onPostDeactivate: handleDeactivate,
           returnFocusOnDeactivate: false,
           clickOutsideDeactivates: true,
           allowOutsideClick: true,
-          isKeyForward: (evt: KeyboardEvent) => isKeyHotkey('arrowdown', evt),
-          isKeyBackward: (evt: KeyboardEvent) => isKeyHotkey('arrowup', evt),
           escapeDeactivates: stopPropagation,
         }}
       >
@@ -43,7 +81,7 @@ export function AutocompleteMenu({ headerContent, requestClose, children }: Auto
             {headerContent}
           </Header>
           <Scroll style={{ flexGrow: 1 }} onKeyDown={preventScrollWithArrowKey}>
-            <div ref={itemsRef} style={{ padding: config.space.S200 }}>
+            <div ref={itemsRef} className={css.AutocompleteMenuItems} style={{ padding: config.space.S200 }}>
               {children}
             </div>
           </Scroll>

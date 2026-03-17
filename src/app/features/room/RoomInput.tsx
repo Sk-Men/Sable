@@ -742,16 +742,31 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
 
     const handleKeyDown: KeyboardEventHandler = useCallback(
       (evt) => {
+        if (autocompleteQuery && isKeyHotkey('arrowdown', evt)) {
+          evt.preventDefault();
+          document.querySelector('[data-autocomplete-menu]')?.dispatchEvent(
+            new CustomEvent('autocomplete-navigate', { detail: { direction: 1 } })
+          );
+          return;
+        }
+        if (autocompleteQuery && isKeyHotkey('arrowup', evt)) {
+          evt.preventDefault();
+          document.querySelector('[data-autocomplete-menu]')?.dispatchEvent(
+            new CustomEvent('autocomplete-navigate', { detail: { direction: -1 } })
+          );
+          return;
+        }
         if (
           (isKeyHotkey('mod+enter', evt) || (!enterForNewline && isKeyHotkey('enter', evt))) &&
           !isComposing(evt)
         ) {
           evt.preventDefault();
           if (autocompleteQuery) {
-            const firstItem = document.querySelector<HTMLButtonElement>(
-              '[data-autocomplete-menu] button'
-            );
-            firstItem?.click();
+            const selectedItem =
+              document.querySelector<HTMLButtonElement>(
+                '[data-autocomplete-menu] button[data-selected]'
+              ) ?? document.querySelector<HTMLButtonElement>('[data-autocomplete-menu] button');
+            selectedItem?.click();
             return;
           }
           submit().catch((error) => {
