@@ -83,6 +83,12 @@ You can manage diagnostic features in: **Settings → General → Diagnostics & 
 
 Depending on the build, you can disable error reporting, enable or disable session replay, and adjust breadcrumb categories.
 
+### First-time consent notice
+
+When a build has crash reporting configured, a notice appears the first time you open Sable. It explains that anonymous crash reports are enabled and gives you the option to opt out before any diagnostic data is sent. You can also dismiss it to keep reporting enabled.
+
+This notice only appears once. Your choice is saved and can be changed at any time in **Settings → General → Diagnostics & Privacy**.
+
 You can also stop all app-based data transmission by uninstalling the app.
 
 ## Legal basis

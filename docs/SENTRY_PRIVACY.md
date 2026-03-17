@@ -11,6 +11,22 @@ configuration details see [SENTRY_INTEGRATION.md](./SENTRY_INTEGRATION.md).
 Sentry is **disabled by default when no DSN is configured** and can be **opted
 out by users** at any time via Settings → General → Diagnostics & Privacy.
 
+### First-Login Consent Notice
+
+When Sentry is configured, the app shows a dismissible notice the first time a
+user loads Sable. The notice explains that crash reporting is active and provides
+a one-click opt-out before any data is sent.
+
+| Action | Effect |
+| --- | --- |
+| **"Got it"** or **✕ dismiss** | Preference saved as opted-in (`sable_sentry_enabled = 'true'`); notice does not appear again |
+| **"Opt out"** | Sentry disabled (`sable_sentry_enabled = 'false'`), page reloads — no Sentry data is sent for that session or any future session |
+
+The preference persists in `localStorage` and can be changed at any time in
+**Settings → General → Diagnostics & Privacy**.
+
+**Code:** `src/app/components/telemetry-consent/TelemetryConsentBanner.tsx`
+
 When enabled, the following categories of data are sent:
 
 ### Error Reports
