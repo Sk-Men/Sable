@@ -46,7 +46,6 @@ export function getSupportedAudioCodec(): string | null {
   const userAgent = globalThis.navigator?.userAgent ?? '';
   const isIOS =
     /iPad|iPhone|iPod/.test(userAgent) ||
-    // eslint-disable-next-line @typescript-eslint/no-deprecated
     (globalThis.navigator?.platform === 'MacIntel' && globalThis.navigator?.maxTouchPoints > 1);
   const isSafari = /^((?!chrome|android|crios|fxios|edgios).)*safari/i.test(userAgent) || isIOS;
 

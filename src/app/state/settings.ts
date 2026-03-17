@@ -97,6 +97,7 @@ export interface Settings {
   autoplayEmojis: boolean;
   saveStickerEmojiBandwidth: boolean;
   alwaysShowCallButton: boolean;
+  faviconForMentionsOnly: boolean;
 
   // furry stuff
   renderAnimals: boolean;
@@ -178,6 +179,7 @@ const defaultSettings: Settings = {
   autoplayEmojis: true,
   saveStickerEmojiBandwidth: false,
   alwaysShowCallButton: false,
+  faviconForMentionsOnly: false,
 
   // furry stuff
   renderAnimals: true,

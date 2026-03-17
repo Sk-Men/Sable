@@ -28,7 +28,7 @@ import {
   VideoContent,
 } from './message';
 import { UrlPreviewCard, UrlPreviewHolder } from './url-preview';
-import { Image, MediaControl, Video } from './media';
+import { Image, MediaControl, PersistedVolumeVideo } from './media';
 import { ImageViewer } from './image-viewer';
 import { PdfViewer } from './Pdf-viewer';
 import { TextViewer } from './text-viewer';
@@ -323,7 +323,7 @@ function RenderMessageContentInternal({
                       )
                     : undefined
                 }
-                renderVideo={(p) => <Video {...p} />}
+                renderVideo={(p) => <PersistedVolumeVideo {...p} />}
               />
             )}
             outlined={outlineAttachment}

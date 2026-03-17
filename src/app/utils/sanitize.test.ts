@@ -37,7 +37,6 @@ describe('sanitizeCustomHtml – XSS prevention', () => {
   });
 
   it('strips javascript: href on anchor tags', () => {
-    // eslint-disable-next-line no-script-url
     const result = sanitizeCustomHtml('<a href="javascript:alert(\'xss\')">link</a>');
     expect(result).not.toMatch(/javascript:/);
   });
