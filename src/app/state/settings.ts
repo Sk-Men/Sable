@@ -50,7 +50,6 @@ export interface Settings {
   showHiddenEvents: boolean;
   showTombstoneEvents: boolean;
   legacyUsernameColor: boolean;
-  allowPipVideos: boolean;
 
   usePushNotifications: boolean;
   useInAppNotifications: boolean;
@@ -130,7 +129,6 @@ const defaultSettings: Settings = {
   showHiddenEvents: false,
   showTombstoneEvents: false,
   legacyUsernameColor: false,
-  allowPipVideos: false,
 
   enableMSC4268CMD: false,
 

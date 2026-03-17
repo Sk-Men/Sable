@@ -232,23 +232,6 @@ function IdentityCosmetics() {
   );
 }
 
-function VideoCosmetics() {
-  const [allowPipVideos, setPipVideos] = useSetting(settingsAtom, 'allowPipVideos');
-
-  return (
-    <Box direction="Column" gap="100">
-      <Text size="L400">Video</Text>
-      <SequenceCard className={SequenceCardStyle} variant="SurfaceVariant" direction="Column">
-        <SettingTile
-          title="Picture in Picture Videos"
-          description="If your browser has it enabled, allows you to pop out the videos in the video call interface. Does not apply retroactively to current joined voice rooms."
-          after={<Switch variant="Primary" value={allowPipVideos} onChange={setPipVideos} />}
-        />
-      </SequenceCard>
-    </Box>
-  );
-}
-
 type CosmeticsProps = {
   requestClose: () => void;
 };
@@ -278,7 +261,6 @@ export function Cosmetics({ requestClose }: CosmeticsProps) {
               <IdentityCosmetics />
               <JumboEmoji />
               <Privacy />
-              <VideoCosmetics />
             </Box>
           </PageContent>
         </Scroll>
