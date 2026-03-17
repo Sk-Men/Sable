@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Box, Button, Icon, IconButton, Icons, Text } from 'folds';
+import { Box, Button, Icon, Icons, Text } from 'folds';
 import * as css from './TelemetryConsentBanner.css';
 
 const SENTRY_KEY = 'sable_sentry_enabled';
@@ -56,16 +56,6 @@ export function TelemetryConsentBanner() {
               </a>
             </Text>
           </div>
-          <IconButton
-            size="300"
-            variant="Surface"
-            fill="None"
-            radii="300"
-            onClick={handleDecline}
-            aria-label="Dismiss"
-          >
-            <Icon size="100" src={Icons.Cross} />
-          </IconButton>
         </div>
         <Box className={css.Actions}>
           <Button variant="Secondary" fill="Soft" size="300" radii="300" onClick={handleDecline}>
