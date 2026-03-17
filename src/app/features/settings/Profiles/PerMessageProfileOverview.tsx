@@ -51,6 +51,7 @@ export function PerMessageProfileOverview() {
       {profiles.map((profile) => (
         <PerMessageProfileEditor
           mx={mx}
+          key={`profile-list-item-${profile.id}`}
           profileId={profile.id}
           avatarMxcUrl={profile.avatarUrl}
           displayName={profile.name}
