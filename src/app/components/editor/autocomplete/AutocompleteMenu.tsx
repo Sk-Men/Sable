@@ -28,7 +28,9 @@ export function AutocompleteMenu({ headerContent, requestClose, children }: Auto
     }
   };
 
-  // Sync data-selected to DOM; reset to index 0 when the item list changes
+  // Sync data-selected to DOM; reset to index 0 when the item list changes.
+  // No dep array — runs after every render so newly-loaded buttons are stamped
+  // immediately (buttons arrive async when search results load).
   useLayoutEffect(() => {
     const buttons = Array.from(
       itemsRef.current?.querySelectorAll<HTMLButtonElement>('button') ?? []
@@ -46,7 +48,7 @@ export function AutocompleteMenu({ headerContent, requestClose, children }: Auto
     buttons.forEach((btn, i) => {
       btn.setAttribute('data-selected', String(i === safeIdx));
     });
-  }, [selectedIndex]);
+  });
 
   // Listen for navigation events dispatched by the editor key handler
   useEffect(() => {
