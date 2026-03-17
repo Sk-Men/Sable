@@ -36,6 +36,7 @@ import { ReactEditor } from 'slate-react';
 import { Editor } from 'slate';
 import { SessionMembershipData } from 'matrix-js-sdk/lib/matrixrtc/CallMembership';
 import to from 'await-to-js';
+import * as Sentry from '@sentry/react';
 import { useAtomValue, useSetAtom } from 'jotai';
 import {
   as,
@@ -205,7 +206,9 @@ export const timelineToEventsCount = (t: EventTimeline) => {
 export const getTimelinesEventsCount = (timelines: EventTimeline[]): number => {
   const timelineEventCountReducer = (count: number, tm: EventTimeline) =>
     count + timelineToEventsCount(tm);
-  return (timelines || []).filter(Boolean).reduce(timelineEventCountReducer, 0);
+  return (timelines || [])
+    .filter(Boolean)
+    .reduce((accumulator, element) => timelineEventCountReducer(accumulator, element), 0);
 };
 
 export const getTimelineAndBaseIndex = (
@@ -290,54 +293,60 @@ const useEventTimelineLoader = (
   onError: (err: Error | null) => void
 ) =>
   useCallback(
-    async (eventId: string) => {
-      const withTimeout = async <T,>(promise: Promise<T>, timeoutMs: number): Promise<T> =>
-        new Promise<T>((resolve, reject) => {
-          const timeoutId = globalThis.setTimeout(() => {
-            reject(new Error('Timed out loading event timeline'));
-          }, timeoutMs);
+    async (eventId: string) =>
+      Sentry.startSpan({ name: 'timeline.jump_load', op: 'matrix.timeline' }, async () => {
+        const jumpLoadStart = performance.now();
+        const withTimeout = async <T,>(promise: Promise<T>, timeoutMs: number): Promise<T> =>
+          new Promise<T>((resolve, reject) => {
+            const timeoutId = globalThis.setTimeout(() => {
+              reject(new Error('Timed out loading event timeline'));
+            }, timeoutMs);
 
-          promise
-            .then((value) => {
-              globalThis.clearTimeout(timeoutId);
-              resolve(value);
-            })
-            .catch((error) => {
-              globalThis.clearTimeout(timeoutId);
-              reject(error);
-            });
-        });
+            promise
+              .then((value) => {
+                globalThis.clearTimeout(timeoutId);
+                resolve(value);
+              })
+              .catch((error) => {
+                globalThis.clearTimeout(timeoutId);
+                reject(error);
+              });
+          });
 
-      if (!room.getUnfilteredTimelineSet().getTimelineForEvent(eventId)) {
-        await withTimeout(
-          mx.roomInitialSync(room.roomId, PAGINATION_LIMIT),
-          EVENT_TIMELINE_LOAD_TIMEOUT_MS
+        if (!room.getUnfilteredTimelineSet().getTimelineForEvent(eventId)) {
+          await withTimeout(
+            mx.roomInitialSync(room.roomId, PAGINATION_LIMIT),
+            EVENT_TIMELINE_LOAD_TIMEOUT_MS
+          );
+          await withTimeout(
+            mx.getLatestTimeline(room.getUnfilteredTimelineSet()),
+            EVENT_TIMELINE_LOAD_TIMEOUT_MS
+          );
+        }
+        const [err, replyEvtTimeline] = await to(
+          withTimeout(
+            mx.getEventTimeline(room.getUnfilteredTimelineSet(), eventId),
+            EVENT_TIMELINE_LOAD_TIMEOUT_MS
+          )
         );
-        await withTimeout(
-          mx.getLatestTimeline(room.getUnfilteredTimelineSet()),
-          EVENT_TIMELINE_LOAD_TIMEOUT_MS
+        if (!replyEvtTimeline) {
+          onError(err ?? null);
+          return;
+        }
+        const linkedTimelines = getLinkedTimelines(replyEvtTimeline);
+        const absIndex = getEventIdAbsoluteIndex(linkedTimelines, replyEvtTimeline, eventId);
+
+        if (absIndex === undefined) {
+          onError(err ?? null);
+          return;
+        }
+
+        Sentry.metrics.distribution(
+          'sable.timeline.jump_load_ms',
+          performance.now() - jumpLoadStart
         );
-      }
-      const [err, replyEvtTimeline] = await to(
-        withTimeout(
-          mx.getEventTimeline(room.getUnfilteredTimelineSet(), eventId),
-          EVENT_TIMELINE_LOAD_TIMEOUT_MS
-        )
-      );
-      if (!replyEvtTimeline) {
-        onError(err ?? null);
-        return;
-      }
-      const linkedTimelines = getLinkedTimelines(replyEvtTimeline);
-      const absIndex = getEventIdAbsoluteIndex(linkedTimelines, replyEvtTimeline, eventId);
-
-      if (absIndex === undefined) {
-        onError(err ?? null);
-        return;
-      }
-
-      onLoad(eventId, linkedTimelines, absIndex);
-    },
+        onLoad(eventId, linkedTimelines, absIndex);
+      }), // end startSpan
     [mx, room, onLoad, onError]
   );
 
@@ -414,6 +423,7 @@ const useTimelinePagination = (
         });
       }
       try {
+        const paginateStart = performance.now();
         const [err] = await to(
           mx.paginateEventTimeline(timelineToPaginate, {
             backwards,
@@ -423,6 +433,9 @@ const useTimelinePagination = (
         if (err) {
           if (alive()) {
             (backwards ? setBackwardStatus : setForwardStatus)('error');
+            Sentry.metrics.count('sable.pagination.error', 1, {
+              attributes: { direction: backwards ? 'backward' : 'forward' },
+            });
             debugLog.error('timeline', 'Timeline pagination failed', {
               direction: backwards ? 'backward' : 'forward',
               error: err instanceof Error ? err.message : String(err),
@@ -445,6 +458,16 @@ const useTimelinePagination = (
         if (alive()) {
           recalibratePagination(lTimelines, timelinesEventsCount, backwards);
           (backwards ? setBackwardStatus : setForwardStatus)('idle');
+          Sentry.metrics.distribution(
+            'sable.pagination.latency_ms',
+            performance.now() - paginateStart,
+            {
+              attributes: {
+                direction: backwards ? 'backward' : 'forward',
+                encrypted: String(!!room?.hasEncryptionStateEvent()),
+              },
+            }
+          );
           debugLog.info('timeline', 'Timeline pagination completed', {
             direction: backwards ? 'backward' : 'forward',
             totalEventsNow: getTimelinesEventsCount(lTimelines),
@@ -545,13 +568,30 @@ const useLiveTimelineRefresh = (room: Room, onRefresh: () => void) => {
   useEffect(() => {
     const handleTimelineRefresh: RoomEventHandlerMap[RoomEvent.TimelineRefresh] = (r: Room) => {
       if (r.roomId !== room.roomId) return;
+      // App-initiated full reinit (e.g. from refreshLiveTimeline()). Rare in normal usage.
+      debugLog.debug('timeline', 'TimelineRefresh: app-initiated live timeline reinit', {
+        roomId: room.roomId,
+        trigger: 'TimelineRefresh',
+      });
       onRefreshRef.current();
     };
     // The SDK fires RoomEvent.TimelineReset on the EventTimelineSet (not the Room)
-    // when a limited sliding-sync response replaces the live EventTimeline with a
-    // fresh one. Without this handler, the stored linkedTimelines reference the old
-    // detached chain and back-pagination silently no-ops, freezing the room.
+    // when a limited sync response replaces the live EventTimeline with a fresh one.
+    // This happens in classic /sync on limited=true (gap after idle/reconnect) AND in
+    // sliding sync when the proxy sends a limited room update.
     const handleTimelineReset: EventTimelineSetHandlerMap[RoomEvent.TimelineReset] = () => {
+      debugLog.info('timeline', 'TimelineReset: SDK-initiated (limited sync / sync gap)', {
+        roomId: room.roomId,
+        trigger: 'TimelineReset',
+        liveTimelineEvents: room.getUnfilteredTimelineSet().getLiveTimeline().getEvents().length,
+      });
+      Sentry.metrics.count('sable.timeline.limited_reset', 1);
+      Sentry.addBreadcrumb({
+        category: 'timeline.sync',
+        message: 'TimelineReset: limited sync gap',
+        level: 'info',
+        data: { roomId: room.roomId },
+      });
       onRefreshRef.current();
     };
     const unfilteredTimelineSet = room.getUnfilteredTimelineSet();
@@ -604,7 +644,12 @@ type ThreadReplyChipProps = {
   onToggle: () => void;
 };
 
-function ThreadReplyChip({ room, mEventId, openThreadId, onToggle }: ThreadReplyChipProps) {
+function ThreadReplyChip({
+  room,
+  mEventId,
+  openThreadId,
+  onToggle,
+}: Readonly<ThreadReplyChipProps>) {
   const mx = useMatrixClient();
   const useAuthentication = useMediaAuthentication();
   const nicknames = useAtomValue(nicknamesAtom);
@@ -630,7 +675,7 @@ function ThreadReplyChip({ room, mEventId, openThreadId, onToggle }: ThreadReply
     }
   });
 
-  const latestReply = replyEvents[replyEvents.length - 1];
+  const latestReply = replyEvents.at(-1);
   const latestSenderId = latestReply?.getSender() ?? '';
   const latestSenderName =
     getMemberDisplayName(room, latestSenderId, nicknames) ??
@@ -734,7 +779,7 @@ export function RoomTimeline({
   roomInputRef,
   editor,
   onEditorReset,
-}: RoomTimelineProps) {
+}: Readonly<RoomTimelineProps>) {
   const mx = useMatrixClient();
   const useAuthentication = useMediaAuthentication();
   const pushProcessor = useMemo(() => new PushProcessor(mx), [mx]);
@@ -804,12 +849,38 @@ export function RoomTimeline({
 
   const atBottomAnchorRef = useRef<HTMLElement>(null);
 
+  // TODO: The return value of "useState" should be destructured and named symmetrically (typescript:S6754)
   const [atBottom, setAtBottomState] = useState<boolean>(true);
   const atBottomRef = useRef(atBottom);
-  const setAtBottom = useCallback((val: boolean) => {
-    setAtBottomState(val);
-    atBottomRef.current = val;
-  }, []);
+  // Tracks when atBottom last changed so we can detect rapid true→false flips
+  // (characteristic of the IO false-positive on bulk event loads).
+  const atBottomLastChangedRef = useRef<number>(0);
+  const setAtBottom = useCallback(
+    (val: boolean) => {
+      setAtBottomState(val);
+      const now = Date.now();
+      const msSincePrevious = now - atBottomLastChangedRef.current;
+      atBottomLastChangedRef.current = now;
+      Sentry.addBreadcrumb({
+        category: 'ui.scroll',
+        message: val ? 'Timeline: scrolled to bottom' : 'Timeline: scrolled away from bottom',
+        level: 'info',
+        data: { roomId: room.roomId, msSincePrevious },
+      });
+      // Rapid flip: bottom→away within 200 ms is characteristic of the known
+      // IntersectionObserver false-positive triggered by bulk event loads causing
+      // a DOM layout shift (see memory: "RoomTimeline Stay at Bottom False-Positive").
+      if (!val && msSincePrevious < 200) {
+        Sentry.captureMessage('Timeline: rapid atBottom flip (possible spurious scroll reset)', {
+          level: 'warning',
+          extra: { roomId: room.roomId, msSincePrevious },
+          tags: { feature: 'timeline' },
+        });
+      }
+      atBottomRef.current = val;
+    },
+    [room.roomId]
+  );
 
   // Set to true by the useLiveTimelineRefresh callback when the timeline is
   // re-initialised (TimelineRefresh or TimelineReset). Allows the range self-heal
@@ -877,8 +948,67 @@ export function RoomTimeline({
   const eventsLength = getTimelinesEventsCount(timeline.linkedTimelines);
   const liveTimelineLinked = timeline.linkedTimelines.at(-1) === getLiveTimeline(room);
 
+  // Track previous eventsLength so we can calculate batch sizes.
+  const prevEventsLengthRef = useRef(eventsLength);
+
+  // Breadcrumb every time the timeline gains events so we can correlate message
+  // batches (sliding sync chunks) with scroll state changes in Sentry Replay.
+  useEffect(() => {
+    const prev = prevEventsLengthRef.current;
+    const delta = eventsLength - prev;
+    prevEventsLengthRef.current = eventsLength;
+
+    if (delta === 0) return;
+
+    const isBatch = delta > 1;
+    // Classify by size: single new message vs small batch vs large catch-up load
+    let batchSize: string;
+    if (delta === 1) batchSize = 'single';
+    else if (delta <= 20) batchSize = 'small';
+    else if (delta <= 100) batchSize = 'medium';
+    else batchSize = 'large';
+
+    Sentry.addBreadcrumb({
+      category: 'timeline.events',
+      message: `Timeline: ${delta} event${delta === 1 ? '' : 's'} added (${batchSize})`,
+      level: isBatch ? 'info' : 'debug',
+      data: {
+        delta,
+        batchSize,
+        eventsLength,
+        prevEventsLength: prev,
+        liveTimelineLinked,
+        rangeEnd: timeline.range.end,
+        atBottom: atBottomRef.current,
+        // Gap between live end and visible window — non-zero while user is scrolled back
+        rangeGap: eventsLength - timeline.range.end,
+      },
+    });
+
+    // A large batch (> 50) while liveTimelineLinked is the sliding-sync
+    // adaptive load pattern that can trigger the IO false-positive scroll reset.
+    // Capture a warning so it's searchable in Sentry even when no reset fires.
+    if (delta > 50 && liveTimelineLinked) {
+      Sentry.captureMessage('Timeline: large event batch from sliding sync', {
+        level: 'warning',
+        extra: { delta, eventsLength, rangeEnd: timeline.range.end, atBottom: atBottomRef.current },
+        tags: { feature: 'timeline', batchSize },
+      });
+    }
+    // atBottomRef and timeline.range.end are intentionally read at effect time, not as deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [eventsLength, liveTimelineLinked]);
+
   // Log timeline component mount/unmount
   useEffect(() => {
+    const mode = eventId ? 'jump' : 'live';
+    Sentry.metrics.count('sable.timeline.open', 1, { attributes: { mode } });
+    const initialWindowSize = timeline.range.end - timeline.range.start;
+    if (initialWindowSize > 0) {
+      Sentry.metrics.distribution('sable.timeline.render_window', initialWindowSize, {
+        attributes: { encrypted: String(room.hasEncryptionStateEvent()), mode },
+      });
+    }
     debugLog.info('timeline', 'Timeline mounted', {
       roomId: room.roomId,
       eventId,
@@ -927,6 +1057,34 @@ export function RoomTimeline({
           if (deltaStart < 3 && deltaEnd < 3) {
             return currentTimeline;
           }
+
+          // Log range changes with scroll state so we can correlate visible-content
+          // jumps with paginator window shifts. scrollRef is a stable ref — safe here.
+          const scrollEl = scrollRef.current;
+          const ds = newRange.start - currentTimeline.range.start;
+          const de = newRange.end - currentTimeline.range.end;
+          debugLog.debug('timeline', 'Virtual paginator range changed', {
+            prevRange: { start: currentTimeline.range.start, end: currentTimeline.range.end },
+            newRange,
+            deltaStart: ds,
+            deltaEnd: de,
+            scrollTop: scrollEl?.scrollTop,
+            scrollHeight: scrollEl?.scrollHeight,
+            clientHeight: scrollEl?.clientHeight,
+          });
+          Sentry.addBreadcrumb({
+            category: 'ui.timeline',
+            message: 'Timeline window shifted',
+            level: 'debug',
+            data: {
+              prevStart: currentTimeline.range.start,
+              prevEnd: currentTimeline.range.end,
+              newStart: newRange.start,
+              newEnd: newRange.end,
+              deltaStart: ds,
+              deltaEnd: de,
+            },
+          });
 
           return { ...currentTimeline, range: newRange };
         });
@@ -1038,6 +1196,9 @@ export function RoomTimeline({
       eventRoom: Room | undefined
     ) => {
       if (eventRoom?.roomId !== room.roomId) return;
+      if (_mEvent.getAssociatedStatus() === EventStatus.NOT_SENT) {
+        Sentry.metrics.count('sable.message.send_failed', 1);
+      }
       setTimeline((ct) => ({ ...ct }));
       if (!unreadInfoRef.current) {
         setUnreadInfo(getRoomUnreadInfo(room));
@@ -1114,6 +1275,17 @@ export function RoomTimeline({
       // self-heal effect below can advance the range as events arrive on the fresh
       // timeline, without atBottom=true being required.
       //
+      // Also force atBottom=true and queue a scroll-to-bottom. The SDK fires
+      // TimelineRefresh before adding new events to the fresh live timeline, so
+      // getInitialTimeline captures range.end=0. Once events arrive the
+      // rangeAtEnd self-heal useEffect needs atBottom=true to run; the
+      // IntersectionObserver may have transiently fired isIntersecting=false
+      // during the render transition, leaving atBottom=false and causing the
+      // "Jump to Latest" button to stick permanently. Forcing atBottom here is
+      // correct: TimelineRefresh always reinits to the live end, so the user
+      // should be repositioned to the bottom regardless.
+      Sentry.metrics.count('sable.timeline.reinit', 1);
+
       // When the user WAS at the bottom we still call setAtBottom(true) so a
       // transient isIntersecting=false from the IntersectionObserver during the
       // DOM transition cannot stick the "Jump to Latest" button on-screen.
@@ -1163,6 +1335,28 @@ export function RoomTimeline({
     if ((atBottom || resetPending) && liveTimelineLinked && eventsLength > timeline.range.end) {
       if (resetPending) timelineJustResetRef.current = false;
       // More events exist than our current range shows. Adjust to the live end.
+      //
+      // IMPORTANT: also queue a scroll-to-bottom here. The scroll that was queued
+      // during TimelineReset / initial mount fires when range.end is still 0
+      // (the SDK fires Reset *before* populating the fresh timeline), so the DOM
+      // has no items yet and the scroll is a no-op. This second increment fires
+      // after setTimeline renders the full range, guaranteeing we actually land
+      // at the bottom once the events are visible.
+      const rangeGap = eventsLength - timeline.range.end;
+      scrollToBottomRef.current.count += 1;
+      scrollToBottomRef.current.smooth = false;
+      Sentry.addBreadcrumb({
+        category: 'ui.scroll',
+        message: 'Timeline: stay-at-bottom range expansion + scroll',
+        level: 'info',
+        data: {
+          eventsLength,
+          prevRangeEnd: timeline.range.end,
+          rangeGap,
+          wasReset: resetPending,
+          atBottom,
+        },
+      });
       setTimeline((ct) => ({
         ...ct,
         range: {
@@ -1303,7 +1497,24 @@ export function RoomTimeline({
   useLayoutEffect(() => {
     const scrollEl = scrollRef.current;
     if (scrollEl) {
+      const preScrollTop = scrollEl.scrollTop;
+      const preScrollHeight = scrollEl.scrollHeight;
+      const { clientHeight } = scrollEl;
       scrollToBottom(scrollEl);
+      // Log whether we were actually away from bottom at mount — useful for diagnosing
+      // rooms that open with the wrong scroll position.
+      const distanceFromBottom = preScrollHeight - preScrollTop - clientHeight;
+      debugLog.debug('timeline', 'Initial scroll to bottom (mount)', {
+        preScrollTop,
+        preScrollHeight,
+        clientHeight,
+        postScrollTop: scrollEl.scrollTop,
+        distanceFromBottom,
+        alreadyAtBottom: distanceFromBottom <= 2,
+      });
+      if (distanceFromBottom > 0) {
+        Sentry.metrics.distribution('sable.timeline.initial_scroll_offset_px', distanceFromBottom);
+      }
     }
   }, []);
 
@@ -1315,7 +1526,19 @@ export function RoomTimeline({
 
     const forceScroll = () => {
       // if the user isn't scrolling jump down to latest content
-      if (!atBottomRef.current) return;
+      const wasAtBottom = atBottomRef.current;
+      const preScrollTop = scrollEl?.scrollTop ?? 0;
+      const preScrollHeight = scrollEl?.scrollHeight ?? 0;
+      // Log every resize so we can see when media loads move the timeline and whether
+      // we corrected it (atBottom=true) or left it (atBottom=false, user is scrolled up).
+      debugLog.debug('timeline', 'Content resized (image/media load)', {
+        atBottom: wasAtBottom,
+        preScrollTop,
+        preScrollHeight,
+        clientHeight: scrollEl?.clientHeight,
+        distanceFromBottom: preScrollHeight - preScrollTop - (scrollEl?.clientHeight ?? 0),
+      });
+      if (!wasAtBottom) return;
       scrollToBottom(scrollEl, 'instant');
     };
 
@@ -1375,11 +1598,36 @@ export function RoomTimeline({
       const scrollEl = scrollRef.current;
       if (scrollEl) {
         const behavior = scrollToBottomRef.current.smooth && !reducedMotion ? 'smooth' : 'instant';
+        const wasAtBottom = atBottomRef.current;
+        Sentry.addBreadcrumb({
+          category: 'ui.scroll',
+          message: 'Timeline: scroll-to-bottom triggered',
+          level: 'info',
+          data: { roomId: room.roomId, behavior, wasAtBottom },
+        });
+        // A scroll-to-bottom while the user was NOT at the bottom and no timeline
+        // reset is expected is a sign of an unexpected scroll jump.
+        if (!wasAtBottom && !timelineJustResetRef.current) {
+          Sentry.captureMessage('Timeline: scroll-to-bottom fired while user was scrolled up', {
+            level: 'warning',
+            extra: { roomId: room.roomId, behavior },
+            tags: { feature: 'timeline' },
+          });
+        }
         // Use requestAnimationFrame to ensure the virtual paginator has finished
         // updating the DOM before we scroll. This prevents scroll position from
         // being stale when new messages arrive while at the bottom.
         requestAnimationFrame(() => {
+          const preScrollTop = scrollEl.scrollTop;
+          const { scrollHeight } = scrollEl;
           scrollToBottom(scrollEl, behavior);
+          debugLog.debug('timeline', 'scrollToBottom fired', {
+            behavior,
+            preScrollTop,
+            scrollHeight,
+            postScrollTop: scrollEl.scrollTop,
+            remainingOffset: scrollEl.scrollHeight - scrollEl.scrollTop - scrollEl.clientHeight,
+          });
           // On Android WebView, layout may still settle after the initial scroll.
           // Fire a second instant scroll after a short delay to guarantee we
           // reach the true bottom (e.g. after images finish loading or the
@@ -1392,7 +1640,7 @@ export function RoomTimeline({
         });
       }
     }
-  }, [scrollToBottomCount, reducedMotion]);
+  }, [scrollToBottomCount, reducedMotion, room.roomId]);
 
   // Remove unreadInfo on mark as read
   useEffect(() => {
@@ -1571,8 +1819,11 @@ export function RoomTimeline({
   );
 
   const handleReactionToggle = useCallback(
-    (targetEventId: string, key: string, shortcode?: string) =>
-      toggleReaction(mx, room, targetEventId, key, shortcode),
+    (targetEventId: string, key: string, shortcode?: string) => {
+      debugLog.info('ui', 'Reaction toggled', { roomId: room.roomId, targetEventId, key });
+      Sentry.metrics.count('sable.message.reaction.toggle', 1);
+      toggleReaction(mx, room, targetEventId, key, shortcode);
+    },
     [mx, room]
   );
 

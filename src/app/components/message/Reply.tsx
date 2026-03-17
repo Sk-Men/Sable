@@ -68,10 +68,10 @@ export const ThreadIndicator = as<'div'>(({ ...props }, ref) => (
 
 type ReplyProps = {
   room: Room;
-  timelineSet?: EventTimelineSet | undefined;
+  timelineSet?: EventTimelineSet;
   replyEventId: string;
-  threadRootId?: string | undefined;
-  onClick?: MouseEventHandler | undefined;
+  threadRootId?: string;
+  onClick?: MouseEventHandler;
 };
 
 export const Reply = as<'div', ReplyProps>(
@@ -119,10 +119,12 @@ export const Reply = as<'div', ReplyProps>(
 
     if (format === 'org.matrix.custom.html' && formattedBody) {
       const strippedHtml = trimReplyFromFormattedBody(formattedBody)
-        .replace(/<br\s*\/?>/gi, ' ')
-        .replace(/<\/p>\s*<p[^>]*>/gi, ' ')
-        .replace(/<\/?p[^>]*>/gi, '')
-        .replace(/(?:\r\n|\r|\n)/g, ' ');
+        .replaceAll(/<br\s*\/?>/gi, ' ')
+        .replaceAll(/<\/p>\s*<p[^>]*>/gi, ' ')
+        .replaceAll(/<\/?p[^>]*>/gi, '')
+        .replaceAll(/<\/li>\s*<li[^>]*>/gi, ' ')
+        .replaceAll(/<\/?(ul|ol|li|blockquote|h[1-6]|pre|div)[^>]*>/gi, '')
+        .replaceAll(/(?:\r\n|\r|\n)/g, ' ');
       const parserOpts = getReactCustomHtmlParser(mx, room.roomId, {
         linkifyOpts: LINKIFY_OPTS,
         useAuthentication,
@@ -130,7 +132,7 @@ export const Reply = as<'div', ReplyProps>(
       });
       bodyJSX = parse(strippedHtml, parserOpts) as JSX.Element;
     } else if (body) {
-      const strippedBody = trimReplyFromBody(body).replace(/(?:\r\n|\r|\n)/g, ' ');
+      const strippedBody = trimReplyFromBody(body).replaceAll(/(?:\r\n|\r|\n)/g, ' ');
       bodyJSX = scaleSystemEmoji(strippedBody);
     }
 

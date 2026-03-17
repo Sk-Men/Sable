@@ -134,6 +134,7 @@ import { createLogger } from '$utils/debug';
 import { createDebugLogger } from '$utils/debugLogger';
 import FocusTrap from 'focus-trap-react';
 import { useQueryClient } from '@tanstack/react-query';
+import * as Sentry from '@sentry/react';
 import {
   delayedEventsSupportedAtom,
   roomIdToScheduledTimeAtomFamily,
@@ -153,6 +154,7 @@ import { useRoomCreators } from '$hooks/useRoomCreators';
 import { useRoomPermissions } from '$hooks/useRoomPermissions';
 import { AutocompleteNotice } from '$components/editor/autocomplete/AutocompleteNotice';
 import { Microphone, Stop } from '@phosphor-icons/react';
+import { getSupportedAudioExtension } from '$plugins/voice-recorder-kit/supportedCodec';
 import { SchedulePickerDialog } from './schedule-send';
 import * as css from './schedule-send/SchedulePickerDialog.css';
 import {
@@ -517,28 +519,74 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
         }
       }
 
-      await Promise.all(
-        contents.map((content) =>
-          mx
-            .sendMessage(roomId, threadRootId ?? null, content as any)
-            .then((res) => {
-              debugLog.info('message', 'Uploaded file message sent', {
-                roomId,
-                eventId: res.event_id,
-                msgtype: content.msgtype,
-              });
-              return res;
+      const invalidate = () =>
+        queryClient.invalidateQueries({ queryKey: ['delayedEvents', roomId] });
+
+      if (scheduledTime) {
+        try {
+          const delayMs = computeDelayMs(scheduledTime);
+          if (editingScheduledDelayId) {
+            await cancelDelayedEvent(mx, editingScheduledDelayId);
+          }
+
+          await Promise.all(
+            contents.map((content) => {
+              if (isEncrypted) {
+                return sendDelayedMessageE2EE(mx, roomId, room, content, delayMs);
+              }
+              return sendDelayedMessage(mx, roomId, content, delayMs);
             })
-            .catch((error: unknown) => {
-              debugLog.error('message', 'Failed to send uploaded file message', {
-                roomId,
-                error: error instanceof Error ? error.message : String(error),
-              });
-              log.error('failed to send uploaded message', { roomId }, error);
-              throw error;
-            })
-        )
-      );
+          );
+
+          invalidate();
+          setEditingScheduledDelayId(null);
+          setScheduledTime(null);
+        } catch (error) {
+          debugLog.error('message', 'Failed to schedule uploaded file message', {
+            roomId,
+            error: error instanceof Error ? error.message : String(error),
+          });
+          log.error('failed to schedule uploaded message', { roomId }, error);
+          throw error;
+        }
+      } else {
+        if (editingScheduledDelayId) {
+          try {
+            await cancelDelayedEvent(mx, editingScheduledDelayId);
+            invalidate();
+            setEditingScheduledDelayId(null);
+          } catch {
+            debugLog.error(
+              'message',
+              'Failed to cancel scheduled event before immediate file send',
+              { roomId }
+            );
+          }
+        }
+
+        await Promise.all(
+          contents.map((content) =>
+            mx
+              .sendMessage(roomId, threadRootId ?? null, content as any)
+              .then((res: { event_id: string }) => {
+                debugLog.info('message', 'Uploaded file message sent', {
+                  roomId,
+                  eventId: res.event_id,
+                  msgtype: content.msgtype,
+                });
+                return res;
+              })
+              .catch((error: unknown) => {
+                debugLog.error('message', 'Failed to send uploaded file message', {
+                  roomId,
+                  error: error instanceof Error ? error.message : String(error),
+                });
+                log.error('failed to send uploaded message', { roomId }, error);
+                throw error;
+              })
+          )
+        );
+      }
     };
 
     const handleCloseAutocomplete = useCallback(() => {
@@ -707,19 +755,35 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
           // Cancel failed — leave state intact for retry
         }
       } else {
+        const msgSendStart = performance.now();
         resetInput();
         debugLog.info('message', 'Sending message', { roomId, msgtype: (content as any).msgtype });
-        mx.sendMessage(roomId, threadRootId ?? null, content as any)
-          .then((res) => {
+        Sentry.startSpan(
+          {
+            name: 'message.send',
+            op: 'matrix.message',
+            attributes: { encrypted: String(isEncrypted) },
+          },
+          () => mx.sendMessage(roomId, threadRootId ?? null, content as any)
+        )
+          .then((res: { event_id: string }) => {
             debugLog.info('message', 'Message sent successfully', {
               roomId,
               eventId: res.event_id,
             });
+            Sentry.metrics.distribution(
+              'sable.message.send_latency_ms',
+              performance.now() - msgSendStart,
+              { attributes: { encrypted: String(isEncrypted) } }
+            );
           })
           .catch((error: unknown) => {
             debugLog.error('message', 'Failed to send message', {
               roomId,
               error: error instanceof Error ? error.message : String(error),
+            });
+            Sentry.metrics.count('sable.message.send_error', 1, {
+              attributes: { encrypted: String(isEncrypted) },
             });
             log.error('failed to send message', { roomId }, error);
           });
@@ -748,11 +812,35 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
 
     const handleKeyDown: KeyboardEventHandler = useCallback(
       (evt) => {
+        if (autocompleteQuery && isKeyHotkey('arrowdown', evt)) {
+          evt.preventDefault();
+          document
+            .querySelector('[data-autocomplete-menu]')
+            ?.dispatchEvent(new CustomEvent('autocomplete-navigate', { detail: { direction: 1 } }));
+          return;
+        }
+        if (autocompleteQuery && isKeyHotkey('arrowup', evt)) {
+          evt.preventDefault();
+          document
+            .querySelector('[data-autocomplete-menu]')
+            ?.dispatchEvent(
+              new CustomEvent('autocomplete-navigate', { detail: { direction: -1 } })
+            );
+          return;
+        }
         if (
           (isKeyHotkey('mod+enter', evt) || (!enterForNewline && isKeyHotkey('enter', evt))) &&
           !isComposing(evt)
         ) {
           evt.preventDefault();
+          if (autocompleteQuery) {
+            const selectedItem =
+              document.querySelector<HTMLButtonElement>(
+                '[data-autocomplete-menu] button[data-selected]'
+              ) ?? document.querySelector<HTMLButtonElement>('[data-autocomplete-menu] button');
+            selectedItem?.click();
+            return;
+          }
           submit().catch((error) => {
             log.error('submit failed', { roomId }, error);
           });
@@ -1120,11 +1208,12 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
                   ref={audioRecorderRef}
                   onRequestClose={() => setShowAudioRecorder(false)}
                   onRecordingComplete={(payload) => {
+                    const extension = getSupportedAudioExtension(payload.audioCodec);
                     const file = new File(
                       [payload.audioBlob],
-                      `sable-audio-message-${Date.now()}.ogg`,
+                      `sable-audio-message-${Date.now()}.${extension}`,
                       {
-                        type: payload.audioBlob.type,
+                        type: payload.audioCodec,
                       }
                     );
                     handleFiles([file], {

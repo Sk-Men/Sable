@@ -1,4 +1,5 @@
 import { useEffect, useRef, useCallback } from 'react';
+import * as Sentry from '@sentry/react';
 import { RoomStateEvent } from 'matrix-js-sdk';
 import { MatrixRTCSession } from 'matrix-js-sdk/lib/matrixrtc/MatrixRTCSession';
 import { MatrixRTCSessionManagerEvents } from 'matrix-js-sdk/lib/matrixrtc/MatrixRTCSessionManager';
@@ -7,6 +8,9 @@ import { mDirectAtom } from '$state/mDirectList';
 import { incomingCallRoomIdAtom, mutedCallRoomIdAtom } from '$state/callEmbed';
 import RingtoneSound from '$public/sound/ringtone.webm';
 import { useMatrixClient } from './useMatrixClient';
+import { createDebugLogger } from '../utils/debugLogger';
+
+const debugLog = createDebugLogger('CallSignaling');
 
 type CallPhase = 'IDLE' | 'RINGING_OUT' | 'RINGING_IN' | 'ACTIVE' | 'ENDED';
 
@@ -121,12 +125,32 @@ export function useCallSignaling() {
 
           // being called
           if (remoteMembers.length > 0 && !isSelfInCall) {
+            if (currentPhase !== 'RINGING_IN') {
+              debugLog.info('call', 'Incoming call detected', {
+                roomId,
+                remoteCount: remoteMembers.length,
+              });
+              Sentry.addBreadcrumb({
+                category: 'call.signal',
+                message: 'Incoming call ringing',
+                data: { roomId },
+              });
+            }
             callPhaseRef.current[roomId] = 'RINGING_IN';
             return { ...acc, incoming: roomId };
           }
 
           // multiple people no ringtone
           if (isSelfInCall && remoteMembers.length > 0) {
+            if (currentPhase !== 'ACTIVE') {
+              debugLog.info('call', 'Call became active', { roomId });
+              Sentry.addBreadcrumb({
+                category: 'call.signal',
+                message: 'Call active',
+                data: { roomId },
+              });
+              Sentry.metrics.count('sable.call.active', 1);
+            }
             callPhaseRef.current[roomId] = 'ACTIVE';
             return acc;
           }
@@ -135,6 +159,15 @@ export function useCallSignaling() {
           if (isSelfInCall && remoteMembers.length === 0) {
             // Check if post call
             if (currentPhase === 'ACTIVE' || currentPhase === 'ENDED') {
+              if (currentPhase !== 'ENDED') {
+                debugLog.info('call', 'Call ended', { roomId });
+                Sentry.addBreadcrumb({
+                  category: 'call.signal',
+                  message: 'Call ended',
+                  data: { roomId },
+                });
+                Sentry.metrics.count('sable.call.ended', 1);
+              }
               callPhaseRef.current[roomId] = 'ENDED';
               return acc;
             }
@@ -144,10 +177,20 @@ export function useCallSignaling() {
               if (!outgoingStartRef.current) outgoingStartRef.current = now;
 
               if (now - outgoingStartRef.current < 30000) {
+                if (currentPhase !== 'RINGING_OUT') {
+                  debugLog.info('call', 'Outgoing call ringing', { roomId });
+                  Sentry.addBreadcrumb({
+                    category: 'call.signal',
+                    message: 'Outgoing call ringing',
+                    data: { roomId },
+                  });
+                }
                 callPhaseRef.current[roomId] = 'RINGING_OUT';
                 return { ...acc, outgoing: roomId };
               }
 
+              debugLog.info('call', 'Outgoing call timed out (unanswered)', { roomId });
+              Sentry.metrics.count('sable.call.timeout', 1);
               callPhaseRef.current[roomId] = 'ENDED';
             }
           }

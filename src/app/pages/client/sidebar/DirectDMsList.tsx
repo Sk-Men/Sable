@@ -1,4 +1,5 @@
-import { useMemo } from 'react';
+import { useMemo, useRef, useEffect } from 'react';
+import * as Sentry from '@sentry/react';
 import { useNavigate } from 'react-router-dom';
 import { Avatar, Text, Box, toRem } from 'folds';
 import { useAtomValue } from 'jotai';
@@ -141,7 +142,7 @@ function DMItem({ room, selected }: DMItemProps) {
         <SidebarItemBadge
           hasCount={unread.total > 0}
           style={{
-            left: unread.total > 0 ? toRem(-6) : toRem(-2),
+            left: unread.total > 0 ? toRem(-6) : toRem(-4),
             right: 'auto',
           }}
         >
@@ -161,6 +162,9 @@ export function DirectDMsList() {
   const selectedRoomId = useSelectedRoom();
   const sidebarRoomIds = useSidebarDirectRoomIds();
 
+  const mountTimeRef = useRef(performance.now());
+  const firstReadyRef = useRef(false);
+
   const recentDMs = useMemo(
     () =>
       sidebarRoomIds
@@ -168,6 +172,16 @@ export function DirectDMsList() {
         .filter((room): room is Room => room !== null),
     [sidebarRoomIds, mx]
   );
+
+  useEffect(() => {
+    if (recentDMs.length > 0 && !firstReadyRef.current) {
+      firstReadyRef.current = true;
+      Sentry.metrics.distribution(
+        'sable.roomlist.time_to_ready_ms',
+        performance.now() - mountTimeRef.current
+      );
+    }
+  }, [recentDMs]);
 
   if (recentDMs.length === 0) {
     return null;

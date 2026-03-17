@@ -17,6 +17,7 @@ export type AudioRecordingCompletePayload = {
   audioBlob: Blob;
   waveform: number[];
   audioLength: number;
+  audioCodec: string;
 };
 
 export type AudioMessageRecorderHandle = {
@@ -67,6 +68,7 @@ export const AudioMessageRecorder = forwardRef<
       audioBlob: payload.audioFile,
       waveform: payload.waveform,
       audioLength: payload.audioLength,
+      audioCodec: payload.audioCodec,
     });
     onWaveformUpdateRef.current(payload.waveform);
     onAudioLengthUpdateRef.current(payload.audioLength);

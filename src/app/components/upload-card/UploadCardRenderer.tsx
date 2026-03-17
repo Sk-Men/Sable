@@ -34,7 +34,7 @@ import { DescriptionEditor } from './UploadDescriptionEditor';
 type PreviewImageProps = {
   fileItem: TUploadItem;
 };
-function PreviewImage({ fileItem }: PreviewImageProps) {
+function PreviewImage({ fileItem }: Readonly<PreviewImageProps>) {
   const { originalFile, metadata } = fileItem;
   const fileUrl = useObjectURL(originalFile);
 
@@ -55,7 +55,7 @@ function PreviewImage({ fileItem }: PreviewImageProps) {
 type PreviewVideoProps = {
   fileItem: TUploadItem;
 };
-function PreviewVideo({ fileItem }: PreviewVideoProps) {
+function PreviewVideo({ fileItem }: Readonly<PreviewVideoProps>) {
   const { originalFile, metadata } = fileItem;
   const fileUrl = useObjectURL(originalFile);
 
@@ -305,7 +305,7 @@ export function UploadCardRenderer({
   onRemove,
   onComplete,
   roomId,
-}: UploadCardRendererProps) {
+}: Readonly<UploadCardRendererProps>) {
   const mx = useMatrixClient();
   const mediaConfig = useMediaConfig();
   const allowSize = mediaConfig['m.upload.size'] || Infinity;

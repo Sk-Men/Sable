@@ -179,7 +179,7 @@ export function Lobby() {
     return new Set(sideSpaces);
   }, [sidebarItems]);
 
-  const [spacesItems, setSpacesItem] = useState<Map<string, IHierarchyRoom>>(() => new Map());
+  const [spacesItems, setSpacesItems] = useState<Map<string, IHierarchyRoom>>(() => new Map());
 
   useElementSizeObserver(
     useCallback(() => heroSectionRef.current, []),
@@ -302,8 +302,7 @@ export function Lobby() {
         }
 
         if (
-          itemRoom &&
-          itemRoom.getJoinRule() === JoinRule.Restricted &&
+          itemRoom?.getJoinRule() === JoinRule.Restricted &&
           item.parentId !== containerParentId
         ) {
           // change join rule allow parameter when dragging
@@ -394,7 +393,7 @@ export function Lobby() {
   const handleSpacesFound = useCallback(
     (sItems: IHierarchyRoom[]) => {
       setSpaceRooms({ type: 'PUT', roomIds: sItems.map((i) => i.room_id) });
-      setSpacesItem((current) => {
+      setSpacesItems((current) => {
         const newItems = produce(current, (draft) => {
           sItems.forEach((item) => draft.set(item.room_id, item));
         });

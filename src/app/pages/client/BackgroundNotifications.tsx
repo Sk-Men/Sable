@@ -39,6 +39,7 @@ import {
   buildRoomMessageNotification,
   resolveNotificationPreviewText,
 } from '$utils/notificationStyle';
+import * as Sentry from '@sentry/react';
 import { startClient, stopClient } from '$client/initMatrix';
 import { useClientConfig } from '$hooks/useClientConfig';
 import { mobileOrTablet } from '$utils/user-agent';
@@ -214,6 +215,7 @@ export function BackgroundNotifications() {
         clientCleanupRef.current.delete(userId);
         stopClient(mx);
         current.delete(userId);
+        Sentry.metrics.gauge('sable.background.client_count', current.size);
         // Clear the background unread badge when this session is no longer a background account.
         setBackgroundUnreads((prev) => {
           const next = { ...prev };
@@ -232,6 +234,7 @@ export function BackgroundNotifications() {
         .then(async (mx) => {
           sessionMx = mx;
           current.set(session.userId, mx);
+          Sentry.metrics.gauge('sable.background.client_count', current.size);
 
           await waitForSync(mx);
 
@@ -505,6 +508,7 @@ export function BackgroundNotifications() {
             userId: session.userId,
             error: err,
           });
+          Sentry.captureException(err, { tags: { component: 'BackgroundNotifications' } });
 
           // Remove the stuck/failed client from current so future runs (or the
           // retry below) can attempt a fresh start.
