@@ -805,38 +805,47 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
 
     const handleKeyDown: KeyboardEventHandler = useCallback(
       (evt) => {
-        if (autocompleteQuery && isKeyHotkey('arrowdown', evt)) {
-          evt.preventDefault();
-          document
-            .querySelector('[data-autocomplete-menu]')
-            ?.dispatchEvent(new CustomEvent('autocomplete-navigate', { detail: { direction: 1 } }));
-          return;
-        }
-        if (autocompleteQuery && isKeyHotkey('arrowup', evt)) {
-          evt.preventDefault();
-          document
-            .querySelector('[data-autocomplete-menu]')
-            ?.dispatchEvent(
+        const autocompleteMenu = document.querySelector('[data-autocomplete-menu]');
+        const isMenuVisible = !!(autocompleteQuery && autocompleteMenu);
+
+        if (isMenuVisible) {
+          if (isKeyHotkey('arrowdown', evt)) {
+            evt.preventDefault();
+            autocompleteMenu.dispatchEvent(
+              new CustomEvent('autocomplete-navigate', { detail: { direction: 1 } })
+            );
+            return;
+          }
+          if (isKeyHotkey('arrowup', evt)) {
+            evt.preventDefault();
+            autocompleteMenu.dispatchEvent(
               new CustomEvent('autocomplete-navigate', { detail: { direction: -1 } })
             );
-          return;
+            return;
+          }
+
+          if (isKeyHotkey('enter', evt) && !isComposing(evt)) {
+            const selectedItem =
+              autocompleteMenu.querySelector<HTMLButtonElement>('button[data-selected]') ??
+              autocompleteMenu.querySelector<HTMLButtonElement>('button');
+
+            if (selectedItem) {
+              evt.preventDefault();
+              selectedItem.click();
+              return;
+            }
+          }
         }
+
         if (
           (isKeyHotkey('mod+enter', evt) || (!enterForNewline && isKeyHotkey('enter', evt))) &&
           !isComposing(evt)
         ) {
           evt.preventDefault();
-          if (autocompleteQuery) {
-            const selectedItem =
-              document.querySelector<HTMLButtonElement>(
-                '[data-autocomplete-menu] button[data-selected]'
-              ) ?? document.querySelector<HTMLButtonElement>('[data-autocomplete-menu] button');
-            selectedItem?.click();
-            return;
-          }
           submit().catch((error) => {
             log.error('submit failed', { roomId }, error);
           });
+          return;
         }
         if (isKeyHotkey('escape', evt)) {
           evt.preventDefault();
