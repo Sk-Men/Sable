@@ -7,6 +7,7 @@ import { ErrorBoundary } from 'react-error-boundary';
 
 import { ClientConfigLoader } from '$components/ClientConfigLoader';
 import { ClientConfigProvider } from '$hooks/useClientConfig';
+import { setMatrixToBase } from '$plugins/matrix-to';
 import { ScreenSizeProvider, useScreenSize } from '$hooks/useScreenSize';
 import { useCompositionEndTracking } from '$hooks/useComposingCheck';
 import { ErrorPage } from '$components/DefaultErrorPage';
@@ -35,16 +36,19 @@ function App() {
                     <ConfigConfigError error={err} retry={retry} ignore={ignore} />
                   )}
                 >
-                  {(clientConfig) => (
-                    <ClientConfigProvider value={clientConfig}>
-                      <QueryClientProvider client={queryClient}>
-                        <JotaiProvider>
-                          <RouterProvider router={createRouter(clientConfig, screenSize)} />
-                        </JotaiProvider>
-                        <ReactQueryDevtools initialIsOpen={false} />
-                      </QueryClientProvider>
-                    </ClientConfigProvider>
-                  )}
+                  {(clientConfig) => {
+                    setMatrixToBase(clientConfig.matrixToBaseUrl);
+                    return (
+                      <ClientConfigProvider value={clientConfig}>
+                        <QueryClientProvider client={queryClient}>
+                          <JotaiProvider>
+                            <RouterProvider router={createRouter(clientConfig, screenSize)} />
+                          </JotaiProvider>
+                          <ReactQueryDevtools initialIsOpen={false} />
+                        </QueryClientProvider>
+                      </ClientConfigProvider>
+                    );
+                  }}
                 </ClientConfigLoader>
               </FeatureCheck>
             </ScreenSizeProvider>
