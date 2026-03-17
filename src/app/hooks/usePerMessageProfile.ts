@@ -44,7 +44,14 @@ type PerMessageProfileRoomAssociation = {
   validUntil?: number; // timestamp in ms until which this association is valid, after which it should be ignored and removed. If not set, the association is valid indefinitely until changed or removed.
 };
 
+/**
+ * the shape of the account data for room associations, which is a wrapper around a list of associations.
+ * This is used to store the associations in account data, and allows us to easily add additional fields in the future if needed without breaking the existing data structure.
+ */
 type PerMessageProfileRoomAssociationWrapper = {
+  /**
+   * a list of associations between rooms and profiles, which is used to determine which profile to apply to messages in a room when sending a message.
+   */
   associations: PerMessageProfileRoomAssociation[];
 };
 
