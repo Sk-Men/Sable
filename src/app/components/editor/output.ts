@@ -10,7 +10,6 @@ import {
 import { findAndReplace } from '$utils/findAndReplace';
 import { sanitizeForRegex } from '$utils/regex';
 import { isUserId } from '$utils/matrix';
-import { getMatrixToRoom, getMatrixToRoomEvent } from '$plugins/matrix-to';
 import { CustomElement } from './slate';
 import { BlockType } from './types';
 
@@ -64,10 +63,17 @@ const elementToCustomHtml = (node: CustomElement, children: string): string => {
       return `<hr/>`;
 
     case BlockType.Mention: {
-      const href = node.eventId
-        ? getMatrixToRoomEvent(node.id, node.eventId, node.viaServers)
-        : getMatrixToRoom(node.id, node.viaServers);
-      return `<a href="${encodeURI(href)}">${sanitizeText(node.name)}</a>`;
+      let fragment = node.id;
+
+      if (node.eventId) {
+        fragment += `/${node.eventId}`;
+      }
+      if (node.viaServers && node.viaServers.length > 0) {
+        fragment += `?${node.viaServers.map((server) => `via=${server}`).join('&')}`;
+      }
+
+      const matrixTo = `https://matrix.to/#/${fragment}`;
+      return `<a href="${encodeURI(matrixTo)}">${sanitizeText(node.name)}</a>`;
     }
     case BlockType.Emoticon:
       return node.key.startsWith('mxc://')
