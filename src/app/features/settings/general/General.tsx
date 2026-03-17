@@ -1206,8 +1206,8 @@ export function General({ requestClose }: Readonly<GeneralProps>) {
               <Gestures isMobile={mobileOrTablet()} />
               <Editor isMobile={mobileOrTablet()} />
               <Messages />
-              <DiagnosticsAndPrivacy />
               <Calls />
+              <DiagnosticsAndPrivacy />
             </Box>
           </PageContent>
         </Scroll>
