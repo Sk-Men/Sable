@@ -26,6 +26,10 @@ import * as css from '$features/room/message/styles.css';
 import { sanitizeCustomHtml } from '$utils/sanitize';
 import { getStateEvents } from '$utils/room';
 import { StateEvent } from '$types/matrix/room';
+import { createDebugLogger } from '$utils/debugLogger';
+import * as Sentry from '@sentry/react';
+
+const debugLog = createDebugLogger('MessageForward');
 
 // Message forwarding component
 export const MessageForwardItem = as<'button', MessageForwardItemProps>(
@@ -263,9 +267,30 @@ export function MessageForwardInternal({
       };
     }
 
+    const msgtype = String(originalContent.msgtype ?? 'unknown');
+    debugLog.info('ui', 'Forwarding message', {
+      sourceRoomId: room.roomId,
+      targetRoomId: targetRoom.roomId,
+      msgtype,
+      isPrivate,
+    });
+    Sentry.metrics.count('sable.message.forward.attempt', 1, { attributes: { msgtype } });
     mx.sendEvent(targetRoom.roomId, null, eventType, content as unknown as SendEventContent)
-      .then(() => setIsForwardSuccess(true))
-      .catch(() => {
+      .then(() => {
+        debugLog.info('ui', 'Message forwarded successfully', {
+          sourceRoomId: room.roomId,
+          targetRoomId: targetRoom.roomId,
+        });
+        Sentry.metrics.count('sable.message.forward.success', 1);
+        setIsForwardSuccess(true);
+      })
+      .catch((err: unknown) => {
+        debugLog.error('ui', 'Message forward failed', {
+          sourceRoomId: room.roomId,
+          targetRoomId: targetRoom.roomId,
+          error: err instanceof Error ? err.message : String(err),
+        });
+        Sentry.metrics.count('sable.message.forward.error', 1);
         setIsForwarding(false);
         setIsForwardSuccess(false);
         setIsForwardError(true);
