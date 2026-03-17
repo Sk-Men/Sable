@@ -5,7 +5,7 @@ let MATRIX_TO_BASE = 'https://matrix.to';
  * Must be called before any getMatrixTo* functions are used.
  */
 export const setMatrixToBase = (baseUrl?: string): void => {
-  if (baseUrl) MATRIX_TO_BASE = baseUrl.replace(/\/$/, '');
+  MATRIX_TO_BASE = baseUrl ? baseUrl.replace(/\/$/, '') : 'https://matrix.to';
 };
 
 export const getMatrixToUser = (userId: string): string => `${MATRIX_TO_BASE}/#/${userId}`;
@@ -64,7 +64,8 @@ let cachedRegexes: {
 const getMatchRegexes = () => {
   if (cachedRegexBase === MATRIX_TO_BASE && cachedRegexes) return cachedRegexes;
   cachedRegexBase = MATRIX_TO_BASE;
-  const standard = escapeForRegex('https://matrix.to');
+  // Use https? so both http:// and https://matrix.to are accepted (original behaviour).
+  const standard = `https?://${escapeForRegex('matrix.to')}`;
   const b =
     MATRIX_TO_BASE !== 'https://matrix.to'
       ? `(?:${standard}|${escapeForRegex(MATRIX_TO_BASE)})`
@@ -72,7 +73,7 @@ const getMatchRegexes = () => {
   cachedRegexes = {
     any: new RegExp(`^${b}\\S*$`),
     user: new RegExp(`^${b}/#/(@[^:\\s]+:[^?/\\s]+)\\/?$`),
-    room: new RegExp(`^${b}/#/([#!][^?/\\s]+)\\/?([?\\S]*)?$`),
+    room: new RegExp(`^${b}/#/([#!][^?/\\s]+)\\/?(\\?[\\S]*)?$`),
     event: new RegExp(`^${b}/#/([#!][^?/\\s]+)/(\\$[^?/\\s]+)\\/?([?\\S]*)?$`),
   };
   return cachedRegexes;
