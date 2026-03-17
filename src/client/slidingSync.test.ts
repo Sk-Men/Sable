@@ -8,13 +8,18 @@
  *
  * 2. pruneRoomTimeline (via unsubscribeFromRoom) — when a room transitions
  *    from active to background, its in-memory event chain is released if it
- *    exceeds PRUNE_TIMELINE_THRESHOLD. Sliding sync does not persist timeline
- *    events to IndexedDB, so the pruned events are gone from memory. On next
- *    open the active-room subscription re-fetches the latest events from the
- *    server.
+ *    exceeds PRUNE_TIMELINE_THRESHOLD. The recent tail is persisted to
+ *    IndexedDB (via store.setSyncData + store.save) so the events survive an
+ *    app reload; the full history is always available from the server.
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { SlidingSyncManager, type SlidingSyncConfig } from './slidingSync';
+
+/** Flush all pending Promise microtasks. */
+const flushPromises = (): Promise<void> =>
+  new Promise((r) => {
+    setTimeout(r, 0);
+  });
 
 // ── vi.hoisted mocks ─────────────────────────────────────────────────────────
 // Must be defined via vi.hoisted so they're available before vi.mock runs
@@ -72,16 +77,26 @@ function makeMockMx(overrides: Record<string, unknown> = {}) {
     getRoom: vi.fn().mockReturnValue(null),
     on: vi.fn(),
     off: vi.fn(),
+    store: {
+      setSyncData: vi.fn().mockResolvedValue(undefined),
+      save: vi.fn().mockResolvedValue(undefined),
+    },
     ...overrides,
   } as unknown as import('$types/matrix-sdk').MatrixClient;
 }
 
 function makeMockRoom(eventCount: number) {
-  const events = Array.from({ length: eventCount }, (_, i) => ({ getId: () => `$ev${i}` }));
+  const events = Array.from({ length: eventCount }, (_, i) => ({
+    getId: () => `$ev${i}`,
+    event: { event_id: `$ev${i}`, type: 'm.room.message', content: {} },
+  }));
   const resetLiveTimeline = vi.fn();
   return {
     getUnfilteredTimelineSet: vi.fn().mockReturnValue({
-      getLiveTimeline: vi.fn().mockReturnValue({ getEvents: vi.fn().mockReturnValue(events) }),
+      getLiveTimeline: vi.fn().mockReturnValue({
+        getEvents: vi.fn().mockReturnValue(events),
+        getPaginationToken: vi.fn().mockReturnValue('t123'),
+      }),
       resetLiveTimeline,
     }),
     _resetLiveTimeline: resetLiveTimeline,
@@ -121,6 +136,28 @@ describe('SlidingSyncManager — timeline pruning on unsubscribe', () => {
     manager.unsubscribeFromRoom('!room:example.com');
 
     expect(room._resetLiveTimeline).toHaveBeenCalledOnce();
+  });
+
+  it('persists events to store.setSyncData and store.save after pruning', async () => {
+    const room = makeMockRoom(PRUNE_THRESHOLD + 1);
+    const mx = makeMockMx({ getRoom: vi.fn().mockReturnValue(room) });
+    const manager = makeManager(mx);
+
+    manager.unsubscribeFromRoom('!room:example.com');
+    await flushPromises();
+
+    const { store } = mx as unknown as {
+      store: { setSyncData: ReturnType<typeof vi.fn>; save: ReturnType<typeof vi.fn> };
+    };
+    expect(store.setSyncData).toHaveBeenCalledOnce();
+    expect(store.save).toHaveBeenCalledWith(true);
+
+    // The payload must target the correct room and use limited:true so the
+    // accumulator replaces any stale timeline rather than appending.
+    const [payload] = store.setSyncData.mock.calls[0] as [
+      { rooms: { join: Record<string, { timeline: { limited: boolean } }> } },
+    ];
+    expect(payload.rooms.join['!room:example.com'].timeline.limited).toBe(true);
   });
 
   it('does not reset when event count equals the threshold exactly', () => {
