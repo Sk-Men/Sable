@@ -78,7 +78,7 @@ The bug report modal (`/bugreport` command or "Bug Report" button) now includes:
 - **Optional Sentry reporting**: Checkbox to send anonymous reports to Sentry
 - **Debug log attachment**: Option to include recent debug logs (last 100 entries)
 - **User feedback API**: Bug reports are sent as Sentry user feedback for better visibility
-- **Privacy controls**: Users can opt-out of Sentry reporting
+- **Privacy controls**: Users can opt-in to Sentry reporting
 
 Integration points:
 
@@ -94,7 +94,7 @@ Comprehensive data scrubbing (full details in [SENTRY_PRIVACY.md](./SENTRY_PRIVA
 - **Matrix ID anonymization**: User IDs, room IDs, and event IDs are masked
 - **Session replay privacy**: All text, media, and form inputs are masked when replay is enabled
 - **request header sanitization**: Authorization headers are removed
-- **User opt-out**: Users can disable Sentry entirely via settings
+- **User opt-in**: Users can enable Sentry via settings
 
 Sensitive patterns automatically redacted:
 
@@ -124,14 +124,14 @@ Sentry controls are split across two settings locations:
 
 ### 6. First-Login Consent Banner
 
-When `VITE_SENTRY_DSN` is set and a user has never seen the crash-reporting notice (i.e. `sable_sentry_enabled` is absent from `localStorage`), a dismissible banner slides in from the bottom of the screen on first load. It explains that anonymous crash reports are enabled and links to the Privacy Policy.
+When `VITE_SENTRY_DSN` is set and a user has never seen the crash-reporting notice (i.e. `sable_sentry_enabled` is absent from `localStorage`), a dismissible banner slides in from the bottom of the screen on first load. It explains that anonymous crash reporting is available and asks if the user wants to enable it.
 
 **Actions available in the banner:**
 
-| Button                 | Effect                                                                                                                        |
-| ---------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
-| **Got it** / × (close) | Sets `sable_sentry_enabled = true` in `localStorage` and dismisses the banner with a fade-out animation. Reporting continues. |
-| **Opt out**            | Sets `sable_sentry_enabled = false` and reloads the page. Sentry is disabled for this user going forward.                     |
+| Button                    | Effect                                                                                                                           |
+| ------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| **Enable**                | Sets `sable_sentry_enabled = true` in `localStorage` and reloads the page so Sentry initialises. Reporting begins after reload.  |
+| **No thanks** / × (close) | Sets `sable_sentry_enabled = false` in `localStorage` and dismisses the banner with a fade-out animation. Sentry stays disabled. |
 
 Once the user has interacted with the banner (either action), it never appears again. The same preference can be changed later in **Settings → General → Diagnostics & Privacy**.
 
@@ -432,7 +432,7 @@ See [SENTRY_PRIVACY.md](./SENTRY_PRIVACY.md) for a complete, code-linked breakdo
 
 In summary, all data sent to Sentry is:
 
-- **Opt-in by default** but can be disabled
+- **Off by default**: Sentry is disabled until the user explicitly opts in
 - **Anonymized**: No personal data or message content
 - **Filtered**: Tokens, passwords, and IDs are redacted
 - **Minimal**: Only error context and debug info

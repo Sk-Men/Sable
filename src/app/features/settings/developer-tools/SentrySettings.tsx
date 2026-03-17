@@ -50,7 +50,7 @@ export function SentrySettings() {
   };
 
   const isSentryConfigured = Boolean(import.meta.env.VITE_SENTRY_DSN);
-  const sentryEnabled = localStorage.getItem('sable_sentry_enabled') !== 'false';
+  const sentryEnabled = localStorage.getItem('sable_sentry_enabled') === 'true';
   const environment = import.meta.env.VITE_SENTRY_ENVIRONMENT || import.meta.env.MODE;
   const isProd = environment === 'production';
   const traceSampleRate = isProd ? '10%' : '100%';

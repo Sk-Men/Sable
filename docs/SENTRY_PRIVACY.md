@@ -9,18 +9,18 @@ configuration details see [SENTRY_INTEGRATION.md](./SENTRY_INTEGRATION.md).
 ## What Is Collected
 
 Sentry is **disabled by default when no DSN is configured** and can be **opted
-out by users** at any time via Settings → General → Diagnostics & Privacy.
+in to by users** at any time via Settings → General → Diagnostics & Privacy.
 
 ### First-Login Consent Notice
 
 When Sentry is configured, the app shows a dismissible notice the first time a
-user loads Sable. The notice explains that crash reporting is active and provides
-a one-click opt-out before any data is sent.
+user loads Sable. The notice explains that crash reporting is available and
+provides a one-click opt-in before any data is sent.
 
-| Action                        | Effect                                                                                                                           |
-| ----------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
-| **"Got it"** or **✕ dismiss** | Preference saved as opted-in (`sable_sentry_enabled = 'true'`); notice does not appear again                                     |
-| **"Opt out"**                 | Sentry disabled (`sable_sentry_enabled = 'false'`), page reloads — no Sentry data is sent for that session or any future session |
+| Action                           | Effect                                                                                                                      |
+| -------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| **"Enable"**                     | Sentry enabled (`sable_sentry_enabled = 'true'`), page reloads so Sentry initialises — data collection begins after reload  |
+| **"No thanks"** or **✕ dismiss** | Preference saved as opted-out (`sable_sentry_enabled = 'false'`); notice does not appear again; no Sentry data is ever sent |
 
 The preference persists in `localStorage` and can be changed at any time in
 **Settings → General → Diagnostics & Privacy**.

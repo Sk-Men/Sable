@@ -85,7 +85,7 @@ Depending on the build, you can disable error reporting, enable or disable sessi
 
 ### First-time consent notice
 
-When a build has crash reporting configured, a notice appears the first time you open Sable. It explains that anonymous crash reports are enabled and gives you the option to opt out before any diagnostic data is sent. You can also dismiss it to keep reporting enabled.
+When a build has crash reporting configured, a notice appears the first time you open Sable. It explains that Sable can send anonymous crash reports to help fix bugs, and gives you the option to enable it. Dismissing the notice without enabling keeps crash reporting off.
 
 This notice only appears once. Your choice is saved and can be changed at any time in **Settings → General → Diagnostics & Privacy**.
 
