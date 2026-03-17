@@ -152,8 +152,33 @@ export function addOrUpdatePerMessageProfile(mx: MatrixClient, profile: PerMessa
   ]);
 }
 
-export function deletePerMessageProfile(mx: MatrixClient, id: string) {
-  return mx.setAccountData(`${ACCOUNT_DATA_PREFIX}.${id}` as any, {});
+async function dropIdFromIndex(mx: MatrixClient, id: string) {
+  const profileListIndex = mx.getAccountData(`${ACCOUNT_DATA_PREFIX}.index` as any);
+  const profileIds = profileListIndex?.getContent()?.profileIds || [];
+  const newProfileIds = profileIds.filter((profileId: string) => profileId !== id);
+  await mx.setAccountData(
+    `${ACCOUNT_DATA_PREFIX}.index` as any,
+    { profileIds: newProfileIds } as any
+  );
+}
+
+async function dropPerMessageProfileRoomAssociations(mx: MatrixClient, id: string) {
+  const accountData = mx.getAccountData(`${ACCOUNT_DATA_PREFIX}.roomassociation` as any);
+  const content = accountData?.getContent();
+
+  const associations: PerMessageProfileRoomAssociation[] = Array.isArray(content) ? content : [];
+  await mx.setAccountData(
+    `${ACCOUNT_DATA_PREFIX}.roomassociation` as any,
+    {
+      associations: associations.filter((assoc) => assoc.profileId !== id),
+    } as any
+  );
+}
+
+export async function deletePerMessageProfile(mx: MatrixClient, id: string) {
+  await dropPerMessageProfileRoomAssociations(mx, id);
+  await mx.setAccountData(`${ACCOUNT_DATA_PREFIX}.${id}` as any, {});
+  await dropIdFromIndex(mx, id);
 }
 
 export async function renamePerMessageProfile(mx: MatrixClient, oldId: string, newId: string) {
