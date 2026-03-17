@@ -128,10 +128,10 @@ When `VITE_SENTRY_DSN` is set and a user has never seen the crash-reporting noti
 
 **Actions available in the banner:**
 
-| Button | Effect |
-|--------|--------|
+| Button                 | Effect                                                                                                                        |
+| ---------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
 | **Got it** / × (close) | Sets `sable_sentry_enabled = true` in `localStorage` and dismisses the banner with a fade-out animation. Reporting continues. |
-| **Opt out** | Sets `sable_sentry_enabled = false` and reloads the page. Sentry is disabled for this user going forward. |
+| **Opt out**            | Sets `sable_sentry_enabled = false` and reloads the page. Sentry is disabled for this user going forward.                     |
 
 Once the user has interacted with the banner (either action), it never appears again. The same preference can be changed later in **Settings → General → Diagnostics & Privacy**.
 
