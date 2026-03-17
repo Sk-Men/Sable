@@ -1,5 +1,15 @@
 # Sable Client Changelog
 
+## 1.9.2 (2026-03-17)
+
+### Fixes
+
+* Fix opacity rendering in name colors. ([#325](https://github.com/SableClient/Sable/pull/325) by @7w1)
+* Fix sending scheduled file attachments. ([#325](https://github.com/SableClient/Sable/pull/325) by @7w1)
+* Fix replies rendering new lines when messages have lists. ([#325](https://github.com/SableClient/Sable/pull/325) by @7w1)
+* Fix threads rendering fallback replies. ([#325](https://github.com/SableClient/Sable/pull/325) by @7w1)
+* Remove pip video setting now that we have sable call ([#324](https://github.com/SableClient/Sable/pull/324) by @beef331)
+
 ## 1.9.1 (2026-03-17)
 
 ### Fixes
