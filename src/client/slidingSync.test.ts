@@ -8,9 +8,10 @@
  *
  * 2. pruneRoomTimeline (via unsubscribeFromRoom) — when a room transitions
  *    from active to background, its in-memory event chain is released if it
- *    exceeds PRUNE_TIMELINE_THRESHOLD. The full history stays on disk in
- *    IndexedDBStore and is re-fetched via the active-room subscription on
- *    next open.
+ *    exceeds PRUNE_TIMELINE_THRESHOLD. Sliding sync does not persist timeline
+ *    events to IndexedDB, so the pruned events are gone from memory. On next
+ *    open the active-room subscription re-fetches the latest events from the
+ *    server.
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { SlidingSyncManager, type SlidingSyncConfig } from './slidingSync';

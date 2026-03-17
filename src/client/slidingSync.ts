@@ -623,8 +623,12 @@ export class SlidingSyncManager {
   /**
    * Reset the live timeline for a room that is no longer actively viewed,
    * freeing its in-memory event chain. Only fires when the room has accumulated
-   * more than PRUNE_TIMELINE_THRESHOLD events. The full history remains on disk
-   * (IndexedDBStore) and is re-loaded from the server subscription on next open.
+   * more than PRUNE_TIMELINE_THRESHOLD events.
+   *
+   * Note: sliding sync does not write timeline events to IndexedDBStore, so
+   * there is no on-disk copy of the pruned events. The full history is still
+   * available on the server; on next open the active-room subscription
+   * re-fetches the latest timeline_limit events.
    */
   private pruneRoomTimeline(roomId: string): void {
     const room = this.mx.getRoom(roomId);
