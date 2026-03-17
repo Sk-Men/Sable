@@ -482,7 +482,12 @@ export function ThreadDrawer({ room, threadRootId, onClose, overlay }: ThreadDra
     const thread = room.getThread(threadRootId);
     const fromThread = thread?.events ?? [];
     if (fromThread.length > 0) {
-      return fromThread.filter((ev) => ev.getId() !== threadRootId && !reactionOrEditEvent(ev));
+      return fromThread.filter(
+        (ev) =>
+          ev.getId() !== threadRootId &&
+          !reactionOrEditEvent(ev) &&
+          ev.getContent()?.['m.relates_to']?.is_falling_back !== true
+      );
     }
     return room
       .getUnfilteredTimelineSet()
@@ -492,7 +497,8 @@ export function ThreadDrawer({ room, threadRootId, onClose, overlay }: ThreadDra
         (ev) =>
           ev.threadRootId === threadRootId &&
           ev.getId() !== threadRootId &&
-          !reactionOrEditEvent(ev)
+          !reactionOrEditEvent(ev) &&
+          ev.getContent()?.['m.relates_to']?.is_falling_back !== true
       );
   })();
 
