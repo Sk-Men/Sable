@@ -151,17 +151,24 @@ export class CallEmbed {
     const controlState = initialControlState ?? new CallControlState(true, false, true);
     this.control = new CallControl(controlState, call, iframe);
 
-    // acknowledge always on screen request to silence error
     this.disposables.push(
       this.listenAction(WidgetApiFromWidgetAction.UpdateAlwaysOnScreen, (evt) => {
         evt.preventDefault();
         this.call.transport.reply(evt.detail as IWidgetApiRequest, { success: true });
       })
     );
+    this.disposables.push(
+      this.listenAction(ElementWidgetActions.Close, (evt) => {
+        evt.preventDefault();
+        this.call.transport.reply(evt.detail as IWidgetApiRequest, {});
+      })
+    );
 
     let initialMediaEvent = true;
     this.disposables.push(
       this.listenAction<ElementMediaStateDetail>(ElementWidgetActions.DeviceMute, (evt) => {
+        evt.preventDefault();
+        this.call.transport.reply(evt.detail as IWidgetApiRequest, {});
         if (initialMediaEvent) {
           initialMediaEvent = false;
           this.control.applyState();
@@ -268,7 +275,9 @@ export class CallEmbed {
     this.eventsToFeed = new WeakSet<MatrixEvent>();
   }
 
-  private onCallJoined(): void {
+  private onCallJoined(evt: CustomEvent): void {
+    evt.preventDefault();
+    this.call.transport.reply(evt.detail as IWidgetApiRequest, {});
     debugLog.info('call', 'Call joined', { roomId: this.roomId });
     this.joined = true;
     this.applyStyles();
