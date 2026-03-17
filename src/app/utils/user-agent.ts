@@ -9,7 +9,7 @@ const isMobileOrTablet = (() => {
   return false;
 })();
 
-const isMac = result.os.name === 'macOS';
+const isMac = result.os.name === 'Mac OS';
 
 export const ua = () => result;
 export const isMacOS = () => isMac;
