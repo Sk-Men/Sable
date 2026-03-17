@@ -156,6 +156,16 @@ export function deletePerMessageProfile(mx: MatrixClient, id: string) {
   return mx.setAccountData(`${ACCOUNT_DATA_PREFIX}.${id}` as any, {});
 }
 
+export async function renamePerMessageProfile(mx: MatrixClient, oldId: string, newId: string) {
+  const profile = await getPerMessageProfileById(mx, oldId);
+  if (!profile) {
+    throw new Error('Profile not found');
+  }
+  const newProfile = { ...profile, id: newId };
+  await addOrUpdatePerMessageProfile(mx, newProfile);
+  await deletePerMessageProfile(mx, oldId);
+}
+
 export async function getListOfRoomsUsingProfile(
   mx: MatrixClient,
   profileId: string
