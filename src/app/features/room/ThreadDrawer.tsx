@@ -398,6 +398,33 @@ export function ThreadDrawer({ room, threadRootId, onClose, overlay }: ThreadDra
 
   const rootEvent = room.findEventById(threadRootId);
 
+  // When the drawer is opened with classic sync, room.createThread() may have
+  // been called with empty initialEvents so thread.events only has the root.
+  // Backfill events from the main room timeline into the Thread object so the
+  // authoritative source is populated for subsequent renders and receipts.
+  useEffect(() => {
+    const thread = room.getThread(threadRootId);
+    if (!thread) return;
+    const hasRepliesInThread = thread.events.some(
+      (ev) => ev.getId() !== threadRootId && !reactionOrEditEvent(ev)
+    );
+    if (hasRepliesInThread) return; // already populated, nothing to do
+
+    const liveEvents = room
+      .getUnfilteredTimelineSet()
+      .getLiveTimeline()
+      .getEvents()
+      .filter(
+        (ev) =>
+          ev.threadRootId === threadRootId &&
+          ev.getId() !== threadRootId &&
+          !reactionOrEditEvent(ev)
+      );
+    if (liveEvents.length > 0) {
+      thread.addEvents(liveEvents, false);
+    }
+  }, [room, threadRootId]);
+
   // Re-render when new thread events arrive (including reactions via ThreadEvent.Update).
   useEffect(() => {
     const isEventInThread = (mEvent: MatrixEvent): boolean => {
@@ -484,11 +511,19 @@ export function ThreadDrawer({ room, threadRootId, onClose, overlay }: ThreadDra
   // Use the Thread object if available (authoritative source with full history).
   // Fall back to scanning the live room timeline for local echoes and the
   // window before the Thread object is registered by the SDK.
+  // NOTE: With classic sync the Thread object is created via room.createThread()
+  // with empty initialEvents, so thread.events may only contain the root event.
+  // We must filter first, then decide whether to fall back — otherwise a thread
+  // whose events array consists solely of the root event (length === 1) prevents
+  // the live-timeline fallback from running, and the drawer shows nothing.
   const replyEvents: MatrixEvent[] = (() => {
     const thread = room.getThread(threadRootId);
     const fromThread = thread?.events ?? [];
-    if (fromThread.length > 0) {
-      return fromThread.filter((ev) => ev.getId() !== threadRootId && !reactionOrEditEvent(ev));
+    const filteredFromThread = fromThread.filter(
+      (ev) => ev.getId() !== threadRootId && !reactionOrEditEvent(ev)
+    );
+    if (filteredFromThread.length > 0) {
+      return filteredFromThread;
     }
     return room
       .getUnfilteredTimelineSet()
