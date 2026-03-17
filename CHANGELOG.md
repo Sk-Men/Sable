@@ -1,5 +1,11 @@
 # Sable Client Changelog
 
+## 1.9.1 (2026-03-17)
+
+### Fixes
+
+* Fix docker builds. ([#322](https://github.com/SableClient/Sable/pull/322) by @7w1)
+
 ## 1.9.0 (2026-03-17)
 
 ### Features
