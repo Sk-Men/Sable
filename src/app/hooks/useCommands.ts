@@ -38,6 +38,8 @@ import { useUserProfile } from './useUserProfile';
 import {
   addOrUpdatePerMessageProfile,
   deletePerMessageProfile,
+  invalidatePerMessageProfile,
+  invalidatePerMessageProfileForProfileId,
   PerMessageProfile,
   setCurrentlyUsedPerMessageProfileIdForRoom,
 } from './usePerMessageProfile';
@@ -522,6 +524,7 @@ export const useCommands = (mx: MatrixClient, room: Room): CommandRecord => {
                 room,
                 mx.getSafeUserId()
               );
+              invalidatePerMessageProfileForProfileId(mx, profileId, () => {});
             })
             .catch(() => {
               sendFeedback(
@@ -549,6 +552,7 @@ export const useCommands = (mx: MatrixClient, room: Room): CommandRecord => {
                 room,
                 mx.getSafeUserId()
               );
+              invalidatePerMessageProfileForProfileId(mx, profileId, () => {});
             })
             .catch(() => {
               sendFeedback(
@@ -591,6 +595,7 @@ export const useCommands = (mx: MatrixClient, room: Room): CommandRecord => {
                 room,
                 mx.getSafeUserId()
               );
+              invalidatePerMessageProfile(room.roomId, () => {});
             })
             .catch(() => {
               sendFeedback(

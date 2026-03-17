@@ -152,8 +152,8 @@ import { useRoomCreators } from '$hooks/useRoomCreators';
 import { useRoomPermissions } from '$hooks/useRoomPermissions';
 import { AutocompleteNotice } from '$components/editor/autocomplete/AutocompleteNotice';
 import {
-  getCurrentlyUsedPerMessageProfileForRoom,
-  PerMessageProfile,
+  convertPerMessageProfileToBeeperFormat,
+  perMessageProfileAtomFamily,
 } from '$hooks/usePerMessageProfile';
 import { getSupportedAudioExtension } from '$plugins/voice-recorder-kit/supportedCodec';
 import { SchedulePickerDialog } from './schedule-send';
@@ -275,18 +275,7 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
     );
 
     // Add state to cache the profile
-    const [perMessageProfile, setPerMessageProfile] = useState<PerMessageProfile | null>(null);
-
-    // Fetch and cache the profile when the roomId changes
-    useEffect(() => {
-      const fetchPmP = async () => {
-        const profile = await getCurrentlyUsedPerMessageProfileForRoom(mx, roomId);
-        console.debug('Fetched per-message profile:', { profile, roomId });
-        setPerMessageProfile(profile ?? null); // Convert undefined to null
-      };
-
-      fetchPmP();
-    }, [mx, roomId]);
+    const perMessageProfile = useAtomValue(perMessageProfileAtomFamily(roomId));
 
     const [uploadBoard, setUploadBoard] = useState(true);
     const [selectedFiles, setSelectedFiles] = useAtom(roomIdToUploadItemsAtomFamily(draftKey));
@@ -655,12 +644,8 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
           perMessageProfile.name,
           perMessageProfile.avatarUrl
         );
-        content['com.beeper.per_message_profile'] = {
-          id: perMessageProfile.id,
-          displayname: perMessageProfile.name,
-          avatar_url: perMessageProfile.avatarUrl,
-          'io.fsky.nyx.pronouns': perMessageProfile.pronouns,
-        };
+        content['com.beeper.per_message_profile'] =
+          convertPerMessageProfileToBeeperFormat(perMessageProfile);
       }
 
       if (replyDraft && !silentReply) {

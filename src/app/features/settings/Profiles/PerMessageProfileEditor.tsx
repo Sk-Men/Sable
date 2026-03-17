@@ -9,7 +9,7 @@ import { useObjectURL } from '$hooks/useObjectURL';
 import { createUploadAtom } from '$state/upload';
 import { UserAvatar } from '$components/user-avatar';
 import { CompactUploadCardRenderer } from '$components/upload-card';
-import { addOrUpdatePerMessageProfile, deletePerMessageProfile } from '$hooks/usePerMessageProfile';
+import { addOrUpdatePerMessageProfile, deletePerMessageProfile, invalidatePerMessageProfileForProfileId } from '$hooks/usePerMessageProfile';
 import { SequenceCardStyle } from '../styles.css';
 import { parsePronounsStringToPronounsSetArray, PronounSet } from '$utils/pronouns';
 
@@ -47,12 +47,12 @@ export function PerMessageProfileEditor({
     return [pronounsString] as const;
   }, [currentPronouns]);
   const [newPronouns, setNewPronouns] = useState<PronounSet[]>(pronouns);
-  const newPronounsString = useMemo(() => {
+  const [newPronounsString, setNewPronounsString] = useState(() => {
     const pronounsString = Array.isArray(newPronouns)
       ? newPronouns.map((p) => `${p.language ? `${p.language}:` : ''}${p.summary}`).join(', ')
       : '';
     return pronounsString;
-  }, [newPronouns]);
+  });
 
   const [newDisplayName, setNewDisplayName] = useState(currentDisplayName);
   const [imageFile, setImageFile] = useState<File | undefined>();
@@ -100,25 +100,37 @@ export function PerMessageProfileEditor({
     [newDisplayName, currentDisplayName, newPronouns, currentPronouns, imageFile]
   );
 
-  // Reset handler for display name
+  /**
+   * Reset handler to reset the display name and pronouns to their current values, and clear the image file if there is one.
+   */
   const handleReset = useCallback(() => {
     setNewDisplayName(currentDisplayName);
     setNewPronouns(currentPronouns);
+    setNewPronounsString(
+      Array.isArray(currentPronouns)
+        ? currentPronouns.map((p) => `${p.language ? `${p.language}:` : ''}${p.summary}`).join(', ')
+        : ''
+    );
     setChangingDisplayName(false);
     setDisableSetDisplayname(false);
   }, [currentDisplayName, currentPronouns]);
 
+  /**
+   * persisting the data :3
+   */
   const handleSave = useCallback(() => {
     addOrUpdatePerMessageProfile(mx, {
       id: profileId,
       name: newDisplayName,
       avatarUrl: avatarMxc,
+      pronouns: newPronouns,
     }).then(() => {
       setCurrentDisplayName(newDisplayName);
       setCurrentPronouns(newPronouns);
     });
     setChangingDisplayName(false);
     setDisableSetDisplayname(false);
+    invalidatePerMessageProfileForProfileId(mx, profileId, () => {});
   }, [mx, profileId, newDisplayName, avatarMxc, newPronouns]);
 
   const handleDelete = useCallback(() => {
@@ -129,9 +141,10 @@ export function PerMessageProfileEditor({
     });
   }, [mx, profileId, onDelete]);
 
-  const handlePronounsChange = useCallback(() => {
-    return setNewPronouns(parsePronounsStringToPronounsSetArray(newPronounsString));
-  }, [newPronounsString]);
+  const handlePronounsChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setNewPronounsString(e.target.value);
+    return setNewPronouns(parsePronounsStringToPronounsSetArray(e.target.value));
+  }, []);
 
   return (
     <Box

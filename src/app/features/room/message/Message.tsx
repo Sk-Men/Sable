@@ -85,6 +85,10 @@ import {
   addStickerToDefaultPack,
   doesStickerExistInDefaultPack,
 } from '$utils/addStickerToDefaultStickerPack';
+import {
+  convertBeeperFormatToOurPerMessageProfile,
+  PerMessageProfileBeeperFormat,
+} from '$hooks/usePerMessageProfile';
 import { MessageEditor } from './MessageEditor';
 import * as css from './styles.css';
 
@@ -376,21 +380,32 @@ function MessageInternal(
   const mx = useMatrixClient();
   const useAuthentication = useMediaAuthentication();
 
-  const pmp = useMemo(
+  const pmp: PerMessageProfileBeeperFormat | undefined = useMemo(
     () =>
       mEvent.event.content?.['com.beeper.per_message_profile'] as
-        | {
-            avatar_url: string | undefined;
-            displayname: string | undefined;
-            id: string | undefined;
-          }
+        | PerMessageProfileBeeperFormat
         | undefined,
     [mEvent]
   );
 
+  /**
+   * We convert the per-message profile from the Beeper format to our internal format here in the message component
+   */
+  const parsedPMPContent = useMemo(() => {
+    if (!pmp) return undefined;
+    return convertBeeperFormatToOurPerMessageProfile(pmp);
+  }, [pmp]);
+
   // Profiles and Colors
   const profile = useUserProfile(senderId, room);
   const { color: usernameColor, font: usernameFont } = useSableCosmetics(senderId, room);
+
+  /**
+   * If there is a per-message profile, we want to use the per message pronouns,
+   * otherwise we fall back to the profile pronouns.
+   * This allows users to set pronouns on a per-message basis, while still falling back to their profile pronouns if they don't set any for a specific message.
+   */
+  const pronouns = parsedPMPContent?.pronouns ?? profile.pronouns;
 
   // Avatars
   // Prefer the room-scoped member avatar (m.room.member) over the global profile
@@ -472,7 +487,7 @@ function MessageInternal(
           </Text>
         </Username>
         {showPronouns && (
-          <Pronouns pronouns={profile.pronouns} tagColor={usernameColor ?? 'currentColor'} />
+          <Pronouns pronouns={pronouns} tagColor={usernameColor ?? 'currentColor'} />
         )}
         {tagIconSrc && <PowerIcon size="100" iconSrc={tagIconSrc} />}
       </Box>
