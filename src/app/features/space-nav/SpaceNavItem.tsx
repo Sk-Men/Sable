@@ -13,7 +13,6 @@ type SpaceNavItemProps = {
 };
 
 export function SpaceNavItem({ room, selected, linkPath }: SpaceNavItemProps) {
-  const { focusWithinProps } = useFocusWithin({ onFocusWithinChange: setHover });
   const [menuAnchor, setMenuAnchor] = useState<RectCords>();
 
   const matrixRoomName = useRoomName(room);
@@ -46,7 +45,6 @@ export function SpaceNavItem({ room, selected, linkPath }: SpaceNavItemProps) {
         aria-selected={selected}
         data-hover={!!menuAnchor}
         onContextMenu={handleContextMenu}
-        {...focusWithinProps}
       >
         <NavButton onClick={handleNavItemClick} aria-label={ariaLabel}>
           <NavItemContent>

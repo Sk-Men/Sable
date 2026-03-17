@@ -828,7 +828,7 @@ export function Space() {
                   </VirtualTile>
                 );
               })}
-              {getConnectorSVG(virtualizedItems)}
+              {getConnectorSVG(hierarchy, virtualizedItems)}
             </NavCategory>
           </Box>
         </PageNavContent>
