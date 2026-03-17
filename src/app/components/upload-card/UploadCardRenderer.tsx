@@ -99,8 +99,26 @@ function PreviewAudio({ fileItem }: PreviewAudioProps) {
     if (!waveform || waveform.length === 0) {
       return Array(BAR_COUNT).fill(0.3);
     }
+    if (waveform.length <= BAR_COUNT) {
+      const step = (waveform.length - 1) / (BAR_COUNT - 1);
+      return Array.from({ length: BAR_COUNT }, (_, i) => {
+        const position = i * step;
+        const lower = Math.floor(position);
+        const upper = Math.min(Math.ceil(position), waveform.length - 1);
+        const fraction = position - lower;
+        if (lower === upper) {
+          return waveform[lower] ?? 0.3;
+        }
+        return (waveform[lower] ?? 0.3) * (1 - fraction) + (waveform[upper] ?? 0.3) * fraction;
+      });
+    }
     const step = waveform.length / BAR_COUNT;
-    return Array.from({ length: BAR_COUNT }, (_, i) => waveform[Math.floor(i * step)] ?? 0);
+    return Array.from({ length: BAR_COUNT }, (_, i) => {
+      const start = Math.floor(i * step);
+      const end = Math.floor((i + 1) * step);
+      const slice = waveform.slice(start, end);
+      return slice.length > 0 ? Math.max(...slice) : 0.3;
+    });
   }, [waveform]);
 
   const progress = duration > 0 ? Math.min(currentTime / duration, 1) : 0;

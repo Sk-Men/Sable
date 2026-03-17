@@ -150,11 +150,29 @@ export const AudioMessageRecorder = forwardRef<
 
   const BAR_COUNT = 28;
   const bars = useMemo(() => {
-    const step = Math.max(1, levels.length / BAR_COUNT);
-    return Array.from(
-      { length: BAR_COUNT },
-      (_, i) => levels[Math.min(Math.floor(i * step), levels.length - 1)] ?? 0.15
-    );
+    if (levels.length === 0) {
+      return Array(BAR_COUNT).fill(0.15);
+    }
+    if (levels.length <= BAR_COUNT) {
+      const step = (levels.length - 1) / (BAR_COUNT - 1);
+      return Array.from({ length: BAR_COUNT }, (_, i) => {
+        const position = i * step;
+        const lower = Math.floor(position);
+        const upper = Math.min(Math.ceil(position), levels.length - 1);
+        const fraction = position - lower;
+        if (lower === upper) {
+          return levels[lower] ?? 0.15;
+        }
+        return (levels[lower] ?? 0.15) * (1 - fraction) + (levels[upper] ?? 0.15) * fraction;
+      });
+    }
+    const step = levels.length / BAR_COUNT;
+    return Array.from({ length: BAR_COUNT }, (_, i) => {
+      const start = Math.floor(i * step);
+      const end = Math.floor((i + 1) * step);
+      const slice = levels.slice(start, end);
+      return slice.length > 0 ? Math.max(...slice) : 0.15;
+    });
   }, [levels]);
 
   const containerClassName = [
