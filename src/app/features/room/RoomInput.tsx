@@ -744,16 +744,18 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
       (evt) => {
         if (autocompleteQuery && isKeyHotkey('arrowdown', evt)) {
           evt.preventDefault();
-          document.querySelector('[data-autocomplete-menu]')?.dispatchEvent(
-            new CustomEvent('autocomplete-navigate', { detail: { direction: 1 } })
-          );
+          document
+            .querySelector('[data-autocomplete-menu]')
+            ?.dispatchEvent(new CustomEvent('autocomplete-navigate', { detail: { direction: 1 } }));
           return;
         }
         if (autocompleteQuery && isKeyHotkey('arrowup', evt)) {
           evt.preventDefault();
-          document.querySelector('[data-autocomplete-menu]')?.dispatchEvent(
-            new CustomEvent('autocomplete-navigate', { detail: { direction: -1 } })
-          );
+          document
+            .querySelector('[data-autocomplete-menu]')
+            ?.dispatchEvent(
+              new CustomEvent('autocomplete-navigate', { detail: { direction: -1 } })
+            );
           return;
         }
         if (

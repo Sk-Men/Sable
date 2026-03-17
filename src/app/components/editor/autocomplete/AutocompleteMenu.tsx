@@ -44,15 +44,14 @@ export function AutocompleteMenu({ headerContent, requestClose, children }: Auto
 
     const safeIdx = Math.max(0, Math.min(idx, count - 1));
     buttons.forEach((btn, i) => {
-      if (i === safeIdx) btn.dataset.selected = 'true';
-      else delete btn.dataset.selected;
+      btn.setAttribute('data-selected', String(i === safeIdx));
     });
-  });
+  }, [selectedIndex]);
 
   // Listen for navigation events dispatched by the editor key handler
   useEffect(() => {
     const container = itemsRef.current?.closest('[data-autocomplete-menu]');
-    if (!container) return;
+    if (!container) return undefined;
     const handler = (e: Event) => {
       const { direction } = (e as CustomEvent<AutocompleteNavigateDetail>).detail;
       setSelectedIndex((prev) => {
@@ -81,7 +80,11 @@ export function AutocompleteMenu({ headerContent, requestClose, children }: Auto
             {headerContent}
           </Header>
           <Scroll style={{ flexGrow: 1 }} onKeyDown={preventScrollWithArrowKey}>
-            <div ref={itemsRef} className={css.AutocompleteMenuItems} style={{ padding: config.space.S200 }}>
+            <div
+              ref={itemsRef}
+              className={css.AutocompleteMenuItems}
+              style={{ padding: config.space.S200 }}
+            >
               {children}
             </div>
           </Scroll>

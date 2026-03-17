@@ -41,10 +41,8 @@ export const AutocompleteNotice = style([
 
 export const AutocompleteMenuItems = style({});
 
-globalStyle(`${AutocompleteMenuItems} button[data-selected]`, {
+globalStyle(`${AutocompleteMenuItems} button[data-selected='true']`, {
   backgroundColor: color.SurfaceVariant.ContainerHover,
   outline: `2px solid ${color.Primary.Main}`,
   outlineOffset: -2,
 });
-
-
