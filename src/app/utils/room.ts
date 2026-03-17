@@ -1,4 +1,5 @@
 import { IconName, IconSrc } from 'folds';
+import { getMatrixToRoom, getMatrixToRoomEvent } from '$plugins/matrix-to';
 
 import {
   EventTimeline,
@@ -511,10 +512,8 @@ export const parseReplyFormattedBody = (
   eventId: string,
   formattedBody: string
 ): string => {
-  const replyToLink = `<a href="https://matrix.to/#/${encodeURIComponent(
-    roomId
-  )}/${encodeURIComponent(eventId)}">In reply to</a>`;
-  const userLink = `<a href="https://matrix.to/#/${encodeURIComponent(userId)}">${userId}</a>`;
+  const replyToLink = `<a href="${getMatrixToRoomEvent(roomId, eventId)}">In reply to</a>`;
+  const userLink = `<a href="${getMatrixToRoom(userId)}">${userId}</a>`;
 
   return `<mx-reply><blockquote>${replyToLink}${userLink}<br />${formattedBody}</blockquote></mx-reply>`;
 };
