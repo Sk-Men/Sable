@@ -560,13 +560,13 @@ export function Space() {
         return;
       }
       // for nearly root level text/call rooms, we will not be drawing any arcs.
-      if (renderDepth == DEPTH_START - 1 && !room?.isSpaceRoom() && connectorStack.length == 0) {
+      if (renderDepth === DEPTH_START - 1 && !room?.isSpaceRoom() && connectorStack.length === 0) {
         return;
       }
 
       // for the sub-root items, we will not draw any arcs from root to it.
       // however, we should capture the aX and aY to draw starter arcs for next depths.
-      if (renderDepth == DEPTH_START) {
+      if (renderDepth === DEPTH_START) {
         connectorStack = [
           {
             aX: PADDING_LEFT_DEPTH_OFFSET * DEPTH_START + PADDING_LEFT_DEPTH_OFFSET_START,
@@ -576,12 +576,12 @@ export function Space() {
         return;
       }
       // adjust the stack to be at the correct depth, which is the "parent" of the current item.
-      while (connectorStack.length + DEPTH_START > renderDepth && connectorStack.length != 0) {
+      while (connectorStack.length + DEPTH_START > renderDepth && connectorStack.length !== 0) {
         connectorStack.pop();
       }
 
       // Fixes crash in case the top level virtual item is unrendered.
-      if (connectorStack.length == 0) {
+      if (connectorStack.length === 0) {
         connectorStack = [{ aX: Math.round(renderDepth * PADDING_LEFT_DEPTH_OFFSET), aY: 0 }];
       }
 
@@ -654,7 +654,15 @@ export function Space() {
           hasUnread || roomId === selectedRoomId || callEmbed?.roomId === roomId;
         return containsShowRoom || !showRoomAnyway;
       },
-      [getContainsShowRoom, getInClosedCategories, space.roomId, callEmbed, subspaceHierarchyLimit]
+      [
+        getContainsShowRoom,
+        getInClosedCategories,
+        space.roomId,
+        callEmbed,
+        subspaceHierarchyLimit,
+        roomToUnread,
+        selectedRoomId,
+      ]
     ),
     useCallback(
       (sId) => getInClosedCategories(space.roomId, sId),
@@ -760,7 +768,7 @@ export function Space() {
                 const room = mx.getRoom(roomId);
                 const renderDepth = room?.isSpaceRoom() ? depth - 2 : depth - 1;
                 if (!room) return null;
-                if (depth == subspaceHierarchyLimit && room.isSpaceRoom()) {
+                if (depth === subspaceHierarchyLimit && room.isSpaceRoom()) {
                   return (
                     <VirtualTile
                       virtualItem={vItem}
