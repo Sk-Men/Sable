@@ -833,7 +833,7 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
 
           if (isKeyHotkey('enter', evt) && !isComposing(evt)) {
             const selectedItem =
-              autocompleteMenu.querySelector<HTMLButtonElement>('button[data-selected]') ??
+              autocompleteMenu.querySelector<HTMLButtonElement>('button[data-selected="true"]') ??
               autocompleteMenu.querySelector<HTMLButtonElement>('button');
 
             if (selectedItem) {
