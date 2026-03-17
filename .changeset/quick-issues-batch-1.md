@@ -15,5 +15,3 @@ Fix several small UI/UX issues:
 - **#103**: Browser tab/PWA theme-color: use the correct light (`#ffffff`) and dark (`#1b1a21`) colours via media-query meta tags
 - **#120**: Video messages: volume is persisted across page loads via `localStorage`
 - **#168**: Notifications: add "Favicon Dot: Mentions Only" setting — when enabled, the favicon only changes for mentions/keywords, not plain unreads
-
-Closes #2, #44, #45, #52, #66, #67, #79, #35, #69, #103, #120, #168
