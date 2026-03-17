@@ -722,7 +722,7 @@ export function ThreadDrawer({ room, threadRootId, onClose, overlay }: ThreadDra
           variant="Background"
           visibility="Hover"
           direction="Vertical"
-          hideTrack={false}
+          hideTrack
           style={{
             maxHeight: '200px',
             height: 'fit-content',
@@ -733,7 +733,7 @@ export function ThreadDrawer({ room, threadRootId, onClose, overlay }: ThreadDra
             className={css.messageList}
             direction="Column"
             style={{
-              padding: `${config.space.S400} 0 ${config.space.S200} 0`,
+              padding: `${config.space.S200} 0 ${config.space.S100} 0`,
             }}
           >
             <ThreadMessage {...sharedMessageProps} mEvent={rootEvent} />
