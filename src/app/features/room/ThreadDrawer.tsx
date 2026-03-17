@@ -180,6 +180,11 @@ function ThreadMessage({
 
   const { replyEventId } = mEvent;
 
+  const relation = mEvent.getRelation();
+  const contentRelatesTo = mEvent.getContent()?.['m.relates_to'];
+  const isFallback =
+    relation?.is_falling_back === true || contentRelatesTo?.is_falling_back === true;
+
   return (
     <Message
       key={mEvent.getId()}
@@ -214,7 +219,8 @@ function ThreadMessage({
       hideReadReceipts={showHideReads}
       showDeveloperTools={showDeveloperTools}
       reply={
-        replyEventId && (
+        replyEventId &&
+        !isFallback && (
           <Reply
             room={room}
             timelineSet={timelineSet}

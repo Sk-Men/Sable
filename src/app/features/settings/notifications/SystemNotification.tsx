@@ -189,6 +189,10 @@ export function SystemNotification() {
   const [showUnreadCounts, setShowUnreadCounts] = useSetting(settingsAtom, 'showUnreadCounts');
   const [badgeCountDMsOnly, setBadgeCountDMsOnly] = useSetting(settingsAtom, 'badgeCountDMsOnly');
   const [showPingCounts, setShowPingCounts] = useSetting(settingsAtom, 'showPingCounts');
+  const [faviconForMentionsOnly, setFaviconForMentionsOnly] = useSetting(
+    settingsAtom,
+    'faviconForMentionsOnly'
+  );
 
   // Describe what the current badge combo actually does so users aren't left guessing.
   const badgeBehaviourSummary = (): string => {
@@ -338,6 +342,24 @@ export function SystemNotification() {
       <Text size="T300" style={{ opacity: 0.7 }}>
         {badgeBehaviourSummary()}
       </Text>
+      <SequenceCard
+        className={SequenceCardStyle}
+        variant="SurfaceVariant"
+        direction="Column"
+        gap="400"
+      >
+        <SettingTile
+          title="Favicon Dot: Mentions Only"
+          description="Only change the browser tab favicon when you have mentions or keywords. Unreads without mentions won't affect the favicon."
+          after={
+            <Switch
+              variant="Primary"
+              value={faviconForMentionsOnly}
+              onChange={setFaviconForMentionsOnly}
+            />
+          }
+        />
+      </SequenceCard>
       <SequenceCard
         className={SequenceCardStyle}
         variant="SurfaceVariant"

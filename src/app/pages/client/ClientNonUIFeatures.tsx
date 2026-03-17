@@ -1,4 +1,5 @@
 import { useAtomValue, useSetAtom } from 'jotai';
+import * as Sentry from '@sentry/react';
 import { ReactNode, useCallback, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -49,7 +50,10 @@ import { createDebugLogger } from '$utils/debugLogger';
 import { useSlidingSyncActiveRoom } from '$hooks/useSlidingSyncActiveRoom';
 import { getSlidingSyncManager } from '$client/initMatrix';
 import { NotificationBanner } from '$components/notification-banner';
+import { TelemetryConsentBanner } from '$components/telemetry-consent';
 import { useCallSignaling } from '$hooks/useCallSignaling';
+import { getBlobCacheStats } from '$hooks/useBlobCache';
+import { lastVisitedRoomIdAtom } from '$state/room/lastRoom';
 import { getInboxInvitesPath } from '../pathUtils';
 import { BackgroundNotifications } from './BackgroundNotifications';
 
@@ -95,6 +99,7 @@ function PageZoomFeature() {
 function FaviconUpdater() {
   const roomToUnread = useAtomValue(roomToUnreadAtom);
   const [usePushNotifications] = useSetting(settingsAtom, 'usePushNotifications');
+  const [faviconForMentionsOnly] = useSetting(settingsAtom, 'faviconForMentionsOnly');
   const registration = useAtomValue(registrationAtom);
 
   useEffect(() => {
@@ -115,8 +120,10 @@ function FaviconUpdater() {
       }
     });
 
-    if (notification) {
-      setFavicon(highlight ? LogoHighlightSVG : LogoUnreadSVG);
+    if (highlight) {
+      setFavicon(LogoHighlightSVG);
+    } else if (!faviconForMentionsOnly && notification) {
+      setFavicon(LogoUnreadSVG);
     } else {
       setFavicon(LogoSVG);
     }
@@ -149,7 +156,7 @@ function FaviconUpdater() {
     } catch {
       // Likely Firefox/Gecko-based and doesn't support badging API
     }
-  }, [roomToUnread, usePushNotifications, registration]);
+  }, [roomToUnread, usePushNotifications, registration, faviconForMentionsOnly]);
 
   return null;
 }
@@ -267,6 +274,8 @@ function MessageNotifications() {
     // already checked focus when the encrypted event arrived, and want to use that
     // original state rather than re-checking after decryption completes).
     const skipFocusCheckEvents = new Set<string>();
+    // Tracks when each event first arrived so we can measure notification delivery latency
+    const notifyTimerMap = new Map<string, number>();
 
     const handleTimelineEvent: RoomEventHandlerMap[RoomEvent.Timeline] = (
       mEvent,
@@ -278,6 +287,10 @@ function MessageNotifications() {
       if (mx.getSyncState() !== 'SYNCING') return;
 
       const eventId = mEvent.getId();
+      // Record event arrival time once per eventId (re-entry via handleDecrypted must not reset it)
+      if (eventId && !notifyTimerMap.has(eventId)) {
+        notifyTimerMap.set(eventId, performance.now());
+      }
       const shouldSkipFocusCheck = eventId && skipFocusCheckEvents.has(eventId);
       if (!shouldSkipFocusCheck) {
         if (document.hasFocus() && (selectedRoomId === room?.roomId || notificationSelected))
@@ -338,6 +351,17 @@ function MessageNotifications() {
 
       // Check if this is a DM using multiple signals for robustness
       const isDM = isDMRoom(room, mDirectsRef.current);
+
+      // Measure total notification delivery latency (includes decryption wait for E2EE events)
+      const arrivalMs = notifyTimerMap.get(eventId);
+      if (arrivalMs !== undefined) {
+        Sentry.metrics.distribution(
+          'sable.notification.delivery_ms',
+          performance.now() - arrivalMs,
+          { attributes: { encrypted: String(mEvent.isEncrypted()), dm: String(isDM) } }
+        );
+        notifyTimerMap.delete(eventId);
+      }
       const pushActions = pushProcessor.actionsForEvent(mEvent);
 
       // For DMs with "All Messages" or "Default" notification settings:
@@ -532,6 +556,30 @@ function PrivacyBlurFeature() {
   return null;
 }
 
+// Periodically emits memory-health gauges so Sentry dashboards can surface
+// unbounded growth (e.g. blob cache never evicted, stale inflight requests).
+function HealthMonitor() {
+  useEffect(() => {
+    const id = window.setInterval(() => {
+      const { cacheSize, inflightCount } = getBlobCacheStats();
+      Sentry.metrics.gauge('sable.media.blob_cache_size', cacheSize);
+      if (inflightCount > 0) {
+        Sentry.metrics.gauge('sable.media.inflight_requests', inflightCount);
+        if (inflightCount >= 10) {
+          Sentry.addBreadcrumb({
+            category: 'media',
+            message: `High inflight request count: ${inflightCount}`,
+            level: 'warning',
+            data: { inflight_count: inflightCount },
+          });
+        }
+      }
+    }, 60_000);
+    return () => window.clearInterval(id);
+  }, []);
+  return null;
+}
+
 type ClientNonUIFeaturesProps = {
   children: ReactNode;
 };
@@ -620,6 +668,81 @@ function SyncNotificationSettingsWithServiceWorker() {
 
 function SlidingSyncActiveRoomSubscriber() {
   useSlidingSyncActiveRoom();
+  return null;
+}
+
+/**
+ * Tracks the currently-viewed room and writes sanitised room metadata to the Sentry scope.
+ * This context appears on every subsequent error/transaction captured while the room is open,
+ * making room-specific bugs much easier to triage.
+ */
+function SentryRoomContextFeature() {
+  const mx = useMatrixClient();
+  const mDirect = useAtomValue(mDirectAtom);
+  const roomId = useAtomValue(lastVisitedRoomIdAtom);
+
+  useEffect(() => {
+    if (!roomId) {
+      Sentry.setContext('room', null);
+      Sentry.setTag('room_type', 'none');
+      Sentry.setTag('room_encrypted', 'none');
+      return;
+    }
+    const room = mx.getRoom(roomId);
+    if (!room) return;
+
+    const isDm = mDirect.has(roomId);
+    const encrypted = mx.isRoomEncrypted(roomId);
+    const memberCount = room.getJoinedMemberCount();
+    // Bucket member count so we can correlate issues with room scale
+    // without leaking precise membership numbers of private rooms.
+    let memberCountRange: string;
+    if (memberCount <= 2) memberCountRange = '1-2';
+    else if (memberCount <= 10) memberCountRange = '3-10';
+    else if (memberCount <= 50) memberCountRange = '11-50';
+    else if (memberCount <= 200) memberCountRange = '51-200';
+    else memberCountRange = '200+';
+
+    Sentry.setContext('room', {
+      type: isDm ? 'dm' : 'group',
+      encrypted,
+      member_count_range: memberCountRange,
+    });
+    // Also set as tags so they can be used to filter events in Sentry
+    Sentry.setTag('room_type', isDm ? 'dm' : 'group');
+    Sentry.setTag('room_encrypted', String(encrypted));
+  }, [mx, mDirect, roomId]);
+
+  return null;
+}
+
+function SentryTagsFeature() {
+  const settings = useAtomValue(settingsAtom);
+
+  useEffect(() => {
+    // Core rendering tags — indexed in Sentry for filtering/search
+    Sentry.setTag('message_layout', String(settings.messageLayout));
+    Sentry.setTag('message_spacing', String(settings.messageSpacing));
+    Sentry.setTag('twitter_emoji', String(settings.twitterEmoji));
+    Sentry.setTag('is_markdown', String(settings.isMarkdown));
+    Sentry.setTag('page_zoom', String(settings.pageZoom));
+    if (settings.themeId) Sentry.setTag('theme_id', settings.themeId);
+    // Additional high-value tags for bug reproduction
+    Sentry.setTag('use_right_bubbles', String(settings.useRightBubbles));
+    Sentry.setTag('reduced_motion', String(settings.reducedMotion));
+    Sentry.setTag('send_presence', String(settings.sendPresence));
+    Sentry.setTag('enter_for_newline', String(settings.enterForNewline));
+    Sentry.setTag('media_auto_load', String(settings.mediaAutoLoad));
+    Sentry.setTag('url_preview', String(settings.urlPreview));
+    Sentry.setTag('use_system_theme', String(settings.useSystemTheme));
+    Sentry.setTag('uniform_icons', String(settings.uniformIcons));
+    Sentry.setTag('jumbo_emoji_size', String(settings.jumboEmojiSize));
+    Sentry.setTag('caption_position', String(settings.captionPosition));
+    Sentry.setTag('right_swipe_action', String(settings.rightSwipeAction));
+    // Full settings snapshot as structured Additional Data on every event
+    Sentry.setContext('settings', { ...settings });
+  }, [settings]);
+
   return null;
 }
 
@@ -726,8 +849,12 @@ export function ClientNonUIFeatures({ children }: ClientNonUIFeaturesProps) {
       <SyncNotificationSettingsWithServiceWorker />
       <HandleDecryptPushEvent />
       <NotificationBanner />
+      <TelemetryConsentBanner />
       <SlidingSyncActiveRoomSubscriber />
       <PresenceFeature />
+      <SentryRoomContextFeature />
+      <SentryTagsFeature />
+      <HealthMonitor />
       {children}
     </>
   );

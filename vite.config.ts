@@ -16,6 +16,7 @@ import fs from 'fs';
 import path from 'path';
 import { cloudflare } from '@cloudflare/vite-plugin';
 import { createRequire } from 'module';
+import { sentryVitePlugin } from '@sentry/vite-plugin';
 import buildConfig from './build.config';
 
 const packageJson = JSON.parse(
@@ -63,7 +64,7 @@ const isReleaseTag = (() => {
 const copyFiles = {
   targets: [
     {
-      src: 'node_modules/@element-hq/element-call-embedded/dist/*',
+      src: 'node_modules/@sableclient/sable-call-embedded/dist/*',
       dest: 'public/element-call',
     },
     {
@@ -189,6 +190,26 @@ export default defineConfig({
       ],
       include: /\.(html|xml|css|json|js|mjs|svg|yaml|yml|toml|wasm|txt|map)$/,
     }),
+    // Sentry source map upload — only active when credentials are provided at build time
+    ...(process.env.SENTRY_AUTH_TOKEN && process.env.SENTRY_ORG && process.env.SENTRY_PROJECT
+      ? [
+          sentryVitePlugin({
+            org: process.env.SENTRY_ORG,
+            project: process.env.SENTRY_PROJECT,
+            authToken: process.env.SENTRY_AUTH_TOKEN,
+            sourcemaps: {
+              filesToDeleteAfterUpload: ['dist/**/*.map'],
+            },
+            release: {
+              name: appVersion,
+            },
+            // Annotate React components with data-sentry-* attributes at build
+            // time so Sentry can show component names in breadcrumbs, spans,
+            // and replay search instead of raw CSS selectors.
+            reactComponentAnnotation: { enabled: true },
+          }),
+        ]
+      : []),
   ],
   optimizeDeps: {
     // Rebuild dep optimizer cache on each dev start to avoid stale API shapes.

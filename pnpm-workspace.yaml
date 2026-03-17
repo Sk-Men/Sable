@@ -1,4 +1,5 @@
 allowBuilds:
+  '@sentry/cli': true
   '@swc/core': true
   esbuild: true
   sharp: true
@@ -6,6 +7,8 @@ allowBuilds:
   workerd: true
 engineStrict: true
 minimumReleaseAge: 1440
+minimumReleaseAgeExclude:
+  - '@sableclient/sable-call-embedded'
 
 overrides:
   brace-expansion: '>=1.1.12'

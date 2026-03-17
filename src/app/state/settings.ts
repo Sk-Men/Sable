@@ -50,7 +50,6 @@ export interface Settings {
   showHiddenEvents: boolean;
   showTombstoneEvents: boolean;
   legacyUsernameColor: boolean;
-  allowPipVideos: boolean;
 
   usePushNotifications: boolean;
   useInAppNotifications: boolean;
@@ -97,6 +96,7 @@ export interface Settings {
   autoplayEmojis: boolean;
   saveStickerEmojiBandwidth: boolean;
   alwaysShowCallButton: boolean;
+  faviconForMentionsOnly: boolean;
 
   // furry stuff
   renderAnimals: boolean;
@@ -129,7 +129,6 @@ const defaultSettings: Settings = {
   showHiddenEvents: false,
   showTombstoneEvents: false,
   legacyUsernameColor: false,
-  allowPipVideos: false,
 
   enableMSC4268CMD: false,
 
@@ -178,6 +177,7 @@ const defaultSettings: Settings = {
   autoplayEmojis: true,
   saveStickerEmojiBandwidth: false,
   alwaysShowCallButton: false,
+  faviconForMentionsOnly: false,
 
   // furry stuff
   renderAnimals: true,
