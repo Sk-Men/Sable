@@ -9,7 +9,7 @@ export const Video = forwardRef<HTMLVideoElement, VideoHTMLAttributes<HTMLVideoE
   )
 );
 
-const VIDEO_VOLUME_KEY = 'videoVolume';
+export const MEDIA_VOLUME_KEY = 'mediaVolume';
 
 export function PersistedVolumeVideo({
   onVolumeChange,
@@ -30,7 +30,7 @@ export function PersistedVolumeVideo({
       {...props}
       ref={innerRef}
       onVolumeChange={(e) => {
-        localStorage.setItem(VIDEO_VOLUME_KEY, String((e.target as HTMLVideoElement).volume));
+        localStorage.setItem(MEDIA_VOLUME_KEY, String((e.target as HTMLVideoElement).volume));
         onVolumeChange?.(e);
       }}
     />

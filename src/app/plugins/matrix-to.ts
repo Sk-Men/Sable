@@ -1,12 +1,4 @@
-let MATRIX_TO_BASE = 'https://matrix.to';
-
-/**
- * Override the default matrix.to base URL (configurable per deployment).
- * Must be called before any getMatrixTo* functions are used.
- */
-export const setMatrixToBase = (baseUrl?: string): void => {
-  if (baseUrl) MATRIX_TO_BASE = baseUrl.replace(/\/$/, '');
-};
+const MATRIX_TO_BASE = 'https://matrix.to';
 
 export const getMatrixToUser = (userId: string): string => `${MATRIX_TO_BASE}/#/${userId}`;
 
