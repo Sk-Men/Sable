@@ -637,12 +637,6 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
       const perMessageProfile = await getCurrentlyUsedPerMessageProfileForRoom(mx, roomId);
 
       if (perMessageProfile) {
-        console.warn(
-          'Using per-message profile:',
-          perMessageProfile.id,
-          perMessageProfile.name,
-          perMessageProfile.avatarUrl
-        );
         content['com.beeper.per_message_profile'] =
           convertPerMessageProfileToBeeperFormat(perMessageProfile);
       }

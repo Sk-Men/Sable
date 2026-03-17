@@ -140,7 +140,6 @@ export async function getAllPerMessageProfiles(mx: MatrixClient): Promise<PerMes
 
 export function addOrUpdatePerMessageProfile(mx: MatrixClient, profile: PerMessageProfile) {
   const profileListIndex = mx.getAccountData(`${ACCOUNT_DATA_PREFIX}.index` as any);
-  console.warn('Storing per-message profile:', profile);
   if (profileListIndex?.getContent()?.profileIds.includes(profile.id)) {
     // profile already exists, just update it
     return mx.setAccountData(`${ACCOUNT_DATA_PREFIX}.${profile.id}` as any, profile as any);
@@ -209,13 +208,6 @@ export async function getCurrentlyUsedPerMessageProfileForRoom(
     .find((assoc: PerMessageProfileRoomAssociation) => assoc.roomId === roomId)?.profileId;
 
   const pmp = profileId ? await getPerMessageProfileById(mx, profileId) : undefined;
-  console.warn('getCurrentlyUsedPerMessageProfileIdForRoom', {
-    accountData,
-    content,
-    roomId,
-    profileId,
-    pmp,
-  });
   return profileId ? pmp : undefined;
 }
 

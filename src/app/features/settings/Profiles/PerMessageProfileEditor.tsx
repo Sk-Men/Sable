@@ -9,9 +9,13 @@ import { useObjectURL } from '$hooks/useObjectURL';
 import { createUploadAtom } from '$state/upload';
 import { UserAvatar } from '$components/user-avatar';
 import { CompactUploadCardRenderer } from '$components/upload-card';
-import { addOrUpdatePerMessageProfile, deletePerMessageProfile, invalidatePerMessageProfileForProfileId } from '$hooks/usePerMessageProfile';
-import { SequenceCardStyle } from '../styles.css';
+import {
+  addOrUpdatePerMessageProfile,
+  deletePerMessageProfile,
+  invalidatePerMessageProfileForProfileId,
+} from '$hooks/usePerMessageProfile';
 import { parsePronounsStringToPronounsSetArray, PronounSet } from '$utils/pronouns';
+import { SequenceCardStyle } from '../styles.css';
 
 /**
  * the props we use for the per-message profile editor, which is used to edit a per-message profile. This is used in the settings page when the user wants to edit a profile.
@@ -40,12 +44,6 @@ export function PerMessageProfileEditor({
 
   // Pronouns
   const [currentPronouns, setCurrentPronouns] = useState<PronounSet[]>(pronouns);
-  const currentPronounsString = useMemo(() => {
-    const pronounsString = Array.isArray(currentPronouns)
-      ? currentPronouns.map((p) => `${p.language ? `${p.language}:` : ''}${p.summary}`).join(', ')
-      : '';
-    return [pronounsString] as const;
-  }, [currentPronouns]);
   const [newPronouns, setNewPronouns] = useState<PronounSet[]>(pronouns);
   const [newPronounsString, setNewPronounsString] = useState(() => {
     const pronounsString = Array.isArray(newPronouns)
@@ -267,12 +265,9 @@ export function PerMessageProfileEditor({
           style={{ flex: 1, minWidth: 0, height: '100%' }}
           aria-label="Display name input"
         >
-          <label
-            htmlFor={`displayNameInput-${profileId}`}
-            style={{ marginBottom: config.space.S200, alignSelf: 'flex-start' }}
-          >
-            <Text size="T300">Display Name:</Text>
-          </label>
+          <Text size="T300" style={{ marginBottom: config.space.S200, alignSelf: 'flex-start' }}>
+            Display Name:
+          </Text>
           <Input
             required
             name="displayNameInput"
@@ -311,14 +306,16 @@ export function PerMessageProfileEditor({
               )
             }
           />
-          <label
-            htmlFor={`pronounsInput-${profileId}`}
-            style={{ marginBottom: config.space.S200, alignSelf: 'flex-start' }}
+          <Text
+            size="T300"
+            style={{
+              marginTop: config.space.S100,
+              marginBottom: config.space.S200,
+              alignSelf: 'flex-start',
+            }}
           >
-            <Text size="T300" style={{ marginTop: config.space.S100 }}>
-              Pronouns:
-            </Text>
-          </label>
+            Pronouns:
+          </Text>
           <Input
             required
             name="pronounsInput"
