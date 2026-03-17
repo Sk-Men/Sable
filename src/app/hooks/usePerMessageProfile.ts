@@ -267,11 +267,18 @@ export const perMessageProfileAtomFamily = atomFamily((roomId: string) =>
 /**
  * TO-DO
  */
-export const invalidatePerMessageProfile = (roomId: string, set: any) => {
+export const invalidatePerMessageProfile: (roomId: string, set: any) => void = (
+  roomId: string,
+  set: any
+) => {
   set(refreshProfileAtomFamily(roomId), (v: number) => v + 1);
 };
 
-export function invalidatePerMessageProfileForProfileId(mx: MatrixClient, profileId: string, set: any) {
+export function invalidatePerMessageProfileForProfileId(
+  mx: MatrixClient,
+  profileId: string,
+  set: any
+) {
   getListOfRoomsUsingProfile(mx, profileId).then((roomIds) => {
     roomIds.forEach((roomId) => {
       set(refreshProfileAtomFamily(roomId), (v: number) => v + 1);

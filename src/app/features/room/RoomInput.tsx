@@ -153,7 +153,7 @@ import { useRoomPermissions } from '$hooks/useRoomPermissions';
 import { AutocompleteNotice } from '$components/editor/autocomplete/AutocompleteNotice';
 import {
   convertPerMessageProfileToBeeperFormat,
-  perMessageProfileAtomFamily,
+  getCurrentlyUsedPerMessageProfileForRoom,
 } from '$hooks/usePerMessageProfile';
 import { getSupportedAudioExtension } from '$plugins/voice-recorder-kit/supportedCodec';
 import { SchedulePickerDialog } from './schedule-send';
@@ -273,9 +273,6 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
       replyUserID ?? '',
       room
     );
-
-    // Add state to cache the profile
-    const perMessageProfile = useAtomValue(perMessageProfileAtomFamily(roomId));
 
     const [uploadBoard, setUploadBoard] = useState(true);
     const [selectedFiles, setSelectedFiles] = useAtom(roomIdToUploadItemsAtomFamily(draftKey));
@@ -637,6 +634,8 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
         body,
       };
 
+      const perMessageProfile = await getCurrentlyUsedPerMessageProfileForRoom(mx, roomId);
+
       if (perMessageProfile) {
         console.warn(
           'Using per-message profile:',
@@ -742,7 +741,6 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
       canSendReaction,
       mx,
       roomId,
-      perMessageProfile,
       replyDraft,
       silentReply,
       scheduledTime,
