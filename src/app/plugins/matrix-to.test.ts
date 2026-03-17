@@ -21,9 +21,7 @@ afterEach(() => {
 
 describe('getMatrixToUser', () => {
   it('generates a standard matrix.to user link', () => {
-    expect(getMatrixToUser('@alice:example.com')).toBe(
-      'https://matrix.to/#/@alice:example.com'
-    );
+    expect(getMatrixToUser('@alice:example.com')).toBe('https://matrix.to/#/@alice:example.com');
   });
 
   it('uses custom base when configured', () => {
@@ -43,9 +41,7 @@ describe('getMatrixToUser', () => {
 
 describe('getMatrixToRoom', () => {
   it('generates a standard matrix.to room link', () => {
-    expect(getMatrixToRoom('!room:example.com')).toBe(
-      'https://matrix.to/#/!room:example.com'
-    );
+    expect(getMatrixToRoom('!room:example.com')).toBe('https://matrix.to/#/!room:example.com');
   });
 
   it('appends via servers', () => {
@@ -70,9 +66,9 @@ describe('getMatrixToRoomEvent', () => {
   });
 
   it('appends via servers', () => {
-    expect(
-      getMatrixToRoomEvent('!room:example.com', '$event123', ['s1.org'])
-    ).toBe('https://matrix.to/#/!room:example.com/$event123?via=s1.org');
+    expect(getMatrixToRoomEvent('!room:example.com', '$event123', ['s1.org'])).toBe(
+      'https://matrix.to/#/!room:example.com/$event123?via=s1.org'
+    );
   });
 
   it('uses custom base when configured', () => {
@@ -117,9 +113,7 @@ describe('testMatrixTo', () => {
 
 describe('parseMatrixToUser', () => {
   it('parses a standard matrix.to user link', () => {
-    expect(parseMatrixToUser('https://matrix.to/#/@alice:example.com')).toBe(
-      '@alice:example.com'
-    );
+    expect(parseMatrixToUser('https://matrix.to/#/@alice:example.com')).toBe('@alice:example.com');
   });
 
   it('returns undefined for non-user links', () => {
@@ -128,16 +122,14 @@ describe('parseMatrixToUser', () => {
 
   it('parses user links from custom base', () => {
     setMatrixToBase('https://matrix.example.org');
-    expect(
-      parseMatrixToUser('https://matrix.example.org/#/@alice:example.com')
-    ).toBe('@alice:example.com');
+    expect(parseMatrixToUser('https://matrix.example.org/#/@alice:example.com')).toBe(
+      '@alice:example.com'
+    );
   });
 
   it('parses standard matrix.to user links even after custom base is set', () => {
     setMatrixToBase('https://matrix.example.org');
-    expect(parseMatrixToUser('https://matrix.to/#/@alice:example.com')).toBe(
-      '@alice:example.com'
-    );
+    expect(parseMatrixToUser('https://matrix.to/#/@alice:example.com')).toBe('@alice:example.com');
   });
 });
 
@@ -170,16 +162,15 @@ describe('parseMatrixToRoom', () => {
   });
 
   it('returns undefined for event links (too many segments)', () => {
-    expect(
-      parseMatrixToRoom('https://matrix.to/#/!room:example.com/$event123')
-    ).toBeUndefined();
+    expect(parseMatrixToRoom('https://matrix.to/#/!room:example.com/$event123')).toBeUndefined();
   });
 
   it('parses room links from custom base', () => {
     setMatrixToBase('https://matrix.example.org');
-    expect(
-      parseMatrixToRoom('https://matrix.example.org/#/!room:example.com')
-    ).toEqual({ roomIdOrAlias: '!room:example.com', viaServers: undefined });
+    expect(parseMatrixToRoom('https://matrix.example.org/#/!room:example.com')).toEqual({
+      roomIdOrAlias: '!room:example.com',
+      viaServers: undefined,
+    });
   });
 
   it('still parses standard matrix.to room links after custom base is set', () => {
@@ -197,9 +188,7 @@ describe('parseMatrixToRoom', () => {
 
 describe('parseMatrixToRoomEvent', () => {
   it('parses a room event link', () => {
-    expect(
-      parseMatrixToRoomEvent('https://matrix.to/#/!room:example.com/$event123')
-    ).toEqual({
+    expect(parseMatrixToRoomEvent('https://matrix.to/#/!room:example.com/$event123')).toEqual({
       roomIdOrAlias: '!room:example.com',
       eventId: '$event123',
       viaServers: undefined,
@@ -208,9 +197,7 @@ describe('parseMatrixToRoomEvent', () => {
 
   it('parses via servers', () => {
     expect(
-      parseMatrixToRoomEvent(
-        'https://matrix.to/#/!room:example.com/$event123?via=s1.org'
-      )
+      parseMatrixToRoomEvent('https://matrix.to/#/!room:example.com/$event123?via=s1.org')
     ).toEqual({
       roomIdOrAlias: '!room:example.com',
       eventId: '$event123',
@@ -219,17 +206,13 @@ describe('parseMatrixToRoomEvent', () => {
   });
 
   it('returns undefined for room-only links', () => {
-    expect(
-      parseMatrixToRoomEvent('https://matrix.to/#/!room:example.com')
-    ).toBeUndefined();
+    expect(parseMatrixToRoomEvent('https://matrix.to/#/!room:example.com')).toBeUndefined();
   });
 
   it('parses event links from custom base', () => {
     setMatrixToBase('https://matrix.example.org');
     expect(
-      parseMatrixToRoomEvent(
-        'https://matrix.example.org/#/!room:example.com/$event123'
-      )
+      parseMatrixToRoomEvent('https://matrix.example.org/#/!room:example.com/$event123')
     ).toEqual({
       roomIdOrAlias: '!room:example.com',
       eventId: '$event123',
@@ -239,9 +222,7 @@ describe('parseMatrixToRoomEvent', () => {
 
   it('still parses standard matrix.to event links after custom base is set', () => {
     setMatrixToBase('https://matrix.example.org');
-    expect(
-      parseMatrixToRoomEvent('https://matrix.to/#/!room:example.com/$event123')
-    ).toEqual({
+    expect(parseMatrixToRoomEvent('https://matrix.to/#/!room:example.com/$event123')).toEqual({
       roomIdOrAlias: '!room:example.com',
       eventId: '$event123',
       viaServers: undefined,
