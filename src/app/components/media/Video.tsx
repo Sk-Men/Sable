@@ -18,7 +18,7 @@ export function PersistedVolumeVideo({
   const innerRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
-    const stored = localStorage.getItem(VIDEO_VOLUME_KEY);
+    const stored = localStorage.getItem(MEDIA_VOLUME_KEY);
     if (innerRef.current && stored !== null) {
       const parsed = parseFloat(stored);
       if (!Number.isNaN(parsed)) innerRef.current.volume = parsed;
