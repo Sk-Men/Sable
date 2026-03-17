@@ -282,15 +282,16 @@ export function HierarchyItemMenu({
                         </Text>
                       </MenuItem>
                     )}
-                    <MenuItem 
+                    <MenuItem
                       size="300"
                       radii="300"
                       onClick={() => {
-                        navigate(getSpaceLobbyPath(getCanonicalAliasOrRoomId(mx, item.roomId)))
-                      }}>
-                        <Text as="span" size="T300" truncate>
-                          Open Lobby
-                        </Text>
+                        navigate(getSpaceLobbyPath(getCanonicalAliasOrRoomId(mx, item.roomId)));
+                      }}
+                    >
+                      <Text as="span" size="T300" truncate>
+                        Open Lobby
+                      </Text>
                     </MenuItem>
                     <InviteMenuItem
                       item={item}

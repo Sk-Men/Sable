@@ -8,12 +8,7 @@ import { getAllParents, getStateEvents, isValidChild } from '$utils/room';
 import { isRoomId } from '$utils/matrix';
 import { SortFunc, byOrderKey, byTsOldToNew, factoryRoomIdByActivity } from '$utils/sort';
 import { useMatrixClient } from './useMatrixClient';
-import { roomToParentsAtom } from '../state/room/roomToParents';
-import { MSpaceChildContent, StateEvent } from '../../types/matrix/room';
-import { getAllParents, getStateEvents, isValidChild } from '../utils/room';
 import { makeLobbyCategoryId } from '../state/closedLobbyCategories';
-import { isRoomId } from '../utils/matrix';
-import { SortFunc, byOrderKey, byTsOldToNew, factoryRoomIdByActivity } from '../utils/sort';
 import { useStateEventCallback } from './useStateEventCallback';
 import { ErrorCode } from '../cs-errorcode';
 

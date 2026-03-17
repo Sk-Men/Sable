@@ -1,14 +1,6 @@
 import { MouseEventHandler, useState } from 'react';
 import { Room } from '$types/matrix-sdk';
-import {
-  Box,
-  Icon,
-  Icons,
-  Text,
-  config,
-  RectCords,
-  Avatar,
-} from 'folds';
+import { Box, Icon, Icons, Text, config, RectCords, Avatar } from 'folds';
 import { useFocusWithin, useHover } from 'react-aria';
 import { useNavigate } from 'react-router-dom';
 import { NavButton, NavItem, NavItemContent } from '$components/nav';
@@ -20,13 +12,7 @@ type SpaceNavItemProps = {
   linkPath: string;
 };
 
-export function SpaceNavItem({
-  room,
-  selected,
-  linkPath,
-}: SpaceNavItemProps) {
-  const [hover, setHover] = useState(false);
-  const { hoverProps } = useHover({ onHoverChange: setHover });
+export function SpaceNavItem({ room, selected, linkPath }: SpaceNavItemProps) {
   const { focusWithinProps } = useFocusWithin({ onFocusWithinChange: setHover });
   const [menuAnchor, setMenuAnchor] = useState<RectCords>();
 
@@ -45,17 +31,11 @@ export function SpaceNavItem({
     });
   };
 
-  const handleNavItemClick: MouseEventHandler<HTMLElement> = (evt) => {
+  const handleNavItemClick: MouseEventHandler<HTMLElement> = () => {
     navigate(linkPath);
   };
 
-  const ariaLabel = [
-    roomName,
-    'Space'
-  ]
-    .flat()
-    .filter(Boolean)
-    .join(', ');
+  const ariaLabel = [roomName, 'Space'].flat().filter(Boolean).join(', ');
 
   return (
     <Box direction="Column" grow="Yes">
@@ -66,26 +46,21 @@ export function SpaceNavItem({
         aria-selected={selected}
         data-hover={!!menuAnchor}
         onContextMenu={handleContextMenu}
-        {...hoverProps}
         {...focusWithinProps}
       >
         <NavButton onClick={handleNavItemClick} aria-label={ariaLabel}>
           <NavItemContent>
             <Box as="span" grow="Yes" alignItems="Center" gap="200">
               <Avatar size="200" radii="400">
-                <Icon src={Icons.Space}
-                style={{ opacity: config.opacity.P300, }}
-                filled={selected}
-                size="100"
+                <Icon
+                  src={Icons.Space}
+                  style={{ opacity: config.opacity.P300 }}
+                  filled={selected}
+                  size="100"
                 />
               </Avatar>
               <Box as="span" grow="Yes">
-                <Text
-                  priority="300"
-                  as="span"
-                  size="Inherit"
-                  truncate
-                >
+                <Text priority="300" as="span" size="Inherit" truncate>
                   {roomName}
                 </Text>
               </Box>

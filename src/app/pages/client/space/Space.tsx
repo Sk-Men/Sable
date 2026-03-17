@@ -1,4 +1,13 @@
-import { MouseEventHandler, ReactElement, ReactSVGElement, forwardRef, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import {
+  MouseEventHandler,
+  ReactElement,
+  forwardRef,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { useAtom, useAtomValue } from 'jotai';
 import {
   Avatar,
@@ -39,7 +48,7 @@ import { roomToUnreadAtom } from '$state/room/roomToUnread';
 import { useCategoryHandler } from '$hooks/useCategoryHandler';
 import { useNavToActivePathMapper } from '$hooks/useNavToActivePathMapper';
 import { useRoomName } from '$hooks/useRoomMeta';
-import { useSpaceJoinedHierarchy } from '$hooks/useSpaceHierarchy';
+import { HierarchyItem, useSpaceJoinedHierarchy } from '$hooks/useSpaceHierarchy';
 import { allRoomsAtom } from '$state/room-list/roomList';
 import { PageNav, PageNavContent, PageNavHeader } from '$components/page';
 import { usePowerLevels } from '$hooks/usePowerLevels';
@@ -529,81 +538,98 @@ export function Space() {
    * @param virtualizedItems - The virtualized item list that will be used to render elements in the nav
    * @returns React SVG Element that can be overlayed on top of the nav category for rooms.
    */
-  const getConnectorSVG = (virtualizedItems: VirtualItem[]): ReactElement => {
+  const getConnectorSVG = (
+    hierarchy: HierarchyItem[],
+    virtualizedItems: VirtualItem[]
+  ): ReactElement => {
     const DEPTH_START = 2;
     const PADDING_LEFT_DEPTH_OFFSET = 15.75;
     const PADDING_LEFT_DEPTH_OFFSET_START = -15.75;
     const RADIUS = 5;
 
-    var connectorStack: { aX: number, aY: number}[] = [];
+    let connectorStack: { aX: number; aY: number }[] = [];
     // Holder for the paths
     const pathHolder: ReactElement[] = [];
     virtualizedItems.forEach((vItem) => {
-        const { roomId, depth } = hierarchy[vItem.index] ?? {};
-        const room = getRoom(roomId);
-        // We will render spaces at a level above their normal depth, since we want their children to be "under" them
-        const renderDepth = room?.isSpaceRoom() ? depth : depth + 1;
-        // for the root items, we are not doing anything with it.
-        if (renderDepth < DEPTH_START) { return; } 
-        // for nearly root level text/call rooms, we will not be drawing any arcs.
-        if (renderDepth == DEPTH_START - 1 && !room?.isSpaceRoom() && connectorStack.length == 0) { return; }
+      const { roomId, depth } = hierarchy[vItem.index] ?? {};
+      const room = getRoom(roomId);
+      // We will render spaces at a level above their normal depth, since we want their children to be "under" them
+      const renderDepth = room?.isSpaceRoom() ? depth : depth + 1;
+      // for the root items, we are not doing anything with it.
+      if (renderDepth < DEPTH_START) {
+        return;
+      }
+      // for nearly root level text/call rooms, we will not be drawing any arcs.
+      if (renderDepth == DEPTH_START - 1 && !room?.isSpaceRoom() && connectorStack.length == 0) {
+        return;
+      }
 
-        // for the sub-root items, we will not draw any arcs from root to it.
-        // however, we should capture the aX and aY to draw starter arcs for next depths.
-        if (renderDepth == DEPTH_START) {
-          connectorStack = [{ aX: PADDING_LEFT_DEPTH_OFFSET * DEPTH_START + PADDING_LEFT_DEPTH_OFFSET_START, aY: vItem.end }];
-          return;
-        }
-        // adjust the stack to be at the correct depth, which is the "parent" of the current item.
-        while (connectorStack.length + DEPTH_START > renderDepth && connectorStack.length != 0) {
-          connectorStack.pop();
-        }
+      // for the sub-root items, we will not draw any arcs from root to it.
+      // however, we should capture the aX and aY to draw starter arcs for next depths.
+      if (renderDepth == DEPTH_START) {
+        connectorStack = [
+          {
+            aX: PADDING_LEFT_DEPTH_OFFSET * DEPTH_START + PADDING_LEFT_DEPTH_OFFSET_START,
+            aY: vItem.end,
+          },
+        ];
+        return;
+      }
+      // adjust the stack to be at the correct depth, which is the "parent" of the current item.
+      while (connectorStack.length + DEPTH_START > renderDepth && connectorStack.length != 0) {
+        connectorStack.pop();
+      }
 
-        // Fixes crash in case the top level virtual item is unrendered.
-        if (connectorStack.length == 0) {
-          connectorStack = [{ aX: Math.round((renderDepth) * PADDING_LEFT_DEPTH_OFFSET), aY: 0 }]
-        }
+      // Fixes crash in case the top level virtual item is unrendered.
+      if (connectorStack.length == 0) {
+        connectorStack = [{ aX: Math.round(renderDepth * PADDING_LEFT_DEPTH_OFFSET), aY: 0 }];
+      }
 
-        const lastConnector = connectorStack[connectorStack.length - 1];
+      const lastConnector = connectorStack[connectorStack.length - 1];
 
-        // aX: numeric x where the vertical connector starts
-        // aY: end of parent (already numeric)
-        const { aX, aY } = lastConnector;
+      // aX: numeric x where the vertical connector starts
+      // aY: end of parent (already numeric)
+      const { aX, aY } = lastConnector;
 
+      // bX: point where the vertical connector ends
+      const bX = Math.round(
+        (renderDepth - 0.5) * PADDING_LEFT_DEPTH_OFFSET + PADDING_LEFT_DEPTH_OFFSET_START
+      );
+      // bY: center of current item
+      const bY = vItem.end - vItem.size / 2;
 
-        // bX: point where the vertical connector ends
-        const bX = Math.round((renderDepth - 0.5) * PADDING_LEFT_DEPTH_OFFSET + PADDING_LEFT_DEPTH_OFFSET_START);
-        // bY: center of current item
-        const bY = vItem.end - vItem.size / 2;
+      const pathString =
+        `M ${aX} ${aY} ` +
+        `L ${aX} ${bY - RADIUS} ` +
+        `A ${RADIUS} ${RADIUS} 0 0 0 ${aX + RADIUS} ${bY} ` +
+        `L ${bX} ${bY}`;
 
-        const pathString = (
-          `M ${aX} ${aY} ` +
-          `L ${aX} ${bY - RADIUS} ` +
-          `A ${RADIUS} ${RADIUS} 0 0 0 ${aX + RADIUS} ${bY} ` +
-          `L ${bX} ${bY}` 
-        );
+      pathHolder.push(
+        <path
+          d={pathString}
+          fill="none"
+          stroke={color.Surface.ContainerLine}
+          strokeWidth="2"
+          display="block"
+        />
+      );
 
-        pathHolder.push(
-          <path
-            d={pathString}
-            fill="none"
-            stroke={color.Surface.ContainerLine}
-            stroke-width="2"
-            display="block"
-          />
-        )
-
-        // add this item to the connector stack, in case the next item's depth is higher.
-        connectorStack.push({ aX: Math.round((renderDepth) * PADDING_LEFT_DEPTH_OFFSET) + PADDING_LEFT_DEPTH_OFFSET_START, aY: vItem.end })
+      // add this item to the connector stack, in case the next item's depth is higher.
+      connectorStack.push({
+        aX: Math.round(renderDepth * PADDING_LEFT_DEPTH_OFFSET) + PADDING_LEFT_DEPTH_OFFSET_START,
+        aY: vItem.end,
       });
+    });
     return (
-      <svg style={{
-        position: 'absolute',
-        inset: 0,
-        width: '100%',
-        height: '100%',
-        pointerEvents: 'none'
-      }}>
+      <svg
+        style={{
+          position: 'absolute',
+          inset: 0,
+          width: '100%',
+          height: '100%',
+          pointerEvents: 'none',
+        }}
+      >
         {pathHolder}
       </svg>
     );
@@ -614,8 +640,7 @@ export function Space() {
     getRoom,
     useCallback(
       (parentId, roomId, depth) => {
-        if (depth >= subspaceHierarchyLimit)
-        {
+        if (depth >= subspaceHierarchyLimit) {
           // we will exclude items above this depth
           return true;
         }
@@ -750,11 +775,11 @@ export function Space() {
                         />
                       </div>
                     </VirtualTile>
-                  )
+                  );
                 }
-                
-                const paddingTop = getCategoryPadding(depth)
-                const paddingLeft = `calc(${renderDepth} * ${config.space.S400})`
+
+                const paddingTop = getCategoryPadding(depth);
+                const paddingLeft = `calc(${renderDepth} * ${config.space.S400})`;
 
                 if (room.isSpaceRoom()) {
                   const categoryId = makeNavCategoryId(space.roomId, roomId);

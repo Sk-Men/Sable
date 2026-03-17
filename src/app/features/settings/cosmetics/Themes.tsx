@@ -343,9 +343,11 @@ function ThemeSettings() {
   );
 }
 
-
 function SubnestedSpaceLinkDepthInput() {
-  const [subspaceHierarchyLimit, setSubspaceHierarchyLimit] = useSetting(settingsAtom, 'subspaceHierarchyLimit');
+  const [subspaceHierarchyLimit, setSubspaceHierarchyLimit] = useSetting(
+    settingsAtom,
+    'subspaceHierarchyLimit'
+  );
   const [inputValue, setInputValue] = useState(subspaceHierarchyLimit.toString());
 
   const handleChange: ChangeEventHandler<HTMLInputElement> = (evt) => {
@@ -453,8 +455,8 @@ export function Appearance() {
         </SequenceCard>
 
         <SequenceCard className={SequenceCardStyle} variant="SurfaceVariant" direction="Column">
-          <SettingTile 
-            title="Subspace Hierarchy Limit" 
+          <SettingTile
+            title="Subspace Hierarchy Limit"
             description="The maximum nesting depth for Subspaces in the sidebar. Once this limit is reached, deeper Subspaces appear as links instead of nested folders."
             after={<SubnestedSpaceLinkDepthInput />}
           />
