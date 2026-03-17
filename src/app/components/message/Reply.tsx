@@ -122,6 +122,8 @@ export const Reply = as<'div', ReplyProps>(
         .replaceAll(/<br\s*\/?>/gi, ' ')
         .replaceAll(/<\/p>\s*<p[^>]*>/gi, ' ')
         .replaceAll(/<\/?p[^>]*>/gi, '')
+        .replaceAll(/<\/li>\s*<li[^>]*>/gi, ' ')
+        .replaceAll(/<\/?(ul|ol|li|blockquote|h[1-6]|pre|div)[^>]*>/gi, '')
         .replaceAll(/(?:\r\n|\r|\n)/g, ' ');
       const parserOpts = getReactCustomHtmlParser(mx, room.roomId, {
         linkifyOpts: LINKIFY_OPTS,
