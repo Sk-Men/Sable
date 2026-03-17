@@ -60,7 +60,7 @@ export const ThemeSelector = as<'div', ThemeSelectorProps>(
   )
 );
 
-function SelectTheme({ disabled }: { disabled?: boolean }) {
+function SelectTheme({ disabled }: Readonly<{ disabled?: boolean }>) {
   const themes = useThemes();
   const themeNames = useThemeNames();
   const [themeId, setThemeId] = useSetting(settingsAtom, 'themeId');
@@ -288,7 +288,7 @@ function ThemeSettings() {
               max="100"
               step="1"
               value={saturation}
-              onChange={(e) => setSaturation(parseInt(e.target.value, 10))}
+              onChange={(e) => setSaturation(Number.parseInt(e.target.value, 10))}
               style={{
                 width: toRem(160),
                 cursor: 'pointer',
@@ -407,7 +407,7 @@ function PageZoomInput() {
       'value' in evt.target &&
       typeof evt.target.value === 'string'
     ) {
-      const newZoom = parseInt(evt.target.value, 10);
+      const newZoom = Number.parseInt(evt.target.value, 10);
       if (Number.isNaN(newZoom)) return;
       const safeZoom = Math.max(Math.min(newZoom, 150), 75);
       setPageZoom(safeZoom);
@@ -418,7 +418,7 @@ function PageZoomInput() {
   return (
     <Input
       style={{ width: toRem(100) }}
-      variant={pageZoom === parseInt(currentZoom, 10) ? 'Secondary' : 'Success'}
+      variant={pageZoom === Number.parseInt(currentZoom, 10) ? 'Secondary' : 'Success'}
       size="300"
       radii="300"
       type="number"

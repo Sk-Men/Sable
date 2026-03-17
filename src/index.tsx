@@ -1,3 +1,4 @@
+import './instrument';
 import { createRoot } from 'react-dom/client';
 import { enableMapSet } from 'immer';
 import '@fontsource-variable/nunito';
@@ -80,7 +81,7 @@ if ('serviceWorker' in navigator) {
     const activeId = getLocalStorageItem<string | undefined>(ACTIVE_SESSION_KEY, undefined);
     const active =
       sessions.find((s) => s.userId === activeId) ?? sessions[0] ?? getFallbackSession();
-    pushSessionToSW(active?.baseUrl, active?.accessToken);
+    pushSessionToSW(active?.baseUrl, active?.accessToken, active?.userId);
   };
 
   navigator.serviceWorker

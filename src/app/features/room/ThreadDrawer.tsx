@@ -180,6 +180,11 @@ function ThreadMessage({
 
   const { replyEventId } = mEvent;
 
+  const relation = mEvent.getRelation();
+  const contentRelatesTo = mEvent.getContent()?.['m.relates_to'];
+  const isFallback =
+    relation?.is_falling_back === true || contentRelatesTo?.is_falling_back === true;
+
   return (
     <Message
       key={mEvent.getId()}
@@ -214,7 +219,8 @@ function ThreadMessage({
       hideReadReceipts={showHideReads}
       showDeveloperTools={showDeveloperTools}
       reply={
-        replyEventId && (
+        replyEventId &&
+        !isFallback && (
           <Reply
             room={room}
             timelineSet={timelineSet}
@@ -719,6 +725,7 @@ export function ThreadDrawer({ room, threadRootId, onClose, overlay }: ThreadDra
           hideTrack={false}
           style={{
             maxHeight: '200px',
+            height: 'fit-content',
             flexShrink: 0,
           }}
         >
@@ -726,7 +733,7 @@ export function ThreadDrawer({ room, threadRootId, onClose, overlay }: ThreadDra
             className={css.messageList}
             direction="Column"
             style={{
-              padding: `${config.space.S600} 0`,
+              padding: `${config.space.S400} 0 ${config.space.S200} 0`,
             }}
           >
             <ThreadMessage {...sharedMessageProps} mEvent={rootEvent} />
@@ -772,7 +779,7 @@ export function ThreadDrawer({ room, threadRootId, onClose, overlay }: ThreadDra
               <Box
                 className={css.messageList}
                 direction="Column"
-                style={{ padding: `${config.space.S600} 0` }}
+                style={{ padding: `0 0 ${config.space.S600} 0` }}
               >
                 {replyEvents.map((mEvent, i) => {
                   const prevEvent = i > 0 ? replyEvents[i - 1] : undefined;
