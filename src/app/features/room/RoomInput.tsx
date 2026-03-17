@@ -512,28 +512,74 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
         }
       }
 
-      await Promise.all(
-        contents.map((content) =>
-          mx
-            .sendMessage(roomId, threadRootId ?? null, content as any)
-            .then((res) => {
-              debugLog.info('message', 'Uploaded file message sent', {
-                roomId,
-                eventId: res.event_id,
-                msgtype: content.msgtype,
-              });
-              return res;
+      const invalidate = () =>
+        queryClient.invalidateQueries({ queryKey: ['delayedEvents', roomId] });
+
+      if (scheduledTime) {
+        try {
+          const delayMs = computeDelayMs(scheduledTime);
+          if (editingScheduledDelayId) {
+            await cancelDelayedEvent(mx, editingScheduledDelayId);
+          }
+
+          await Promise.all(
+            contents.map((content) => {
+              if (isEncrypted) {
+                return sendDelayedMessageE2EE(mx, roomId, room, content, delayMs);
+              }
+              return sendDelayedMessage(mx, roomId, content, delayMs);
             })
-            .catch((error: unknown) => {
-              debugLog.error('message', 'Failed to send uploaded file message', {
-                roomId,
-                error: error instanceof Error ? error.message : String(error),
-              });
-              log.error('failed to send uploaded message', { roomId }, error);
-              throw error;
-            })
-        )
-      );
+          );
+
+          invalidate();
+          setEditingScheduledDelayId(null);
+          setScheduledTime(null);
+        } catch (error) {
+          debugLog.error('message', 'Failed to schedule uploaded file message', {
+            roomId,
+            error: error instanceof Error ? error.message : String(error),
+          });
+          log.error('failed to schedule uploaded message', { roomId }, error);
+          throw error;
+        }
+      } else {
+        if (editingScheduledDelayId) {
+          try {
+            await cancelDelayedEvent(mx, editingScheduledDelayId);
+            invalidate();
+            setEditingScheduledDelayId(null);
+          } catch {
+            debugLog.error(
+              'message',
+              'Failed to cancel scheduled event before immediate file send',
+              { roomId }
+            );
+          }
+        }
+
+        await Promise.all(
+          contents.map((content) =>
+            mx
+              .sendMessage(roomId, threadRootId ?? null, content as any)
+              .then((res) => {
+                debugLog.info('message', 'Uploaded file message sent', {
+                  roomId,
+                  eventId: res.event_id,
+                  msgtype: content.msgtype,
+                });
+                return res;
+              })
+              .catch((error: unknown) => {
+                debugLog.error('message', 'Failed to send uploaded file message', {
+                  roomId,
+                  error: error instanceof Error ? error.message : String(error),
+                });
+                log.error('failed to send uploaded message', { roomId }, error);
+                throw error;
+              })
+          )
+        );
+      }
     };
 
     const handleCloseAutocomplete = useCallback(() => {

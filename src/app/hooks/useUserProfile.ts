@@ -69,7 +69,8 @@ const isValidHex = (c: any): string | undefined => {
   if (typeof c !== 'string') return undefined;
   // silly tuwunel smh
   const cleaned = c.replaceAll(/["']/g, '').trim();
-  return /^#([0-9A-F]{3,6})$/i.test(cleaned) ? cleaned : undefined;
+  // Strictly allow only 3 or 6 digit hex codes, aka no opacity
+  return /^#([0-9A-F]{3}|[0-9A-F]{6})$/i.test(cleaned) ? cleaned : undefined;
 };
 const sanitizeFont = (f: string) => f.replaceAll(/[;{}<>]/g, '').slice(0, 32);
 
