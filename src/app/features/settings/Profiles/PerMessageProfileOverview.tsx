@@ -21,7 +21,7 @@ export function PerMessageProfileOverview() {
   }, [mx]);
 
   return (
-    <Box gap="200" direction="Column">
+    <Box gap="200" direction="Column" alignItems="Start">
       {profiles.map((profile) => (
         <PerMessageProfileEditor
           mx={mx}

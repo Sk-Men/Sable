@@ -1,4 +1,4 @@
-import { Page, PageHeader } from '$components/page';
+import { Page, PageHeader, PageNavContent } from '$components/page';
 import { Box, IconButton, Icon, Icons, Text } from 'folds';
 import { PerMessageProfileOverview } from './PerMessageProfileOverview';
 
@@ -13,7 +13,7 @@ export function PerMessageProfilePage({ requestClose }: PerMessageProfilePagePro
         <Box grow="Yes" gap="200">
           <Box grow="Yes" alignItems="Center" gap="200">
             <Text size="H3" truncate>
-              Per Message Profiles
+              Profiles (Per-Message)
             </Text>
           </Box>
           <Box shrink="No">
@@ -23,9 +23,24 @@ export function PerMessageProfilePage({ requestClose }: PerMessageProfilePagePro
           </Box>
         </Box>
       </PageHeader>
-      <Box grow="Yes">
-        <PerMessageProfileOverview />
-      </Box>
+      <PageNavContent>
+        <Box
+          grow="Yes"
+          gap="200"
+          style={{
+            paddingLeft: '20px',
+            paddingRight: '20px',
+            paddingTop: '10px',
+            marginRight: '5px',
+            marginLeft: '5px',
+          }}
+          direction="Column"
+          shrink="No"
+        >
+          <Text size="H4">Per-Message Profiles</Text>
+          <PerMessageProfileOverview />
+        </Box>
+      </PageNavContent>
     </Page>
   );
 }

@@ -36,7 +36,7 @@ import { General } from './general';
 import { Cosmetics } from './cosmetics/Cosmetics';
 import { Experimental } from './experimental/Experimental';
 import { KeyboardShortcuts } from './keyboard-shortcuts';
-import { PerMessageProfilePage } from './PerMessageProfiles/PerMessageProfilesPage';
+import { PerMessageProfilePage } from './Profiles/ProfilesPage';
 
 export enum SettingsPages {
   GeneralPage,
@@ -74,7 +74,7 @@ const useSettingsMenuItems = (): SettingsMenuItem[] =>
       },
       {
         page: SettingsPages.PerMessageProfilesPage,
-        name: 'Per-Message Profiles',
+        name: 'Profiles',
         icon: Icons.User,
       },
       {
