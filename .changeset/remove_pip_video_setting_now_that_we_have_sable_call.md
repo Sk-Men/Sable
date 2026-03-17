@@ -1,5 +1,5 @@
 ---
-default: minor
+default: patch
 ---
 
-# Remove pip video setting now that we have sable call
+Remove pip video setting now that we have sable call
