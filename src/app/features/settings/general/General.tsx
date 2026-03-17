@@ -56,7 +56,7 @@ type DateHintProps = {
   hasChanges: boolean;
   handleReset: () => void;
 };
-function DateHint({ hasChanges, handleReset }: DateHintProps) {
+function DateHint({ hasChanges, handleReset }: Readonly<DateHintProps>) {
   const [anchor, setAnchor] = useState<RectCords>();
   const categoryPadding = { padding: config.space.S200, paddingTop: 0 };
 
@@ -223,7 +223,7 @@ type CustomDateFormatProps = {
   value: string;
   onChange: (format: string) => void;
 };
-function CustomDateFormat({ value, onChange }: CustomDateFormatProps) {
+function CustomDateFormat({ value, onChange }: Readonly<CustomDateFormatProps>) {
   const [dateFormatCustom, setDateFormatCustom] = useState(value);
 
   useEffect(() => {
@@ -288,12 +288,12 @@ type PresetDateFormatProps = {
   value: string;
   onChange: (format: string) => void;
 };
-function PresetDateFormat({ value, onChange }: PresetDateFormatProps) {
+function PresetDateFormat({ value, onChange }: Readonly<PresetDateFormatProps>) {
   const [menuCords, setMenuCords] = useState<RectCords>();
   const dateFormatItems = useDateFormatItems();
 
   const getDisplayDate = (format: string): string =>
-    format !== '' ? dayjs().format(format) : 'Custom';
+    format === '' ? 'Custom' : dayjs().format(format);
 
   const handleMenu: MouseEventHandler<HTMLButtonElement> = (evt) => {
     setMenuCords(evt.currentTarget.getBoundingClientRect());
@@ -415,7 +415,7 @@ function DateAndTime() {
   );
 }
 
-function Editor({ isMobile }: { isMobile: boolean }) {
+function Editor({ isMobile }: Readonly<{ isMobile: boolean }>) {
   const [enterForNewline, setEnterForNewline] = useSetting(settingsAtom, 'enterForNewline');
   const [isMarkdown, setIsMarkdown] = useSetting(settingsAtom, 'isMarkdown');
   const [hideActivity, setHideActivity] = useSetting(settingsAtom, 'hideActivity');
@@ -681,7 +681,7 @@ function SelectMessageSpacing() {
   );
 }
 
-function SelectRightSwipeAction({ disabled }: { disabled?: boolean }) {
+function SelectRightSwipeAction({ disabled }: Readonly<{ disabled?: boolean }>) {
   const [menuCords, setMenuCords] = useState<RectCords>();
   const [action, setAction] = useSetting(settingsAtom, 'rightSwipeAction');
 
@@ -749,7 +749,7 @@ function SelectRightSwipeAction({ disabled }: { disabled?: boolean }) {
   );
 }
 
-function Gestures({ isMobile }: { isMobile: boolean }) {
+function Gestures({ isMobile }: Readonly<{ isMobile: boolean }>) {
   const [mobileGestures, setMobileGestures] = useSetting(settingsAtom, 'mobileGestures');
 
   return (
@@ -788,7 +788,7 @@ function EmojiSelectorThresholdInput() {
     const val = evt.target.value;
     setInputValue(val);
 
-    const parsed = parseInt(val, 10);
+    const parsed = Number.parseInt(val, 10);
     if (!Number.isNaN(parsed) && parsed >= 1 && parsed <= 10) {
       setEmojiThreshold(parsed);
     }
@@ -809,7 +809,7 @@ function EmojiSelectorThresholdInput() {
   return (
     <Input
       style={{ width: toRem(80) }}
-      variant={parseInt(inputValue, 10) === emojiThreshold ? 'Secondary' : 'Success'}
+      variant={Number.parseInt(inputValue, 10) === emojiThreshold ? 'Secondary' : 'Success'}
       size="300"
       radii="300"
       type="number"
@@ -820,6 +820,31 @@ function EmojiSelectorThresholdInput() {
       onKeyDown={handleKeyDown}
       outlined
     />
+  );
+}
+
+function Calls() {
+  const [alwaysShowCallButton, setAlwaysShowCallButton] = useSetting(
+    settingsAtom,
+    'alwaysShowCallButton'
+  );
+
+  return (
+    <Box direction="Column" gap="100">
+      <Text size="L400">Calls</Text>
+      <SequenceCard className={SequenceCardStyle} variant="SurfaceVariant" direction="Column">
+        <SettingTile
+          title="Show Call Button for Large Rooms"
+          after={
+            <Switch
+              variant="Primary"
+              value={alwaysShowCallButton}
+              onChange={setAlwaysShowCallButton}
+            />
+          }
+        />
+      </SequenceCard>
+    </Box>
   );
 }
 
@@ -1156,7 +1181,7 @@ function DiagnosticsAndPrivacy() {
   );
 }
 
-export function General({ requestClose }: GeneralProps) {
+export function General({ requestClose }: Readonly<GeneralProps>) {
   return (
     <Page>
       <PageHeader outlined={false}>
@@ -1182,6 +1207,7 @@ export function General({ requestClose }: GeneralProps) {
               <Editor isMobile={mobileOrTablet()} />
               <Messages />
               <DiagnosticsAndPrivacy />
+              <Calls />
             </Box>
           </PageContent>
         </Scroll>

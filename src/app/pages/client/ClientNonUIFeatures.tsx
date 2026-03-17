@@ -99,6 +99,7 @@ function PageZoomFeature() {
 function FaviconUpdater() {
   const roomToUnread = useAtomValue(roomToUnreadAtom);
   const [usePushNotifications] = useSetting(settingsAtom, 'usePushNotifications');
+  const [faviconForMentionsOnly] = useSetting(settingsAtom, 'faviconForMentionsOnly');
   const registration = useAtomValue(registrationAtom);
 
   useEffect(() => {
@@ -119,8 +120,10 @@ function FaviconUpdater() {
       }
     });
 
-    if (notification) {
-      setFavicon(highlight ? LogoHighlightSVG : LogoUnreadSVG);
+    if (highlight) {
+      setFavicon(LogoHighlightSVG);
+    } else if (!faviconForMentionsOnly && notification) {
+      setFavicon(LogoUnreadSVG);
     } else {
       setFavicon(LogoSVG);
     }
@@ -153,7 +156,7 @@ function FaviconUpdater() {
     } catch {
       // Likely Firefox/Gecko-based and doesn't support badging API
     }
-  }, [roomToUnread, usePushNotifications, registration]);
+  }, [roomToUnread, usePushNotifications, registration, faviconForMentionsOnly]);
 
   return null;
 }

@@ -152,6 +152,7 @@ import { usePowerLevelsContext } from '$hooks/usePowerLevels';
 import { useRoomCreators } from '$hooks/useRoomCreators';
 import { useRoomPermissions } from '$hooks/useRoomPermissions';
 import { AutocompleteNotice } from '$components/editor/autocomplete/AutocompleteNotice';
+import { getSupportedAudioExtension } from '$plugins/voice-recorder-kit/supportedCodec';
 import { SchedulePickerDialog } from './schedule-send';
 import * as css from './schedule-send/SchedulePickerDialog.css';
 import {
@@ -758,11 +759,35 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
 
     const handleKeyDown: KeyboardEventHandler = useCallback(
       (evt) => {
+        if (autocompleteQuery && isKeyHotkey('arrowdown', evt)) {
+          evt.preventDefault();
+          document
+            .querySelector('[data-autocomplete-menu]')
+            ?.dispatchEvent(new CustomEvent('autocomplete-navigate', { detail: { direction: 1 } }));
+          return;
+        }
+        if (autocompleteQuery && isKeyHotkey('arrowup', evt)) {
+          evt.preventDefault();
+          document
+            .querySelector('[data-autocomplete-menu]')
+            ?.dispatchEvent(
+              new CustomEvent('autocomplete-navigate', { detail: { direction: -1 } })
+            );
+          return;
+        }
         if (
           (isKeyHotkey('mod+enter', evt) || (!enterForNewline && isKeyHotkey('enter', evt))) &&
           !isComposing(evt)
         ) {
           evt.preventDefault();
+          if (autocompleteQuery) {
+            const selectedItem =
+              document.querySelector<HTMLButtonElement>(
+                '[data-autocomplete-menu] button[data-selected]'
+              ) ?? document.querySelector<HTMLButtonElement>('[data-autocomplete-menu] button');
+            selectedItem?.click();
+            return;
+          }
           submit().catch((error) => {
             log.error('submit failed', { roomId }, error);
           });
@@ -1148,7 +1173,7 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
                       onRecordingComplete={(audioBlob) => {
                         const file = new File(
                           [audioBlob],
-                          `sable-audio-message-${Date.now()}.ogg`,
+                          `sable-audio-message-${Date.now()}.${getSupportedAudioExtension(audioBlob.type)}`,
                           {
                             type: audioBlob.type,
                           }

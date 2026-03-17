@@ -122,6 +122,23 @@ Sentry controls are split across two settings locations:
 - **Attach debug logs**: Manually attach recent logs to next error report
 - **Test buttons**: Force an error, test feedback, test message capture
 
+### 6. First-Login Consent Banner
+
+When `VITE_SENTRY_DSN` is set and a user has never seen the crash-reporting notice (i.e. `sable_sentry_enabled` is absent from `localStorage`), a dismissible banner slides in from the bottom of the screen on first load. It explains that anonymous crash reports are enabled and links to the Privacy Policy.
+
+**Actions available in the banner:**
+
+| Button | Effect |
+|--------|--------|
+| **Got it** / × (close) | Sets `sable_sentry_enabled = true` in `localStorage` and dismisses the banner with a fade-out animation. Reporting continues. |
+| **Opt out** | Sets `sable_sentry_enabled = false` and reloads the page. Sentry is disabled for this user going forward. |
+
+Once the user has interacted with the banner (either action), it never appears again. The same preference can be changed later in **Settings → General → Diagnostics & Privacy**.
+
+**Implementation:** `src/app/components/telemetry-consent/TelemetryConsentBanner.tsx` — rendered inside the logged-in client layout so it only appears after a session is established.
+
+> **Self-hosters**: If you do not set `VITE_SENTRY_DSN`, the banner is never shown and Sentry is entirely disabled at build time. No network requests are made to Sentry.
+
 ## Configuration
 
 ### Environment Variables

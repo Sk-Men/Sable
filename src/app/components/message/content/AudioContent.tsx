@@ -1,5 +1,5 @@
 /* eslint-disable jsx-a11y/media-has-caption */
-import { ReactNode, useCallback, useRef, useState } from 'react';
+import { ReactNode, useCallback, useEffect, useRef, useState } from 'react';
 import { Badge, Chip, Icon, IconButton, Icons, ProgressBar, Spinner, Text, toRem } from 'folds';
 import { EncryptedAttachmentInfo } from 'browser-encrypt-attachment';
 import { Range } from 'react-range';
@@ -18,6 +18,7 @@ import { useThrottle } from '$hooks/useThrottle';
 import { secondsToMinutesAndSeconds } from '$utils/common';
 import { decryptFile, downloadEncryptedMedia, downloadMedia, mxcUrlToHttp } from '$utils/matrix';
 import { useMediaAuthentication } from '$hooks/useMediaAuthentication';
+import { MEDIA_VOLUME_KEY } from '$components/media';
 
 const PLAY_TIME_THROTTLE_OPS = {
   wait: 500,
@@ -59,6 +60,14 @@ export function AudioContent({
   );
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  useEffect(() => {
+    const stored = localStorage.getItem(MEDIA_VOLUME_KEY);
+    if (audioRef.current && stored !== null) {
+      const parsed = parseFloat(stored);
+      if (!Number.isNaN(parsed)) audioRef.current.volume = parsed;
+    }
+  }, []);
 
   const [currentTime, setCurrentTime] = useState(0);
   // duration in seconds. (NOTE: info.duration is in milliseconds)
@@ -197,7 +206,14 @@ export function AudioContent({
       </>
     ),
     children: (
-      <audio controls={false} autoPlay ref={audioRef}>
+      <audio
+        controls={false}
+        autoPlay
+        ref={audioRef}
+        onVolumeChange={(e) => {
+          localStorage.setItem(MEDIA_VOLUME_KEY, String((e.target as HTMLAudioElement).volume));
+        }}
+      >
         {srcState.status === AsyncStatus.Success && <source src={srcState.data} type={mimeType} />}
       </audio>
     ),

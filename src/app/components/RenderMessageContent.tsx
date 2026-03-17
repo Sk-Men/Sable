@@ -28,7 +28,7 @@ import {
   VideoContent,
 } from './message';
 import { UrlPreviewCard, UrlPreviewHolder } from './url-preview';
-import { Image, MediaControl, Video } from './media';
+import { Image, MediaControl, PersistedVolumeVideo } from './media';
 import { ImageViewer } from './image-viewer';
 import { PdfViewer } from './Pdf-viewer';
 import { TextViewer } from './text-viewer';
@@ -47,6 +47,7 @@ type RenderMessageContentProps = {
   htmlReactParserOptions: HTMLReactParserOptions;
   linkifyOpts: Opts;
   outlineAttachment?: boolean;
+  hideCaption?: boolean;
 };
 
 const getMediaType = (url: string) => {
@@ -71,6 +72,7 @@ function RenderMessageContentInternal({
   htmlReactParserOptions,
   linkifyOpts,
   outlineAttachment,
+  hideCaption,
 }: RenderMessageContentProps) {
   const content = useMemo(() => getContent<any>(), [getContent]);
 
@@ -121,7 +123,7 @@ function RenderMessageContentInternal({
 
   const renderCaption = () => {
     const hasCaption = content.body && content.body.trim().length > 0;
-    if (captionPosition === CaptionPosition.Hidden) return null;
+    if (captionPosition === CaptionPosition.Hidden || hideCaption) return null;
     if (hasCaption && content.filename && content.filename !== content.body) {
       if (captionPosition !== CaptionPosition.Inline)
         return (
@@ -321,7 +323,7 @@ function RenderMessageContentInternal({
                       )
                     : undefined
                 }
-                renderVideo={(p) => <Video {...p} />}
+                renderVideo={(p) => <PersistedVolumeVideo {...p} />}
               />
             )}
             outlined={outlineAttachment}

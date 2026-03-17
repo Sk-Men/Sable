@@ -118,7 +118,7 @@ export function DirectTab() {
         <SidebarItemBadge
           hasCount={directUnread.total > 0}
           style={{
-            left: directUnread.total > 0 ? toRem(-6) : toRem(-2),
+            left: directUnread.total > 0 ? toRem(-6) : toRem(-4),
             right: 'auto',
           }}
         >

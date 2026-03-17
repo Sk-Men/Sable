@@ -64,6 +64,7 @@ export interface Settings {
   dateFormatString: string;
 
   developerTools: boolean;
+  enableMSC4268CMD: boolean;
 
   // Cosmetics!
   jumboEmojiSize: JumboEmojiSize;
@@ -95,6 +96,8 @@ export interface Settings {
   autoplayStickers: boolean;
   autoplayEmojis: boolean;
   saveStickerEmojiBandwidth: boolean;
+  alwaysShowCallButton: boolean;
+  faviconForMentionsOnly: boolean;
 
   // furry stuff
   renderAnimals: boolean;
@@ -128,6 +131,8 @@ const defaultSettings: Settings = {
   showTombstoneEvents: false,
   legacyUsernameColor: false,
   allowPipVideos: false,
+
+  enableMSC4268CMD: false,
 
   // Push notifications (SW/Sygnal): default on for mobile, opt-in on desktop.
   // In-app pill banner: default on for mobile (primary foreground alert), opt-in on desktop.
@@ -173,6 +178,8 @@ const defaultSettings: Settings = {
   autoplayStickers: true,
   autoplayEmojis: true,
   saveStickerEmojiBandwidth: false,
+  alwaysShowCallButton: false,
+  faviconForMentionsOnly: false,
 
   // furry stuff
   renderAnimals: true,
