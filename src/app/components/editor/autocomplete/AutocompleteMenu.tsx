@@ -31,6 +31,9 @@ export function AutocompleteMenu({ headerContent, requestClose, children }: Auto
   // Sync data-selected to DOM; reset to index 0 when the item list changes.
   // No dep array — runs after every render so newly-loaded buttons are stamped
   // immediately (buttons arrive async when search results load).
+  // setSelectedIndex is a stable React setter; the conditional call never
+  // triggers an infinite update chain (it only fires when button count changes).
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useLayoutEffect(() => {
     const buttons = Array.from(
       itemsRef.current?.querySelectorAll<HTMLButtonElement>('button') ?? []
