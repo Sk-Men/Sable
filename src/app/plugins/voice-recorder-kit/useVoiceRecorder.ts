@@ -22,24 +22,27 @@ function getSharedAudioContext(): AudioContext {
 
 // downsample an array of samples to a target count by averaging blocks of samples together
 function downsampleWaveform(samples: number[], targetCount: number): number[] {
-  if (samples.length === 0) return Array.from({ length: targetCount }, () => 0);
+  if (samples.length === 0) return Array.from({ length: targetCount }, () => 0.15);
   if (samples.length <= targetCount) {
-    const padded = [...samples];
-    while (padded.length < targetCount) padded.push(0);
-    return padded;
+    const step = (samples.length - 1) / (targetCount - 1);
+    return Array.from({ length: targetCount }, (_, i) => {
+      const position = i * step;
+      const lower = Math.floor(position);
+      const upper = Math.min(Math.ceil(position), samples.length - 1);
+      const fraction = position - lower;
+      if (lower === upper) {
+        return samples[lower] ?? 0.15;
+      }
+      return (samples[lower] ?? 0.15) * (1 - fraction) + (samples[upper] ?? 0.15) * fraction;
+    });
   }
-  const result: number[] = [];
-  const blockSize = samples.length / targetCount;
-  for (let i = 0; i < targetCount; i += 1) {
-    const start = Math.floor(i * blockSize);
-    const end = Math.floor((i + 1) * blockSize);
-    let sum = 0;
-    for (let j = start; j < end; j += 1) {
-      sum += samples[j];
-    }
-    result.push(sum / (end - start));
-  }
-  return result;
+  const step = samples.length / targetCount;
+  return Array.from({ length: targetCount }, (_, i) => {
+    const start = Math.floor(i * step);
+    const end = Math.floor((i + 1) * step);
+    const slice = samples.slice(start, end);
+    return slice.length > 0 ? Math.max(...slice) : 0.15;
+  });
 }
 
 export function useVoiceRecorder(options: UseVoiceRecorderOptions = {}): UseVoiceRecorderReturn {

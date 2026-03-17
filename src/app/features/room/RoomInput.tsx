@@ -1237,10 +1237,6 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
                 aria-label={showAudioRecorder ? 'Stop recording' : 'Record audio message'}
                 aria-pressed={showAudioRecorder}
                 onClick={() => {
-                  if (mobileOrTablet() && showAudioRecorder) {
-                    audioRecorderRef.current?.stop();
-                    return;
-                  }
                   if (mobileOrTablet()) return;
                   if (showAudioRecorder) {
                     audioRecorderRef.current?.stop();
@@ -1250,31 +1246,30 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
                 }}
                 onPointerDown={() => {
                   if (!mobileOrTablet()) return;
-                  if (showAudioRecorder) return; // already recording — onClick will stop it
+                  if (showAudioRecorder) return;
                   micHoldStartRef.current = Date.now();
                   setShowAudioRecorder(true);
 
-                  // One-shot global listeners: the mic button stays mounted now but
-                  // the ref is already populated by the time pointerup fires.
                   let cleanup: () => void;
                   const onUp = () => {
                     cleanup();
                     const held = Date.now() - micHoldStartRef.current;
                     if (held >= HOLD_THRESHOLD_MS) {
-                      audioRecorderRef.current?.stop();
+                      setTimeout(() => {
+                        audioRecorderRef.current?.stop();
+                      }, 50);
+                    } else {
+                      setTimeout(() => {
+                        audioRecorderRef.current?.cancel();
+                      }, 50);
                     }
-                    // Short tap → recorder stays open; tap stop-icon to finish
-                  };
-                  const onCancel = () => {
-                    cleanup();
-                    audioRecorderRef.current?.cancel();
                   };
                   cleanup = () => {
                     window.removeEventListener('pointerup', onUp);
-                    window.removeEventListener('pointercancel', onCancel);
+                    window.removeEventListener('pointercancel', cleanup);
                   };
                   window.addEventListener('pointerup', onUp);
-                  window.addEventListener('pointercancel', onCancel);
+                  window.addEventListener('pointercancel', cleanup);
                 }}
               >
                 {showAudioRecorder ? (

@@ -9,7 +9,6 @@ import {
 } from 'react';
 import { useVoiceRecorder } from '$plugins/voice-recorder-kit';
 import type { VoiceRecorderStopPayload } from '$plugins/voice-recorder-kit';
-import { mobileOrTablet } from '$utils/user-agent';
 import { Box, Text } from 'folds';
 import * as css from './AudioMessageRecorder.css';
 
@@ -45,12 +44,7 @@ export const AudioMessageRecorder = forwardRef<
   const isDismissedRef = useRef(false);
   const userRequestedStopRef = useRef(false);
   const [isCanceling, setIsCanceling] = useState(false);
-  const [isShaking, setIsShaking] = useState(false);
-  const [swipeX, setSwipeX] = useState(0);
-  const [showCancelHint, setShowCancelHint] = useState(false);
   const [announcedTime, setAnnouncedTime] = useState(0);
-  const touchStartXRef = useRef(0);
-  const isSwipingRef = useRef(false);
 
   const onRecordingCompleteRef = useRef(onRecordingComplete);
   onRecordingCompleteRef.current = onRecordingComplete;
@@ -108,46 +102,6 @@ export const AudioMessageRecorder = forwardRef<
     }
   }, [seconds, announcedTime]);
 
-  const CANCEL_THRESHOLD = 80;
-
-  const handlePointerDown = useCallback((e: React.PointerEvent) => {
-    if (!mobileOrTablet()) return;
-    touchStartXRef.current = e.clientX;
-    isSwipingRef.current = true;
-    (e.target as HTMLElement).setPointerCapture(e.pointerId);
-  }, []);
-
-  const handlePointerMove = useCallback((e: React.PointerEvent) => {
-    if (!isSwipingRef.current || !mobileOrTablet()) return;
-    const deltaX = e.clientX - touchStartXRef.current;
-    if (deltaX < 0) {
-      setSwipeX(Math.max(deltaX, -CANCEL_THRESHOLD - 20));
-      setShowCancelHint(deltaX < -30);
-    } else {
-      setSwipeX(0);
-      setShowCancelHint(false);
-    }
-  }, []);
-
-  const handlePointerUp = useCallback(
-    (e: React.PointerEvent) => {
-      if (!isSwipingRef.current || !mobileOrTablet()) return;
-      isSwipingRef.current = false;
-      (e.target as HTMLElement).releasePointerCapture(e.pointerId);
-
-      const deltaX = e.clientX - touchStartXRef.current;
-      if (deltaX < -CANCEL_THRESHOLD) {
-        doCancel();
-      } else if (deltaX < -30) {
-        setIsShaking(true);
-        setTimeout(() => setIsShaking(false), 300);
-      }
-      setSwipeX(0);
-      setShowCancelHint(false);
-    },
-    [doCancel]
-  );
-
   const BAR_COUNT = 28;
   const bars = useMemo(() => {
     if (levels.length === 0) {
@@ -175,11 +129,7 @@ export const AudioMessageRecorder = forwardRef<
     });
   }, [levels]);
 
-  const containerClassName = [
-    css.Container,
-    isCanceling ? css.ContainerCanceling : null,
-    isShaking ? css.ContainerShake : null,
-  ]
+  const containerClassName = [css.Container, isCanceling ? css.ContainerCanceling : null]
     .filter(Boolean)
     .join(' ');
 
@@ -190,17 +140,7 @@ export const AudioMessageRecorder = forwardRef<
           {error}
         </Text>
       )}
-      <Box
-        grow="Yes"
-        alignItems="Center"
-        gap="200"
-        className={containerClassName}
-        style={{ transform: swipeX !== 0 ? `translateX(${swipeX}px)` : undefined }}
-        onPointerDown={handlePointerDown}
-        onPointerMove={handlePointerMove}
-        onPointerUp={handlePointerUp}
-        onPointerCancel={handlePointerUp}
-      >
+      <Box grow="Yes" alignItems="Center" gap="200" className={containerClassName}>
         <div aria-hidden className={css.RecDot} />
 
         <Box grow="Yes" alignItems="Center" gap="100" className={css.WaveformContainer}>
@@ -221,16 +161,6 @@ export const AudioMessageRecorder = forwardRef<
           <span className={css.SrOnly} aria-live="polite">
             Recording duration: {formatTime(announcedTime)}
           </span>
-        )}
-
-        {showCancelHint && (
-          <div
-            role="status"
-            aria-live="polite"
-            className={[css.CancelHint, css.CancelHintVisible].join(' ')}
-          >
-            Release to cancel
-          </div>
         )}
       </Box>
     </>
