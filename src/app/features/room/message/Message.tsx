@@ -280,6 +280,10 @@ function useMobileDoubleTap(callback: () => void, delay = 300) {
   );
 }
 
+/**
+ * Component to render pronouns in the chat timeline.
+ * It also filters them.
+ */
 const Pronouns = as<
   'span',
   {
@@ -295,6 +299,13 @@ const Pronouns = as<
     .map((lang) => lang.trim().toLowerCase())
     .filter(Boolean);
 
+  /**
+   * filter the pronouns based on the user's language settings.
+   * If filtering is enabled, only show pronouns that match the selected languages.
+   * If filtering is disabled, show all pronouns but still apply the language filter to determine which pronouns to show if there are multiple sets of pronouns for different languages.
+   * If there are multiple sets of pronouns and filtering is enabled, only show the ones that match the selected languages.
+   * If there are no pronouns that match the selected languages, show all pronouns.
+   */
   const visiblePronouns = filterPronounsByLanguage(
     pronouns,
     languageFilterEnabled,
