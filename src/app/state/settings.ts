@@ -98,6 +98,7 @@ export interface Settings {
   saveStickerEmojiBandwidth: boolean;
   alwaysShowCallButton: boolean;
   faviconForMentionsOnly: boolean;
+  highlightMentions: boolean;
 
   // furry stuff
   renderAnimals: boolean;
@@ -180,6 +181,7 @@ const defaultSettings: Settings = {
   saveStickerEmojiBandwidth: false,
   alwaysShowCallButton: false,
   faviconForMentionsOnly: false,
+  highlightMentions: true,
 
   // furry stuff
   renderAnimals: true,

@@ -381,6 +381,8 @@ function MessageInternal(
   const profile = useUserProfile(senderId, room);
   const { color: usernameColor, font: usernameFont } = useSableCosmetics(senderId, room);
 
+  const [highlightMentions] = useSetting(settingsAtom, 'highlightMentions');
+
   // Avatars
   // Prefer the room-scoped member avatar (m.room.member) over the global profile
   // avatar so per-room avatar overrides are respected in the timeline.
@@ -744,7 +746,7 @@ function MessageInternal(
       space={messageSpacing}
       collapse={collapse}
       highlight={highlight}
-      notifyHighlight={notifyHighlight}
+      notifyHighlight={highlightMentions ? notifyHighlight : undefined}
       selected={!!menuAnchor || !!emojiBoardAnchor}
       {...props}
       {...hoverProps}
@@ -1169,6 +1171,7 @@ export const Event = as<'div', EventProps>(
 
     const [menuAnchor, setMenuAnchor] = useState<RectCords>();
     const [mobileOptionsOpen, setMobileOptionsOpen] = useState(false);
+    const [highlightMentions] = useSetting(settingsAtom, 'highlightMentions');
 
     const handleContextMenu: MouseEventHandler<HTMLDivElement> = (evt) => {
       if (mobileOrTablet()) {
@@ -1245,7 +1248,7 @@ export const Event = as<'div', EventProps>(
         space={messageSpacing}
         autoCollapse
         highlight={highlight}
-        notifyHighlight={notifyHighlight}
+        notifyHighlight={highlightMentions ? notifyHighlight : undefined}
         selected={!!menuAnchor}
         {...props}
         {...hoverProps}
