@@ -7,11 +7,13 @@ import {
   IJoinedRoom,
   IRoomEvent,
   ISyncResponse,
+  KnownMembership,
   MatrixClient,
   MSC3575List,
   MSC3575RoomData,
   MSC3575RoomSubscription,
   MSC3575_WILDCARD,
+  RoomMemberEvent,
   SlidingSync,
   SlidingSyncEvent,
   SlidingSyncState,
@@ -256,6 +258,8 @@ export class SlidingSyncManager {
 
   private readonly onLifecycle: (state: SlidingSyncState, resp: unknown, err?: Error) => void;
 
+  private readonly onMembershipLeave: (event: unknown, member: { userId: string; roomId: string; membership?: string }) => void;
+
   private presenceExtension!: ExtensionPresence;
 
   private listsFullyLoaded = false;
@@ -424,6 +428,13 @@ export class SlidingSyncManager {
       }
     };
 
+    this.onMembershipLeave = (_event, member) => {
+      if (member.userId !== this.mx.getUserId()) return;
+      if (member.membership !== KnownMembership.Leave && member.membership !== KnownMembership.Ban) return;
+      if (!this.activeRoomSubscriptions.has(member.roomId)) return;
+      this.unsubscribeFromRoom(member.roomId);
+    };
+
     this.onConnectionChange = () => {
       const isOnline = navigator.onLine;
       const connectionInfo =
@@ -466,6 +477,7 @@ export class SlidingSyncManager {
     });
 
     this.slidingSync.on(SlidingSyncEvent.Lifecycle, this.onLifecycle);
+    this.mx.on(RoomMemberEvent.Membership, this.onMembershipLeave);
     const connection = (
       typeof navigator !== 'undefined' ? (navigator as any).connection : undefined
     ) as
@@ -504,6 +516,7 @@ export class SlidingSyncManager {
     // Stop the SDK's internal polling loop and abort any in-flight requests.
     this.slidingSync.stop();
     this.slidingSync.removeListener(SlidingSyncEvent.Lifecycle, this.onLifecycle);
+    this.mx.removeListener(RoomMemberEvent.Membership, this.onMembershipLeave);
     const connection = (
       typeof navigator !== 'undefined' ? (navigator as any).connection : undefined
     ) as

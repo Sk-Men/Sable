@@ -15,6 +15,10 @@
  *    Note: navigation between rooms no longer calls unsubscribeFromRoom —
  *    subscriptions accumulate across the session so returning to a room is
  *    instant (matching Element Web's model).
+ *
+ * 3. onMembershipLeave — when the MatrixClient emits a RoomMemberEvent.Membership
+ *    event indicating the local user left or was banned from a room that is
+ *    actively subscribed, unsubscribeFromRoom() should be called automatically.
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { SlidingSyncManager, type SlidingSyncConfig } from './slidingSync';
@@ -81,6 +85,7 @@ function makeMockMx(overrides: Record<string, unknown> = {}) {
     getRoom: vi.fn().mockReturnValue(null),
     on: vi.fn(),
     off: vi.fn(),
+    removeListener: vi.fn(),
     store: {
       setSyncData: vi.fn().mockResolvedValue(undefined),
       save: vi.fn().mockResolvedValue(undefined),
@@ -191,3 +196,83 @@ describe('SlidingSyncManager — timeline pruning on unsubscribe', () => {
     expect(() => manager.unsubscribeFromRoom('!room:example.com')).not.toThrow();
   });
 });
+
+// ── onMembershipLeave: auto-unsubscribe on leave/ban ─────────────────────────
+
+describe('SlidingSyncManager — membership leave auto-unsubscribe', () => {
+  /** Fire the RoomMemberEvent.Membership listener registered on mx.on */
+  function fireMembershipEvent(
+    mx: ReturnType<typeof makeMockMx>,
+    membership: string,
+    roomId = '!room:example.com',
+    userId = '@user:example.com',
+  ) {
+    const onCall = (mx.on as ReturnType<typeof vi.fn>).mock.calls.find(
+      ([event]: [string]) => event === 'RoomMember.membership',
+    );
+    if (!onCall) throw new Error('onMembershipLeave listener not registered');
+    const [, handler] = onCall as [string, (e: unknown, m: { userId: string; roomId: string; membership: string }) => void];
+    handler(undefined, { userId, roomId, membership });
+  }
+
+  it('unsubscribes when the local user leaves an active room', () => {
+    const room = makeMockRoom(PRUNE_THRESHOLD + 1);
+    const mx = makeMockMx({ getRoom: vi.fn().mockReturnValue(room) });
+    const manager = makeManager(mx);
+    manager.attach();
+    // Manually add to active subscriptions to simulate having visited the room.
+    manager.subscribeToRoom('!room:example.com');
+
+    fireMembershipEvent(mx, 'leave');
+
+    expect(room._resetLiveTimeline).toHaveBeenCalledOnce();
+  });
+
+  it('unsubscribes when the local user is banned from an active room', () => {
+    const room = makeMockRoom(PRUNE_THRESHOLD + 1);
+    const mx = makeMockMx({ getRoom: vi.fn().mockReturnValue(room) });
+    const manager = makeManager(mx);
+    manager.attach();
+    manager.subscribeToRoom('!room:example.com');
+
+    fireMembershipEvent(mx, 'ban');
+
+    expect(room._resetLiveTimeline).toHaveBeenCalledOnce();
+  });
+
+  it('does nothing when a different user leaves', () => {
+    const room = makeMockRoom(PRUNE_THRESHOLD + 1);
+    const mx = makeMockMx({ getRoom: vi.fn().mockReturnValue(room) });
+    const manager = makeManager(mx);
+    manager.attach();
+    manager.subscribeToRoom('!room:example.com');
+
+    fireMembershipEvent(mx, 'leave', '!room:example.com', '@other:example.com');
+
+    expect(room._resetLiveTimeline).not.toHaveBeenCalled();
+  });
+
+  it('does nothing when membership is join', () => {
+    const room = makeMockRoom(PRUNE_THRESHOLD + 1);
+    const mx = makeMockMx({ getRoom: vi.fn().mockReturnValue(room) });
+    const manager = makeManager(mx);
+    manager.attach();
+    manager.subscribeToRoom('!room:example.com');
+
+    fireMembershipEvent(mx, 'join');
+
+    expect(room._resetLiveTimeline).not.toHaveBeenCalled();
+  });
+
+  it('does nothing for a room that was never subscribed', () => {
+    const room = makeMockRoom(PRUNE_THRESHOLD + 1);
+    const mx = makeMockMx({ getRoom: vi.fn().mockReturnValue(room) });
+    const manager = makeManager(mx);
+    manager.attach(); // registers the listener, but no subscribeToRoom call
+
+    fireMembershipEvent(mx, 'leave');
+
+    expect(room._resetLiveTimeline).not.toHaveBeenCalled();
+  });
+});
+
