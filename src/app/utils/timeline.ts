@@ -15,9 +15,11 @@ export const getFirstLinkedTimeline = (
   timeline: EventTimeline,
   direction: Direction
 ): EventTimeline => {
-  const linkedTm = timeline.getNeighbouringTimeline(direction);
-  if (!linkedTm) return timeline;
-  return getFirstLinkedTimeline(linkedTm, direction);
+  let current = timeline;
+  while (current.getNeighbouringTimeline(direction)) {
+    current = current.getNeighbouringTimeline(direction)!;
+  }
+  return current;
 };
 
 export const getLinkedTimelines = (timeline: EventTimeline): EventTimeline[] => {
@@ -52,23 +54,28 @@ export const getTimelineAndBaseIndex = (
   timelines: EventTimeline[],
   index: number
 ): [EventTimeline | undefined, number] => {
-  let uptoTimelineLen = 0;
   const validTimelines = (timelines || []).filter(Boolean);
 
-  const timeline = validTimelines.find((t) => {
-    const events = t.getEvents();
-    if (!events) return false;
+  const result = validTimelines.reduce<{
+    found?: EventTimeline;
+    baseIndex: number;
+  }>(
+    (acc, timeline) => {
+      if (acc.found) return acc;
 
-    uptoTimelineLen += events.length;
-    return index < uptoTimelineLen;
-  });
+      const events = timeline.getEvents();
+      const len = events ? events.length : 0;
 
-  if (!timeline) return [undefined, 0];
+      if (index < acc.baseIndex + len) {
+        return { ...acc, found: timeline };
+      }
 
-  const events = timeline.getEvents();
-  const timelineLen = events ? events.length : 0;
+      return { ...acc, baseIndex: acc.baseIndex + len };
+    },
+    { baseIndex: 0 }
+  );
 
-  return [timeline, Math.max(0, uptoTimelineLen - timelineLen)];
+  return [result.found, result.found ? result.baseIndex : 0];
 };
 
 export const getTimelineRelativeIndex = (absoluteIndex: number, timelineBaseIndex: number) =>
@@ -127,8 +134,18 @@ export const getRoomUnreadInfo = (room: Room, scrollTo = false) => {
 
   const readUptoEventId = room.getEventReadUpTo(room.client.getUserId() ?? '');
   if (!readUptoEventId) return undefined;
+
   const evtTimeline = getEventTimeline(room, readUptoEventId);
-  const latestTimeline = evtTimeline && getFirstLinkedTimeline(evtTimeline, Direction.Forward);
+
+  if (!evtTimeline) {
+    return {
+      readUptoEventId,
+      inLiveTimeline: false,
+      scrollTo,
+    };
+  }
+
+  const latestTimeline = getFirstLinkedTimeline(evtTimeline, Direction.Forward);
   return {
     readUptoEventId,
     inLiveTimeline: latestTimeline === room.getLiveTimeline(),
@@ -136,11 +153,14 @@ export const getRoomUnreadInfo = (room: Room, scrollTo = false) => {
   };
 };
 
-export const getThreadReplyCount = (room: Room, mEventId: string): number =>
-  room
-    .getUnfilteredTimelineSet()
-    .getLiveTimeline()
-    .getEvents()
-    .filter(
-      (ev) => ev.threadRootId === mEventId && ev.getId() !== mEventId && !reactionOrEditEvent(ev)
-    ).length;
+export const getThreadReplyCount = (room: Room, mEventId: string): number => {
+  const thread = room.getThread(mEventId);
+  if (thread) return thread.length;
+
+  const linkedTimelines = getLinkedTimelines(getLiveTimeline(room));
+  const allEvents = linkedTimelines.flatMap((tl) => tl.getEvents());
+
+  return allEvents.filter(
+    (ev) => ev.threadRootId === mEventId && ev.getId() !== mEventId && !reactionOrEditEvent(ev)
+  ).length;
+};
