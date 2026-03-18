@@ -1154,7 +1154,7 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
                         grow="Yes"
                         style={{ minWidth: 0 }}
                       >
-                        {replyDraft.relation?.rel_type === RelationType.Thread && (
+                        {replyDraft.relation?.rel_type === RelationType.Thread && !threadRootId && (
                           <ThreadIndicator />
                         )}
                         <ReplyLayout
