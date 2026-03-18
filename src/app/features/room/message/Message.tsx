@@ -79,7 +79,7 @@ import { MessageSourceCodeItem } from '$components/message/modals/MessageSource'
 import { MessageForwardItem } from '$components/message/modals/MessageForward';
 import { MessageDeleteItem } from '$components/message/modals/MessageDelete';
 import { MessageReportItem } from '$components/message/modals/MessageReport';
-import { filterPronounsByLanguage } from '$utils/pronouns';
+import { filterPronounsByLanguage, getParsedPronouns } from '$utils/pronouns';
 import { useMentionClickHandler } from '$hooks/useMentionClickHandler';
 import {
   addStickerToDefaultPack,
@@ -423,32 +423,9 @@ function MessageInternal(
   const [parsePronouns] = useSetting(settingsAtom, 'parsePronouns');
 
   const [useRightBubbles] = useSetting(settingsAtom, 'useRightBubbles');
-
   const { cleanedDisplayName, inlinePronoun } = useMemo(() => {
     const rawName = pmp?.displayname || senderDisplayName || '';
-
-    if (!parsePronouns) {
-      return { cleanedDisplayName: rawName, inlinePronoun: null };
-    }
-
-    // match text like (she/her) or [he/they/them] but not (hi)
-    const regex = /[\(\[]?([a-zA-Z]+\/[a-zA-Z]+(?:\/[a-zA-Z]+)?)[\)\]]?/;
-    const match = rawName.match(regex);
-
-    if (match) {
-      let strippedName = rawName.replace(match[0], '').trim();
-
-      if (!strippedName || strippedName === '') {
-        strippedName = rawName;
-      }
-
-      return {
-        cleanedDisplayName: strippedName,
-        inlinePronoun: match[1].toLowerCase().slice(0, 16),
-      };
-    }
-
-    return { cleanedDisplayName: rawName, inlinePronoun: null };
+    return getParsedPronouns(rawName, parsePronouns);
   }, [pmp, senderDisplayName, parsePronouns]);
 
   const mergedPronouns = useMemo(() => {
