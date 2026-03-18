@@ -71,6 +71,7 @@ export interface Settings {
   privacyBlurAvatars: boolean;
   privacyBlurEmotes: boolean;
   showPronouns: boolean;
+  parsePronouns: boolean;
   renderGlobalNameColors: boolean;
   filterPronounsBasedOnLanguage?: boolean;
   filterPronounsLanguages?: string[];
@@ -154,6 +155,7 @@ const defaultSettings: Settings = {
   privacyBlurAvatars: false,
   privacyBlurEmotes: false,
   showPronouns: true,
+  parsePronouns: true,
   renderGlobalNameColors: true,
   renderRoomColors: true,
   renderRoomFonts: true,

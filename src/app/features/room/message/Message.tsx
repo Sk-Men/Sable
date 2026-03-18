@@ -79,7 +79,7 @@ import { MessageSourceCodeItem } from '$components/message/modals/MessageSource'
 import { MessageForwardItem } from '$components/message/modals/MessageForward';
 import { MessageDeleteItem } from '$components/message/modals/MessageDelete';
 import { MessageReportItem } from '$components/message/modals/MessageReport';
-import { filterPronounsByLanguage } from '$utils/pronouns';
+import { filterPronounsByLanguage, getParsedPronouns } from '$utils/pronouns';
 import { useMentionClickHandler } from '$hooks/useMentionClickHandler';
 import {
   addStickerToDefaultPack,
@@ -390,11 +390,6 @@ function MessageInternal(
     return mxc ? mxcUrlToHttp(mx, mxc, useAuthentication, 48, 48, 'crop') : undefined;
   }, [pmp, collapse, profile.avatarUrl, senderId, mx, room, useAuthentication]);
 
-  const displayName = useMemo(
-    () => pmp?.displayname || senderDisplayName,
-    [pmp, senderDisplayName]
-  );
-
   const cachedAvatar = useBlobCache(avatarUrl ?? undefined);
 
   // UI State
@@ -423,8 +418,32 @@ function MessageInternal(
 
   const [mobileOptionsOpen, setMobileOptionsOpen] = useState(false);
   const optionsRef = useRef<HTMLDivElement>(null);
+
   const [showPronouns] = useSetting(settingsAtom, 'showPronouns');
+  const [parsePronouns] = useSetting(settingsAtom, 'parsePronouns');
+
   const [useRightBubbles] = useSetting(settingsAtom, 'useRightBubbles');
+  const { cleanedDisplayName, inlinePronoun } = useMemo(() => {
+    const rawName = pmp?.displayname || senderDisplayName || '';
+    return getParsedPronouns(rawName, parsePronouns);
+  }, [pmp, senderDisplayName, parsePronouns]);
+
+  const mergedPronouns = useMemo(() => {
+    const existing = profile.pronouns ? [...profile.pronouns] : [];
+
+    if (inlinePronoun) {
+      const isDupe = existing.some((p) => p.summary?.toLowerCase() === inlinePronoun);
+
+      if (!isDupe) {
+        existing.push({
+          summary: inlinePronoun,
+          language: 'en',
+        });
+      }
+    }
+
+    return existing;
+  }, [profile.pronouns, inlinePronoun]);
 
   useEffect(() => {
     if (!mobileOptionsOpen) return undefined;
@@ -457,11 +476,11 @@ function MessageInternal(
           onClick={onUsernameClick}
         >
           <Text as="span" size={messageLayout === MessageLayout.Bubble ? 'T300' : 'T400'} truncate>
-            <UsernameBold>{displayName}</UsernameBold>
+            <UsernameBold>{cleanedDisplayName}</UsernameBold>
           </Text>
         </Username>
         {showPronouns && (
-          <Pronouns pronouns={profile.pronouns} tagColor={usernameColor ?? 'currentColor'} />
+          <Pronouns pronouns={mergedPronouns} tagColor={usernameColor ?? 'currentColor'} />
         )}
         {tagIconSrc && <PowerIcon size="100" iconSrc={tagIconSrc} />}
       </Box>
@@ -500,7 +519,7 @@ function MessageInternal(
         <UserAvatar
           userId={senderId}
           src={cachedAvatar}
-          alt={displayName}
+          alt={cleanedDisplayName}
           renderFallback={() => <Icon size="200" src={Icons.User} filled />}
         />
       </Avatar>
@@ -976,7 +995,7 @@ function MessageInternal(
                                 autoFocus
                                 value={nickDraft}
                                 onChange={(e) => setNickDraft(e.target.value)}
-                                placeholder={displayName}
+                                placeholder={cleanedDisplayName}
                                 onKeyDown={(e) => {
                                   if (e.key === 'Enter') {
                                     setNickname(senderId, nickDraft || undefined, mx);
