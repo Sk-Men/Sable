@@ -21,6 +21,7 @@ import { FALLBACK_MIMETYPE, getBlobSafeMimeType } from '$utils/mimeTypes';
 import { parseGeoUri, scaleYDimension } from '$utils/common';
 import { useSetting } from '$state/hooks/settings';
 import { settingsAtom } from '$state/settings';
+import { PerMessageProfileBeeperFormat } from '$hooks/usePerMessageProfile';
 import { Attachment, AttachmentBox, AttachmentContent, AttachmentHeader } from './attachment';
 import { FileHeader, FileDownloadButton } from './FileHeader';
 import {
@@ -135,7 +136,7 @@ export function MText({ edited, content, renderBody, renderUrlsPreview, style }:
   const urlsMatch = renderUrlsPreview && trimmedBody.match(URL_REG);
   const urls = urlsMatch ? [...new Set(urlsMatch)] : undefined;
 
-  if (content['com.beeper.per_message_profile']) {
+  if ((content['com.beeper.per_message_profile'] as PerMessageProfileBeeperFormat)?.has_fallback) {
     // unwrap per-message profile fallback if present
     return (
       <MessageTextBody preWrap={typeof customBody !== 'string'} style={style}>
