@@ -38,8 +38,6 @@ import { useUserProfile } from './useUserProfile';
 import {
   addOrUpdatePerMessageProfile,
   deletePerMessageProfile,
-  invalidatePerMessageProfile,
-  invalidatePerMessageProfileForProfileId,
   PerMessageProfile,
   setCurrentlyUsedPerMessageProfileIdForRoom,
 } from './usePerMessageProfile';
@@ -524,7 +522,6 @@ export const useCommands = (mx: MatrixClient, room: Room): CommandRecord => {
                 room,
                 mx.getSafeUserId()
               );
-              invalidatePerMessageProfileForProfileId(mx, profileId, () => {});
             })
             .catch(() => {
               sendFeedback(
@@ -552,7 +549,6 @@ export const useCommands = (mx: MatrixClient, room: Room): CommandRecord => {
                 room,
                 mx.getSafeUserId()
               );
-              invalidatePerMessageProfileForProfileId(mx, profileId, () => {});
             })
             .catch(() => {
               sendFeedback(
@@ -577,9 +573,9 @@ export const useCommands = (mx: MatrixClient, room: Room): CommandRecord => {
               .then(() => {
                 sendFeedback('Per message profile reset for this room.', room, mx.getSafeUserId());
               })
-              .catch(() => {
+              .catch((e) => {
                 sendFeedback(
-                  'Failed to reset per message profile for this room.',
+                  `Failed to reset per message profile for this room. Failed with: "${e.message}"`,
                   room,
                   mx.getSafeUserId()
                 );
@@ -595,11 +591,10 @@ export const useCommands = (mx: MatrixClient, room: Room): CommandRecord => {
                 room,
                 mx.getSafeUserId()
               );
-              invalidatePerMessageProfile(room.roomId, () => {});
             })
-            .catch(() => {
+            .catch((e) => {
               sendFeedback(
-                'Failed to set per message profile for this room.',
+                `Failed to set per message profile for this room. Failed with: "${e.message}"`,
                 room,
                 mx.getSafeUserId()
               );

@@ -12,7 +12,6 @@ import { CompactUploadCardRenderer } from '$components/upload-card';
 import {
   addOrUpdatePerMessageProfile,
   deletePerMessageProfile,
-  invalidatePerMessageProfileForProfileId,
   renamePerMessageProfile,
 } from '$hooks/usePerMessageProfile';
 import { parsePronounsStringToPronounsSetArray, PronounSet } from '$utils/pronouns';
@@ -155,7 +154,6 @@ export function PerMessageProfileEditor({
     }
     setChangingDisplayName(false);
     setDisableSetDisplayname(false);
-    invalidatePerMessageProfileForProfileId(mx, profileId, () => {});
   }, [mx, profileId, newDisplayName, avatarMxc, newPronouns, hasIdChange, newId]);
 
   const handleDelete = useCallback(() => {

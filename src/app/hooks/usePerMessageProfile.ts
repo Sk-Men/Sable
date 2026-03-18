@@ -1,8 +1,5 @@
 import { PronounSet } from '$utils/pronouns';
-import { atom } from 'jotai';
-import { atomFamily } from 'jotai/utils';
 import { MatrixClient } from 'matrix-js-sdk';
-import { useMatrixClient } from './useMatrixClient';
 
 const ACCOUNT_DATA_PREFIX = 'fyi.cisnt.permessageprofile';
 
@@ -99,17 +96,12 @@ type PerMessageProfileIndex = {
   profileIds: string[];
 };
 
+/**
+ * how we will store room associations in the account data :3
+ */
 type PerMessageProfileRoomAssociation = {
-  /**
-   * the id of the profile to use for messages in this room. This is used to apply a profile to all messages in a room without having to set the profile for each message individually.
-   */
   profileId: string;
-  /**
-   * the id of the room this association applies to.
-   * This is used to apply a profile to all messages in a room without having to set the profile for each message individually.
-   */
-  roomId: string;
-  validUntil?: number; // timestamp in ms until which this association is valid, after which it should be ignored and removed. If not set, the association is valid indefinitely until changed or removed.
+  validUntil?: number;
 };
 
 /**
@@ -118,21 +110,42 @@ type PerMessageProfileRoomAssociation = {
  */
 type PerMessageProfileRoomAssociationWrapper = {
   /**
-   * a list of associations between rooms and profiles, which is used to determine which profile to apply to messages in a room when sending a message.
+   * Key-Value pairs of room ids and profile ids, used to apply a profile to all messages in a room without having to set the profile for each message individually.
+   * The key is the room id, and the value is the profile id. The profile id can then be used to fetch the profile data when applying the profile to a message before sending it.
+   *
+   * @type {Map<string, PerMessageProfileRoomAssociation>}
    */
-  associations: PerMessageProfileRoomAssociation[];
+  associations:
+    | Map<string, PerMessageProfileRoomAssociation>
+    | Record<string, PerMessageProfileRoomAssociation>;
 };
+
+// Helper to always get a Map from wrapper
+function getAssociationsMap(
+  wrapper?: PerMessageProfileRoomAssociationWrapper
+): Map<string, PerMessageProfileRoomAssociation> {
+  if (!wrapper?.associations) return new Map();
+  if (wrapper.associations instanceof Map) return wrapper.associations;
+  return new Map(Object.entries(wrapper.associations));
+}
+
+// Helper to always get a plain object from a Map
+function associationsMapToObject(
+  map: Map<string, PerMessageProfileRoomAssociation>
+): Record<string, PerMessageProfileRoomAssociation> {
+  return Object.fromEntries(map);
+}
 
 export async function getPerMessageProfileById(
   mx: MatrixClient,
   id: string
 ): Promise<PerMessageProfile | undefined> {
-  const profile = await mx.getAccountData(`${ACCOUNT_DATA_PREFIX}.${id}` as any);
+  const profile = mx.getAccountData(`${ACCOUNT_DATA_PREFIX}.${id}` as any);
   return profile ? (profile.getContent() as unknown as PerMessageProfile) : undefined;
 }
 
 export async function getAllPerMessageProfiles(mx: MatrixClient): Promise<PerMessageProfile[]> {
-  const profileData = await mx.getAccountData(`${ACCOUNT_DATA_PREFIX}.index` as any);
+  const profileData = mx.getAccountData(`${ACCOUNT_DATA_PREFIX}.index` as any);
   const profileIds = (profileData?.getContent() as PerMessageProfileIndex)?.profileIds || [];
   const profiles = await Promise.all(profileIds.map((id) => getPerMessageProfileById(mx, id)));
   return profiles.filter((profile): profile is PerMessageProfile => profile !== undefined);
@@ -152,6 +165,14 @@ export function addOrUpdatePerMessageProfile(mx: MatrixClient, profile: PerMessa
   ]);
 }
 
+/**
+ * remove a id from the index of profile ids, used when deleting a profile to
+ * remove the id from the list of profiles, so it doesn't show up in the list of profiles to manage anymore.
+ * The actual profile data is also removed when deleting a profile, but this function is only responsible
+ * for removing the id from the index.
+ * @param mx the matrix client
+ * @param id the id to drop from the index
+ */
 async function dropIdFromIndex(mx: MatrixClient, id: string) {
   const profileListIndex = mx.getAccountData(`${ACCOUNT_DATA_PREFIX}.index` as any);
   const profileIds = profileListIndex?.getContent()?.profileIds || [];
@@ -162,25 +183,95 @@ async function dropIdFromIndex(mx: MatrixClient, id: string) {
   );
 }
 
-async function dropPerMessageProfileRoomAssociations(mx: MatrixClient, id: string) {
+async function getRoomsUsingProfile(mx: MatrixClient, profileId: string): Promise<string[]> {
   const accountData = mx.getAccountData(`${ACCOUNT_DATA_PREFIX}.roomassociation` as any);
-  const content = accountData?.getContent();
+  const content: PerMessageProfileRoomAssociationWrapper | undefined = accountData?.getContent();
+  const associations = getAssociationsMap(content);
+  const roomsUsingProfile: string[] = [];
+  Array.from(associations.entries()).forEach(([roomId, assoc]) => {
+    if (assoc?.profileId === profileId) roomsUsingProfile.push(roomId);
+  });
+  return roomsUsingProfile;
+}
 
-  const associations: PerMessageProfileRoomAssociation[] = Array.isArray(content) ? content : [];
-  await mx.setAccountData(
+/**
+ * sets the per message profile to be used for messages in a room. This is done by setting account data with a list of room associations, which is then checked when sending a message to apply the profile to the message if the room matches an association. The associations can also have an optional expiration time, after which they will be ignored and removed.
+ * @param mx matrix client
+ * @param roomId the room id your querying for
+ * @param profileId the profile id you are querying for
+ * @param validUntil the timestamp until the pmp association is valid
+ * @param reset if true, the association for the room will be removed, if false and profileId is undefined, the association will be set to undefined but not removed, meaning it will still be visible in the list of associations but won't have any effect. This is useful for resetting the association without losing the information of which profile was associated before.
+ * @returns promose that resolves when the association has been set
+ */
+export async function setCurrentlyUsedPerMessageProfileIdForRoom(
+  mx: MatrixClient,
+  roomId: string,
+  profileId: string | undefined,
+  validUntil?: number,
+  reset?: boolean
+) {
+  const accountData = mx.getAccountData(`${ACCOUNT_DATA_PREFIX}.roomassociation` as any);
+  const content: PerMessageProfileRoomAssociationWrapper | undefined = accountData?.getContent();
+  const associations = getAssociationsMap(content);
+
+  if (reset) {
+    associations.delete(roomId);
+    mx.setAccountData(
+      `${ACCOUNT_DATA_PREFIX}.roomassociation` as any,
+      { associations: associationsMapToObject(associations) } as any
+    );
+    return;
+  }
+  if (!profileId) {
+    throw new Error("profile Id is empty, yet it isn't a reset");
+  }
+  associations.set(roomId, { profileId, validUntil });
+  mx.setAccountData(
     `${ACCOUNT_DATA_PREFIX}.roomassociation` as any,
-    {
-      associations: associations.filter((assoc) => assoc.profileId !== id),
-    } as any
+    { associations: associationsMapToObject(associations) } as any
   );
 }
 
+/**
+ * drops all room associations for a profile, used when deleting a profile to make sure there are no dangling associations left that point to a non existing profile, which could cause issues when trying to apply the profile to a message in a room that still has an association for the deleted profile.
+ *
+ * @param {MatrixClient} mx the matrix client
+ * @param {string} id the id of the profile to drop associations for
+ */
+async function dropPerMessageProfileRoomAssociations(mx: MatrixClient, id: string) {
+  const accountData = mx.getAccountData(`${ACCOUNT_DATA_PREFIX}.roomassociation` as any);
+  const content: PerMessageProfileRoomAssociationWrapper | undefined = accountData?.getContent();
+  if (!content) return;
+  const associations = getAssociationsMap(content);
+  const roomsUsingProfile = await getRoomsUsingProfile(mx, id);
+  if (roomsUsingProfile.length === 0) return;
+  roomsUsingProfile.forEach((roomId) => {
+    associations.delete(roomId);
+  });
+  await mx.setAccountData(
+    `${ACCOUNT_DATA_PREFIX}.roomassociation` as any,
+    { associations: associationsMapToObject(associations) } as any
+  );
+}
+
+/**
+ * deletes a per message profile by its id
+ * @param mx the matrix client
+ * @param id the id of the profile to delete
+ */
 export async function deletePerMessageProfile(mx: MatrixClient, id: string) {
   await dropPerMessageProfileRoomAssociations(mx, id);
   await mx.setAccountData(`${ACCOUNT_DATA_PREFIX}.${id}` as any, {});
   await dropIdFromIndex(mx, id);
 }
 
+/**
+ * move a profile from one id to another, used when renaming a profile to change the id.
+ * This is done by creating a new profile with the new id and the same data as the old profile, and then deleting the old profile.
+ * @param mx the matrix client
+ * @param oldId the id the profile is currently saved under
+ * @param newId the id it will be moved to
+ */
 export async function renamePerMessageProfile(mx: MatrixClient, oldId: string, newId: string) {
   const profile = await getPerMessageProfileById(mx, oldId);
   if (!profile) {
@@ -195,24 +286,7 @@ export async function getListOfRoomsUsingProfile(
   mx: MatrixClient,
   profileId: string
 ): Promise<string[]> {
-  const accountData = mx.getAccountData(`${ACCOUNT_DATA_PREFIX}.roomassociation` as any);
-  const content = accountData?.getContent()?.associations as
-    | PerMessageProfileRoomAssociation[]
-    | undefined;
-
-  if (!Array.isArray(content)) {
-    // If content is not an array, return empty list
-    return [];
-  }
-
-  const roomsUsingProfile = content
-    .filter(
-      (assoc: PerMessageProfileRoomAssociation) =>
-        assoc.profileId === profileId && (!assoc.validUntil || assoc.validUntil > Date.now())
-    )
-    .map((assoc: PerMessageProfileRoomAssociation) => assoc.roomId);
-
-  return roomsUsingProfile;
+  return getRoomsUsingProfile(mx, profileId);
 }
 
 /**
@@ -226,89 +300,9 @@ export async function getCurrentlyUsedPerMessageProfileForRoom(
   roomId: string
 ): Promise<PerMessageProfile | undefined> {
   const accountData = mx.getAccountData(`${ACCOUNT_DATA_PREFIX}.roomassociation` as any);
-  const content = accountData?.getContent()?.associations as
-    | PerMessageProfileRoomAssociation[]
-    | undefined;
-
-  if (!Array.isArray(content)) {
-    // If content is not an array, return undefined
-    return undefined;
-  }
-
-  const profileId = content
-    .filter(
-      (assoc: PerMessageProfileRoomAssociation) =>
-        !assoc.validUntil || assoc.validUntil > Date.now()
-    )
-    .find((assoc: PerMessageProfileRoomAssociation) => assoc.roomId === roomId)?.profileId;
-
+  const content: PerMessageProfileRoomAssociationWrapper | undefined = accountData?.getContent();
+  const associations = getAssociationsMap(content);
+  const profileId = associations.get(roomId)?.profileId;
   const pmp = profileId ? await getPerMessageProfileById(mx, profileId) : undefined;
   return profileId ? pmp : undefined;
-}
-
-/**
- * sets the per message profile to be used for messages in a room. This is done by setting account data with a list of room associations, which is then checked when sending a message to apply the profile to the message if the room matches an association. The associations can also have an optional expiration time, after which they will be ignored and removed.
- * @param mx matrix client
- * @param roomId the room id your querying for
- * @param profileId the profile id you are querying for
- * @param validUntil the timestamp until the pmp association is valid
- * @param reset if true, the association for the room will be removed, if false and profileId is undefined, the association will be set to undefined but not removed, meaning it will still be visible in the list of associations but won't have any effect. This is useful for resetting the association without losing the information of which profile was associated before.
- * @returns promose that resolves when the association has been set
- */
-export function setCurrentlyUsedPerMessageProfileIdForRoom(
-  mx: MatrixClient,
-  roomId: string,
-  profileId: string | undefined,
-  validUntil?: number,
-  reset?: boolean
-) {
-  const accountData = mx.getAccountData(`${ACCOUNT_DATA_PREFIX}.roomassociation` as any);
-  const content = accountData?.getContent();
-
-  const associations: PerMessageProfileRoomAssociation[] = Array.isArray(content) ? content : [];
-
-  if (profileId) {
-    associations.push({ roomId, profileId, validUntil } satisfies PerMessageProfileRoomAssociation);
-  } else if (reset) {
-    associations.filter((assoc) => assoc.roomId !== roomId);
-  }
-
-  const wrapper: PerMessageProfileRoomAssociationWrapper = {
-    associations,
-  };
-  return mx.setAccountData(`${ACCOUNT_DATA_PREFIX}.roomassociation` as any, wrapper as any);
-}
-
-// Atom to trigger refresh
-const refreshProfileAtomFamily = atomFamily(() => atom(0));
-
-// Atom family to fetch profile for a room
-export const perMessageProfileAtomFamily = atomFamily((roomId: string) =>
-  atom(async (get) => {
-    get(refreshProfileAtomFamily(roomId)); // depend on refresh signal
-    const mx = useMatrixClient(); // You need to provide this atom for MatrixClient
-    return getCurrentlyUsedPerMessageProfileForRoom(mx, roomId);
-  })
-);
-
-/**
- * TO-DO
- */
-export const invalidatePerMessageProfile: (roomId: string, set: any) => void = (
-  roomId: string,
-  set: any
-) => {
-  set(refreshProfileAtomFamily(roomId), (v: number) => v + 1);
-};
-
-export function invalidatePerMessageProfileForProfileId(
-  mx: MatrixClient,
-  profileId: string,
-  set: any
-) {
-  getListOfRoomsUsingProfile(mx, profileId).then((roomIds) => {
-    roomIds.forEach((roomId) => {
-      set(refreshProfileAtomFamily(roomId), (v: number) => v + 1);
-    });
-  });
 }
