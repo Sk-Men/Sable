@@ -41,13 +41,14 @@ export function PaginationLoader({
   if (isEmpty) {
     const count = isCompact ? 5 : 3;
     const anchorIndex = direction === 'backward' ? count - 1 : 0;
+    const skeletonKeys = Array.from({ length: count }, (_, idx) => `skeleton-${direction}-${idx}`);
 
     return (
       <>
-        {[...Array(count)].map((_, i) => {
+        {skeletonKeys.map((skeletonKey, i) => {
           const attachRef = i === anchorIndex ? observerRef : undefined;
           return (
-            <MessageBase key={i} ref={attachRef}>
+            <MessageBase key={skeletonKey} ref={attachRef}>
               {isCompact ? <CompactPlaceholder /> : <DefaultPlaceholder />}
             </MessageBase>
           );
