@@ -457,7 +457,7 @@ function MessageInternal(
   }, [pmp, senderDisplayName, parsePronouns]);
 
   const mergedPronouns = useMemo(() => {
-    const existing = profile.pronouns ? [...profile.pronouns] : [];
+    const existing = pronouns ? [...pronouns] : [];
 
     if (inlinePronoun) {
       const isDupe = existing.some((p) => p.summary?.toLowerCase() === inlinePronoun);
@@ -471,7 +471,7 @@ function MessageInternal(
     }
 
     return existing;
-  }, [profile.pronouns, inlinePronoun]);
+  }, [pronouns, inlinePronoun]);
 
   useEffect(() => {
     if (!mobileOptionsOpen) return undefined;
@@ -508,7 +508,7 @@ function MessageInternal(
           </Text>
         </Username>
         {showPronouns && (
-          <Pronouns pronouns={pronouns} tagColor={usernameColor ?? 'currentColor'} />
+          <Pronouns pronouns={mergedPronouns} tagColor={usernameColor ?? 'currentColor'} />
         )}
         {tagIconSrc && <PowerIcon size="100" iconSrc={tagIconSrc} />}
       </Box>
