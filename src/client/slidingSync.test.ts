@@ -6,11 +6,15 @@
  *    running after the client is "stopped", leaking network traffic and
  *    event listeners.
  *
- * 2. pruneRoomTimeline (via unsubscribeFromRoom) — when a room transitions
- *    from active to background, its in-memory event chain is released if it
- *    exceeds PRUNE_TIMELINE_THRESHOLD. The recent tail is persisted to
- *    IndexedDB (via store.setSyncData + store.save) so the events survive an
- *    app reload; the full history is always available from the server.
+ * 2. pruneRoomTimeline (via unsubscribeFromRoom) — when a room is explicitly
+ *    unsubscribed (e.g. user leaves the room), its in-memory event chain is
+ *    released if it exceeds PRUNE_TIMELINE_THRESHOLD. The recent tail is
+ *    persisted to IndexedDB (via store.setSyncData + store.save) so the events
+ *    survive an app reload; the full history is always available from the server.
+ *
+ *    Note: navigation between rooms no longer calls unsubscribeFromRoom —
+ *    subscriptions accumulate across the session so returning to a room is
+ *    instant (matching Element Web's model).
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { SlidingSyncManager, type SlidingSyncConfig } from './slidingSync';
@@ -125,7 +129,7 @@ describe('SlidingSyncManager.dispose()', () => {
 // ── pruneRoomTimeline (exercised via unsubscribeFromRoom) ────────────────────
 
 // This value must match PRUNE_TIMELINE_THRESHOLD in slidingSync.ts.
-const PRUNE_THRESHOLD = 150;
+const PRUNE_THRESHOLD = 100;
 
 describe('SlidingSyncManager — timeline pruning on unsubscribe', () => {
   it('resets the live timeline when event count exceeds the threshold', () => {
