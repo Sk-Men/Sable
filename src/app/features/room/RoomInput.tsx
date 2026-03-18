@@ -159,6 +159,7 @@ import {
 } from '$hooks/usePerMessageProfile';
 import { Microphone, Stop } from '@phosphor-icons/react';
 import { getSupportedAudioExtension } from '$plugins/voice-recorder-kit/supportedCodec';
+import { sanitizeCustomHtml } from '$utils/sanitize';
 import { SchedulePickerDialog } from './schedule-send';
 import * as css from './schedule-send/SchedulePickerDialog.css';
 import {
@@ -688,18 +689,6 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
         body,
       };
 
-      /**
-       * the currently with the room associated per-message profile, if any, so that it can be included in the message content when sending.
-       * This allows the server to apply the correct profile-based transformations (e.g. font size adjustments) when processing the message,
-       * and also allows clients to display an accurate preview of how the message will look with the profile applied while it's being composed.
-       */
-      const perMessageProfile = await getCurrentlyUsedPerMessageProfileForRoom(mx, roomId);
-
-      if (perMessageProfile) {
-        content['com.beeper.per_message_profile'] =
-          convertPerMessageProfileToBeeperFormat(perMessageProfile);
-      }
-
       if (replyDraft && !silentReply) {
         mentionData.users.add(replyDraft.userId);
       }
@@ -710,6 +699,42 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
         content.format = 'org.matrix.custom.html';
         content.formatted_body = formattedBody;
       }
+
+      /**
+       * the currently with the room associated per-message profile, if any, so that it can be included in the message content when sending.
+       * This allows the server to apply the correct profile-based transformations (e.g. font size adjustments) when processing the message,
+       * and also allows clients to display an accurate preview of how the message will look with the profile applied while it's being composed.
+       */
+      const perMessageProfile = await getCurrentlyUsedPerMessageProfileForRoom(mx, roomId);
+
+      if (perMessageProfile) {
+        content['com.beeper.per_message_profile'] =
+          convertPerMessageProfileToBeeperFormat(perMessageProfile);
+
+        // if a per-message profile is used, it must per spec include a fallback
+        const prefix = `${perMessageProfile.name}: `;
+
+        if (!content.body.startsWith(prefix)) {
+          // to prevent double-prefixing when the fallback is already present
+          content.body = prefix + content.body;
+        }
+
+        /**
+         * html escaped version of the display name
+         */
+        const escapedName = sanitizeCustomHtml(perMessageProfile.name);
+
+        const htmlPrefix = `<strong data-mx-profile-fallback>${escapedName}:</strong> `;
+
+        if (content.formatted_body && !content.formatted_body.startsWith(htmlPrefix)) {
+          content.formatted_body = htmlPrefix + content.formatted_body;
+        } else {
+          // we don't have a formatted body, but we need one
+          content.format = 'org.matrix.custom.html';
+          content.formatted_body = `${htmlPrefix} ${plainText}`;
+        }
+      }
+
       if (replyDraft) {
         content['m.relates_to'] = getReplyContent(replyDraft, room);
       }
