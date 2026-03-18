@@ -22,18 +22,18 @@ export const getFirstLinkedTimeline = (
   return current;
 };
 
+const collectTimelines = (
+  tl: EventTimeline | null,
+  dir: Direction,
+  acc: EventTimeline[] = []
+): EventTimeline[] => {
+  if (!tl) return acc;
+  return collectTimelines(tl.getNeighbouringTimeline(dir), dir, [...acc, tl]);
+};
+
 export const getLinkedTimelines = (timeline: EventTimeline): EventTimeline[] => {
   const firstTimeline = getFirstLinkedTimeline(timeline, Direction.Backward);
-  const timelines: EventTimeline[] = [];
-
-  for (
-    let nextTimeline: EventTimeline | null = firstTimeline;
-    nextTimeline;
-    nextTimeline = nextTimeline.getNeighbouringTimeline(Direction.Forward)
-  ) {
-    timelines.push(nextTimeline);
-  }
-  return timelines;
+  return collectTimelines(firstTimeline, Direction.Forward);
 };
 
 export const timelineToEventsCount = (t: EventTimeline) => {
@@ -158,9 +158,12 @@ export const getThreadReplyCount = (room: Room, mEventId: string): number => {
   if (thread) return thread.length;
 
   const linkedTimelines = getLinkedTimelines(getLiveTimeline(room));
-  const allEvents = linkedTimelines.flatMap((tl) => tl.getEvents());
-
-  return allEvents.filter(
-    (ev) => ev.threadRootId === mEventId && ev.getId() !== mEventId && !reactionOrEditEvent(ev)
-  ).length;
+  return linkedTimelines.reduce((acc, tl) => {
+    const threadEvents = tl
+      .getEvents()
+      .filter(
+        (ev) => ev.threadRootId === mEventId && ev.getId() !== mEventId && !reactionOrEditEvent(ev)
+      );
+    return acc + threadEvents.length;
+  }, 0);
 };

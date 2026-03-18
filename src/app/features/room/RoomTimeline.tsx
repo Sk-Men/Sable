@@ -84,8 +84,6 @@ import {
   renderMatrixMention,
 } from '$plugins/react-custom-html-parser';
 import {
-  roomHaveNotification,
-  roomHaveUnread,
   canEditEvent,
   decryptAllTimelineEvent,
   getEditedEvent,
@@ -96,6 +94,22 @@ import {
   isMembershipChanged,
   reactionOrEditEvent,
 } from '$utils/room';
+import {
+  getLiveTimeline,
+  getEventTimeline,
+  getFirstLinkedTimeline,
+  getLinkedTimelines,
+  getTimelinesEventsCount,
+  getTimelineAndBaseIndex,
+  getTimelineRelativeIndex,
+  getTimelineEvent,
+  getEventIdAbsoluteIndex,
+  getInitialTimeline,
+  getEmptyTimeline,
+  getRoomUnreadInfo,
+  getThreadReplyCount,
+  PAGINATION_LIMIT,
+} from '$utils/timeline';
 import { useSetting } from '$state/hooks/settings';
 import { MessageLayout, settingsAtom } from '$state/settings';
 import { nicknamesAtom } from '$state/nicknames';
@@ -166,117 +180,6 @@ const TimelineDivider = as<'div', { variant?: ContainerColor | 'Inherit' }>(
   )
 );
 
-export const getLiveTimeline = (room: Room): EventTimeline =>
-  room.getUnfilteredTimelineSet().getLiveTimeline();
-
-export const getEventTimeline = (room: Room, eventId: string): EventTimeline | undefined => {
-  const timelineSet = room.getUnfilteredTimelineSet();
-  return timelineSet.getTimelineForEvent(eventId) ?? undefined;
-};
-
-export const getFirstLinkedTimeline = (
-  timeline: EventTimeline,
-  direction: Direction
-): EventTimeline => {
-  const linkedTm = timeline.getNeighbouringTimeline(direction);
-  if (!linkedTm) return timeline;
-  return getFirstLinkedTimeline(linkedTm, direction);
-};
-
-export const getLinkedTimelines = (timeline: EventTimeline): EventTimeline[] => {
-  const firstTimeline = getFirstLinkedTimeline(timeline, Direction.Backward);
-  const timelines: EventTimeline[] = [];
-
-  for (
-    let nextTimeline: EventTimeline | null = firstTimeline;
-    nextTimeline;
-    nextTimeline = nextTimeline.getNeighbouringTimeline(Direction.Forward)
-  ) {
-    timelines.push(nextTimeline);
-  }
-  return timelines;
-};
-
-export const timelineToEventsCount = (t: EventTimeline) => {
-  if (!t) return 0;
-  const events = t.getEvents();
-  return events ? events.length : 0;
-};
-
-export const getTimelinesEventsCount = (timelines: EventTimeline[]): number => {
-  const timelineEventCountReducer = (count: number, tm: EventTimeline) =>
-    count + timelineToEventsCount(tm);
-  return (timelines || [])
-    .filter(Boolean)
-    .reduce((accumulator, element) => timelineEventCountReducer(accumulator, element), 0);
-};
-
-export const getTimelineAndBaseIndex = (
-  timelines: EventTimeline[],
-  index: number
-): [EventTimeline | undefined, number] => {
-  let uptoTimelineLen = 0;
-  const validTimelines = (timelines || []).filter(Boolean);
-
-  const timeline = validTimelines.find((t) => {
-    const events = t.getEvents();
-    if (!events) return false;
-
-    uptoTimelineLen += events.length;
-    return index < uptoTimelineLen;
-  });
-
-  if (!timeline) return [undefined, 0];
-
-  const events = timeline.getEvents();
-  const timelineLen = events ? events.length : 0;
-
-  return [timeline, Math.max(0, uptoTimelineLen - timelineLen)];
-};
-
-export const getTimelineRelativeIndex = (absoluteIndex: number, timelineBaseIndex: number) =>
-  absoluteIndex - timelineBaseIndex;
-
-export const getTimelineEvent = (
-  timeline: EventTimeline,
-  index: number
-): MatrixEvent | undefined => {
-  if (!timeline) return undefined;
-  const events = timeline.getEvents();
-  return events ? events[index] : undefined;
-};
-
-export const getEventIdAbsoluteIndex = (
-  timelines: EventTimeline[],
-  eventTimeline: EventTimeline,
-  eventId: string
-): number | undefined => {
-  const timelineIndex = timelines.indexOf(eventTimeline);
-  if (timelineIndex === -1) return undefined;
-
-  const currentEvents = eventTimeline.getEvents();
-  if (!currentEvents) return undefined;
-
-  const eventIndex = currentEvents.findIndex((evt: MatrixEvent) => evt.getId() === eventId);
-  if (eventIndex === -1) return undefined;
-
-  const baseIndex = timelines.slice(0, timelineIndex).reduce((accValue, timeline) => {
-    const evs = timeline.getEvents();
-    return (evs ? evs.length : 0) + accValue;
-  }, 0);
-
-  return baseIndex + eventIndex;
-};
-
-type RoomTimelineProps = {
-  room: Room;
-  eventId?: string;
-  roomInputRef: RefObject<HTMLElement>;
-  editor: Editor;
-  onEditorReset?: () => void;
-};
-
-const PAGINATION_LIMIT = 60;
 const EVENT_TIMELINE_LOAD_TIMEOUT_MS = 12000;
 
 type PaginationStatus = 'idle' | 'loading' | 'error';
@@ -379,7 +282,7 @@ const useTimelinePagination = (
       const topAddedTm = topTmIndex === -1 ? [] : newLTimelines.slice(0, topTmIndex);
 
       const topTmAddedEvt =
-        timelineToEventsCount(newLTimelines[topTmIndex]) - timelinesEventsCount[0];
+        (newLTimelines[topTmIndex]?.getEvents()?.length ?? 0) - timelinesEventsCount[0];
       const offsetRange = getTimelinesEventsCount(topAddedTm) + (backwards ? topTmAddedEvt : 0);
 
       setTimeline((currentTimeline) => ({
@@ -401,7 +304,7 @@ const useTimelinePagination = (
       if (fetchingRef.current[directionKey]) return;
 
       const { linkedTimelines: lTimelines } = timelineRef.current;
-      const timelinesEventsCount = lTimelines.map(timelineToEventsCount);
+      const timelinesEventsCount = lTimelines.map((t) => t.getEvents()?.length ?? 0);
 
       const timelineToPaginate = backwards ? lTimelines[0] : lTimelines.at(-1);
       if (!timelineToPaginate) return;
@@ -490,16 +393,10 @@ const useTimelinePagination = (
 };
 
 const useLiveEventArrive = (room: Room, onArrive: (mEvent: MatrixEvent) => void) => {
-  // Stable ref so the effect dep array only contains `room`. The listener is
-  // registered once per room mount; onArrive can change freely without causing
-  // listener churn during rapid re-renders (e.g. sync error/retry cycles).
   const onArriveRef = useRef(onArrive);
   onArriveRef.current = onArrive;
 
   useEffect(() => {
-    // Capture the live timeline and registration time. Events appended to the
-    // live timeline AFTER this point can be genuinely new even when
-    // liveEvent=false (older sliding sync proxies that omit num_live).
     const liveTimeline = getLiveTimeline(room);
     const registeredAt = Date.now();
     const handleTimelineEvent: EventTimelineSetHandlerMap[RoomEvent.Timeline] = (
@@ -510,11 +407,6 @@ const useLiveEventArrive = (room: Room, onArrive: (mEvent: MatrixEvent) => void)
       data: IRoomTimelineData
     ) => {
       if (eventRoom?.roomId !== room.roomId) return;
-      // Standard sync: liveEvent=true for real-time events.
-      // Sliding sync fallback: liveEvent=false on buggy proxies. Treat events
-      // on the live timeline as new only when their server timestamp is within
-      // 60 s before registration — this filters out initial-sync backfill that
-      // happens to fire after mount while excluding genuine reconnect messages.
       const isLive =
         data.liveEvent ||
         (!toStartOfTimeline &&
@@ -538,7 +430,7 @@ const useLiveEventArrive = (room: Room, onArrive: (mEvent: MatrixEvent) => void)
       room.removeListener(RoomEvent.Timeline, handleTimelineEvent);
       room.removeListener(RoomEvent.Redaction, handleRedaction);
     };
-  }, [room]); // stable: re-register only when room changes, not on callback identity changes
+  }, [room]);
 };
 
 const useRelationUpdate = (room: Room, onRelation: () => void) => {
@@ -553,9 +445,6 @@ const useRelationUpdate = (room: Room, onRelation: () => void) => {
       _removed: boolean,
       data: IRoomTimelineData
     ) => {
-      // Live Replace events are handled by useLiveEventArrive re-render.
-      // Non-live Replace events (bundled/historical edits from sliding sync)
-      // also need to trigger a re-render so makeReplaced state is reflected.
       if (eventRoom?.roomId !== room.roomId || data.liveEvent) return;
       if (mEvent.getRelation()?.rel_type === RelationType.Replace) {
         onRelationRef.current();
@@ -575,30 +464,10 @@ const useLiveTimelineRefresh = (room: Room, onRefresh: () => void) => {
   useEffect(() => {
     const handleTimelineRefresh: RoomEventHandlerMap[RoomEvent.TimelineRefresh] = (r: Room) => {
       if (r.roomId !== room.roomId) return;
-      // App-initiated full reinit (e.g. from refreshLiveTimeline()). Rare in normal usage.
-      debugLog.debug('timeline', 'TimelineRefresh: app-initiated live timeline reinit', {
-        roomId: room.roomId,
-        trigger: 'TimelineRefresh',
-      });
       onRefreshRef.current();
     };
-    // The SDK fires RoomEvent.TimelineReset on the EventTimelineSet (not the Room)
-    // when a limited sync response replaces the live EventTimeline with a fresh one.
-    // This happens in classic /sync on limited=true (gap after idle/reconnect) AND in
-    // sliding sync when the proxy sends a limited room update.
     const handleTimelineReset: EventTimelineSetHandlerMap[RoomEvent.TimelineReset] = () => {
-      debugLog.info('timeline', 'TimelineReset: SDK-initiated (limited sync / sync gap)', {
-        roomId: room.roomId,
-        trigger: 'TimelineReset',
-        liveTimelineEvents: room.getUnfilteredTimelineSet().getLiveTimeline().getEvents().length,
-      });
       Sentry.metrics.count('sable.timeline.limited_reset', 1);
-      Sentry.addBreadcrumb({
-        category: 'timeline.sync',
-        message: 'TimelineReset: limited sync gap',
-        level: 'info',
-        data: { roomId: room.roomId },
-      });
       onRefreshRef.current();
     };
     const unfilteredTimelineSet = room.getUnfilteredTimelineSet();
@@ -612,14 +481,11 @@ const useLiveTimelineRefresh = (room: Room, onRefresh: () => void) => {
   }, [room]);
 };
 
-// Trigger re-render when thread reply counts change so the thread chip updates.
 const useThreadUpdate = (room: Room, onUpdate: () => void) => {
   const onUpdateRef = useRef(onUpdate);
   onUpdateRef.current = onUpdate;
 
   useEffect(() => {
-    // Stable wrapper: the same function identity is kept for the lifetime of
-    // the room so add/removeListener calls always match.
     const handler = () => onUpdateRef.current();
     room.on(ThreadEvent.New, handler);
     room.on(ThreadEvent.Update, handler);
@@ -631,18 +497,6 @@ const useThreadUpdate = (room: Room, onUpdate: () => void) => {
     };
   }, [room]);
 };
-
-// Returns the number of replies in a thread, counting actual reply events
-// (excluding the root event, reactions, and edits) from the live timeline.
-// Always uses timeline-based counting for accuracy and live updates.
-const getThreadReplyCount = (room: Room, mEventId: string): number =>
-  room
-    .getUnfilteredTimelineSet()
-    .getLiveTimeline()
-    .getEvents()
-    .filter(
-      (ev) => ev.threadRootId === mEventId && ev.getId() !== mEventId && !reactionOrEditEvent(ev)
-    ).length;
 
 type ThreadReplyChipProps = {
   room: Room;
@@ -749,35 +603,12 @@ function ThreadReplyChip({
   );
 }
 
-const getInitialTimeline = (room: Room) => {
-  const linkedTimelines = getLinkedTimelines(getLiveTimeline(room));
-  const evLength = getTimelinesEventsCount(linkedTimelines);
-  return {
-    linkedTimelines,
-    range: {
-      start: Math.max(evLength - PAGINATION_LIMIT, 0),
-      end: evLength,
-    },
-  };
-};
-
-const getEmptyTimeline = () => ({
-  range: { start: 0, end: 0 },
-  linkedTimelines: [],
-});
-
-const getRoomUnreadInfo = (room: Room, scrollTo = false) => {
-  if (!roomHaveNotification(room) && !roomHaveUnread(room.client, room)) return undefined;
-
-  const readUptoEventId = room.getEventReadUpTo(room.client.getUserId() ?? '');
-  if (!readUptoEventId) return undefined;
-  const evtTimeline = getEventTimeline(room, readUptoEventId);
-  const latestTimeline = evtTimeline && getFirstLinkedTimeline(evtTimeline, Direction.Forward);
-  return {
-    readUptoEventId,
-    inLiveTimeline: latestTimeline === room.getLiveTimeline(),
-    scrollTo,
-  };
+type RoomTimelineProps = {
+  room: Room;
+  eventId?: string;
+  roomInputRef: RefObject<HTMLElement>;
+  editor: Editor;
+  onEditorReset?: () => void;
 };
 
 export function RoomTimeline({
@@ -845,8 +676,6 @@ export function RoomTimeline({
   const imagePackRooms: Room[] = useImagePackRooms(room.roomId, roomToParents);
 
   const [unreadInfo, setUnreadInfo] = useState(() => getRoomUnreadInfo(room, true));
-  // Stable ref so listeners that only need to *read* unreadInfo don't force
-  // effect re-registration (and listener churn) every time a new message arrives.
   const unreadInfoRef = useRef(unreadInfo);
   unreadInfoRef.current = unreadInfo;
   const readUptoEventIdRef = useRef<string>();
@@ -857,16 +686,9 @@ export function RoomTimeline({
   const hideReadsRef = useRef(hideReads);
   hideReadsRef.current = hideReads;
 
-  const unreadInfoRef = useRef(unreadInfo);
-  unreadInfoRef.current = unreadInfo;
-
   const atBottomAnchorRef = useRef<HTMLElement>(null);
-
-  // TODO: The return value of "useState" should be destructured and named symmetrically (typescript:S6754)
   const [atBottom, setAtBottomState] = useState<boolean>(true);
   const atBottomRef = useRef(atBottom);
-  // Tracks when atBottom last changed so we can detect rapid true→false flips
-  // (characteristic of the IO false-positive on bulk event loads).
   const atBottomLastChangedRef = useRef<number>(0);
   const setAtBottom = useCallback(
     (val: boolean) => {
@@ -880,9 +702,6 @@ export function RoomTimeline({
         level: 'info',
         data: { roomId: room.roomId, msSincePrevious },
       });
-      // Rapid flip: bottom→away within 200 ms is characteristic of the known
-      // IntersectionObserver false-positive triggered by bulk event loads causing
-      // a DOM layout shift (see memory: "RoomTimeline Stay at Bottom False-Positive").
       if (!val && msSincePrevious < 200) {
         Sentry.captureMessage('Timeline: rapid atBottom flip (possible spurious scroll reset)', {
           level: 'warning',
@@ -895,12 +714,7 @@ export function RoomTimeline({
     [room.roomId]
   );
 
-  // Set to true by the useLiveTimelineRefresh callback when the timeline is
-  // re-initialised (TimelineRefresh or TimelineReset). Allows the range self-heal
-  // effect below to run even when atBottom=false, so the virtual paginator window
-  // is restored to the live end without forcing a viewport scroll.
   const timelineJustResetRef = useRef(false);
-
   const scrollRef = useRef<HTMLDivElement>(null);
   const scrollToBottomRef = useRef({
     count: 0,
@@ -960,12 +774,8 @@ export function RoomTimeline({
   );
   const eventsLength = getTimelinesEventsCount(timeline.linkedTimelines);
   const liveTimelineLinked = timeline.linkedTimelines.at(-1) === getLiveTimeline(room);
-
-  // Track previous eventsLength so we can calculate batch sizes.
   const prevEventsLengthRef = useRef(eventsLength);
 
-  // Breadcrumb every time the timeline gains events so we can correlate message
-  // batches (sliding sync chunks) with scroll state changes in Sentry Replay.
   useEffect(() => {
     const prev = prevEventsLengthRef.current;
     const delta = eventsLength - prev;
@@ -974,7 +784,6 @@ export function RoomTimeline({
     if (delta === 0) return;
 
     const isBatch = delta > 1;
-    // Classify by size: single new message vs small batch vs large catch-up load
     let batchSize: string;
     if (delta === 1) batchSize = 'single';
     else if (delta <= 20) batchSize = 'small';
@@ -993,14 +802,10 @@ export function RoomTimeline({
         liveTimelineLinked,
         rangeEnd: timeline.range.end,
         atBottom: atBottomRef.current,
-        // Gap between live end and visible window — non-zero while user is scrolled back
         rangeGap: eventsLength - timeline.range.end,
       },
     });
 
-    // A large batch (> 50) while liveTimelineLinked is the sliding-sync
-    // adaptive load pattern that can trigger the IO false-positive scroll reset.
-    // Capture a warning so it's searchable in Sentry even when no reset fires.
     if (delta > 50 && liveTimelineLinked) {
       Sentry.captureMessage('Timeline: large event batch from sliding sync', {
         level: 'warning',
@@ -1008,11 +813,8 @@ export function RoomTimeline({
         tags: { feature: 'timeline', batchSize },
       });
     }
-    // atBottomRef and timeline.range.end are intentionally read at effect time, not as deps
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [eventsLength, liveTimelineLinked]);
 
-  // Log timeline component mount/unmount
   useEffect(() => {
     const mode = eventId ? 'jump' : 'live';
     Sentry.metrics.count('sable.timeline.open', 1, { attributes: { mode } });
@@ -1022,19 +824,8 @@ export function RoomTimeline({
         attributes: { encrypted: String(room.hasEncryptionStateEvent()), mode },
       });
     }
-    debugLog.info('timeline', 'Timeline mounted', {
-      roomId: room.roomId,
-      eventId,
-      initialEventsCount: eventsLength,
-      liveTimelineLinked,
-    });
-    return () => {
-      debugLog.info('timeline', 'Timeline unmounted', { roomId: room.roomId });
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [room.roomId, eventId]); // Only log on mount/unmount - intentionally capturing initial values
+  }, [room.roomId, eventId]);
 
-  // Log live timeline linking state changes
   useEffect(() => {
     debugLog.debug('timeline', 'Live timeline link state changed', {
       roomId: room.roomId,
@@ -1042,6 +833,7 @@ export function RoomTimeline({
       eventsLength,
     });
   }, [liveTimelineLinked, room.roomId, eventsLength]);
+
   const canPaginateBack =
     typeof timeline.linkedTimelines[0]?.getPaginationToken(Direction.Backward) === 'string';
   const rangeAtStart = timeline.range.start === 0;
@@ -1071,8 +863,6 @@ export function RoomTimeline({
             return currentTimeline;
           }
 
-          // Log range changes with scroll state so we can correlate visible-content
-          // jumps with paginator window shifts. scrollRef is a stable ref — safe here.
           const scrollEl = scrollRef.current;
           const ds = newRange.start - currentTimeline.range.start;
           const de = newRange.end - currentTimeline.range.end;
@@ -1084,19 +874,6 @@ export function RoomTimeline({
             scrollTop: scrollEl?.scrollTop,
             scrollHeight: scrollEl?.scrollHeight,
             clientHeight: scrollEl?.clientHeight,
-          });
-          Sentry.addBreadcrumb({
-            category: 'ui.timeline',
-            message: 'Timeline window shifted',
-            level: 'debug',
-            data: {
-              prevStart: currentTimeline.range.start,
-              prevEnd: currentTimeline.range.end,
-              newStart: newRange.start,
-              newEnd: newRange.end,
-              deltaStart: ds,
-              deltaEnd: de,
-            },
           });
 
           return { ...currentTimeline, range: newRange };
@@ -1156,23 +933,13 @@ export function RoomTimeline({
     room,
     useCallback(
       (mEvt: MatrixEvent) => {
-        // Thread reply events are re-emitted from the Thread to the Room and
-        // must not increment the main timeline range or scroll it.
-        // useThreadUpdate handles the chip re-render for these events.
         if (mEvt.threadRootId !== undefined) return;
 
-        // if user is at bottom of timeline
-        // keep paginating timeline and conditionally mark as read
-        // otherwise we update timeline without paginating
-        // so timeline can be updated with evt like: edits, reactions etc
         if (atBottomRef.current && atLiveEndRef.current) {
           if (
             document.hasFocus() &&
             (!unreadInfoRef.current || mEvt.getSender() === mx.getUserId())
           ) {
-            // Check if the document is in focus (user is actively viewing the app),
-            // and either there are no unread messages or the latest message is from the current user.
-            // If either condition is met, trigger the markAsRead function to send a read receipt.
             requestAnimationFrame(() => markAsRead(mx, mEvt.getRoomId()!, hideReadsRef.current));
           }
 
@@ -1180,8 +947,7 @@ export function RoomTimeline({
             setUnreadInfo(getRoomUnreadInfo(room));
           }
 
-          scrollToBottomRef.current.count += 1; // Use instant scroll when the current user sent the message
-          // to avoid Android WebView smooth-scroll not reaching bottom.
+          scrollToBottomRef.current.count += 1;
           scrollToBottomRef.current.smooth = mEvt.getSender() !== mx.getUserId();
 
           setTimeline((ct) => ({
@@ -1229,12 +995,6 @@ export function RoomTimeline({
       highlight = true,
       onScroll: ((scrolled: boolean) => void) | undefined = undefined
     ) => {
-      debugLog.info('timeline', 'Jumping to event', {
-        roomId: room.roomId,
-        eventId: evtId,
-        highlight,
-      });
-
       const evtTimeline = getEventTimeline(room, evtId);
       const absoluteIndex =
         evtTimeline && getEventIdAbsoluteIndex(timeline.linkedTimelines, evtTimeline, evtId);
@@ -1253,16 +1013,7 @@ export function RoomTimeline({
           scrollTo: !scrolled,
           highlight,
         });
-        debugLog.debug('timeline', 'Event found in current timeline', {
-          roomId: room.roomId,
-          eventId: evtId,
-          index: absoluteIndex,
-        });
       } else {
-        debugLog.debug('timeline', 'Event not in current timeline, loading timeline', {
-          roomId: room.roomId,
-          eventId: evtId,
-        });
         loadEventTimeline(evtId);
       }
     },
@@ -1272,36 +1023,7 @@ export function RoomTimeline({
   useLiveTimelineRefresh(
     room,
     useCallback(() => {
-      // Always reinitialize on TimelineRefresh/TimelineReset. With sliding sync,
-      // a limited response replaces the room's live EventTimeline with a brand-new
-      // object. At that moment liveTimelineLinked is stale-false (stored
-      // linkedTimelines reference the old detached chain), so any guard on that
-      // flag would skip reinit, causing back-pagination to no-op silently and the
-      // room to appear frozen. Unconditional reinit is correct: both events signal
-      // that stored range/indices against the old chain are invalid.
-      //
-      // Only force the viewport to the bottom if the user was already there.
-      // When the user has scrolled up to read history and a sync gap fires, we
-      // must still reinit (the old timeline is gone), but scrolling them back to
-      // the bottom is jarring. Instead we set timelineJustResetRef=true so the
-      // self-heal effect below can advance the range as events arrive on the fresh
-      // timeline, without atBottom=true being required.
-      //
-      // Also force atBottom=true and queue a scroll-to-bottom. The SDK fires
-      // TimelineRefresh before adding new events to the fresh live timeline, so
-      // getInitialTimeline captures range.end=0. Once events arrive the
-      // rangeAtEnd self-heal useEffect needs atBottom=true to run; the
-      // IntersectionObserver may have transiently fired isIntersecting=false
-      // during the render transition, leaving atBottom=false and causing the
-      // "Jump to Latest" button to stick permanently. Forcing atBottom here is
-      // correct: TimelineRefresh always reinits to the live end, so the user
-      // should be repositioned to the bottom regardless.
       Sentry.metrics.count('sable.timeline.reinit', 1);
-
-      // When the user WAS at the bottom we still call setAtBottom(true) so a
-      // transient isIntersecting=false from the IntersectionObserver during the
-      // DOM transition cannot stick the "Jump to Latest" button on-screen.
-      debugLog.info('timeline', 'Live timeline refresh triggered', { roomId: room.roomId });
       const wasAtBottom = atBottomRef.current;
       timelineJustResetRef.current = true;
       setTimeline(getInitialTimeline(room));
@@ -1313,8 +1035,6 @@ export function RoomTimeline({
     }, [room, setAtBottom])
   );
 
-  // Re-render when non-live Replace relations arrive (bundled/historical edits
-  // from sliding sync that wouldn't otherwise trigger a timeline update).
   useRelationUpdate(
     room,
     useCallback(() => {
@@ -1322,8 +1042,6 @@ export function RoomTimeline({
     }, [])
   );
 
-  // Re-render when thread reply counts change (new reply or thread update) so
-  // the thread chip on root messages reflects the correct count.
   useThreadUpdate(
     room,
     useCallback(() => {
@@ -1331,44 +1049,12 @@ export function RoomTimeline({
     }, [])
   );
 
-  // When historical events load (e.g., from active subscription), stay at bottom
-  // by adjusting the range. The virtual paginator expects the range to match the
-  // position we want to display. Without this, loading more history makes it look
-  // like we've scrolled up because the range (0, 10) is now showing the old events
-  // instead of the latest ones.
-  //
-  // Also runs after a timeline reset (timelineJustResetRef=true) even when
-  // atBottom=false. After TimelineReset the SDK fires the event before populating
-  // the fresh timeline, so getInitialTimeline sees range.end=0. When events
-  // arrive eventsLength grows and we need to heal the range back to the live end
-  // regardless of the user's scroll position.
   useEffect(() => {
     const resetPending = timelineJustResetRef.current;
     if ((atBottom || resetPending) && liveTimelineLinked && eventsLength > timeline.range.end) {
       if (resetPending) timelineJustResetRef.current = false;
-      // More events exist than our current range shows. Adjust to the live end.
-      //
-      // IMPORTANT: also queue a scroll-to-bottom here. The scroll that was queued
-      // during TimelineReset / initial mount fires when range.end is still 0
-      // (the SDK fires Reset *before* populating the fresh timeline), so the DOM
-      // has no items yet and the scroll is a no-op. This second increment fires
-      // after setTimeline renders the full range, guaranteeing we actually land
-      // at the bottom once the events are visible.
-      const rangeGap = eventsLength - timeline.range.end;
       scrollToBottomRef.current.count += 1;
       scrollToBottomRef.current.smooth = false;
-      Sentry.addBreadcrumb({
-        category: 'ui.scroll',
-        message: 'Timeline: stay-at-bottom range expansion + scroll',
-        level: 'info',
-        data: {
-          eventsLength,
-          prevRangeEnd: timeline.range.end,
-          rangeGap,
-          wasReset: resetPending,
-          atBottom,
-        },
-      });
       setTimeline((ct) => ({
         ...ct,
         range: {
@@ -1379,8 +1065,6 @@ export function RoomTimeline({
     }
   }, [atBottom, liveTimelineLinked, eventsLength, timeline.range.end]);
 
-  // Recover from transient empty timeline state when the live timeline
-  // already has events (can happen when opening by event id, then fallbacking).
   useEffect(() => {
     if (eventId) return;
     if (timeline.linkedTimelines.length > 0) return;
@@ -1388,13 +1072,11 @@ export function RoomTimeline({
     setTimeline(getInitialTimeline(room));
   }, [eventId, room, timeline.linkedTimelines.length]);
 
-  // Stay at bottom when room editor resize
   useResizeObserver(
     useMemo(() => {
       let mounted = false;
       return (entries) => {
         if (!mounted) {
-          // skip initial mounting call
           mounted = true;
           return;
         }
@@ -1433,15 +1115,11 @@ export function RoomTimeline({
         if (!targetEntry) return;
 
         if (targetEntry.isIntersecting) {
-          // User has reached the bottom
-          debugLog.debug('timeline', 'Scrolled to bottom', { roomId: room.roomId });
           setAtBottom(true);
           if (atLiveEndRef.current && document.hasFocus()) {
             tryAutoMarkAsRead();
           }
         } else {
-          // User has intentionally scrolled up.
-          debugLog.debug('timeline', 'Scrolled away from bottom', { roomId: room.roomId });
           setAtBottom(false);
         }
       },
@@ -1468,7 +1146,6 @@ export function RoomTimeline({
     )
   );
 
-  // Handle up arrow edit
   useKeyDown(
     window,
     useCallback(
@@ -1492,10 +1169,6 @@ export function RoomTimeline({
     )
   );
 
-  // Keep a stable ref so timeline state updates (new messages arriving) don't
-  // cause handleOpenEvent to rebuild and re-trigger this effect, yanking the
-  // user back to the notification event on every incoming message.
-  // We only want to scroll once per unique eventId value.
   const handleOpenEventRef = useRef(handleOpenEvent);
   handleOpenEventRef.current = handleOpenEvent;
 
@@ -1503,53 +1176,22 @@ export function RoomTimeline({
     if (eventId) {
       handleOpenEventRef.current(eventId);
     }
-  }, [eventId]); // handleOpenEvent intentionally omitted — use ref above
+  }, [eventId]);
 
-  // Scroll to bottom on initial timeline load
   useLayoutEffect(() => {
     const scrollEl = scrollRef.current;
     if (scrollEl) {
-      const preScrollTop = scrollEl.scrollTop;
-      const preScrollHeight = scrollEl.scrollHeight;
-      const { clientHeight } = scrollEl;
       scrollToBottom(scrollEl);
-      // Log whether we were actually away from bottom at mount — useful for diagnosing
-      // rooms that open with the wrong scroll position.
-      const distanceFromBottom = preScrollHeight - preScrollTop - clientHeight;
-      debugLog.debug('timeline', 'Initial scroll to bottom (mount)', {
-        preScrollTop,
-        preScrollHeight,
-        clientHeight,
-        postScrollTop: scrollEl.scrollTop,
-        distanceFromBottom,
-        alreadyAtBottom: distanceFromBottom <= 2,
-      });
-      if (distanceFromBottom > 0) {
-        Sentry.metrics.distribution('sable.timeline.initial_scroll_offset_px', distanceFromBottom);
-      }
     }
   }, []);
 
-  // Rescroll to bottom when images load at the start
   useEffect(() => {
     const scrollEl = scrollRef.current;
     const contentEl = scrollEl?.firstElementChild as HTMLElement;
     if (!scrollEl || !contentEl) return () => {};
 
     const forceScroll = () => {
-      // if the user isn't scrolling jump down to latest content
       const wasAtBottom = atBottomRef.current;
-      const preScrollTop = scrollEl?.scrollTop ?? 0;
-      const preScrollHeight = scrollEl?.scrollHeight ?? 0;
-      // Log every resize so we can see when media loads move the timeline and whether
-      // we corrected it (atBottom=true) or left it (atBottom=false, user is scrolled up).
-      debugLog.debug('timeline', 'Content resized (image/media load)', {
-        atBottom: wasAtBottom,
-        preScrollTop,
-        preScrollHeight,
-        clientHeight: scrollEl?.clientHeight,
-        distanceFromBottom: preScrollHeight - preScrollTop - (scrollEl?.clientHeight ?? 0),
-      });
       if (!wasAtBottom) return;
       scrollToBottom(scrollEl, 'instant');
     };
@@ -1565,8 +1207,6 @@ export function RoomTimeline({
     };
   }, [room]);
 
-  // if live timeline is linked and unreadInfo change
-  // Scroll to last read message
   useLayoutEffect(() => {
     const { readUptoEventId, inLiveTimeline, scrollTo } = unreadInfo ?? {};
     if (readUptoEventId && inLiveTimeline && scrollTo) {
@@ -1584,7 +1224,6 @@ export function RoomTimeline({
     }
   }, [room, unreadInfo, scrollToItem]);
 
-  // scroll to focused message
   useLayoutEffect(() => {
     if (focusItem?.scrollTo) {
       scrollToItem(focusItem.index, {
@@ -1605,47 +1244,14 @@ export function RoomTimeline({
     return () => clearTimeout(timeoutId);
   }, [alive, focusItem, scrollToItem]);
 
-  // scroll to bottom of timeline
   const scrollToBottomCount = scrollToBottomRef.current.count;
   useLayoutEffect(() => {
     if (scrollToBottomCount > 0) {
       const scrollEl = scrollRef.current;
       if (scrollEl) {
         const behavior = scrollToBottomRef.current.smooth && !reducedMotion ? 'smooth' : 'instant';
-        const wasAtBottom = atBottomRef.current;
-        Sentry.addBreadcrumb({
-          category: 'ui.scroll',
-          message: 'Timeline: scroll-to-bottom triggered',
-          level: 'info',
-          data: { roomId: room.roomId, behavior, wasAtBottom },
-        });
-        // A scroll-to-bottom while the user was NOT at the bottom and no timeline
-        // reset is expected is a sign of an unexpected scroll jump.
-        if (!wasAtBottom && !timelineJustResetRef.current) {
-          Sentry.captureMessage('Timeline: scroll-to-bottom fired while user was scrolled up', {
-            level: 'warning',
-            extra: { roomId: room.roomId, behavior },
-            tags: { feature: 'timeline' },
-          });
-        }
-        // Use requestAnimationFrame to ensure the virtual paginator has finished
-        // updating the DOM before we scroll. This prevents scroll position from
-        // being stale when new messages arrive while at the bottom.
         requestAnimationFrame(() => {
-          const preScrollTop = scrollEl.scrollTop;
-          const { scrollHeight } = scrollEl;
           scrollToBottom(scrollEl, behavior);
-          debugLog.debug('timeline', 'scrollToBottom fired', {
-            behavior,
-            preScrollTop,
-            scrollHeight,
-            postScrollTop: scrollEl.scrollTop,
-            remainingOffset: scrollEl.scrollHeight - scrollEl.scrollTop - scrollEl.clientHeight,
-          });
-          // On Android WebView, layout may still settle after the initial scroll.
-          // Fire a second instant scroll after a short delay to guarantee we
-          // reach the true bottom (e.g. after images finish loading or the
-          // virtual keyboard shifts the viewport).
           if (behavior === 'instant') {
             setTimeout(() => {
               scrollToBottom(scrollEl, 'instant');
@@ -1656,14 +1262,12 @@ export function RoomTimeline({
     }
   }, [scrollToBottomCount, reducedMotion, room.roomId]);
 
-  // Remove unreadInfo on mark as read
   useEffect(() => {
     if (!unread) {
       setUnreadInfo(undefined);
     }
   }, [unread]);
 
-  // scroll out of view msg editor in view.
   useEffect(() => {
     if (editId) {
       const editMsgElement =
@@ -1715,7 +1319,6 @@ export function RoomTimeline({
       if (!userId) return;
 
       const cachedData = globalProfiles[userId];
-
       const cleanExtended = cachedData?.extended ? { ...cachedData.extended } : undefined;
 
       if (cleanExtended) {
@@ -1789,23 +1392,13 @@ export function RoomTimeline({
         : replyEvt.getWireContent();
       const senderId = replyEvt.getSender();
       if (senderId) {
-        if (typeof body === 'string') {
-          setReplyDraft({
-            userId: senderId,
-            eventId: replyId,
-            body,
-            formattedBody,
-            relation,
-          });
-        } else {
-          setReplyDraft({
-            userId: senderId,
-            eventId: replyId,
-            body: '',
-            formattedBody: '',
-            relation,
-          });
-        }
+        setReplyDraft({
+          userId: senderId,
+          eventId: replyId,
+          body: typeof body === 'string' ? body : '',
+          formattedBody: typeof formattedBody === 'string' ? formattedBody : '',
+          relation,
+        });
       }
     },
     [room, setReplyDraft, activeReplyId]
@@ -1819,7 +1412,6 @@ export function RoomTimeline({
         return;
       }
       if (startThread) {
-        // Create thread if it doesn't exist, then open the thread drawer
         const rootEvent = room.findEventById(replyId);
         if (rootEvent && !room.getThread(replyId)) {
           room.createThread(replyId, rootEvent, [], false);
@@ -1834,8 +1426,6 @@ export function RoomTimeline({
 
   const handleReactionToggle = useCallback(
     (targetEventId: string, key: string, shortcode?: string) => {
-      debugLog.info('ui', 'Reaction toggled', { roomId: room.roomId, targetEventId, key });
-      Sentry.metrics.count('sable.message.reaction.toggle', 1);
       toggleReaction(mx, room, targetEventId, key, shortcode);
     },
     [mx, room]
@@ -1904,9 +1494,6 @@ export function RoomTimeline({
 
         const editedEvent = getEditedEvent(mEventId, mEvent, timelineSet);
         const editedNewContent = editedEvent?.getContent()['m.new_content'];
-        // If makeReplaced was called with a stripped edit (no m.new_content),
-        // mEvent.getContent() returns {}. Fall back to getOriginalContent() so
-        // the message renders with its original content instead of breaking.
         const baseContent = mEvent.getContent();
         const safeContent =
           Object.keys(baseContent).length > 0 ? baseContent : mEvent.getOriginalContent();
@@ -1916,7 +1503,6 @@ export function RoomTimeline({
         const senderDisplayName =
           getMemberDisplayName(room, senderId, nicknames) ?? getMxIdLocalPart(senderId) ?? senderId;
 
-        // determine if message is forwarded by checking for the presence of the 'moe.sable.message.forward' key in the event content
         const forwardContent = safeContent['moe.sable.message.forward'] as
           | {
               original_timestamp?: unknown;
@@ -2635,6 +2221,7 @@ export function RoomTimeline({
       );
     }
   );
+
   const processedEvents = useMemo(() => {
     const items = getItems();
     let prevEvent: MatrixEvent | undefined;
@@ -2654,7 +2241,6 @@ export function RoomTimeline({
         if (!mEvent || !mEventId) return null;
 
         const eventSender = mEvent.getSender();
-
         if (eventSender && ignoredUsersSet.has(eventSender)) {
           return null;
         }
@@ -2666,9 +2252,7 @@ export function RoomTimeline({
         }
         if (!dayDivider) {
           dayDivider = prevEvent ? !inSameDay(prevEvent.getTs(), mEvent.getTs()) : false;
-        } // Thread REPLIES belong only in the thread timeline; filter them from the
-        // main room timeline. Keep thread ROOT events (threadRootId === their own
-        // event ID) so they remain visible with the ThreadReplyChip attached.
+        }
 
         if (mEvent.threadRootId !== undefined && mEvent.threadRootId !== mEventId) {
           return null;
@@ -2710,7 +2294,6 @@ export function RoomTimeline({
       })
       .filter((e): e is NonNullable<typeof e> => e !== null);
 
-    // Reverse for column-reverse rendering
     return chronologicallyProcessed.reverse();
   }, [timeline.linkedTimelines, getItems, ignoredUsersSet, showHiddenEvents, mx]);
 
