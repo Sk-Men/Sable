@@ -995,7 +995,7 @@ function MessageInternal(
                                 autoFocus
                                 value={nickDraft}
                                 onChange={(e) => setNickDraft(e.target.value)}
-                                placeholder={displayName}
+                                placeholder={cleanedDisplayName}
                                 onKeyDown={(e) => {
                                   if (e.key === 'Enter') {
                                     setNickname(senderId, nickDraft || undefined, mx);
