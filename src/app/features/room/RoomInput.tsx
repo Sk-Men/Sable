@@ -688,6 +688,11 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
         body,
       };
 
+      /**
+       * the currently with the room associated per-message profile, if any, so that it can be included in the message content when sending.
+       * This allows the server to apply the correct profile-based transformations (e.g. font size adjustments) when processing the message,
+       * and also allows clients to display an accurate preview of how the message will look with the profile applied while it's being composed.
+       */
       const perMessageProfile = await getCurrentlyUsedPerMessageProfileForRoom(mx, roomId);
 
       if (perMessageProfile) {

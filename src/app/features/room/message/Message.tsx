@@ -380,6 +380,11 @@ function MessageInternal(
   const mx = useMatrixClient();
   const useAuthentication = useMediaAuthentication();
 
+  /**
+   * We read the per-message profile from the event content here.
+   * We have to do this in the message component because the per-message profile can be different for each message, and we need to read it for each message individually.
+   * We also want to avoid reading and parsing the per-message profile in a parent component like the timeline, because that would be inefficient and would cause unnecessary re-renders of the entire timeline whenever a per-message profile changes.
+   */
   const pmp: PerMessageProfileBeeperFormat | undefined = useMemo(
     () =>
       mEvent.event.content?.['com.beeper.per_message_profile'] as
