@@ -79,7 +79,7 @@ import { MessageSourceCodeItem } from '$components/message/modals/MessageSource'
 import { MessageForwardItem } from '$components/message/modals/MessageForward';
 import { MessageDeleteItem } from '$components/message/modals/MessageDelete';
 import { MessageReportItem } from '$components/message/modals/MessageReport';
-import { filterPronounsByLanguage } from '$utils/pronouns';
+import { filterPronounsByLanguage, getParsedPronouns } from '$utils/pronouns';
 import { useMentionClickHandler } from '$hooks/useMentionClickHandler';
 import {
   addStickerToDefaultPack,
@@ -211,6 +211,13 @@ export type ForwardedMessageProps = {
   originalEventPrivate: boolean;
 };
 
+export type MSC2723ForwardedMessageProps = {
+  event_id: string;
+  room_id: string;
+  sender: string | null;
+  origin_server_ts: number;
+};
+
 export type MessageProps = {
   room: Room;
   mEvent: MatrixEvent;
@@ -248,6 +255,7 @@ export type MessageProps = {
   onResend?: (event: MatrixEvent) => void;
   onDeleteFailedSend?: (event: MatrixEvent) => void;
   messageForwardedProps?: ForwardedMessageProps;
+  msc2723ForwardedMessageProps?: MSC2723ForwardedMessageProps;
 };
 
 function useMobileDoubleTap(callback: () => void, delay = 300) {
@@ -349,6 +357,7 @@ function MessageInternal(
     onResend,
     onDeleteFailedSend,
     messageForwardedProps,
+    msc2723ForwardedMessageProps,
     ...props
   }: MessageProps & { className?: string; children?: ReactNode },
   ref: any
@@ -372,6 +381,8 @@ function MessageInternal(
   const profile = useUserProfile(senderId, room);
   const { color: usernameColor, font: usernameFont } = useSableCosmetics(senderId, room);
 
+  const [highlightMentions] = useSetting(settingsAtom, 'highlightMentions');
+
   // Avatars
   // Prefer the room-scoped member avatar (m.room.member) over the global profile
   // avatar so per-room avatar overrides are respected in the timeline.
@@ -380,11 +391,6 @@ function MessageInternal(
     const mxc = pmp?.avatar_url || getMemberAvatarMxc(room, senderId) || profile.avatarUrl;
     return mxc ? mxcUrlToHttp(mx, mxc, useAuthentication, 48, 48, 'crop') : undefined;
   }, [pmp, collapse, profile.avatarUrl, senderId, mx, room, useAuthentication]);
-
-  const displayName = useMemo(
-    () => pmp?.displayname || senderDisplayName,
-    [pmp, senderDisplayName]
-  );
 
   const cachedAvatar = useBlobCache(avatarUrl ?? undefined);
 
@@ -414,8 +420,32 @@ function MessageInternal(
 
   const [mobileOptionsOpen, setMobileOptionsOpen] = useState(false);
   const optionsRef = useRef<HTMLDivElement>(null);
+
   const [showPronouns] = useSetting(settingsAtom, 'showPronouns');
+  const [parsePronouns] = useSetting(settingsAtom, 'parsePronouns');
+
   const [useRightBubbles] = useSetting(settingsAtom, 'useRightBubbles');
+  const { cleanedDisplayName, inlinePronoun } = useMemo(() => {
+    const rawName = pmp?.displayname || senderDisplayName || '';
+    return getParsedPronouns(rawName, parsePronouns);
+  }, [pmp, senderDisplayName, parsePronouns]);
+
+  const mergedPronouns = useMemo(() => {
+    const existing = profile.pronouns ? [...profile.pronouns] : [];
+
+    if (inlinePronoun) {
+      const isDupe = existing.some((p) => p.summary?.toLowerCase() === inlinePronoun);
+
+      if (!isDupe) {
+        existing.push({
+          summary: inlinePronoun,
+          language: 'en',
+        });
+      }
+    }
+
+    return existing;
+  }, [profile.pronouns, inlinePronoun]);
 
   useEffect(() => {
     if (!mobileOptionsOpen) return undefined;
@@ -448,11 +478,11 @@ function MessageInternal(
           onClick={onUsernameClick}
         >
           <Text as="span" size={messageLayout === MessageLayout.Bubble ? 'T300' : 'T400'} truncate>
-            <UsernameBold>{displayName}</UsernameBold>
+            <UsernameBold>{cleanedDisplayName}</UsernameBold>
           </Text>
         </Username>
         {showPronouns && (
-          <Pronouns pronouns={profile.pronouns} tagColor={usernameColor ?? 'currentColor'} />
+          <Pronouns pronouns={mergedPronouns} tagColor={usernameColor ?? 'currentColor'} />
         )}
         {tagIconSrc && <PowerIcon size="100" iconSrc={tagIconSrc} />}
       </Box>
@@ -491,7 +521,7 @@ function MessageInternal(
         <UserAvatar
           userId={senderId}
           src={cachedAvatar}
-          alt={displayName}
+          alt={cleanedDisplayName}
           renderFallback={() => <Icon size="200" src={Icons.User} filled />}
         />
       </Avatar>
@@ -508,6 +538,32 @@ function MessageInternal(
   const canDeleteFailedSend = isFailedSend && senderId === mx.getUserId() && !!onDeleteFailedSend;
   // handle clicks on mentions in the message body (e.g. jump to original message from a forwarded message notice)
   const mentionClickHandler = useMentionClickHandler(room.roomId);
+
+  const forwardedNotice = useMemo(() => {
+    if (messageForwardedProps?.isForwarded) {
+      return {
+        label: messageForwardedProps.originalEventPrivate
+          ? 'Forwarded private message'
+          : 'Forwarded from another room',
+        roomId: messageForwardedProps.originalRoomId,
+        eventId: messageForwardedProps.originalEventId,
+        ts: messageForwardedProps.originalTimestamp ?? 0,
+        showLink: !messageForwardedProps.originalEventPrivate,
+      };
+    }
+
+    if (msc2723ForwardedMessageProps) {
+      return {
+        label: 'Forwarded from another room',
+        roomId: msc2723ForwardedMessageProps.room_id,
+        eventId: msc2723ForwardedMessageProps.event_id,
+        ts: msc2723ForwardedMessageProps.origin_server_ts ?? 0,
+        showLink: true,
+      };
+    }
+
+    return null;
+  }, [messageForwardedProps, msc2723ForwardedMessageProps]);
 
   const handleResendClick: MouseEventHandler<HTMLButtonElement> = useCallback(
     (evt) => {
@@ -539,27 +595,26 @@ function MessageInternal(
         [css.MessageFailed]: isFailedSend,
       })}
     >
-      {messageForwardedProps?.isForwarded && (
+      {forwardedNotice && (
         <Chip as="div" variant="SurfaceVariant" radii="Pill">
           <Text size="T200" priority="300">
-            Forwarded{' '}
-            {messageForwardedProps.originalEventPrivate ? 'private message' : 'from another room'}{' '}
-            {!messageForwardedProps.originalEventPrivate && (
-              <a
-                href={getMatrixToRoomEvent(
-                  messageForwardedProps.originalRoomId,
-                  messageForwardedProps.originalEventId
-                )}
-                rel="noreferrer noopener"
-                data-mention-id={messageForwardedProps.originalRoomId}
-                data-mention-event-id={messageForwardedProps.originalEventId}
-                onClick={mentionClickHandler}
-              >
-                jump to original
-              </a>
+            {forwardedNotice.label}
+            {forwardedNotice.showLink && (
+              <>
+                {' '}
+                <a
+                  href={getMatrixToRoomEvent(forwardedNotice.roomId, forwardedNotice.eventId)}
+                  rel="noreferrer noopener"
+                  data-mention-id={forwardedNotice.roomId}
+                  data-mention-event-id={forwardedNotice.eventId}
+                  onClick={mentionClickHandler}
+                >
+                  jump to original
+                </a>
+              </>
             )}
             <Time
-              ts={messageForwardedProps?.originalTimestamp ?? 0}
+              ts={forwardedNotice.ts}
               compact={messageLayout === MessageLayout.Compact}
               hour24Clock={hour24Clock}
               dateFormatString={dateFormatString}
@@ -691,7 +746,7 @@ function MessageInternal(
       space={messageSpacing}
       collapse={collapse}
       highlight={highlight}
-      notifyHighlight={notifyHighlight}
+      notifyHighlight={highlightMentions ? notifyHighlight : undefined}
       selected={!!menuAnchor || !!emojiBoardAnchor}
       {...props}
       {...hoverProps}
@@ -942,7 +997,7 @@ function MessageInternal(
                                 autoFocus
                                 value={nickDraft}
                                 onChange={(e) => setNickDraft(e.target.value)}
-                                placeholder={displayName}
+                                placeholder={cleanedDisplayName}
                                 onKeyDown={(e) => {
                                   if (e.key === 'Enter') {
                                     setNickname(senderId, nickDraft || undefined, mx);
@@ -1116,6 +1171,7 @@ export const Event = as<'div', EventProps>(
 
     const [menuAnchor, setMenuAnchor] = useState<RectCords>();
     const [mobileOptionsOpen, setMobileOptionsOpen] = useState(false);
+    const [highlightMentions] = useSetting(settingsAtom, 'highlightMentions');
 
     const handleContextMenu: MouseEventHandler<HTMLDivElement> = (evt) => {
       if (mobileOrTablet()) {
@@ -1192,7 +1248,7 @@ export const Event = as<'div', EventProps>(
         space={messageSpacing}
         autoCollapse
         highlight={highlight}
-        notifyHighlight={notifyHighlight}
+        notifyHighlight={highlightMentions ? notifyHighlight : undefined}
         selected={!!menuAnchor}
         {...props}
         {...hoverProps}

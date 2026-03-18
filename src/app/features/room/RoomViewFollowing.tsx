@@ -32,22 +32,26 @@ export function RoomViewFollowingPlaceholder() {
 
 export type RoomViewFollowingProps = {
   room: Room;
+  threadEventId?: string;
+  participantIds?: Set<string>;
 };
 export const RoomViewFollowing = as<'div', RoomViewFollowingProps>(
-  ({ className, room, ...props }, ref) => {
+  ({ className, room, threadEventId, participantIds, ...props }, ref) => {
     const mx = useMatrixClient();
     const [open, setOpen] = useState(false);
     const latestEvent = useRoomLatestRenderedEvent(room);
-    const latestEventReaders = useRoomEventReaders(room, latestEvent?.getId());
+    const resolvedEventId = threadEventId ?? latestEvent?.getId();
+    const latestEventReaders = useRoomEventReaders(room, resolvedEventId);
     const nicknames = useAtomValue(nicknamesAtom);
     const names = latestEventReaders
       .filter((readerId) => readerId !== mx.getUserId())
+      .filter((readerId) => !participantIds || participantIds.has(readerId))
       .map(
         (readerId) =>
           getMemberDisplayName(room, readerId, nicknames) ?? getMxIdLocalPart(readerId) ?? readerId
       );
 
-    const eventId = latestEvent?.getId();
+    const eventId = resolvedEventId;
 
     return (
       <>
@@ -85,56 +89,106 @@ export const RoomViewFollowing = as<'div', RoomViewFollowingProps>(
               <Text size="T300" truncate>
                 {names.length === 1 && (
                   <>
-                    <b>{names[0]}</b>
-                    <Text as="span" size="Inherit" priority="300">
+                    <b style={{ WebkitTextFillColor: 'inherit' }}>{names[0]}</b>
+                    <Text
+                      as="span"
+                      size="Inherit"
+                      priority="300"
+                      style={{ WebkitTextFillColor: 'currentColor' }}
+                    >
                       {' is following the conversation.'}
                     </Text>
                   </>
                 )}
                 {names.length === 2 && (
                   <>
-                    <b>{names[0]}</b>
-                    <Text as="span" size="Inherit" priority="300">
+                    <b style={{ WebkitTextFillColor: 'inherit' }}>{names[0]}</b>
+                    <Text
+                      as="span"
+                      size="Inherit"
+                      priority="300"
+                      style={{ WebkitTextFillColor: 'currentColor' }}
+                    >
                       {' and '}
                     </Text>
-                    <b>{names[1]}</b>
-                    <Text as="span" size="Inherit" priority="300">
+                    <b style={{ WebkitTextFillColor: 'inherit' }}>{names[1]}</b>
+                    <Text
+                      as="span"
+                      size="Inherit"
+                      priority="300"
+                      style={{ WebkitTextFillColor: 'currentColor' }}
+                    >
                       {' are following the conversation.'}
                     </Text>
                   </>
                 )}
                 {names.length === 3 && (
                   <>
-                    <b>{names[0]}</b>
-                    <Text as="span" size="Inherit" priority="300">
+                    <b style={{ WebkitTextFillColor: 'inherit' }}>{names[0]}</b>
+                    <Text
+                      as="span"
+                      size="Inherit"
+                      priority="300"
+                      style={{ WebkitTextFillColor: 'currentColor' }}
+                    >
                       {', '}
                     </Text>
-                    <b>{names[1]}</b>
-                    <Text as="span" size="Inherit" priority="300">
+                    <b style={{ WebkitTextFillColor: 'inherit' }}>{names[1]}</b>
+                    <Text
+                      as="span"
+                      size="Inherit"
+                      priority="300"
+                      style={{ WebkitTextFillColor: 'currentColor' }}
+                    >
                       {' and '}
                     </Text>
-                    <b>{names[2]}</b>
-                    <Text as="span" size="Inherit" priority="300">
+                    <b style={{ WebkitTextFillColor: 'inherit' }}>{names[2]}</b>
+                    <Text
+                      as="span"
+                      size="Inherit"
+                      priority="300"
+                      style={{ WebkitTextFillColor: 'currentColor' }}
+                    >
                       {' are following the conversation.'}
                     </Text>
                   </>
                 )}
                 {names.length > 3 && (
                   <>
-                    <b>{names[0]}</b>
-                    <Text as="span" size="Inherit" priority="300">
+                    <b style={{ WebkitTextFillColor: 'inherit' }}>{names[0]}</b>
+                    <Text
+                      as="span"
+                      size="Inherit"
+                      priority="300"
+                      style={{ WebkitTextFillColor: 'currentColor' }}
+                    >
                       {', '}
                     </Text>
-                    <b>{names[1]}</b>
-                    <Text as="span" size="Inherit" priority="300">
+                    <b style={{ WebkitTextFillColor: 'inherit' }}>{names[1]}</b>
+                    <Text
+                      as="span"
+                      size="Inherit"
+                      priority="300"
+                      style={{ WebkitTextFillColor: 'currentColor' }}
+                    >
                       {', '}
                     </Text>
-                    <b>{names[2]}</b>
-                    <Text as="span" size="Inherit" priority="300">
+                    <b style={{ WebkitTextFillColor: 'inherit' }}>{names[2]}</b>
+                    <Text
+                      as="span"
+                      size="Inherit"
+                      priority="300"
+                      style={{ WebkitTextFillColor: 'currentColor' }}
+                    >
                       {' and '}
                     </Text>
-                    <b>{names.length - 3} others</b>
-                    <Text as="span" size="Inherit" priority="300">
+                    <b style={{ WebkitTextFillColor: 'inherit' }}>{names.length - 3} others</b>
+                    <Text
+                      as="span"
+                      size="Inherit"
+                      priority="300"
+                      style={{ WebkitTextFillColor: 'currentColor' }}
+                    >
                       {' are following the conversation.'}
                     </Text>
                   </>

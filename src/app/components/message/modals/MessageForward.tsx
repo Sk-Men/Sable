@@ -26,6 +26,10 @@ import * as css from '$features/room/message/styles.css';
 import { sanitizeCustomHtml } from '$utils/sanitize';
 import { getStateEvents } from '$utils/room';
 import { StateEvent } from '$types/matrix/room';
+import { createDebugLogger } from '$utils/debugLogger';
+import * as Sentry from '@sentry/react';
+
+const debugLog = createDebugLogger('MessageForward');
 
 // Message forwarding component
 export const MessageForwardItem = as<'button', MessageForwardItemProps>(
@@ -85,6 +89,14 @@ type ForwardMeta = {
   original_event_id?: string;
   // to mark that event_id and room_id are not present
   original_event_private: boolean;
+};
+
+// see https://github.com/hummlbach/matrix-doc/blob/acea0854a1c9489599295a858b068ce02a6b2b20/proposals/2723-add-forward-info.md
+type MSC2723ForwardMeta = {
+  event_id: string;
+  room_id: string;
+  sender: string | null; // we won't set this field
+  origin_server_ts: number;
 };
 
 export function MessageForwardInternal({
@@ -211,13 +223,15 @@ export function MessageForwardInternal({
           formatted_body: newBodyHtml,
         }
       : {};
+    const baseContent = { ...mEvent.getContent() };
+    delete baseContent['com.beeper.per_message_profile']; // remove per-message profile as that could confuse clients in the target room
     let content;
     // handle privacy stuff
     if (isPrivate) {
       // if the message is from a private room, we should strip any media or mentions to avoid leaking information to the target room
       // we can still include the original message content in the body of the message, so we'll just use a fallback text/plain content with the original message body
       content = {
-        ...mEvent.getContent(),
+        ...baseContent,
         'm.relates_to': null, // remove any relations to avoid confusion in the target room
         'm.mentions': null, // remove mentions to avoid leaking information about users in the original room
         ...forwardedTextContent,
@@ -230,7 +244,7 @@ export function MessageForwardInternal({
       };
     } else {
       content = {
-        ...mEvent.getContent(),
+        ...baseContent,
         ...forwardedTextContent,
         'm.relates_to': {
           rel_type: 'm.reference',
@@ -244,12 +258,39 @@ export function MessageForwardInternal({
           original_event_id: eventId,
           original_event_private: false,
         } satisfies ForwardMeta,
+        'com.famedly.app.forwarded': {
+          event_id: eventId,
+          room_id: room.roomId,
+          sender: null, // we won't set this field, as a design decision to avoid potential privacy issues and since the sender can be inferred from the event_id and room_id if needed
+          origin_server_ts: mEvent.getTs(),
+        } satisfies MSC2723ForwardMeta,
       };
     }
 
+    const msgtype = String(originalContent.msgtype ?? 'unknown');
+    debugLog.info('ui', 'Forwarding message', {
+      sourceRoomId: room.roomId,
+      targetRoomId: targetRoom.roomId,
+      msgtype,
+      isPrivate,
+    });
+    Sentry.metrics.count('sable.message.forward.attempt', 1, { attributes: { msgtype } });
     mx.sendEvent(targetRoom.roomId, null, eventType, content as unknown as SendEventContent)
-      .then(() => setIsForwardSuccess(true))
-      .catch(() => {
+      .then(() => {
+        debugLog.info('ui', 'Message forwarded successfully', {
+          sourceRoomId: room.roomId,
+          targetRoomId: targetRoom.roomId,
+        });
+        Sentry.metrics.count('sable.message.forward.success', 1);
+        setIsForwardSuccess(true);
+      })
+      .catch((err: unknown) => {
+        debugLog.error('ui', 'Message forward failed', {
+          sourceRoomId: room.roomId,
+          targetRoomId: targetRoom.roomId,
+          error: err instanceof Error ? err.message : String(err),
+        });
+        Sentry.metrics.count('sable.message.forward.error', 1);
         setIsForwarding(false);
         setIsForwardSuccess(false);
         setIsForwardError(true);

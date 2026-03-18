@@ -5,6 +5,7 @@ import {
   ExtensionState,
   MatrixClient,
   MSC3575List,
+  MSC3575RoomData,
   MSC3575RoomSubscription,
   MSC3575_WILDCARD,
   SlidingSync,
@@ -16,8 +17,11 @@ import {
   User,
 } from '$types/matrix-sdk';
 import { createLogger } from '$utils/debug';
+import { createDebugLogger } from '$utils/debugLogger';
+import * as Sentry from '@sentry/react';
 
 const log = createLogger('slidingSync');
+const debugLog = createDebugLogger('slidingSync');
 
 export const LIST_JOINED = 'joined';
 export const LIST_INVITES = 'invites';
@@ -316,6 +320,28 @@ export class SlidingSyncManager {
 
   private listsFullyLoaded = false;
 
+  private initialSyncCompleted = false;
+
+  private syncCount = 0;
+
+  private previousListCounts: Map<string, number> = new Map();
+
+  /**
+   * One-shot RoomData listeners keyed by roomId, used to measure the latency
+   * between subscribeToRoom() and the first data arriving for that room.
+   * Cleaned up automatically after first fire or on unsubscribe/dispose.
+   */
+  private readonly pendingRoomDataListeners = new Map<
+    string,
+    (roomId: string, data: MSC3575RoomData) => void
+  >();
+
+  /** Wall-clock time recorded in attach() — used to compute true initial-sync latency. */
+  private attachTime: number | null = null;
+
+  /** Span covering the period from attach() to the first successful complete cycle. */
+  private initialSyncSpan: ReturnType<typeof Sentry.startInactiveSpan> | null = null;
+
   public readonly slidingSync: SlidingSync;
 
   public readonly probeTimeoutMs: number;
@@ -359,17 +385,145 @@ export class SlidingSyncManager {
     );
 
     this.onLifecycle = (state, resp, err) => {
-      if (this.disposed || err || !resp || state !== SlidingSyncState.Complete) return;
+      const syncStartTime = performance.now();
+      this.syncCount += 1;
+      Sentry.metrics.count('sable.sync.cycle', 1, {
+        attributes: { transport: 'sliding', state },
+      });
+
+      debugLog.info('sync', `Sliding sync lifecycle: ${state} (cycle #${this.syncCount})`, {
+        state,
+        hasError: !!err,
+        syncNumber: this.syncCount,
+        isInitialSync: !this.initialSyncCompleted,
+      });
+
+      if (err) {
+        debugLog.error('sync', 'Sliding sync error', {
+          error: err,
+          errorMessage: err.message,
+          syncNumber: this.syncCount,
+          state,
+        });
+        Sentry.metrics.count('sable.sync.error', 1, {
+          attributes: { transport: 'sliding', state },
+        });
+      }
+
+      if (this.disposed) {
+        debugLog.warn('sync', 'Sync lifecycle called after disposal', { state });
+        return;
+      }
+
+      if (err || !resp || state !== SlidingSyncState.Complete) return;
+
+      // Track what changed in this sync cycle
+      const changes: Record<string, any> = {};
+      let totalRoomCount = 0;
+      let hasChanges = false;
+
+      this.listKeys.forEach((key) => {
+        const listData = this.slidingSync.getListData(key);
+        const currentCount = listData?.joinedCount ?? 0;
+        const previousCount = this.previousListCounts.get(key) ?? 0;
+
+        totalRoomCount += currentCount;
+
+        if (currentCount !== previousCount) {
+          changes[key] = {
+            previous: previousCount,
+            current: currentCount,
+            delta: currentCount - previousCount,
+          };
+          this.previousListCounts.set(key, currentCount);
+          hasChanges = true;
+        }
+      });
+
+      if (hasChanges || !this.initialSyncCompleted) {
+        debugLog.info('sync', 'Room counts changed in sync cycle', {
+          syncNumber: this.syncCount,
+          changes,
+          totalRoomCount,
+          isInitialSync: !this.initialSyncCompleted,
+        });
+      }
+
+      const syncDuration = performance.now() - syncStartTime;
+
+      // Mark initial sync as complete after first successful cycle
+      if (!this.initialSyncCompleted) {
+        this.initialSyncCompleted = true;
+        // Wall-clock ms from attach() — the actual user-perceived wait for first data.
+        const initialElapsed =
+          this.attachTime != null ? performance.now() - this.attachTime : syncDuration;
+        debugLog.info('sync', 'Initial sync completed', {
+          syncNumber: this.syncCount,
+          totalRoomCount,
+          listCounts: Object.fromEntries(
+            this.listKeys.map((key) => [key, this.slidingSync.getListData(key)?.joinedCount ?? 0])
+          ),
+          timeElapsed: `${initialElapsed.toFixed(2)}ms`,
+        });
+        Sentry.metrics.distribution('sable.sync.initial_ms', initialElapsed, {
+          attributes: { transport: 'sliding' },
+        });
+        this.initialSyncSpan?.setAttributes({
+          'sync.cycles_to_ready': this.syncCount,
+          'sync.rooms_at_ready': totalRoomCount,
+        });
+        this.initialSyncSpan?.end();
+        this.initialSyncSpan = null;
+      }
+
       this.expandListsToKnownCount();
+
+      Sentry.metrics.distribution('sable.sync.processing_ms', syncDuration, {
+        attributes: { transport: 'sliding' },
+      });
+      if (syncDuration > 1000) {
+        debugLog.warn('sync', 'Slow sync cycle detected', {
+          syncNumber: this.syncCount,
+          duration: `${syncDuration.toFixed(2)}ms`,
+          totalRoomCount,
+        });
+      }
     };
 
     this.onConnectionChange = () => {
+      const isOnline = navigator.onLine;
+      const connectionInfo =
+        typeof navigator !== 'undefined' ? (navigator as any).connection : undefined;
+      const effectiveType = connectionInfo?.effectiveType;
+      const downlink = connectionInfo?.downlink;
+
+      debugLog.info('network', `Network connectivity changed: ${isOnline ? 'online' : 'offline'}`, {
+        online: isOnline,
+        effectiveType,
+        downlink: downlink ? `${downlink} Mbps` : undefined,
+      });
+
+      if (!isOnline) {
+        debugLog.warn('network', 'Device went offline - sync paused', {
+          syncNumber: this.syncCount,
+        });
+      } else {
+        debugLog.info('network', 'Device back online - sync will resume', {
+          syncNumber: this.syncCount,
+        });
+      }
+
       if (this.disposed || !this.adaptiveTimeline) return;
       const nextLimit = resolveAdaptiveRoomTimelineLimit(
         this.configuredTimelineLimit,
         readAdaptiveSignals()
       );
       if (nextLimit === this.roomTimelineLimit) return;
+      debugLog.info('sync', `Adaptive timeline limit updated to ${nextLimit}`, {
+        limit: nextLimit,
+        previousLimit: this.roomTimelineLimit,
+        reason: 'connection change',
+      });
       this.roomTimelineLimit = nextLimit;
       this.applyRoomTimelineLimit(nextLimit);
       log.log(
@@ -379,6 +533,22 @@ export class SlidingSyncManager {
   }
 
   public attach(): void {
+    debugLog.info('sync', 'Attaching sliding sync listeners', {
+      proxyBaseUrl: this.proxyBaseUrl,
+      listPageSize: this.listPageSize,
+      roomTimelineLimit: this.roomTimelineLimit,
+      adaptiveTimeline: this.adaptiveTimeline,
+      maxRooms: this.maxRooms,
+      lists: this.listKeys,
+    });
+
+    this.attachTime = performance.now();
+    this.initialSyncSpan = Sentry.startInactiveSpan({
+      name: 'sync.initial',
+      op: 'matrix.sync',
+      attributes: { 'sync.transport': 'sliding', 'sync.proxy': this.proxyBaseUrl },
+    });
+
     this.slidingSync.on(SlidingSyncEvent.Lifecycle, this.onLifecycle);
     const connection = (
       typeof navigator !== 'undefined' ? (navigator as any).connection : undefined
@@ -395,10 +565,25 @@ export class SlidingSyncManager {
       window.addEventListener('online', this.onConnectionChange);
       window.addEventListener('offline', this.onConnectionChange);
     }
+
+    debugLog.info('sync', 'Sliding sync listeners attached successfully', {
+      hasConnectionAPI: !!connection,
+      hasWindowEvents: typeof window !== 'undefined',
+    });
   }
 
   public dispose(): void {
     if (this.disposed) return;
+
+    debugLog.info('sync', 'Disposing sliding sync', {
+      syncCount: this.syncCount,
+      initialSyncCompleted: this.initialSyncCompleted,
+    });
+
+    // Clean up pending room-data latency listeners before marking disposed.
+    // SlidingSync.stop() will removeAllListeners anyway, but this keeps the Map tidy.
+    this.pendingRoomDataListeners.clear();
+
     this.disposed = true;
     this.slidingSync.removeListener(SlidingSyncEvent.Lifecycle, this.onLifecycle);
     const connection = (
@@ -416,6 +601,10 @@ export class SlidingSyncManager {
       window.removeEventListener('online', this.onConnectionChange);
       window.removeEventListener('offline', this.onConnectionChange);
     }
+
+    debugLog.info('sync', 'Sliding sync disposed successfully', {
+      totalSyncCycles: this.syncCount,
+    });
   }
 
   private applyRoomTimelineLimit(timelineLimit: number): void {
@@ -455,10 +644,16 @@ export class SlidingSyncManager {
     let allListsComplete = true;
     let expandedAny = false;
 
+    const expansionStartTime = performance.now();
+    const expansionDetails: Record<string, any> = {};
+
     this.listKeys.forEach((key) => {
       const listData = this.slidingSync.getListData(key);
       const knownCount = listData?.joinedCount ?? 0;
-      if (knownCount <= 0) return;
+      if (knownCount <= 0) {
+        expansionDetails[key] = { status: 'empty', knownCount: 0 };
+        return;
+      }
 
       const existing = this.slidingSync.getListParams(key);
       const currentEnd = getListEndIndex(existing);
@@ -468,6 +663,7 @@ export class SlidingSyncManager {
 
       if (currentEnd >= maxEnd) {
         // This list is fully loaded
+        expansionDetails[key] = { status: 'complete', knownCount, currentEnd };
         return;
       }
 
@@ -480,22 +676,86 @@ export class SlidingSyncManager {
       const chunkSize = 100;
       const desiredEnd = Math.min(currentEnd + chunkSize, maxEnd);
 
+      if (desiredEnd === currentEnd) {
+        expansionDetails[key] = {
+          status: 'complete',
+          knownCount,
+          currentEnd,
+          desiredEnd,
+        };
+        return;
+      }
+
       this.slidingSync.setListRanges(key, [[0, desiredEnd]]);
       expandedAny = true;
+
+      expansionDetails[key] = {
+        status: 'expanding',
+        knownCount,
+        previousEnd: currentEnd,
+        newEnd: desiredEnd,
+        roomsToLoad: desiredEnd - currentEnd,
+      };
+
+      debugLog.info('sync', `Expanding list "${key}" to full range`, {
+        list: key,
+        knownCount,
+        previousEnd: currentEnd,
+        newEnd: desiredEnd,
+        roomsToLoad: desiredEnd - currentEnd,
+      });
 
       if (knownCount > this.maxRooms) {
         log.warn(
           `Sliding Sync list "${key}" capped at ${this.maxRooms}/${knownCount} rooms for ${this.mx.getUserId()}`
         );
+        debugLog.warn('sync', `List "${key}" exceeds maxRooms limit`, {
+          list: key,
+          knownCount,
+          maxRooms: this.maxRooms,
+          cappedCount: this.maxRooms,
+        });
       }
     });
+
+    const expansionDuration = performance.now() - expansionStartTime;
+    const hasExpansions = Object.values(expansionDetails).some((d) => d.status === 'expanding');
 
     // Mark as fully loaded once all lists are complete
     if (allListsComplete) {
       this.listsFullyLoaded = true;
       log.log(`Sliding Sync all lists fully loaded for ${this.mx.getUserId()}`);
+      const totalRooms = this.listKeys.reduce(
+        (sum, key) => sum + (this.slidingSync.getListData(key)?.joinedCount ?? 0),
+        0
+      );
+      const listsLoadedMs =
+        this.attachTime != null ? Math.round(performance.now() - this.attachTime) : 0;
+      Sentry.metrics.distribution('sable.sync.lists_loaded_ms', listsLoadedMs, {
+        attributes: { transport: 'sliding' },
+      });
+      Sentry.metrics.gauge('sable.sync.total_rooms', totalRooms, {
+        attributes: { transport: 'sliding' },
+      });
     } else if (expandedAny) {
       log.log(`Sliding Sync lists expanding... for ${this.mx.getUserId()}`);
+    }
+
+    if (hasExpansions) {
+      debugLog.info('sync', 'List expansion completed', {
+        syncNumber: this.syncCount,
+        lists: expansionDetails,
+        timeElapsed: `${expansionDuration.toFixed(2)}ms`,
+      });
+    }
+
+    if (expansionDuration > 500) {
+      debugLog.warn('sync', 'Slow list expansion detected', {
+        duration: `${expansionDuration.toFixed(2)}ms`,
+        expandedLists: Object.keys(expansionDetails).filter(
+          (key) => expansionDetails[key].status === 'expanding'
+        ),
+      });
     }
   }
 
@@ -530,8 +790,13 @@ export class SlidingSyncManager {
       } else {
         this.slidingSync.setList(listKey, list);
       }
-    } catch {
+    } catch (error) {
       // ignore — the list will be re-sent on the next sync cycle
+      debugLog.warn('sync', `Failed to update list "${listKey}"`, {
+        list: listKey,
+        error: error instanceof Error ? error.message : String(error),
+        updateType: updateArgs.ranges && Object.keys(updateArgs).length === 1 ? 'ranges' : 'full',
+      });
     }
     return this.slidingSync.getListParams(listKey) ?? list;
   }
@@ -561,52 +826,64 @@ export class SlidingSyncManager {
     let endIndex = batchSize - 1;
     let hasMore = true;
     let firstTime = true;
+    let batchCount = 0;
 
-    const spideringRequiredState: MSC3575List['required_state'] = [
-      [EventType.RoomJoinRules, ''],
-      [EventType.RoomAvatar, ''],
-      [EventType.RoomTombstone, ''],
-      [EventType.RoomEncryption, ''],
-      [EventType.RoomCreate, ''],
-      [EventType.RoomTopic, ''],
-      [EventType.RoomCanonicalAlias, ''],
-      [EventType.RoomMember, MSC3575_STATE_KEY_ME],
-      ['m.space.child', MSC3575_WILDCARD],
-      ['im.ponies.room_emotes', MSC3575_WILDCARD],
-    ];
+    await Sentry.startSpan(
+      { name: 'sync.spidering', op: 'matrix.sync', attributes: { 'sync.transport': 'sliding' } },
+      async (span) => {
+        const spideringRequiredState: MSC3575List['required_state'] = [
+          [EventType.RoomJoinRules, ''],
+          [EventType.RoomAvatar, ''],
+          [EventType.RoomTombstone, ''],
+          [EventType.RoomEncryption, ''],
+          [EventType.RoomCreate, ''],
+          [EventType.RoomTopic, ''],
+          [EventType.RoomCanonicalAlias, ''],
+          [EventType.RoomMember, MSC3575_STATE_KEY_ME],
+          ['m.space.child', MSC3575_WILDCARD],
+          ['im.ponies.room_emotes', MSC3575_WILDCARD],
+        ];
 
-    while (hasMore) {
-      if (this.disposed) return;
-      const ranges: [number, number][] = [[0, endIndex]];
-      try {
-        if (firstTime) {
-          // Full setList on first call to register the list with all params.
-          this.slidingSync.setList(LIST_SEARCH, {
-            ranges,
-            sort: ['by_recency'],
-            timeline_limit: 0,
-            required_state: spideringRequiredState,
-          });
-        } else {
-          // Cheaper range-only update for subsequent pages; sticky params are preserved.
-          this.slidingSync.setListRanges(LIST_SEARCH, ranges);
+        while (hasMore) {
+          if (this.disposed) return;
+          batchCount += 1;
+          const ranges: [number, number][] = [[0, endIndex]];
+          try {
+            if (firstTime) {
+              // Full setList on first call to register the list with all params.
+              this.slidingSync.setList(LIST_SEARCH, {
+                ranges,
+                sort: ['by_recency'],
+                timeline_limit: 0,
+                required_state: spideringRequiredState,
+              });
+            } else {
+              // Cheaper range-only update for subsequent pages; sticky params are preserved.
+              this.slidingSync.setListRanges(LIST_SEARCH, ranges);
+            }
+          } catch {
+            // Swallow errors — the next iteration will retry with updated ranges.
+          } finally {
+            // eslint-disable-next-line no-await-in-loop
+            await new Promise<void>((res) => {
+              setTimeout(res, gapBetweenRequestsMs);
+            });
+          }
+
+          if (this.disposed) return;
+          const listData = this.slidingSync.getListData(LIST_SEARCH);
+          hasMore = endIndex + 1 < (listData?.joinedCount ?? 0);
+          endIndex += batchSize;
+          firstTime = false;
         }
-      } catch {
-        // Swallow errors — the next iteration will retry with updated ranges.
-      } finally {
-        // eslint-disable-next-line no-await-in-loop
-        await new Promise<void>((res) => {
-          setTimeout(res, gapBetweenRequestsMs);
+        const finalCount = this.slidingSync.getListData(LIST_SEARCH)?.joinedCount ?? 0;
+        span.setAttributes({
+          'spidering.batches': batchCount,
+          'spidering.total_rooms': finalCount,
         });
+        log.log(`Sliding Sync spidering complete for ${this.mx.getUserId()}`);
       }
-
-      if (this.disposed) return;
-      const listData = this.slidingSync.getListData(LIST_SEARCH);
-      hasMore = endIndex + 1 < (listData?.joinedCount ?? 0);
-      endIndex += batchSize;
-      firstTime = false;
-    }
-    log.log(`Sliding Sync spidering complete for ${this.mx.getUserId()}`);
+    );
   }
 
   /**
@@ -663,7 +940,8 @@ export class SlidingSyncManager {
   public subscribeToRoom(roomId: string): void {
     if (this.disposed) return;
     const room = this.mx.getRoom(roomId);
-    if (room && !this.mx.isRoomEncrypted(roomId)) {
+    const isEncrypted = this.mx.isRoomEncrypted(roomId);
+    if (room && !isEncrypted) {
       // Only use the unencrypted (lazy-load) subscription when we are certain
       // the room is unencrypted.  Unknown rooms fall through to the safer
       // encrypted default.
@@ -671,7 +949,58 @@ export class SlidingSyncManager {
     }
     this.activeRoomSubscriptions.add(roomId);
     this.slidingSync.modifyRoomSubscriptions(new Set(this.activeRoomSubscriptions));
+    Sentry.metrics.gauge('sable.sync.active_subscriptions', this.activeRoomSubscriptions.size, {
+      attributes: { transport: 'sliding' },
+    });
     log.log(`Sliding Sync active room subscription added: ${roomId}`);
+    debugLog.info('sync', 'Room subscription requested (sliding)', {
+      encrypted: isEncrypted,
+      unknownRoom: !room,
+      activeSubscriptions: this.activeRoomSubscriptions.size,
+      syncCycle: this.syncCount,
+    });
+    Sentry.addBreadcrumb({
+      category: 'sync.sliding',
+      message: 'Subscribed to room (active)',
+      level: 'info',
+      data: { encrypted: isEncrypted, activeSubscriptions: this.activeRoomSubscriptions.size },
+    });
+    // One-shot listener: measure latency from subscription request to first room data.
+    // Clean up any stale listener for the same roomId first.
+    const existingListener = this.pendingRoomDataListeners.get(roomId);
+    if (existingListener) {
+      this.slidingSync.removeListener(SlidingSyncEvent.RoomData, existingListener);
+    }
+    const subscribeMs = performance.now();
+    const onFirstRoomData = (dataRoomId: string) => {
+      if (dataRoomId !== roomId) return;
+      const latencyMs = Math.round(performance.now() - subscribeMs);
+      // Measure how many events landed on the live timeline as part of this
+      // subscription activation — this is the "page" the timeline has to absorb.
+      const subscribedRoom = this.mx.getRoom(roomId);
+      const eventCount = subscribedRoom?.getLiveTimeline().getEvents().length ?? 0;
+      debugLog.info('sync', 'Room subscription: first data received (sliding)', {
+        latencyMs,
+        syncCycle: this.syncCount,
+        eventCount,
+      });
+      Sentry.metrics.distribution('sable.sync.room_sub_latency_ms', latencyMs, {
+        attributes: { transport: 'sliding' },
+      });
+      Sentry.metrics.distribution('sable.sync.room_sub_event_count', eventCount, {
+        attributes: { transport: 'sliding' },
+      });
+      Sentry.addBreadcrumb({
+        category: 'sync.sliding',
+        message: `Room subscription data arrived (${eventCount} events, ${latencyMs}ms)`,
+        level: 'info',
+        data: { latencyMs, eventCount, syncCycle: this.syncCount },
+      });
+      this.slidingSync.removeListener(SlidingSyncEvent.RoomData, onFirstRoomData);
+      this.pendingRoomDataListeners.delete(roomId);
+    };
+    this.pendingRoomDataListeners.set(roomId, onFirstRoomData);
+    this.slidingSync.on(SlidingSyncEvent.RoomData, onFirstRoomData);
   }
 
   /**
@@ -681,9 +1010,22 @@ export class SlidingSyncManager {
    */
   public unsubscribeFromRoom(roomId: string): void {
     if (this.disposed) return;
+    // Clean up any pending first-data latency listener for this room.
+    const pendingListener = this.pendingRoomDataListeners.get(roomId);
+    if (pendingListener) {
+      this.slidingSync.removeListener(SlidingSyncEvent.RoomData, pendingListener);
+      this.pendingRoomDataListeners.delete(roomId);
+    }
     this.activeRoomSubscriptions.delete(roomId);
     this.slidingSync.modifyRoomSubscriptions(new Set(this.activeRoomSubscriptions));
+    Sentry.metrics.gauge('sable.sync.active_subscriptions', this.activeRoomSubscriptions.size, {
+      attributes: { transport: 'sliding' },
+    });
     log.log(`Sliding Sync active room subscription removed: ${roomId}`);
+    debugLog.info('sync', 'Room subscription removed (sliding)', {
+      remainingSubscriptions: this.activeRoomSubscriptions.size,
+      syncCycle: this.syncCount,
+    });
   }
 
   public static async probe(
@@ -691,25 +1033,33 @@ export class SlidingSyncManager {
     proxyBaseUrl: string,
     probeTimeoutMs: number
   ): Promise<boolean> {
-    try {
-      const response = await mx.slidingSync(
-        {
-          lists: {
-            probe: {
-              ranges: [[0, 0]],
-              timeline_limit: 1,
-              required_state: [],
+    return Sentry.startSpan(
+      { name: 'sync.probe', op: 'matrix.sync', attributes: { 'sync.proxy': proxyBaseUrl } },
+      async (span) => {
+        try {
+          const response = await mx.slidingSync(
+            {
+              lists: {
+                probe: {
+                  ranges: [[0, 0]],
+                  timeline_limit: 1,
+                  required_state: [],
+                },
+              },
+              timeout: 0,
+              clientTimeout: probeTimeoutMs,
             },
-          },
-          timeout: 0,
-          clientTimeout: probeTimeoutMs,
-        },
-        proxyBaseUrl
-      );
+            proxyBaseUrl
+          );
 
-      return typeof response.pos === 'string' && response.pos.length > 0;
-    } catch {
-      return false;
-    }
+          const supported = typeof response.pos === 'string' && response.pos.length > 0;
+          span.setAttribute('probe.supported', supported);
+          return supported;
+        } catch {
+          span.setAttribute('probe.supported', false);
+          return false;
+        }
+      }
+    );
   }
 }

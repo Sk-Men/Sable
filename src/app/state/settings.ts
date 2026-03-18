@@ -50,7 +50,6 @@ export interface Settings {
   showHiddenEvents: boolean;
   showTombstoneEvents: boolean;
   legacyUsernameColor: boolean;
-  allowPipVideos: boolean;
 
   usePushNotifications: boolean;
   useInAppNotifications: boolean;
@@ -64,6 +63,7 @@ export interface Settings {
   dateFormatString: string;
 
   developerTools: boolean;
+  enableMSC4268CMD: boolean;
 
   // Cosmetics!
   jumboEmojiSize: JumboEmojiSize;
@@ -71,6 +71,7 @@ export interface Settings {
   privacyBlurAvatars: boolean;
   privacyBlurEmotes: boolean;
   showPronouns: boolean;
+  parsePronouns: boolean;
   renderGlobalNameColors: boolean;
   filterPronounsBasedOnLanguage?: boolean;
   filterPronounsLanguages?: string[];
@@ -94,6 +95,10 @@ export interface Settings {
   autoplayGifs: boolean;
   autoplayStickers: boolean;
   autoplayEmojis: boolean;
+  saveStickerEmojiBandwidth: boolean;
+  alwaysShowCallButton: boolean;
+  faviconForMentionsOnly: boolean;
+  highlightMentions: boolean;
 
   // furry stuff
   renderAnimals: boolean;
@@ -126,7 +131,8 @@ const defaultSettings: Settings = {
   showHiddenEvents: false,
   showTombstoneEvents: false,
   legacyUsernameColor: false,
-  allowPipVideos: false,
+
+  enableMSC4268CMD: false,
 
   // Push notifications (SW/Sygnal): default on for mobile, opt-in on desktop.
   // In-app pill banner: default on for mobile (primary foreground alert), opt-in on desktop.
@@ -150,6 +156,7 @@ const defaultSettings: Settings = {
   privacyBlurAvatars: false,
   privacyBlurEmotes: false,
   showPronouns: true,
+  parsePronouns: true,
   renderGlobalNameColors: true,
   renderRoomColors: true,
   renderRoomFonts: true,
@@ -171,6 +178,10 @@ const defaultSettings: Settings = {
   autoplayGifs: true,
   autoplayStickers: true,
   autoplayEmojis: true,
+  saveStickerEmojiBandwidth: false,
+  alwaysShowCallButton: false,
+  faviconForMentionsOnly: false,
+  highlightMentions: true,
 
   // furry stuff
   renderAnimals: true,

@@ -112,7 +112,7 @@ export function HomeTab() {
         <SidebarItemBadge
           hasCount={homeUnread.total > 0}
           style={{
-            left: homeUnread.total > 0 ? toRem(-6) : toRem(-2),
+            left: homeUnread.total > 0 ? toRem(-6) : toRem(-4),
             right: 'auto',
           }}
         >

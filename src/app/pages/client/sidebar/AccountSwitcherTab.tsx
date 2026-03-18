@@ -1,6 +1,9 @@
 import { MouseEvent, MouseEventHandler, useCallback, useState } from 'react';
 import {
   Box,
+  Button,
+  Dialog,
+  Header,
   Icon,
   Icons,
   Menu,
@@ -42,10 +45,12 @@ import { useSessionProfiles } from '$hooks/useSessionProfiles';
 import { Settings } from '$features/settings';
 import { Modal500 } from '$components/Modal500';
 import { createLogger } from '$utils/debug';
+import { createDebugLogger } from '$utils/debugLogger';
 import { useClientConfig } from '$hooks/useClientConfig';
 import { UnreadBadge, UnreadBadgeCenter } from '$components/unread-badge';
 
 const log = createLogger('AccountSwitcherTab');
+const debugLog = createDebugLogger('AccountSwitcherTab');
 
 function AccountRow({
   session,
@@ -160,6 +165,9 @@ export function AccountSwitcherTab() {
   const [menuAnchor, setMenuAnchor] = useState<RectCords>();
   const [busyUserIds, setBusyUserIds] = useState<Set<string>>(new Set());
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [confirmSignOutSession, setConfirmSignOutSession] = useState<Session | undefined>(
+    undefined
+  );
 
   const activeSession = sessions.find((s) => s.userId === activeSessionId) ?? sessions[0];
 
@@ -246,6 +254,9 @@ export function AccountSwitcherTab() {
   };
 
   const handleOpenSettings = () => {
+    debugLog.info('ui', 'Settings button clicked', {
+      userId: activeSession?.userId,
+    });
     setMenuAnchor(undefined);
     setSettingsOpen(true);
   };
@@ -328,7 +339,10 @@ export function AccountSwitcherTab() {
                       isBusy={busyUserIds.has(session.userId)}
                       unread={!isActive ? backgroundUnreads[session.userId] : undefined}
                       onSwitch={handleSwitch}
-                      onSignOut={handleSignOut}
+                      onSignOut={(pendingSession) => {
+                        setMenuAnchor(undefined);
+                        setConfirmSignOutSession(pendingSession);
+                      }}
                     />
                   );
                 })}
@@ -358,6 +372,43 @@ export function AccountSwitcherTab() {
       {settingsOpen && (
         <Modal500 requestClose={() => setSettingsOpen(false)}>
           <Settings requestClose={() => setSettingsOpen(false)} />
+        </Modal500>
+      )}
+      {confirmSignOutSession && (
+        <Modal500 requestClose={() => setConfirmSignOutSession(undefined)}>
+          <Dialog variant="Surface">
+            <Header
+              style={{
+                padding: `0 ${config.space.S200} 0 ${config.space.S400}`,
+                borderBottomWidth: config.borderWidth.B300,
+              }}
+              variant="Surface"
+              size="500"
+            >
+              <Box grow="Yes">
+                <Text size="H4">Sign out</Text>
+              </Box>
+            </Header>
+            <Box style={{ padding: config.space.S400 }} direction="Column" gap="400">
+              <Text priority="400">
+                Are you sure you want to sign out of <b>{confirmSignOutSession.userId}</b>?
+              </Text>
+              <Box direction="Column" gap="200">
+                <Button
+                  variant="Critical"
+                  onClick={() => {
+                    handleSignOut(confirmSignOutSession);
+                    setConfirmSignOutSession(undefined);
+                  }}
+                >
+                  <Text size="B400">Sign out</Text>
+                </Button>
+                <Button variant="Secondary" onClick={() => setConfirmSignOutSession(undefined)}>
+                  <Text size="B400">Cancel</Text>
+                </Button>
+              </Box>
+            </Box>
+          </Dialog>
         </Modal500>
       )}
     </SidebarItem>

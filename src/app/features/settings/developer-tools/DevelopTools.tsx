@@ -11,6 +11,8 @@ import { copyToClipboard } from '$utils/dom';
 import { SequenceCardStyle } from '$features/settings/styles.css';
 import { AccountData } from './AccountData';
 import { SyncDiagnostics } from './SyncDiagnostics';
+import { DebugLogViewer } from './DebugLogViewer';
+import { SentrySettings } from './SentrySettings';
 
 type DeveloperToolsProps = {
   requestClose: () => void;
@@ -119,6 +121,16 @@ export function DeveloperTools({ requestClose }: DeveloperToolsProps) {
                   onExpandToggle={setExpend}
                   onSelect={setAccountDataType}
                 />
+              )}
+              {developerTools && (
+                <Box direction="Column" gap="100">
+                  <DebugLogViewer />
+                </Box>
+              )}
+              {developerTools && (
+                <Box direction="Column" gap="100">
+                  <SentrySettings />
+                </Box>
               )}
             </Box>
           </PageContent>

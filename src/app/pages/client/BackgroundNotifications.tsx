@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import {
   ClientEvent,
   createClient,
@@ -32,17 +32,20 @@ import {
 } from '$utils/room';
 import { NotificationType, StateEvent } from '$types/matrix/room';
 import { createLogger } from '$utils/debug';
+import { createDebugLogger } from '$utils/debugLogger';
 import LogoSVG from '$public/res/svg/cinny.svg';
 import { nicknamesAtom } from '$state/nicknames';
 import {
   buildRoomMessageNotification,
   resolveNotificationPreviewText,
 } from '$utils/notificationStyle';
+import * as Sentry from '@sentry/react';
 import { startClient, stopClient } from '$client/initMatrix';
 import { useClientConfig } from '$hooks/useClientConfig';
 import { mobileOrTablet } from '$utils/user-agent';
 
 const log = createLogger('BackgroundNotifications');
+const debugLog = createDebugLogger('BackgroundNotifications');
 const isClientReadyForNotifications = (state: SyncState | string | null): boolean =>
   state === SyncState.Prepared || state === SyncState.Syncing || state === SyncState.Catchup;
 
@@ -68,21 +71,29 @@ const startBackgroundClient = async (
 /**
  * Wait for the background client to finish its initial sync so that
  * push rules and account data are available before processing events.
+ * Rejects after 30 seconds so callers can handle a stalled client instead
+ * of blocking indefinitely.
  */
 const waitForSync = (mx: MatrixClient): Promise<void> =>
-  new Promise((resolve) => {
+  new Promise((resolve, reject) => {
     const state = mx.getSyncState();
     if (isClientReadyForNotifications(state)) {
       resolve();
       return;
     }
+    let syncTimer: ReturnType<typeof setTimeout> | undefined;
     const onSync = (newState: SyncState) => {
       if (isClientReadyForNotifications(newState)) {
+        if (syncTimer !== undefined) clearTimeout(syncTimer);
         mx.removeListener(ClientEvent.Sync, onSync);
         resolve();
       }
     };
     mx.on(ClientEvent.Sync, onSync);
+    syncTimer = setTimeout(() => {
+      mx.removeListener(ClientEvent.Sync, onSync);
+      reject(new Error('background client sync timed out'));
+    }, 30_000);
   });
 
 export function BackgroundNotifications() {
@@ -120,10 +131,18 @@ export function BackgroundNotifications() {
   setBackgroundUnreadsRef.current = setBackgroundUnreads;
   const setInAppBannerRef = useRef(setInAppBanner);
   setInAppBannerRef.current = setInAppBanner;
+  // Per-client listener teardown callbacks, so we can explicitly remove event
+  // listeners before stopping a background client.
+  const clientCleanupRef = useRef<Map<string, () => void>>(new Map());
 
-  const inactiveSessions = sessions.filter(
-    (s) => s.userId !== (activeSessionId ?? sessions[0]?.userId)
+  const inactiveSessions = useMemo(
+    () => sessions.filter((s) => s.userId !== (activeSessionId ?? sessions[0]?.userId)),
+    [sessions, activeSessionId]
   );
+  // Ref so retry setTimeout callbacks can access the current session list
+  // without stale closures.
+  const inactiveSessionsRef = useRef(inactiveSessions);
+  inactiveSessionsRef.current = inactiveSessions;
 
   interface NotifyOptions {
     /** Title shown in the notification banner. */
@@ -192,8 +211,11 @@ export function BackgroundNotifications() {
 
     current.forEach((mx, userId) => {
       if (!activeIds.has(userId)) {
+        clientCleanupRef.current.get(userId)?.();
+        clientCleanupRef.current.delete(userId);
         stopClient(mx);
         current.delete(userId);
+        Sentry.metrics.gauge('sable.background.client_count', current.size);
         // Clear the background unread badge when this session is no longer a background account.
         setBackgroundUnreads((prev) => {
           const next = { ...prev };
@@ -203,12 +225,16 @@ export function BackgroundNotifications() {
       }
     });
 
-    inactiveSessions.forEach((session) => {
-      const alreadyRunning = current.has(session.userId);
-      if (alreadyRunning) return;
+    // startSession handles init, listener teardown tracking, and retry-on-failure.
+    // Using a named function (vs. inline .then) lets the .catch() schedule a
+    // fresh retry referencing the latest session from inactiveSessionsRef.
+    const startSession = (session: Session, attempt = 0): void => {
+      let sessionMx: MatrixClient | undefined;
       startBackgroundClient(session, clientConfig.slidingSync)
         .then(async (mx) => {
+          sessionMx = mx;
           current.set(session.userId, mx);
+          Sentry.metrics.gauge('sable.background.client_count', current.size);
 
           await waitForSync(mx);
 
@@ -303,6 +329,10 @@ export function BackgroundNotifications() {
 
             const notificationType = getNotificationType(mx, room.roomId);
             if (notificationType === NotificationType.Mute) {
+              debugLog.debug('notification', 'Room is muted - skipping notification', {
+                roomId: room.roomId,
+                eventId,
+              });
               return;
             }
 
@@ -329,8 +359,26 @@ export function BackgroundNotifications() {
             const shouldNotify = pushActions?.notify || shouldForceDMNotification;
 
             if (!shouldNotify) {
+              debugLog.debug('notification', 'Event filtered - no push action match', {
+                eventId,
+                roomId: room.roomId,
+                eventType,
+                isDM,
+              });
               return;
             }
+
+            const loudByRule = Boolean(pushActions.tweaks?.sound);
+            const isHighlight = Boolean(pushActions.tweaks?.highlight);
+
+            debugLog.info('notification', 'Processing notification event', {
+              eventId,
+              roomId: room.roomId,
+              eventType,
+              isDM,
+              isHighlight,
+              loud: loudByRule,
+            });
 
             const senderName =
               getMemberDisplayName(room, sender, nicknamesRef.current) ??
@@ -343,10 +391,7 @@ export function BackgroundNotifications() {
               ? (mxcUrlToHttp(mx, avatarMxc, false, 96, 96, 'crop') ?? undefined)
               : LogoSVG;
 
-            const loudByRule = Boolean(pushActions.tweaks?.sound);
-
             // Track background unread count for every notifiable event (loud or silent).
-            const isHighlight = Boolean(pushActions.tweaks?.highlight);
             setBackgroundUnreadsRef.current((prev) => {
               const cur = prev[session.userId] ?? { total: 0, highlight: 0 };
               return {
@@ -360,6 +405,10 @@ export function BackgroundNotifications() {
 
             // Silent-rule events: unread badge updated above; no OS notification or sound.
             if (!loudByRule && !isHighlight) {
+              debugLog.debug('notification', 'Silent notification - badge updated only', {
+                eventId,
+                roomId: room.roomId,
+              });
               return;
             }
 
@@ -410,6 +459,11 @@ export function BackgroundNotifications() {
 
             if (canShowInAppBanner) {
               // App is in the foreground on a different account — show the themed in-app banner.
+              debugLog.info('notification', 'Showing in-app banner', {
+                eventId,
+                roomId: room.roomId,
+                title: notificationPayload.title,
+              });
               setInAppBannerRef.current({
                 id: dedupeId,
                 title: notificationPayload.title,
@@ -422,6 +476,12 @@ export function BackgroundNotifications() {
             } else if (loudByRule) {
               // App is backgrounded or in-app notifications disabled — fire an OS notification.
               // Only send for loud (sound-tweak) rules; highlight-only events are silently counted.
+              debugLog.info('notification', 'Sending OS notification', {
+                eventId,
+                roomId: room.roomId,
+                title: notificationPayload.title,
+                hasSound: !notificationPayload.options.silent,
+              });
               sendNotification({
                 title: notificationPayload.title,
                 icon: notificationPayload.options.icon,
@@ -435,14 +495,59 @@ export function BackgroundNotifications() {
           };
 
           mx.on(RoomEvent.Timeline, handleTimeline as unknown as (...args: unknown[]) => void);
+
+          // Register teardown so these listeners are removed when this client is stopped.
+          clientCleanupRef.current.set(session.userId, () => {
+            mx.off(ClientEvent.AccountData as any, handleAccountData);
+            mx.off(RoomEvent.Timeline, handleTimeline as unknown as (...args: unknown[]) => void);
+          });
         })
         .catch((err) => {
           log.error('failed to start background client for', session.userId, err);
+          debugLog.error('notification', 'Failed to start background client', {
+            userId: session.userId,
+            error: err,
+          });
+          Sentry.captureException(err, { tags: { component: 'BackgroundNotifications' } });
+
+          // Remove the stuck/failed client from current so future runs (or the
+          // retry below) can attempt a fresh start.
+          if (sessionMx && current.get(session.userId) === sessionMx) {
+            clientCleanupRef.current.get(session.userId)?.();
+            clientCleanupRef.current.delete(session.userId);
+            current.delete(session.userId);
+            stopClient(sessionMx);
+          }
+
+          // Retry with exponential backoff, up to 5 attempts (5s, 10s, 20s, 40s, 60s cap).
+          if (attempt < 5) {
+            const retryDelay = Math.min(5_000 * 2 ** attempt, 60_000);
+            setTimeout(() => {
+              const latestSession = inactiveSessionsRef.current.find(
+                (s) => s.userId === session.userId
+              );
+              if (latestSession && !current.has(session.userId)) {
+                startSession(latestSession, attempt + 1);
+              }
+            }, retryDelay);
+          }
         });
+    };
+
+    inactiveSessions.forEach((session) => {
+      if (!current.has(session.userId)) startSession(session);
     });
 
     return () => {
-      current.forEach((mx) => stopClient(mx));
+      // Reading ref.current in cleanup is intentional - we want cleanup functions
+      // that were registered during async startBackgroundClient operations
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+      const cleanupMap = clientCleanupRef.current;
+      current.forEach((mx, userId) => {
+        cleanupMap.get(userId)?.();
+        cleanupMap.delete(userId);
+        stopClient(mx);
+      });
       current.clear();
     };
   }, [

@@ -14,6 +14,7 @@ import { isKeyHotkey } from 'is-hotkey';
 import {
   EventType,
   IContent,
+  MatrixEvent,
   MsgType,
   RelationType,
   Room,
@@ -24,6 +25,7 @@ import { ReactEditor } from 'slate-react';
 import { Editor, Point, Range, Transforms } from 'slate';
 import {
   Box,
+  color,
   config,
   Dialog,
   Icon,
@@ -114,6 +116,7 @@ import { settingsAtom } from '$state/settings';
 import {
   getMemberDisplayName,
   getMentionContent,
+  reactionOrEditEvent,
   trimReplyFromBody,
   trimReplyFromFormattedBody,
 } from '$utils/room';
@@ -128,8 +131,10 @@ import { useImagePackRooms } from '$hooks/useImagePackRooms';
 import { useComposingCheck } from '$hooks/useComposingCheck';
 import { useSableCosmetics } from '$hooks/useSableCosmetics';
 import { createLogger } from '$utils/debug';
+import { createDebugLogger } from '$utils/debugLogger';
 import FocusTrap from 'focus-trap-react';
 import { useQueryClient } from '@tanstack/react-query';
+import * as Sentry from '@sentry/react';
 import {
   delayedEventsSupportedAtom,
   roomIdToScheduledTimeAtomFamily,
@@ -148,6 +153,8 @@ import { usePowerLevelsContext } from '$hooks/usePowerLevels';
 import { useRoomCreators } from '$hooks/useRoomCreators';
 import { useRoomPermissions } from '$hooks/useRoomPermissions';
 import { AutocompleteNotice } from '$components/editor/autocomplete/AutocompleteNotice';
+import { Microphone, Stop } from '@phosphor-icons/react';
+import { getSupportedAudioExtension } from '$plugins/voice-recorder-kit/supportedCodec';
 import { SchedulePickerDialog } from './schedule-send';
 import * as css from './schedule-send/SchedulePickerDialog.css';
 import {
@@ -157,25 +164,74 @@ import {
   getVideoMsgContent,
 } from './msgContent';
 import { CommandAutocomplete } from './CommandAutocomplete';
+import { AudioMessageRecorder, AudioMessageRecorderHandle } from './AudioMessageRecorder';
 
-const getReplyContent = (replyDraft: IReplyDraft | undefined): IEventRelation => {
+// Returns the event ID of the most recent non-reaction/non-edit event in a thread,
+// falling back to the thread root if no replies exist yet.
+const getLatestThreadEventId = (room: Room, threadRootId: string): string => {
+  const thread = room.getThread(threadRootId);
+  const threadEvents: MatrixEvent[] = thread?.events ?? [];
+  const filtered = threadEvents.filter(
+    (ev) => ev.getId() !== threadRootId && !reactionOrEditEvent(ev)
+  );
+  if (filtered.length > 0) {
+    return filtered[filtered.length - 1].getId() ?? threadRootId;
+  }
+  // Fall back to the live timeline if the Thread object hasn't been registered yet
+  const liveEvents = room
+    .getUnfilteredTimelineSet()
+    .getLiveTimeline()
+    .getEvents()
+    .filter(
+      (ev) =>
+        ev.threadRootId === threadRootId && ev.getId() !== threadRootId && !reactionOrEditEvent(ev)
+    );
+  if (liveEvents.length > 0) {
+    return liveEvents[liveEvents.length - 1].getId() ?? threadRootId;
+  }
+  return threadRootId;
+};
+
+const getReplyContent = (replyDraft: IReplyDraft | undefined, room?: Room): IEventRelation => {
   if (!replyDraft) return {};
 
   const relatesTo: IEventRelation = {};
 
-  relatesTo['m.in_reply_to'] = {
-    event_id: replyDraft.eventId,
-  };
-
+  // If this is a thread relation
   if (replyDraft.relation?.rel_type === RelationType.Thread) {
     relatesTo.event_id = replyDraft.relation.event_id;
     relatesTo.rel_type = RelationType.Thread;
-    relatesTo.is_falling_back = false;
+
+    // Check if this is a reply to a specific message in the thread
+    // (replyDraft.body being empty means it's just a seeded thread draft)
+    if (replyDraft.body && replyDraft.eventId !== replyDraft.relation.event_id) {
+      // Explicit reply to a specific message — per spec, is_falling_back must be false
+      relatesTo['m.in_reply_to'] = {
+        event_id: replyDraft.eventId,
+      };
+      relatesTo.is_falling_back = false;
+    } else {
+      // Regular thread message — per spec, include fallback m.in_reply_to pointing to the
+      // most recent thread message so unthreaded clients can display it as a reply chain
+      const threadRootId = replyDraft.relation.event_id ?? replyDraft.eventId;
+      const latestEventId = room ? getLatestThreadEventId(room, threadRootId) : threadRootId;
+      relatesTo['m.in_reply_to'] = {
+        event_id: latestEventId,
+      };
+      relatesTo.is_falling_back = true;
+    }
+  } else {
+    // Regular reply (not in a thread)
+    relatesTo['m.in_reply_to'] = {
+      event_id: replyDraft.eventId,
+    };
   }
+
   return relatesTo;
 };
 
 const log = createLogger('RoomInput');
+const debugLog = createDebugLogger('RoomInput');
 interface ReplyEventContent {
   'm.relates_to'?: IEventRelation;
 }
@@ -185,9 +241,13 @@ interface RoomInputProps {
   fileDropContainerRef: RefObject<HTMLElement>;
   roomId: string;
   room: Room;
+  threadRootId?: string;
 }
 export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
-  ({ editor, fileDropContainerRef, roomId, room }, ref) => {
+  ({ editor, fileDropContainerRef, roomId, room, threadRootId }, ref) => {
+    // When in thread mode, isolate drafts by thread root ID so thread replies
+    // don't clobber the main room draft (and vice versa).
+    const draftKey = threadRootId ?? roomId;
     const mx = useMatrixClient();
     const useAuthentication = useMediaAuthentication();
     const [enterForNewline] = useSetting(settingsAtom, 'enterForNewline');
@@ -195,6 +255,7 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
     const [hideActivity] = useSetting(settingsAtom, 'hideActivity');
     const commands = useCommands(mx, room);
     const emojiBtnRef = useRef<HTMLButtonElement>(null);
+    const micBtnRef = useRef<HTMLButtonElement>(null);
     const roomToParents = useAtomValue(roomToParentsAtom);
     const nicknames = useAtomValue(nicknamesAtom);
 
@@ -203,8 +264,8 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
     const permissions = useRoomPermissions(creators, powerLevels);
     const canSendReaction = permissions.event(MessageEvent.Reaction, mx.getSafeUserId());
 
-    const [msgDraft, setMsgDraft] = useAtom(roomIdToMsgDraftAtomFamily(roomId));
-    const [replyDraft, setReplyDraft] = useAtom(roomIdToReplyDraftAtomFamily(roomId));
+    const [msgDraft, setMsgDraft] = useAtom(roomIdToMsgDraftAtomFamily(draftKey));
+    const [replyDraft, setReplyDraft] = useAtom(roomIdToReplyDraftAtomFamily(draftKey));
     const replyUserID = replyDraft?.userId;
 
     const { color: replyUsernameColor, font: replyUsernameFont } = useSableCosmetics(
@@ -213,7 +274,7 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
     );
 
     const [uploadBoard, setUploadBoard] = useState(true);
-    const [selectedFiles, setSelectedFiles] = useAtom(roomIdToUploadItemsAtomFamily(roomId));
+    const [selectedFiles, setSelectedFiles] = useAtom(roomIdToUploadItemsAtomFamily(draftKey));
     const uploadFamilyObserverAtom = createUploadFamilyObserverAtom(
       roomUploadAtomFamily,
       selectedFiles.map((f) => f.file)
@@ -225,6 +286,10 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
     const imagePackRooms: Room[] = useImagePackRooms(roomId, roomToParents);
 
     const [toolbar, setToolbar] = useSetting(settingsAtom, 'editorToolbar');
+    const [showAudioRecorder, setShowAudioRecorder] = useState(false);
+    const audioRecorderRef = useRef<AudioMessageRecorderHandle>(null);
+    const micHoldStartRef = useRef<number>(0);
+    const HOLD_THRESHOLD_MS = 400;
     const [autocompleteQuery, setAutocompleteQuery] =
       useState<AutocompleteQuery<AutocompletePrefix>>();
     const [isQuickTextReact, setQuickTextReact] = useState(false);
@@ -234,7 +299,7 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
     const [inputKey, setInputKey] = useState(0);
 
     const handleFiles = useCallback(
-      async (files: File[]) => {
+      async (files: File[], audioMeta?: { waveform: number[]; audioDuration: number }) => {
         setUploadBoard(true);
         const safeFiles = files.map(safeFile);
         const fileItems: TUploadItem[] = [];
@@ -248,6 +313,8 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
               ...ef,
               metadata: {
                 markedAsSpoiler: false,
+                waveform: audioMeta?.waveform,
+                audioDuration: audioMeta?.audioDuration,
               },
             })
           );
@@ -259,6 +326,8 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
               encInfo: undefined,
               metadata: {
                 markedAsSpoiler: false,
+                waveform: audioMeta?.waveform,
+                audioDuration: audioMeta?.audioDuration,
               },
             })
           );
@@ -328,6 +397,26 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
       replyBodyJSX = scaleSystemEmoji(strippedBody);
     }
 
+    // Seed the reply draft with the thread relation whenever we're in thread
+    // mode (e.g. on first render or when the thread root changes). We use the
+    // current user's ID as userId so that the mention logic skips it.
+    useEffect(() => {
+      if (!threadRootId) return;
+      setReplyDraft((prev) => {
+        if (
+          prev?.relation?.rel_type === RelationType.Thread &&
+          prev.relation.event_id === threadRootId
+        )
+          return prev;
+        return {
+          userId: mx.getUserId() ?? '',
+          eventId: threadRootId,
+          body: '',
+          relation: { rel_type: RelationType.Thread, event_id: threadRootId },
+        };
+      });
+    }, [threadRootId, setReplyDraft, mx]);
+
     useEffect(() => {
       Transforms.insertFragment(editor, msgDraft);
     }, [editor, msgDraft]);
@@ -343,7 +432,7 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
         resetEditor(editor);
         resetEditorHistory(editor);
       },
-      [roomId, editor, setMsgDraft]
+      [draftKey, editor, setMsgDraft]
     );
 
     useEffect(() => {
@@ -415,19 +504,89 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
       const contents = fulfilledPromiseSettledResult(await Promise.allSettled(contentsPromises));
 
       if (contents.length > 0) {
-        const replyContent = plainText?.length === 0 ? getReplyContent(replyDraft) : undefined;
+        const replyContent =
+          plainText?.length === 0 ? getReplyContent(replyDraft, room) : undefined;
         if (replyContent) contents[0]['m.relates_to'] = replyContent;
-        setReplyDraft(undefined);
+        if (threadRootId) {
+          setReplyDraft({
+            userId: mx.getUserId() ?? '',
+            eventId: threadRootId,
+            body: '',
+            relation: { rel_type: RelationType.Thread, event_id: threadRootId },
+          });
+        } else {
+          setReplyDraft(undefined);
+        }
       }
 
-      await Promise.all(
-        contents.map((content) =>
-          mx.sendMessage(roomId, content as any).catch((error: unknown) => {
-            log.error('failed to send uploaded message', { roomId }, error);
-            throw error;
-          })
-        )
-      );
+      const invalidate = () =>
+        queryClient.invalidateQueries({ queryKey: ['delayedEvents', roomId] });
+
+      if (scheduledTime) {
+        try {
+          const delayMs = computeDelayMs(scheduledTime);
+          if (editingScheduledDelayId) {
+            await cancelDelayedEvent(mx, editingScheduledDelayId);
+          }
+
+          await Promise.all(
+            contents.map((content) => {
+              if (isEncrypted) {
+                return sendDelayedMessageE2EE(mx, roomId, room, content, delayMs);
+              }
+              return sendDelayedMessage(mx, roomId, content, delayMs);
+            })
+          );
+
+          invalidate();
+          setEditingScheduledDelayId(null);
+          setScheduledTime(null);
+        } catch (error) {
+          debugLog.error('message', 'Failed to schedule uploaded file message', {
+            roomId,
+            error: error instanceof Error ? error.message : String(error),
+          });
+          log.error('failed to schedule uploaded message', { roomId }, error);
+          throw error;
+        }
+      } else {
+        if (editingScheduledDelayId) {
+          try {
+            await cancelDelayedEvent(mx, editingScheduledDelayId);
+            invalidate();
+            setEditingScheduledDelayId(null);
+          } catch {
+            debugLog.error(
+              'message',
+              'Failed to cancel scheduled event before immediate file send',
+              { roomId }
+            );
+          }
+        }
+
+        await Promise.all(
+          contents.map((content) =>
+            mx
+              .sendMessage(roomId, threadRootId ?? null, content as any)
+              .then((res: { event_id: string }) => {
+                debugLog.info('message', 'Uploaded file message sent', {
+                  roomId,
+                  eventId: res.event_id,
+                  msgtype: content.msgtype,
+                });
+                return res;
+              })
+              .catch((error: unknown) => {
+                debugLog.error('message', 'Failed to send uploaded file message', {
+                  roomId,
+                  error: error instanceof Error ? error.message : String(error),
+                });
+                log.error('failed to send uploaded message', { roomId }, error);
+                throw error;
+              })
+          )
+        );
+      }
     };
 
     const handleCloseAutocomplete = useCallback(() => {
@@ -536,7 +695,7 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
         content.formatted_body = formattedBody;
       }
       if (replyDraft) {
-        content['m.relates_to'] = getReplyContent(replyDraft);
+        content['m.relates_to'] = getReplyContent(replyDraft, room);
       }
       const invalidate = () =>
         queryClient.invalidateQueries({ queryKey: ['delayedEvents', roomId] });
@@ -545,7 +704,17 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
         resetEditor(editor);
         resetEditorHistory(editor);
         setInputKey((prev) => prev + 1);
-        setReplyDraft(undefined);
+        if (threadRootId) {
+          // Re-seed the thread reply draft so the next message also goes to the thread.
+          setReplyDraft({
+            userId: mx.getUserId() ?? '',
+            eventId: threadRootId,
+            body: '',
+            relation: { rel_type: RelationType.Thread, event_id: threadRootId },
+          });
+        } else {
+          setReplyDraft(undefined);
+        }
         sendTypingStatus(false);
       };
       if (scheduledTime) {
@@ -569,18 +738,55 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
       } else if (editingScheduledDelayId) {
         try {
           await cancelDelayedEvent(mx, editingScheduledDelayId);
-          mx.sendMessage(roomId, content as any);
+          debugLog.info('message', 'Sending message after cancelling scheduled event', {
+            roomId,
+            scheduledDelayId: editingScheduledDelayId,
+          });
+          const res = await mx.sendMessage(roomId, threadRootId ?? null, content as any);
+          debugLog.info('message', 'Message sent successfully', { roomId, eventId: res.event_id });
           invalidate();
           setEditingScheduledDelayId(null);
           resetInput();
-        } catch {
+        } catch (error) {
+          debugLog.error('message', 'Failed to send message after cancelling scheduled event', {
+            roomId,
+            error: error instanceof Error ? error.message : String(error),
+          });
           // Cancel failed — leave state intact for retry
         }
       } else {
+        const msgSendStart = performance.now();
         resetInput();
-        mx.sendMessage(roomId, content as any).catch((error: unknown) => {
-          log.error('failed to send message', { roomId }, error);
-        });
+        debugLog.info('message', 'Sending message', { roomId, msgtype: (content as any).msgtype });
+        Sentry.startSpan(
+          {
+            name: 'message.send',
+            op: 'matrix.message',
+            attributes: { encrypted: String(isEncrypted) },
+          },
+          () => mx.sendMessage(roomId, threadRootId ?? null, content as any)
+        )
+          .then((res: { event_id: string }) => {
+            debugLog.info('message', 'Message sent successfully', {
+              roomId,
+              eventId: res.event_id,
+            });
+            Sentry.metrics.distribution(
+              'sable.message.send_latency_ms',
+              performance.now() - msgSendStart,
+              { attributes: { encrypted: String(isEncrypted) } }
+            );
+          })
+          .catch((error: unknown) => {
+            debugLog.error('message', 'Failed to send message', {
+              roomId,
+              error: error instanceof Error ? error.message : String(error),
+            });
+            Sentry.metrics.count('sable.message.send_error', 1, {
+              attributes: { encrypted: String(isEncrypted) },
+            });
+            log.error('failed to send message', { roomId }, error);
+          });
       }
     }, [
       editor,
@@ -588,6 +794,7 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
       canSendReaction,
       mx,
       roomId,
+      threadRootId,
       replyDraft,
       silentReply,
       scheduledTime,
@@ -605,6 +812,38 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
 
     const handleKeyDown: KeyboardEventHandler = useCallback(
       (evt) => {
+        const autocompleteMenu = document.querySelector('[data-autocomplete-menu]');
+        const isMenuVisible = !!(autocompleteQuery && autocompleteMenu);
+
+        if (isMenuVisible) {
+          if (isKeyHotkey('arrowdown', evt)) {
+            evt.preventDefault();
+            autocompleteMenu.dispatchEvent(
+              new CustomEvent('autocomplete-navigate', { detail: { direction: 1 } })
+            );
+            return;
+          }
+          if (isKeyHotkey('arrowup', evt)) {
+            evt.preventDefault();
+            autocompleteMenu.dispatchEvent(
+              new CustomEvent('autocomplete-navigate', { detail: { direction: -1 } })
+            );
+            return;
+          }
+
+          if ((isKeyHotkey('enter', evt) || isKeyHotkey('tab', evt)) && !isComposing(evt)) {
+            const selectedItem =
+              autocompleteMenu.querySelector<HTMLButtonElement>('button[data-selected="true"]') ??
+              autocompleteMenu.querySelector<HTMLButtonElement>('button');
+
+            if (selectedItem) {
+              evt.preventDefault();
+              selectedItem.click();
+              return;
+            }
+          }
+        }
+
         if (
           (isKeyHotkey('mod+enter', evt) || (!enterForNewline && isKeyHotkey('enter', evt))) &&
           !isComposing(evt)
@@ -613,9 +852,14 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
           submit().catch((error) => {
             log.error('submit failed', { roomId }, error);
           });
+          return;
         }
         if (isKeyHotkey('escape', evt)) {
           evt.preventDefault();
+          if (showAudioRecorder) {
+            audioRecorderRef.current?.cancel();
+            return;
+          }
           if (autocompleteQuery) {
             setAutocompleteQuery(undefined);
             return;
@@ -623,7 +867,15 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
           setReplyDraft(undefined);
         }
       },
-      [submit, roomId, setReplyDraft, enterForNewline, autocompleteQuery, isComposing]
+      [
+        submit,
+        roomId,
+        setReplyDraft,
+        enterForNewline,
+        autocompleteQuery,
+        isComposing,
+        showAudioRecorder,
+      ]
     );
 
     const handleKeyUp: KeyboardEventHandler = useCallback(
@@ -691,8 +943,17 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
         info,
       };
       if (replyDraft) {
-        content['m.relates_to'] = getReplyContent(replyDraft);
-        setReplyDraft(undefined);
+        content['m.relates_to'] = getReplyContent(replyDraft, room);
+        if (threadRootId) {
+          setReplyDraft({
+            userId: mx.getUserId() ?? '',
+            eventId: threadRootId,
+            body: '',
+            relation: { rel_type: RelationType.Thread, event_id: threadRootId },
+          });
+        } else {
+          setReplyDraft(undefined);
+        }
       }
       mx.sendEvent(roomId, EventType.Sticker, content);
     };
@@ -816,7 +1077,7 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
           editableName="RoomInput"
           editor={editor}
           key={inputKey}
-          placeholder="Send a message..."
+          placeholder={showAudioRecorder && mobileOrTablet() ? '' : 'Send a message...'}
           onKeyDown={handleKeyDown}
           onKeyUp={handleKeyUp}
           onPaste={handlePaste}
@@ -851,7 +1112,7 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
                   </Box>
                 </div>
               )}
-              {replyDraft && (
+              {replyDraft && (!threadRootId || replyDraft.body) && (
                 <div>
                   <Box
                     alignItems="Center"
@@ -859,7 +1120,18 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
                     style={{ padding: `${config.space.S200} ${config.space.S300} 0` }}
                   >
                     <IconButton
-                      onClick={() => setReplyDraft(undefined)}
+                      onClick={() => {
+                        if (threadRootId) {
+                          setReplyDraft({
+                            userId: mx.getUserId() ?? '',
+                            eventId: threadRootId,
+                            body: '',
+                            relation: { rel_type: RelationType.Thread, event_id: threadRootId },
+                          });
+                        } else {
+                          setReplyDraft(undefined);
+                        }
+                      }}
                       variant="SurfaceVariant"
                       size="300"
                       radii="300"
@@ -925,19 +1197,97 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
             </>
           }
           before={
-            <IconButton
-              onClick={() => pickFile('*')}
-              variant="SurfaceVariant"
-              size="300"
-              radii="300"
-              title="Upload File"
-              aria-label="Upload and attach a File"
-            >
-              <Icon src={Icons.PlusCircle} />
-            </IconButton>
+            !(showAudioRecorder && mobileOrTablet()) && (
+              <IconButton
+                onClick={() => pickFile('*')}
+                variant="SurfaceVariant"
+                size="300"
+                radii="300"
+                title="Upload File"
+                aria-label="Upload and attach a File"
+              >
+                <Icon src={Icons.PlusCircle} />
+              </IconButton>
+            )
           }
           after={
             <>
+              {showAudioRecorder && (
+                <AudioMessageRecorder
+                  ref={audioRecorderRef}
+                  onRequestClose={() => setShowAudioRecorder(false)}
+                  onRecordingComplete={(payload) => {
+                    const extension = getSupportedAudioExtension(payload.audioCodec);
+                    const file = new File(
+                      [payload.audioBlob],
+                      `sable-audio-message-${Date.now()}.${extension}`,
+                      {
+                        type: payload.audioCodec,
+                      }
+                    );
+                    handleFiles([file], {
+                      waveform: payload.waveform,
+                      audioDuration: payload.audioLength,
+                    });
+                    setShowAudioRecorder(false);
+                  }}
+                  onAudioLengthUpdate={() => {}}
+                  onWaveformUpdate={() => {}}
+                />
+              )}
+
+              {/* ── Mic button — always present; icon swaps to Stop while recording ── */}
+              <IconButton
+                ref={micBtnRef}
+                variant={showAudioRecorder ? 'Critical' : 'SurfaceVariant'}
+                size="300"
+                radii="300"
+                title={showAudioRecorder ? 'Stop recording' : 'Record audio message'}
+                aria-label={showAudioRecorder ? 'Stop recording' : 'Record audio message'}
+                aria-pressed={showAudioRecorder}
+                onClick={() => {
+                  if (mobileOrTablet()) return;
+                  if (showAudioRecorder) {
+                    audioRecorderRef.current?.stop();
+                  } else {
+                    setShowAudioRecorder(true);
+                  }
+                }}
+                onPointerDown={() => {
+                  if (!mobileOrTablet()) return;
+                  if (showAudioRecorder) return;
+                  micHoldStartRef.current = Date.now();
+                  setShowAudioRecorder(true);
+
+                  let cleanup: () => void;
+                  const onUp = () => {
+                    cleanup();
+                    const held = Date.now() - micHoldStartRef.current;
+                    if (held >= HOLD_THRESHOLD_MS) {
+                      setTimeout(() => {
+                        audioRecorderRef.current?.stop();
+                      }, 50);
+                    } else {
+                      setTimeout(() => {
+                        audioRecorderRef.current?.cancel();
+                      }, 50);
+                    }
+                  };
+                  cleanup = () => {
+                    window.removeEventListener('pointerup', onUp);
+                    window.removeEventListener('pointercancel', cleanup);
+                  };
+                  window.addEventListener('pointerup', onUp);
+                  window.addEventListener('pointercancel', cleanup);
+                }}
+              >
+                {showAudioRecorder ? (
+                  <Stop size={20} weight="fill" style={{ color: color.Critical.Main }} />
+                ) : (
+                  <Microphone size={20} />
+                )}
+              </IconButton>
+
               <IconButton
                 variant="SurfaceVariant"
                 size="300"
