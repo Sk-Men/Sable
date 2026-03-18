@@ -65,6 +65,7 @@ export function PerMessageProfileEditor({
 
   const [newDisplayName, setNewDisplayName] = useState(currentDisplayName);
   const [imageFile, setImageFile] = useState<File | undefined>();
+  const [imageHasChanges, setImageHasChanges] = useState(false);
   const [avatarMxc, setAvatarMxc] = useState(avatarMxcUrl);
   const imageFileURL = useObjectURL(imageFile);
   const avatarUrl = useMemo(() => {
@@ -81,12 +82,14 @@ export function PerMessageProfileEditor({
   const pickFile = useFilePicker(setImageFile, false);
   const handleRemoveUpload = useCallback(() => {
     setImageFile(undefined);
+    setImageHasChanges(true);
   }, []);
   const handleUploaded = useCallback(
     (upload: { status: string; mxc: string }) => {
-      if (upload && upload.status === 'success') {
+      if (upload?.status === 'success') {
         setAvatarMxc(upload.mxc);
         if (onChange) onChange({ id: profileId, name: newDisplayName, avatarUrl: upload.mxc });
+        setImageHasChanges(true);
       }
       setImageFile(undefined);
     },
@@ -108,31 +111,31 @@ export function PerMessageProfileEditor({
       newDisplayName !== (currentDisplayName ?? '') ||
       newPronounsString !== currentPronounsString ||
       hasIdChange ||
-      !!imageFile,
+      imageHasChanges,
     [
       newDisplayName,
       currentDisplayName,
       newPronounsString,
       currentPronounsString,
       hasIdChange,
-      imageFile,
+      imageHasChanges,
     ]
   );
 
   /**
-   * Reset handler to reset the display name and pronouns to their current values, and clear the image file if there is one.
+   * handler for resetting the display name
    */
-  const handleReset = useCallback(() => {
-    setNewDisplayName(currentDisplayName);
+  const handleDisplayNameReset = useCallback(() => {
+    setNewDisplayName(currentDisplayName ?? '');
+  }, [currentDisplayName]);
+
+  /**
+   * handler for resetting the pronouns
+   */
+  const handlePronounsReset = useCallback(() => {
     setNewPronouns(currentPronouns);
-    setNewPronounsString(
-      Array.isArray(currentPronouns)
-        ? currentPronouns.map((p) => `${p.language ? `${p.language}:` : ''}${p.summary}`).join(', ')
-        : ''
-    );
-    setChangingDisplayName(false);
-    setDisableSetDisplayname(false);
-  }, [currentDisplayName, currentPronouns]);
+    setNewPronounsString(currentPronounsString);
+  }, [currentPronouns, currentPronounsString]);
 
   /**
    * persisting the data :3
@@ -146,14 +149,15 @@ export function PerMessageProfileEditor({
     }).then(() => {
       setCurrentDisplayName(newDisplayName);
       setCurrentPronouns(newPronouns);
+      setImageHasChanges(false);
+      setChangingDisplayName(false);
+      setDisableSetDisplayname(false);
+      if (hasIdChange) {
+        renamePerMessageProfile(mx, profileId, newId).then(() => {
+          setCurrentId(newId);
+        });
+      }
     });
-    if (hasIdChange) {
-      renamePerMessageProfile(mx, profileId, newId).then(() => {
-        setCurrentId(newId);
-      });
-    }
-    setChangingDisplayName(false);
-    setDisableSetDisplayname(false);
   }, [mx, profileId, newDisplayName, avatarMxc, newPronouns, hasIdChange, newId]);
 
   const handleDelete = useCallback(() => {
@@ -344,11 +348,11 @@ export function PerMessageProfileEditor({
               aria-label={`Display name for ${profileId}`}
               title={`Display name for ${profileId}`}
               after={
-                hasChanges &&
+                newDisplayName !== (currentDisplayName ?? '') &&
                 !changingDisplayName && (
                   <IconButton
                     type="reset"
-                    onClick={handleReset}
+                    onClick={handleDisplayNameReset}
                     size="300"
                     radii="300"
                     variant="Secondary"
@@ -392,11 +396,10 @@ export function PerMessageProfileEditor({
               aria-label={`Pronouns for ${profileId}`}
               title={`Pronouns for ${profileId}`}
               after={
-                hasChanges &&
-                !changingDisplayName && (
+                newPronounsString !== currentPronounsString && (
                   <IconButton
                     type="reset"
-                    onClick={handleReset}
+                    onClick={handlePronounsReset}
                     size="300"
                     radii="300"
                     variant="Secondary"
