@@ -306,15 +306,42 @@ function AddRoomButton({ item }: { item: HierarchyItem }) {
         </FocusTrap>
       }
     >
-      <Chip
-        variant="Primary"
-        radii="Pill"
-        before={<Icon src={Icons.Plus} size="50" />}
-        onClick={handleAddRoom}
-        aria-pressed={!!cords}
+      {item.parentId === undefined ? (
+        <Chip
+          variant="Primary"
+          radii="Pill"
+          before={<Icon src={Icons.Plus} size="50" />}
+          onClick={handleAddRoom}
+          aria-pressed={!!cords}
+        >
+          <Text size="B300">Add Room</Text>
+        </Chip>
+    ) : (
+      <TooltipProvider
+        position="Bottom"
+        offset={4}
+        tooltip={
+          <Tooltip>
+            <Text>Add Room</Text>
+          </Tooltip>
+        }
       >
-        <Text size="B300">Add Room</Text>
-      </Chip>
+        {(triggerRef) => (
+            <IconButton
+              ref={triggerRef}
+              onClick={handleAddRoom}
+              aria-pressed={!!cords}
+              aria-label="Add Room"
+              variant="Primary"
+              fill="Soft"
+              size="300"
+              radii="300"
+            >
+              <Icon size="50" src={Icons.HashPlus} />
+            </IconButton>
+          )}
+        </TooltipProvider>
+      )}
       {addExisting && (
         <AddExistingModal parentId={item.roomId} requestClose={() => setAddExisting(false)} />
       )}

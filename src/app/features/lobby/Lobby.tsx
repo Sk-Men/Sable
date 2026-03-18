@@ -1,6 +1,6 @@
-import { MouseEventHandler, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Box, Chip, Icon, IconButton, Icons, Line, Scroll, Spinner, Text, config } from 'folds';
-import { useVirtualizer } from '@tanstack/react-virtual';
+import { MouseEventHandler, ReactElement, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Box, Chip, Icon, IconButton, Icons, Line, Scroll, Spinner, Text, color, config } from 'folds';
+import { useVirtualizer, VirtualItem } from '@tanstack/react-virtual';
 import { useAtom, useAtomValue } from 'jotai';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -13,7 +13,7 @@ import {
 import { produce } from 'immer';
 import { useSpace } from '$hooks/useSpace';
 import { Page, PageContent, PageContentCenter, PageHeroSection } from '$components/page';
-import { HierarchyItem, HierarchyItemSpace, useSpaceHierarchy } from '$hooks/useSpaceHierarchy';
+import { HierarchyItem, HierarchyItemSpace, SpaceHierarchy, useSpaceHierarchy } from '$hooks/useSpaceHierarchy';
 import { VirtualTile } from '$components/virtualizer';
 import { spaceRoomsAtom } from '$state/spaceRooms';
 import { useSetting } from '$state/hooks/settings';
@@ -52,7 +52,7 @@ import { AsyncStatus, useAsyncCallback } from '$hooks/useAsyncCallback';
 import { getRoomPermissionsAPI } from '$hooks/useRoomPermissions';
 import { getRoomCreatorsForRoomId } from '$hooks/useRoomCreators';
 import { MembersDrawer } from '$features/room/MembersDrawer';
-import { SpaceHierarchy } from './SpaceHierarchy';
+import { SpaceHierarchyItem } from './SpaceHierarchyItem';
 import { CanDropCallback, useDnDMonitor } from './DnD';
 import { LobbyHero } from './LobbyHero';
 import { LobbyHeader } from './LobbyHeader';
@@ -520,6 +520,74 @@ export function Lobby() {
     [mx, sidebarItems, sidebarSpaces]
   );
 
+  const getPaddingTop = (hierarchy: SpaceHierarchy[], vItem: VirtualItem) => {
+    if (vItem.index === 0) return 0;
+    const prevDepth = hierarchy[vItem.index - 1]?.space.depth ?? 0;
+    const depth = hierarchy[vItem.index].space.depth;
+    if (depth !== 1 && depth >= prevDepth) return config.space.S200;
+    return config.space.S500;
+  };
+
+  const getConnectorSVG = useCallback((hierarchy: SpaceHierarchy[], virtualizedItems: VirtualItem[]): ReactElement => {
+    const PADDING_LEFT_DEPTH_OFFSET = 15.75;
+    const PADDING_LEFT_DEPTH_OFFSET_START = -15;
+
+    var aY: number = 0;
+    // Holder for the paths
+    const pathHolder: ReactElement[] = [];
+    virtualizedItems.forEach((vItem) => {
+      const { depth } = hierarchy[vItem.index].space ?? {};
+
+      // We will render spaces at a level above their normal depth, since we want their children to be "under" them
+      // for the root items, we are not doing anything with it.
+      if (depth < 1) {
+        return;
+      }
+      // for the sub-root items, we will not draw any arcs from root to it.
+      // however, we should capture the aX and aY to draw starter arcs for next depths.
+      if (depth === 1) {
+        aY = vItem.end;
+        return;
+      }
+
+      var pathStrings: string[] = [];
+
+      for (var iDepth = 0; iDepth < depth; iDepth++) {
+        var X = iDepth * PADDING_LEFT_DEPTH_OFFSET + PADDING_LEFT_DEPTH_OFFSET_START;
+
+        var bY = vItem.end;
+
+        pathStrings.push(`M ${X} ${aY} L ${X} ${bY}`); 
+      }
+
+      pathHolder.push(
+        <path
+          d={pathStrings.join(" ")}
+          fill="none"
+          stroke={color.Surface.ContainerLine}
+          strokeWidth={config.borderWidth.B300}
+          display="block"
+        />
+      );
+
+      aY = vItem.end;
+    });
+
+    return (
+      <svg
+        style={{
+          position: 'absolute',
+          inset: 0,
+          width: '100%',
+          height: '100%',
+          pointerEvents: 'none',
+        }}
+      >
+        {pathHolder}
+      </svg>
+    );
+  }, [hierarchy, vItems]);
+
   return (
     <PowerLevelsContextProvider value={spacePowerLevels}>
       <Box grow="Yes">
@@ -567,19 +635,19 @@ export function Lobby() {
                         item.space.roomId
                       );
 
-                      const paddingLeft = `calc((${item.space.depth} - 1) * ${config.space.S200})`;
+                      const paddingLeft = `calc((${item.space.depth} - 1) * ${config.space.S400})`;
 
                       return (
                         <VirtualTile
                           virtualItem={vItem}
                           style={{
-                            paddingTop: vItem.index === 0 ? 0 : config.space.S500,
+                            paddingTop: getPaddingTop(hierarchy, vItem),
                             paddingLeft,
                           }}
                           ref={virtualizer.measureElement}
                           key={vItem.index}
                         >
-                          <SpaceHierarchy
+                          <SpaceHierarchyItem
                             spaceItem={item.space}
                             summary={spacesItems.get(item.space.roomId)}
                             roomItems={item.rooms}
@@ -605,6 +673,7 @@ export function Lobby() {
                         </VirtualTile>
                       );
                     })}
+                    {getConnectorSVG(hierarchy, vItems)}
                   </div>
                   {reordering && (
                     <Box
