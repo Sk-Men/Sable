@@ -62,7 +62,6 @@ import {
   getEventIdAbsoluteIndex,
 } from '$utils/timeline';
 import { useScrollManager } from '$hooks/useScrollManager';
-import { getResizeObserverEntry, useResizeObserver } from '$hooks/useResizeObserver';
 import { useTimelineSync } from '$hooks/timeline/useTimelineSync';
 import { useTimelineActions } from '$hooks/timeline/useTimelineActions';
 import { useProcessedTimeline } from '$hooks/timeline/useProcessedTimeline';
@@ -155,8 +154,6 @@ export function RoomTimeline({
 
   const [editId, setEditId] = useState<string>();
   const [unreadInfo, setUnreadInfo] = useState(() => getRoomUnreadInfo(room, true));
-  const unreadInfoRef = useRef(unreadInfo);
-  unreadInfoRef.current = unreadInfo;
 
   const readUptoEventIdRef = useRef<string | undefined>(undefined);
   if (unreadInfo) readUptoEventIdRef.current = unreadInfo.readUptoEventId;
@@ -183,7 +180,9 @@ export function RoomTimeline({
   const setOpenThread = useSetAtom(openThreadAtom);
 
   const scrollRef = useRef<HTMLDivElement>(null);
-  const { isAtBottom, onScroll, scrollToBottom } = useScrollManager(scrollRef);
+  const messageListRef = useRef<HTMLDivElement>(null);
+
+  const { isAtBottom, onScroll, scrollToBottom, sentryRef } = useScrollManager(scrollRef);
 
   const timelineSync = useTimelineSync({
     room,
@@ -196,8 +195,6 @@ export function RoomTimeline({
     hideReadsRef,
     readUptoEventIdRef,
   });
-
-  const getScrollElement = useCallback(() => scrollRef.current, []);
 
   const virtualPaginator = useVirtualPaginator({
     count: timelineSync.eventsLength,
@@ -214,7 +211,7 @@ export function RoomTimeline({
       },
       [timelineSync]
     ),
-    getScrollElement,
+    getScrollElement: useCallback(() => scrollRef.current, []),
     getItemElement: useCallback(
       (index: number) =>
         (scrollRef.current?.querySelector(`[data-message-item="${index}"]`) as HTMLElement) ??
@@ -223,6 +220,53 @@ export function RoomTimeline({
     ),
     onEnd: timelineSync.handleTimelinePagination,
   });
+
+  useEffect(() => {
+    let timeoutId: ReturnType<typeof setTimeout> | undefined;
+    if (timelineSync.focusItem) {
+      if (timelineSync.focusItem.scrollTo) {
+        virtualPaginator.scrollToItem(timelineSync.focusItem.index, {
+          behavior: reducedMotion ? 'instant' : 'smooth',
+          align: 'center',
+          stopInView: true,
+        });
+        timelineSync.setFocusItem((prev) => (prev ? { ...prev, scrollTo: false } : undefined));
+      }
+      timeoutId = setTimeout(() => {
+        timelineSync.setFocusItem(undefined);
+      }, 2000);
+    }
+    return () => {
+      if (timeoutId !== undefined) {
+        clearTimeout(timeoutId);
+      }
+    };
+  }, [timelineSync.focusItem, virtualPaginator, timelineSync, reducedMotion]);
+
+  useEffect(() => {
+    if (eventId) return;
+
+    const { readUptoEventId, inLiveTimeline, scrollTo } = unreadInfo ?? {};
+    if (readUptoEventId && inLiveTimeline && scrollTo) {
+      const evtTimeline = getEventTimeline(room, readUptoEventId);
+      const absoluteIndex = evtTimeline
+        ? getEventIdAbsoluteIndex(
+            timelineSync.timeline.linkedTimelines,
+            evtTimeline,
+            readUptoEventId
+          )
+        : undefined;
+
+      if (absoluteIndex !== undefined) {
+        virtualPaginator.scrollToItem(absoluteIndex, {
+          behavior: 'instant',
+          align: 'start',
+          stopInView: true,
+        });
+        setUnreadInfo((prev) => (prev ? { ...prev, scrollTo: false } : prev));
+      }
+    }
+  }, [room, unreadInfo, timelineSync.timeline.linkedTimelines, virtualPaginator, eventId]);
 
   const actions = useTimelineActions({
     room,
@@ -246,16 +290,12 @@ export function RoomTimeline({
         : undefined;
 
       if (typeof absoluteIndex === 'number') {
-        const scrolled = virtualPaginator.scrollToItem(absoluteIndex, {
+        virtualPaginator.scrollToItem(absoluteIndex, {
           behavior: reducedMotion ? 'instant' : 'smooth',
           align: 'center',
           stopInView: true,
         });
-        timelineSync.setFocusItem({
-          index: absoluteIndex,
-          scrollTo: !scrolled,
-          highlight: true,
-        });
+        timelineSync.setFocusItem({ index: absoluteIndex, scrollTo: false, highlight: true });
       } else {
         timelineSync.loadEventTimeline(id);
       }
@@ -350,12 +390,7 @@ export function RoomTimeline({
       setOpenThread: actions.setOpenThread,
       handleOpenReply: actions.handleOpenReply,
     },
-    utils: {
-      htmlReactParserOptions,
-      linkifyOpts,
-      getMemberPowerTag,
-      parseMemberEvent,
-    },
+    utils: { htmlReactParserOptions, linkifyOpts, getMemberPowerTag, parseMemberEvent },
   });
 
   const tryAutoMarkAsRead = useCallback(() => {
@@ -390,27 +425,6 @@ export function RoomTimeline({
     }
   }, [isAtBottom, timelineSync.liveTimelineLinked, timelineSync.rangeAtEnd, tryAutoMarkAsRead]);
 
-  useResizeObserver(
-    useMemo(() => {
-      let mounted = false;
-      return (entries: ResizeObserverEntry[]) => {
-        if (!mounted) {
-          mounted = true;
-          return;
-        }
-        if (!roomInputRef.current) return;
-
-        const editorBaseEntry = getResizeObserverEntry(roomInputRef.current, entries);
-        if (!editorBaseEntry || !scrollRef.current) return;
-
-        if (isAtBottom) {
-          scrollToBottom('instant');
-        }
-      };
-    }, [isAtBottom, scrollToBottom, roomInputRef]),
-    useCallback(() => roomInputRef.current, [roomInputRef])
-  );
-
   return (
     <Box grow="Yes" style={{ position: 'relative' }}>
       {unreadInfo?.readUptoEventId && !unreadInfo?.inLiveTimeline && (
@@ -438,6 +452,7 @@ export function RoomTimeline({
 
       <Scroll ref={scrollRef} visibility="Hover" onScroll={onScroll}>
         <Box
+          ref={messageListRef}
           className={css.messageList}
           style={{ minHeight: '100%', padding: `${config.space.S600} 0` }}
         >
@@ -516,6 +531,7 @@ export function RoomTimeline({
                 <RoomIntro room={room} />
               </div>
             )}
+          <div ref={sentryRef} style={{ height: '1px', width: '100%', flexShrink: 0 }} />
         </Box>
       </Scroll>
 

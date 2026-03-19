@@ -565,7 +565,13 @@ export function useTimelineSync({
 
   useEffect(() => {
     const resetPending = timelineJustResetRef.current;
-    if ((isAtBottom || resetPending) && liveTimelineLinked && eventsLength > timeline.range.end) {
+    const isActuallyAtLiveEnd = isAtBottom && atLiveEndRef.current;
+
+    if (
+      (isActuallyAtLiveEnd || resetPending) &&
+      liveTimelineLinked &&
+      eventsLength > timeline.range.end
+    ) {
       if (resetPending) timelineJustResetRef.current = false;
       scrollToBottom('instant');
       setTimeline((ct) => ({

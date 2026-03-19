@@ -1,79 +1,69 @@
-import { useCallback, useRef, useState, useLayoutEffect } from 'react';
-import { scrollToBottom as domScrollToBottom, getScrollInfo } from '$utils/dom';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { scrollToBottom as domScrollToBottom } from '$utils/dom';
 
 type ScrollBehavior = 'auto' | 'instant' | 'smooth';
 
 export const useScrollManager = (scrollRef: React.RefObject<HTMLElement>) => {
   const [isAtBottom, setIsAtBottom] = useState(true);
   const isAtBottomRef = useRef(true);
-  const autoScrollRef = useRef(false);
+  const sentryRef = useRef<HTMLDivElement>(null);
 
-  const checkAtBottom = useCallback(() => {
-    const el = scrollRef.current;
-    if (!el) return;
+  useEffect(() => {
+    const sentryEl = sentryRef.current;
+    const scrollEl = scrollRef.current;
 
-    const { top, height, viewHeight } = getScrollInfo(el);
-    const distanceToBottom = height - top - viewHeight;
+    let observer: IntersectionObserver | undefined;
 
-    const atBottom = distanceToBottom <= 5;
+    if (sentryEl && scrollEl) {
+      observer = new IntersectionObserver(
+        ([entry]) => {
+          const atBottom = entry.isIntersecting;
 
-    if (atBottom !== isAtBottomRef.current) {
-      isAtBottomRef.current = atBottom;
-      setIsAtBottom(atBottom);
+          isAtBottomRef.current = atBottom;
+          setIsAtBottom(atBottom);
+        },
+        {
+          root: scrollEl,
+          rootMargin: '10px 0px 0px 0px',
+          threshold: 0,
+        }
+      );
+
+      observer.observe(sentryEl);
     }
+
+    return () => {
+      if (observer) {
+        observer.disconnect();
+      }
+    };
   }, [scrollRef]);
 
   const scrollToBottom = useCallback(
     (behavior: ScrollBehavior = 'instant') => {
       const el = scrollRef.current;
       if (el) {
-        autoScrollRef.current = true;
         domScrollToBottom(el, behavior);
 
+        isAtBottomRef.current = true;
+        setIsAtBottom(true);
+
         if (behavior === 'instant') {
-          setTimeout(() => {
+          requestAnimationFrame(() => {
             if (scrollRef.current) domScrollToBottom(scrollRef.current, 'instant');
-          }, 50);
+          });
         }
       }
     },
     [scrollRef]
   );
 
-  const onScroll = useCallback(() => {
-    if (autoScrollRef.current) {
-      autoScrollRef.current = false;
-      return;
-    }
-    checkAtBottom();
-  }, [checkAtBottom]);
-
-  useLayoutEffect(() => {
-    const el = scrollRef.current;
-
-    if (!el) {
-      return undefined;
-    }
-
-    const resizeObserver = new ResizeObserver(() => {
-      if (isAtBottomRef.current) {
-        scrollToBottom('instant');
-      }
-    });
-
-    if (el.firstElementChild) {
-      resizeObserver.observe(el.firstElementChild);
-    }
-
-    return () => {
-      resizeObserver.disconnect();
-    };
-  }, [scrollRef, scrollToBottom]);
+  const onScroll = useCallback(() => {}, []);
 
   return {
     isAtBottom,
     onScroll,
     scrollToBottom,
-    checkAtBottom,
+    sentryRef,
   };
 };
