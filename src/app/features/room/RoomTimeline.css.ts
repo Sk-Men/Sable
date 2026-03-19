@@ -38,15 +38,15 @@ export const messageList = style({
 });
 
 globalStyle(`body ${messageList} > *`, {
-  overflowAnchor: 'auto',
+  overflowAnchor: 'none',
 });
 
 globalStyle(`body ${messageList} [data-message-id]`, {
+  overflowAnchor: 'auto',
   transition: 'background-color 0.1s ease-in-out !important',
   position: 'relative',
   zIndex: 1,
 });
-
 globalStyle(`body ${messageList} [data-message-id]:hover`, {
   backgroundColor: 'var(--sable-surface-container-hover) !important',
   zIndex: 2,
