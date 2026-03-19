@@ -280,32 +280,6 @@ export function RoomTimeline({
     }
   }, [room, unreadInfo, timelineSync.timeline.linkedTimelines, virtualPaginator, eventId]);
 
-  useLayoutEffect(() => {
-    const scrollEl = scrollRef.current;
-    if (!scrollEl) return;
-
-    const {
-      eventsLength: oldLength,
-      scrollHeight: oldHeight,
-      scrollTop: oldTop,
-    } = scrollDataRef.current;
-    const newLength = timelineSync.eventsLength;
-
-    if (newLength > oldLength && oldLength > 0) {
-      const newHeight = scrollEl.scrollHeight;
-      const heightDiff = newHeight - oldHeight;
-      if (oldTop < 500) {
-        scrollEl.scrollTop = oldTop + heightDiff;
-      }
-    }
-
-    scrollDataRef.current = {
-      eventsLength: newLength,
-      scrollHeight: scrollEl.scrollHeight,
-      scrollTop: scrollEl.scrollTop,
-    };
-  }, [timelineSync.eventsLength]);
-
   const actions = useTimelineActions({
     room,
     mx,
