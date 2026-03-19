@@ -274,15 +274,7 @@ export function RoomTimeline({
     if (!v) return;
     const prev = topSpacerHeightRef.current;
 
-    if (eventsLengthRef.current > 15) {
-      if (prev > 0) {
-        topSpacerHeightRef.current = 0;
-        setTopSpacerHeight(0);
-      }
-      return;
-    }
-
-    const newH = Math.max(0, v.viewportSize + prev - v.scrollSize);
+    const newH = Math.max(0, v.viewportSize - v.scrollSize + prev);
     if (Math.abs(prev - newH) > 2) {
       topSpacerHeightRef.current = newH;
       setTopSpacerHeight(newH);
@@ -611,6 +603,18 @@ export function RoomTimeline({
     isReadOnly,
     hideMemberInReadOnly,
   });
+
+  useEffect(() => {
+    const v = vListRef.current;
+    if (!v) return;
+    if (
+      canPaginateBackRef.current &&
+      backwardStatusRef.current === 'idle' &&
+      v.scrollSize <= v.viewportSize
+    ) {
+      timelineSyncRef.current.handleTimelinePagination(true);
+    }
+  }, [timelineSync.eventsLength, timelineSync.backwardStatus]);
 
   return (
     <Box grow="Yes" style={{ position: 'relative' }}>
