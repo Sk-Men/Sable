@@ -162,9 +162,7 @@ export function RoomView({ eventId }: { eventId?: string }) {
                 editor={editor}
                 onEditorReset={handleResetEditor}
               />
-              <Box style={{ position: 'relative', zIndex: 10 }}>
-                <RoomViewTyping room={room} />
-              </Box>
+              <RoomViewTyping room={room} />
               <GlobalModalManager />
             </Box>
             <Box shrink="No" direction="Column">
