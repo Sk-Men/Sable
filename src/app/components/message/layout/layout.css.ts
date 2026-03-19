@@ -67,11 +67,11 @@ const HighlightVariant = styleVariants({
 
 const NotifyHighlightVariant = styleVariants({
   silent: {
-    backgroundColor: `color-mix(in srgb, ${color.Secondary.Container} 40%, transparent)`,
+    backgroundColor: `color-mix(in srgb, ${color.Secondary.Container} 25%, transparent)`,
     boxShadow: `inset ${config.borderWidth.B700} 0 0 ${color.Secondary.ContainerLine}`,
   },
   loud: {
-    backgroundColor: `color-mix(in srgb, ${color.Warning.Container} 40%, transparent)`,
+    backgroundColor: `color-mix(in srgb, ${color.Warning.Container} 25%, transparent)`,
     boxShadow: `inset ${config.borderWidth.B700} 0 0 ${color.Warning.ContainerLine}`,
   },
 });
