@@ -1,4 +1,12 @@
-import { Fragment, RefObject, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import {
+  Fragment,
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { Editor } from 'slate';
 import { useAtomValue, useSetAtom } from 'jotai';
 import { PushProcessor, Room, Direction } from '$types/matrix-sdk';
@@ -182,6 +190,12 @@ export function RoomTimeline({
 
   const { isAtBottom, onScroll, scrollToBottom, sentryRef } = useScrollManager(scrollRef);
 
+  const scrollDataRef = useRef({
+    eventsLength: 0,
+    scrollHeight: 0,
+    scrollTop: 0,
+  });
+
   const timelineSync = useTimelineSync({
     room,
     mx,
@@ -265,6 +279,32 @@ export function RoomTimeline({
       }
     }
   }, [room, unreadInfo, timelineSync.timeline.linkedTimelines, virtualPaginator, eventId]);
+
+  useLayoutEffect(() => {
+    const scrollEl = scrollRef.current;
+    if (!scrollEl) return;
+
+    const {
+      eventsLength: oldLength,
+      scrollHeight: oldHeight,
+      scrollTop: oldTop,
+    } = scrollDataRef.current;
+    const newLength = timelineSync.eventsLength;
+
+    if (newLength > oldLength && oldLength > 0) {
+      const newHeight = scrollEl.scrollHeight;
+      const heightDiff = newHeight - oldHeight;
+      if (oldTop < 500) {
+        scrollEl.scrollTop = oldTop + heightDiff;
+      }
+    }
+
+    scrollDataRef.current = {
+      eventsLength: newLength,
+      scrollHeight: scrollEl.scrollHeight,
+      scrollTop: scrollEl.scrollTop,
+    };
+  }, [timelineSync.eventsLength]);
 
   const actions = useTimelineActions({
     room,
@@ -448,7 +488,17 @@ export function RoomTimeline({
         </TimelineFloat>
       )}
 
-      <Scroll ref={scrollRef} visibility="Hover" onScroll={onScroll}>
+      <Scroll
+        ref={scrollRef}
+        visibility="Hover"
+        onScroll={() => {
+          onScroll();
+          if (scrollRef.current) {
+            scrollDataRef.current.scrollTop = scrollRef.current.scrollTop;
+            scrollDataRef.current.scrollHeight = scrollRef.current.scrollHeight;
+          }
+        }}
+      >
         <Box
           ref={messageListRef}
           className={css.messageList}
