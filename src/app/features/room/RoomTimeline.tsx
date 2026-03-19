@@ -71,7 +71,7 @@ import {
 } from '$utils/timeline';
 import { useTimelineSync } from '$hooks/timeline/useTimelineSync';
 import { useTimelineActions } from '$hooks/timeline/useTimelineActions';
-import { useProcessedTimeline } from '$hooks/timeline/useProcessedTimeline';
+import { ProcessedEvent, useProcessedTimeline } from '$hooks/timeline/useProcessedTimeline';
 import { useTimelineEventRenderer } from '$hooks/timeline/useTimelineEventRenderer';
 import * as css from './RoomTimeline.css';
 
@@ -388,30 +388,6 @@ export function RoomTimeline({
     },
   });
 
-  const vListItemCount =
-    timelineSync.eventsLength === 0 &&
-    (timelineSync.canPaginateBack || timelineSync.backwardStatus === 'loading')
-      ? 3
-      : timelineSync.eventsLength;
-  const vListData = useMemo(
-    () => Array.from({ length: vListItemCount }, (_, i) => i),
-    [vListItemCount]
-  );
-
-  const processedEvents = useProcessedTimeline({
-    items: vListData,
-    linkedTimelines: timelineSync.timeline.linkedTimelines,
-    ignoredUsersSet,
-    showHiddenEvents,
-    showTombstoneEvents,
-    mxUserId: mx.getUserId(),
-    readUptoEventId: readUptoEventIdRef.current,
-    hideMembershipEvents,
-    hideNickAvatarEvents,
-    isReadOnly,
-    hideMemberInReadOnly,
-  });
-
   const linkifyOpts = useMemo(
     () => ({
       ...LINKIFY_OPTS,
@@ -612,6 +588,30 @@ export function RoomTimeline({
     }
   }
 
+  const vListItemCount =
+    timelineSync.eventsLength === 0 &&
+    (timelineSync.canPaginateBack || timelineSync.backwardStatus === 'loading')
+      ? 3
+      : timelineSync.eventsLength;
+  const vListIndices = useMemo(
+    () => Array.from({ length: vListItemCount }, (_, i) => i),
+    [vListItemCount]
+  );
+
+  const processedEvents = useProcessedTimeline({
+    items: vListIndices,
+    linkedTimelines: timelineSync.timeline.linkedTimelines,
+    ignoredUsersSet,
+    showHiddenEvents,
+    showTombstoneEvents,
+    mxUserId: mx.getUserId(),
+    readUptoEventId: readUptoEventIdRef.current,
+    hideMembershipEvents,
+    hideNickAvatarEvents,
+    isReadOnly,
+    hideMemberInReadOnly,
+  });
+
   return (
     <Box grow="Yes" style={{ position: 'relative' }}>
       {unreadInfo?.readUptoEventId && !unreadInfo?.inLiveTimeline && (
@@ -637,9 +637,9 @@ export function RoomTimeline({
         </TimelineFloat>
       )}
 
-      <VList
+      <VList<ProcessedEvent>
         ref={vListRef}
-        data={vListData}
+        data={processedEvents}
         shift={shift}
         className={css.messageList}
         style={{
@@ -651,22 +651,8 @@ export function RoomTimeline({
           paddingBottom: config.space.S600,
         }}
         onScroll={handleVListScroll}
-        onScrollEnd={() => {
-          const windowExpiry = mountScrollWindowRef.current;
-          const v = vListRef.current;
-          const dfb = v ? v.scrollSize - v.scrollOffset - v.viewportSize : -1;
-          if (windowExpiry !== 0 && eventsLengthRef.current > 0 && !eventId) {
-            if (v && dfb < 20) {
-              mountScrollWindowRef.current = 0;
-            } else if (Date.now() < windowExpiry && v != null) {
-              v.scrollToIndex(eventsLengthRef.current - 1, { align: 'end' });
-            } else {
-              mountScrollWindowRef.current = 0;
-            }
-          }
-        }}
       >
-        {(index: number) => {
+        {(eventData, index) => {
           if (showLoadingPlaceholders) {
             return (
               <MessageBase key={`placeholder-${index}`}>
@@ -678,8 +664,6 @@ export function RoomTimeline({
               </MessageBase>
             );
           }
-
-          const eventData = processedEvents.find((e) => e?.itemIndex === index);
 
           if (!eventData) {
             if (index === 0 && !timelineSync.canPaginateBack) {

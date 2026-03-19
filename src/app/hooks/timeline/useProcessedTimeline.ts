@@ -33,6 +33,8 @@ export interface ProcessedEvent {
   willRenderDayDivider: boolean;
 }
 
+const MESSAGE_EVENT_TYPES = ['m.room.message', 'm.room.message.encrypted', 'm.sticker'];
+
 export function useProcessedTimeline({
   items,
   linkedTimelines,
@@ -45,21 +47,21 @@ export function useProcessedTimeline({
   hideNickAvatarEvents,
   isReadOnly,
   hideMemberInReadOnly,
-}: UseProcessedTimelineOptions): (ProcessedEvent | null)[] {
+}: UseProcessedTimelineOptions): ProcessedEvent[] {
   return useMemo(() => {
     let prevEvent: MatrixEvent | undefined;
     let isPrevRendered = false;
     let newDivider = false;
     let dayDivider = false;
 
-    const chronologicallyProcessed = items.map((item) => {
+    return items.reduce<ProcessedEvent[]>((acc, item) => {
       const [eventTimeline, baseIndex] = getTimelineAndBaseIndex(linkedTimelines, item);
-      if (!eventTimeline) return null;
+      if (!eventTimeline) return acc;
 
       const timelineSet = eventTimeline.getTimelineSet();
       const mEvent = getTimelineEvent(eventTimeline, getTimelineRelativeIndex(item, baseIndex));
 
-      if (!mEvent) return null;
+      if (!mEvent) return acc;
 
       const {
         getId: getEvtId,
@@ -71,20 +73,20 @@ export function useProcessedTimeline({
       } = mEvent;
 
       const mEventId = getEvtId.call(mEvent);
-      if (!mEventId) return null;
+      if (!mEventId) return acc;
 
       const eventSender = getEvtSender.call(mEvent) ?? null;
 
-      if (eventSender && ignoredUsersSet.has(eventSender)) return null;
-      if (getEvtIsRedacted.call(mEvent) && !(showHiddenEvents || showTombstoneEvents)) return null;
+      if (eventSender && ignoredUsersSet.has(eventSender)) return acc;
+      if (getEvtIsRedacted.call(mEvent) && !(showHiddenEvents || showTombstoneEvents)) return acc;
 
       const type = getEvtType.call(mEvent);
 
       if (type === 'm.room.member') {
         const membershipChanged = isMembershipChanged(mEvent);
-        if (hideMemberInReadOnly && isReadOnly) return null;
-        if (membershipChanged && hideMembershipEvents) return null;
-        if (!membershipChanged && hideNickAvatarEvents) return null;
+        if (hideMemberInReadOnly && isReadOnly) return acc;
+        if (membershipChanged && hideMembershipEvents) return acc;
+        if (!membershipChanged && hideNickAvatarEvents) return acc;
       }
 
       if (!showHiddenEvents) {
@@ -100,11 +102,16 @@ export function useProcessedTimeline({
         ].includes(type);
 
         if (!isStandardRendered) {
-          if (Object.keys(mEvent.getContent()).length === 0) return null;
-          if (mEvent.getRelation()) return null;
-          if (mEvent.isRedaction()) return null;
+          if (Object.keys(mEvent.getContent()).length === 0) return acc;
+          if (mEvent.getRelation()) return acc;
+          if (mEvent.isRedaction()) return acc;
         }
       }
+
+      if (threadRootId !== undefined && threadRootId !== mEventId) return acc;
+
+      const isReactionOrEdit = reactionOrEditEvent(mEvent);
+      if (isReactionOrEdit) return acc;
 
       if (!newDivider && readUptoEventId) {
         const prevId = prevEvent ? prevEvent.getId() : undefined;
@@ -115,37 +122,34 @@ export function useProcessedTimeline({
         dayDivider = prevEvent ? !inSameDay(prevEvent.getTs(), getEvtTs.call(mEvent)) : false;
       }
 
-      if (threadRootId !== undefined && threadRootId !== mEventId) return null;
-
-      const isReactionOrEdit = reactionOrEditEvent(mEvent);
-      const willBeRendered = !isReactionOrEdit;
+      const isMessageEvent = MESSAGE_EVENT_TYPES.includes(type);
 
       let collapsed = false;
-      if (
-        isPrevRendered &&
-        !dayDivider &&
-        (!newDivider || eventSender === mxUserId) &&
-        prevEvent !== undefined
-      ) {
+      if (isPrevRendered && !dayDivider && prevEvent !== undefined) {
         const { getSender: getPrevSender, getType: getPrevType, getTs: getPrevTs } = prevEvent;
-        collapsed =
-          getPrevSender.call(prevEvent) === eventSender &&
-          getPrevType.call(prevEvent) === type &&
-          minuteDifference(getPrevTs.call(prevEvent), getEvtTs.call(mEvent)) < 2;
+
+        if (isMessageEvent) {
+          // Message events: same sender+type within 2 min, respect unread divider
+          const withinTimeThreshold =
+            minuteDifference(getPrevTs.call(prevEvent), getEvtTs.call(mEvent)) < 2;
+          collapsed =
+            (!newDivider || eventSender === mxUserId) &&
+            getPrevSender.call(prevEvent) === eventSender &&
+            getPrevType.call(prevEvent) === type &&
+            withinTimeThreshold;
+        } else {
+          // Non-message/system events: collapse unconditionally until a day boundary,
+          // except when immediately following a message event (which acts as a visual
+          // break — the first system event after messages should always show in full).
+          const prevIsMessageEvent = MESSAGE_EVENT_TYPES.includes(getPrevType.call(prevEvent));
+          collapsed = !prevIsMessageEvent;
+        }
       }
 
-      const willRenderNewDivider = newDivider && willBeRendered && eventSender !== mxUserId;
-      const willRenderDayDivider = dayDivider && willBeRendered;
+      const willRenderNewDivider = newDivider && eventSender !== mxUserId;
+      const willRenderDayDivider = dayDivider;
 
-      prevEvent = mEvent;
-      isPrevRendered = willBeRendered;
-
-      if (willRenderNewDivider) newDivider = false;
-      if (willRenderDayDivider) dayDivider = false;
-
-      if (!willBeRendered) return null;
-
-      return {
+      const processed: ProcessedEvent = {
         id: mEventId,
         itemIndex: item,
         mEvent,
@@ -155,9 +159,15 @@ export function useProcessedTimeline({
         willRenderNewDivider,
         willRenderDayDivider,
       };
-    });
 
-    return chronologicallyProcessed;
+      prevEvent = mEvent;
+      isPrevRendered = true;
+      if (willRenderNewDivider) newDivider = false;
+      if (willRenderDayDivider) dayDivider = false;
+
+      acc.push(processed);
+      return acc;
+    }, []);
   }, [
     items,
     linkedTimelines,

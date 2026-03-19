@@ -1147,6 +1147,7 @@ export type EventProps = {
   messageSpacing: MessageSpacing;
   hideReadReceipts?: boolean;
   showDeveloperTools?: boolean;
+  collapse?: boolean;
 };
 export const Event = as<'div', EventProps>(
   (
@@ -1156,6 +1157,7 @@ export const Event = as<'div', EventProps>(
       mEvent,
       highlight,
       notifyHighlight,
+      collapse,
       canDelete,
       onReplyClick,
       messageSpacing,
@@ -1246,7 +1248,7 @@ export const Event = as<'div', EventProps>(
         className={classNames(css.MessageBase, className)}
         tabIndex={0}
         space={messageSpacing}
-        autoCollapse
+        collapse={collapse}
         highlight={highlight}
         notifyHighlight={highlightMentions ? notifyHighlight : undefined}
         selected={!!menuAnchor}

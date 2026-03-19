@@ -714,7 +714,7 @@ export function useTimelineEventRenderer({
           </Message>
         );
       },
-      [StateEvent.RoomMember]: (mEventId, mEvent, item) => {
+      [StateEvent.RoomMember]: (mEventId, mEvent, item, timelineSet, collapse) => {
         const { getTs, getSender } = mEvent;
         const membershipChanged = isMembershipChanged(mEvent);
         if (hideMemberInReadOnly && isReadOnly) return null;
@@ -741,6 +741,7 @@ export function useTimelineEventRenderer({
             room={room}
             mEvent={mEvent}
             highlight={highlighted}
+            collapse={collapse}
             canDelete={canRedact || getSender.call(mEvent) === mx.getUserId()}
             onReplyClick={onReplyClick}
             hideReadReceipts={hideReads}
@@ -762,7 +763,7 @@ export function useTimelineEventRenderer({
           </Event>
         );
       },
-      [StateEvent.RoomName]: (mEventId, mEvent, item) => {
+      [StateEvent.RoomName]: (mEventId, mEvent, item, timelineSet, collapse) => {
         const { getTs, getSender } = mEvent;
         const highlighted = focusItem?.index === item && focusItem.highlight;
         const senderId = getSender.call(mEvent) ?? '';
@@ -786,6 +787,7 @@ export function useTimelineEventRenderer({
             room={room}
             mEvent={mEvent}
             highlight={highlighted}
+            collapse={collapse}
             canDelete={canRedact || senderId === mx.getUserId()}
             onReplyClick={onReplyClick}
             hideReadReceipts={hideReads}
@@ -808,7 +810,7 @@ export function useTimelineEventRenderer({
           </Event>
         );
       },
-      [StateEvent.RoomTopic]: (mEventId, mEvent, item) => {
+      [StateEvent.RoomTopic]: (mEventId, mEvent, item, timelineSet, collapse) => {
         const { getTs, getSender } = mEvent;
         const highlighted = focusItem?.index === item && focusItem.highlight;
         const senderId = getSender.call(mEvent) ?? '';
@@ -832,6 +834,7 @@ export function useTimelineEventRenderer({
             room={room}
             mEvent={mEvent}
             highlight={highlighted}
+            collapse={collapse}
             canDelete={canRedact || senderId === mx.getUserId()}
             onReplyClick={onReplyClick}
             hideReadReceipts={hideReads}
@@ -854,7 +857,7 @@ export function useTimelineEventRenderer({
           </Event>
         );
       },
-      [StateEvent.RoomAvatar]: (mEventId, mEvent, item) => {
+      [StateEvent.RoomAvatar]: (mEventId, mEvent, item, timelineSet, collapse) => {
         const { getTs, getSender } = mEvent;
         const highlighted = focusItem?.index === item && focusItem.highlight;
         const senderId = getSender.call(mEvent) ?? '';
@@ -878,6 +881,7 @@ export function useTimelineEventRenderer({
             room={room}
             mEvent={mEvent}
             highlight={highlighted}
+            collapse={collapse}
             canDelete={canRedact || senderId === mx.getUserId()}
             onReplyClick={onReplyClick}
             hideReadReceipts={hideReads}
@@ -900,7 +904,7 @@ export function useTimelineEventRenderer({
           </Event>
         );
       },
-      [StateEvent.GroupCallMemberPrefix]: (mEventId, mEvent, item) => {
+      [StateEvent.GroupCallMemberPrefix]: (mEventId, mEvent, item, timelineSet, collapse) => {
         const { getTs, getSender, getContent: getEventContent, getPrevContent } = mEvent;
         const highlighted = focusItem?.index === item && focusItem.highlight;
         const senderId = getSender.call(mEvent) ?? '';
@@ -931,6 +935,7 @@ export function useTimelineEventRenderer({
             room={room}
             mEvent={mEvent}
             highlight={highlighted}
+            collapse={collapse}
             canDelete={canRedact || senderId === mx.getUserId()}
             hideReadReceipts={hideReads}
             onReplyClick={onReplyClick}
@@ -954,7 +959,7 @@ export function useTimelineEventRenderer({
         );
       },
     },
-    (mEventId, mEvent, item) => {
+    (mEventId, mEvent, item, timelineSet, collapse) => {
       const { getSender, getTs, getType } = mEvent;
       if (!showHiddenEvents) return null;
       const highlighted = focusItem?.index === item && focusItem.highlight;
@@ -979,6 +984,7 @@ export function useTimelineEventRenderer({
           room={room}
           mEvent={mEvent}
           highlight={highlighted}
+          collapse={collapse}
           canDelete={canRedact || senderId === mx.getUserId()}
           onReplyClick={onReplyClick}
           hideReadReceipts={hideReads}
@@ -1003,7 +1009,7 @@ export function useTimelineEventRenderer({
         </Event>
       );
     },
-    (mEventId, mEvent, item) => {
+    (mEventId, mEvent, item, timelineSet, collapse) => {
       const {
         getContent: getEventContent,
         getRelation,
@@ -1039,6 +1045,7 @@ export function useTimelineEventRenderer({
           room={room}
           mEvent={mEvent}
           highlight={highlighted}
+          collapse={collapse}
           canDelete={canRedact || senderId === mx.getUserId()}
           onReplyClick={onReplyClick}
           hideReadReceipts={hideReads}
