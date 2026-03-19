@@ -1,5 +1,6 @@
 import {
   Fragment,
+  ReactNode,
   useCallback,
   useEffect,
   useLayoutEffect,
@@ -11,6 +12,7 @@ import { Editor } from 'slate';
 import { useAtomValue, useSetAtom } from 'jotai';
 import { PushProcessor, Room, Direction } from '$types/matrix-sdk';
 import classNames from 'classnames';
+import { VList, VListHandle } from 'virtua';
 import {
   as,
   Box,
@@ -18,19 +20,18 @@ import {
   Icon,
   Icons,
   Line,
-  Scroll,
   Text,
   Badge,
   color,
   config,
   toRem,
   ContainerColor,
+  Spinner,
 } from 'folds';
-import { MessageBase } from '$components/message';
+import { MessageBase, CompactPlaceholder, DefaultPlaceholder } from '$components/message';
 import { RoomIntro } from '$components/room-intro';
 import { useMatrixClient } from '$hooks/useMatrixClient';
 import { useAlive } from '$hooks/useAlive';
-import { useVirtualPaginator } from '$hooks/useVirtualPaginator';
 import { useDocumentFocusChange } from '$hooks/useDocumentFocusChange';
 import { markAsRead } from '$utils/notifications';
 import {
@@ -66,15 +67,12 @@ import {
   getEventTimeline,
   getFirstLinkedTimeline,
   getInitialTimeline,
-  PAGINATION_LIMIT,
   getEventIdAbsoluteIndex,
 } from '$utils/timeline';
-import { useScrollManager } from '$hooks/useScrollManager';
 import { useTimelineSync } from '$hooks/timeline/useTimelineSync';
 import { useTimelineActions } from '$hooks/timeline/useTimelineActions';
 import { useProcessedTimeline } from '$hooks/timeline/useProcessedTimeline';
 import { useTimelineEventRenderer } from '$hooks/timeline/useTimelineEventRenderer';
-import { PaginationLoader } from '$components/PaginationPlaceholders';
 import * as css from './RoomTimeline.css';
 
 const TimelineFloat = as<'div', css.TimelineFloatVariants>(
@@ -185,22 +183,55 @@ export function RoomTimeline({
   const openThreadId = useAtomValue(openThreadAtom);
   const setOpenThread = useSetAtom(openThreadAtom);
 
-  const scrollRef = useRef<HTMLDivElement>(null);
-  const messageListRef = useRef<HTMLDivElement>(null);
+  const vListRef = useRef<VListHandle>(null);
+  const [atBottomState, setAtBottomState] = useState(true);
+  const atBottomRef = useRef(atBottomState);
+  const setAtBottom = useCallback((val: boolean) => {
+    setAtBottomState(val);
+    atBottomRef.current = val;
+  }, []);
 
-  const { isAtBottom, onScroll, scrollToBottom, sentryRef } = useScrollManager(scrollRef);
+  const [shift, setShift] = useState(false);
+  const [topSpacerHeight, setTopSpacerHeight] = useState(0);
 
-  const scrollDataRef = useRef({
-    eventsLength: 0,
-    scrollHeight: 0,
-    scrollTop: 0,
-  });
+  const topSpacerHeightRef = useRef(0);
+  const mountScrollWindowRef = useRef<number>(Date.now() + 3000);
+  const hasInitialScrolledRef = useRef(false);
+  const currentRoomIdRef = useRef(room.roomId);
+
+  if (currentRoomIdRef.current !== room.roomId) {
+    hasInitialScrolledRef.current = false;
+    mountScrollWindowRef.current = Date.now() + 3000;
+    currentRoomIdRef.current = room.roomId;
+  }
+
+  const scrollToBottom = useCallback(
+    (behavior?: 'instant' | 'smooth') => {
+      if (!vListRef.current) return;
+      const lastIndex = timelineSyncRef.current.eventsLength - 1;
+      if (lastIndex < 0) return;
+
+      vListRef.current.scrollToIndex(lastIndex, {
+        align: 'end',
+        smooth: behavior === 'smooth' && !reducedMotion,
+      });
+
+      if (behavior === 'instant') {
+        setTimeout(() => {
+          vListRef.current?.scrollToIndex(timelineSyncRef.current.eventsLength - 1, {
+            align: 'end',
+          });
+        }, 80);
+      }
+    },
+    [reducedMotion]
+  );
 
   const timelineSync = useTimelineSync({
     room,
     mx,
     eventId,
-    isAtBottom,
+    isAtBottom: atBottomState,
     scrollToBottom,
     unreadInfo,
     setUnreadInfo,
@@ -208,39 +239,89 @@ export function RoomTimeline({
     readUptoEventIdRef,
   });
 
-  const virtualPaginator = useVirtualPaginator({
-    count: timelineSync.eventsLength,
-    limit: PAGINATION_LIMIT,
-    range: timelineSync.timeline.range,
-    onRangeChange: useCallback(
-      (newRange) => {
-        timelineSync.setTimeline((ct) => {
-          const deltaStart = Math.abs(ct.range.start - newRange.start);
-          const deltaEnd = Math.abs(ct.range.end - newRange.end);
-          if (deltaStart < 3 && deltaEnd < 3) return ct;
-          return { ...ct, range: newRange };
+  const timelineSyncRef = useRef(timelineSync);
+  timelineSyncRef.current = timelineSync;
+
+  const eventsLengthRef = useRef(timelineSync.eventsLength);
+  eventsLengthRef.current = timelineSync.eventsLength;
+
+  const canPaginateBackRef = useRef(timelineSync.canPaginateBack);
+  canPaginateBackRef.current = timelineSync.canPaginateBack;
+
+  const liveTimelineLinkedRef = useRef(timelineSync.liveTimelineLinked);
+  liveTimelineLinkedRef.current = timelineSync.liveTimelineLinked;
+
+  const backwardStatusRef = useRef(timelineSync.backwardStatus);
+  backwardStatusRef.current = timelineSync.backwardStatus;
+
+  const forwardStatusRef = useRef(timelineSync.forwardStatus);
+  forwardStatusRef.current = timelineSync.forwardStatus;
+
+  useLayoutEffect(() => {
+    if (eventId || hasInitialScrolledRef.current) return;
+    if (timelineSync.eventsLength > 0 && vListRef.current) {
+      vListRef.current.scrollToIndex(timelineSync.eventsLength - 1, { align: 'end' });
+      const t = setTimeout(() => {
+        vListRef.current?.scrollToIndex(eventsLengthRef.current - 1, { align: 'end' });
+      }, 80);
+      hasInitialScrolledRef.current = true;
+      return () => clearTimeout(t);
+    }
+  }, [timelineSync.eventsLength, eventId, room.roomId]);
+
+  const recalcTopSpacer = useCallback(() => {
+    const v = vListRef.current;
+    if (!v) return;
+    const prev = topSpacerHeightRef.current;
+
+    if (eventsLengthRef.current > 15) {
+      if (prev > 0) {
+        topSpacerHeightRef.current = 0;
+        setTopSpacerHeight(0);
+      }
+      return;
+    }
+
+    const newH = Math.max(0, v.viewportSize + prev - v.scrollSize);
+    if (Math.abs(prev - newH) > 2) {
+      topSpacerHeightRef.current = newH;
+      setTopSpacerHeight(newH);
+      if (prev > 0 && newH === 0 && eventsLengthRef.current > 0) {
+        requestAnimationFrame(() => {
+          vListRef.current?.scrollToIndex(eventsLengthRef.current - 1, { align: 'end' });
         });
-      },
-      [timelineSync]
-    ),
-    getScrollElement: useCallback(() => scrollRef.current, []),
-    getItemElement: useCallback(
-      (index: number) =>
-        (scrollRef.current?.querySelector(`[data-message-item="${index}"]`) as HTMLElement) ??
-        undefined,
-      []
-    ),
-    onEnd: timelineSync.handleTimelinePagination,
-  });
+      }
+    }
+  }, []);
+
+  useLayoutEffect(() => {
+    const id = requestAnimationFrame(recalcTopSpacer);
+    return () => cancelAnimationFrame(id);
+  }, [recalcTopSpacer, timelineSync.eventsLength]);
+
+  const prevBackwardStatusRef = useRef(timelineSync.backwardStatus);
+  const wasAtBottomBeforePaginationRef = useRef(false);
+
+  useLayoutEffect(() => {
+    const prev = prevBackwardStatusRef.current;
+    prevBackwardStatusRef.current = timelineSync.backwardStatus;
+    if (timelineSync.backwardStatus === 'loading') {
+      wasAtBottomBeforePaginationRef.current = atBottomRef.current;
+      if (!atBottomRef.current) setShift(true);
+    } else if (prev === 'loading' && timelineSync.backwardStatus === 'idle') {
+      if (shift) setShift(false);
+      if (wasAtBottomBeforePaginationRef.current) {
+        vListRef.current?.scrollToIndex(eventsLengthRef.current - 1, { align: 'end' });
+      }
+    }
+  }, [timelineSync.backwardStatus, shift]);
 
   useEffect(() => {
     let timeoutId: ReturnType<typeof setTimeout> | undefined;
     if (timelineSync.focusItem) {
-      if (timelineSync.focusItem.scrollTo) {
-        virtualPaginator.scrollToItem(timelineSync.focusItem.index, {
-          behavior: reducedMotion ? 'instant' : 'smooth',
+      if (timelineSync.focusItem.scrollTo && vListRef.current) {
+        vListRef.current.scrollToIndex(timelineSync.focusItem.index, {
           align: 'center',
-          stopInView: true,
         });
         timelineSync.setFocusItem((prev) => (prev ? { ...prev, scrollTo: false } : undefined));
       }
@@ -249,15 +330,12 @@ export function RoomTimeline({
       }, 2000);
     }
     return () => {
-      if (timeoutId !== undefined) {
-        clearTimeout(timeoutId);
-      }
+      if (timeoutId !== undefined) clearTimeout(timeoutId);
     };
-  }, [timelineSync.focusItem, virtualPaginator, timelineSync, reducedMotion]);
+  }, [timelineSync.focusItem, timelineSync, reducedMotion]);
 
   useEffect(() => {
     if (eventId) return;
-
     const { readUptoEventId, inLiveTimeline, scrollTo } = unreadInfo ?? {};
     if (readUptoEventId && inLiveTimeline && scrollTo) {
       const evtTimeline = getEventTimeline(room, readUptoEventId);
@@ -269,16 +347,12 @@ export function RoomTimeline({
           )
         : undefined;
 
-      if (absoluteIndex !== undefined) {
-        virtualPaginator.scrollToItem(absoluteIndex, {
-          behavior: 'instant',
-          align: 'start',
-          stopInView: true,
-        });
+      if (absoluteIndex !== undefined && vListRef.current) {
+        vListRef.current.scrollToIndex(absoluteIndex, { align: 'start' });
         setUnreadInfo((prev) => (prev ? { ...prev, scrollTo: false } : prev));
       }
     }
-  }, [room, unreadInfo, timelineSync.timeline.linkedTimelines, virtualPaginator, eventId]);
+  }, [room, unreadInfo, timelineSync.timeline.linkedTimelines, eventId]);
 
   const actions = useTimelineActions({
     room,
@@ -302,11 +376,11 @@ export function RoomTimeline({
         : undefined;
 
       if (typeof absoluteIndex === 'number') {
-        virtualPaginator.scrollToItem(absoluteIndex, {
-          behavior: reducedMotion ? 'instant' : 'smooth',
-          align: 'center',
-          stopInView: true,
-        });
+        if (vListRef.current) {
+          vListRef.current.scrollToIndex(absoluteIndex, {
+            align: 'center',
+          });
+        }
         timelineSync.setFocusItem({ index: absoluteIndex, scrollTo: false, highlight: true });
       } else {
         timelineSync.loadEventTimeline(id);
@@ -314,14 +388,28 @@ export function RoomTimeline({
     },
   });
 
+  const vListItemCount =
+    timelineSync.eventsLength === 0 &&
+    (timelineSync.canPaginateBack || timelineSync.backwardStatus === 'loading')
+      ? 3
+      : timelineSync.eventsLength;
+  const vListData = useMemo(
+    () => Array.from({ length: vListItemCount }, (_, i) => i),
+    [vListItemCount]
+  );
+
   const processedEvents = useProcessedTimeline({
-    items: virtualPaginator.getItems(),
+    items: vListData,
     linkedTimelines: timelineSync.timeline.linkedTimelines,
     ignoredUsersSet,
     showHiddenEvents,
     showTombstoneEvents,
     mxUserId: mx.getUserId(),
     readUptoEventId: readUptoEventIdRef.current,
+    hideMembershipEvents,
+    hideNickAvatarEvents,
+    isReadOnly,
+    hideMemberInReadOnly,
   });
 
   const linkifyOpts = useMemo(
@@ -420,22 +508,109 @@ export function RoomTimeline({
   useDocumentFocusChange(
     useCallback(
       (inFocus) => {
-        if (inFocus && isAtBottom) tryAutoMarkAsRead();
+        if (inFocus && atBottomState) tryAutoMarkAsRead();
       },
-      [tryAutoMarkAsRead, isAtBottom]
+      [tryAutoMarkAsRead, atBottomState]
     )
   );
 
   useEffect(() => {
-    if (
-      isAtBottom &&
-      document.hasFocus() &&
-      timelineSync.liveTimelineLinked &&
-      timelineSync.rangeAtEnd
-    ) {
+    if (atBottomState && document.hasFocus() && timelineSync.liveTimelineLinked)
       tryAutoMarkAsRead();
+  }, [atBottomState, timelineSync.liveTimelineLinked, tryAutoMarkAsRead]);
+
+  const handleVListScroll = useCallback(
+    (offset: number) => {
+      const v = vListRef.current;
+      if (!v) return;
+
+      const distanceFromBottom = v.scrollSize - offset - v.viewportSize;
+      const isNowAtBottom = distanceFromBottom < 100;
+      if (isNowAtBottom !== atBottomRef.current) {
+        setAtBottom(isNowAtBottom);
+      }
+
+      if (offset < 500 && canPaginateBackRef.current && backwardStatusRef.current === 'idle') {
+        timelineSyncRef.current.handleTimelinePagination(true);
+      }
+      if (
+        distanceFromBottom < 500 &&
+        !liveTimelineLinkedRef.current &&
+        forwardStatusRef.current === 'idle'
+      ) {
+        timelineSyncRef.current.handleTimelinePagination(false);
+      }
+    },
+    [setAtBottom]
+  );
+
+  const showLoadingPlaceholders =
+    timelineSync.eventsLength === 0 &&
+    (timelineSync.canPaginateBack || timelineSync.backwardStatus === 'loading');
+
+  let backPaginationJSX: ReactNode | undefined;
+  if (timelineSync.canPaginateBack || timelineSync.backwardStatus !== 'idle') {
+    if (timelineSync.backwardStatus === 'error') {
+      backPaginationJSX = (
+        <Box
+          justifyContent="Center"
+          alignItems="Center"
+          gap="200"
+          style={{ padding: config.space.S300 }}
+        >
+          <Text style={{ color: color.Critical.Main }} size="T300">
+            Failed to load history.
+          </Text>
+          <Chip
+            variant="SurfaceVariant"
+            radii="Pill"
+            outlined
+            onClick={() => timelineSync.handleTimelinePagination(true)}
+          >
+            <Text size="B300">Retry</Text>
+          </Chip>
+        </Box>
+      );
+    } else if (timelineSync.backwardStatus === 'loading' && timelineSync.eventsLength > 0) {
+      backPaginationJSX = (
+        <Box justifyContent="Center" style={{ padding: config.space.S300 }}>
+          <Spinner variant="Secondary" size="400" />
+        </Box>
+      );
     }
-  }, [isAtBottom, timelineSync.liveTimelineLinked, timelineSync.rangeAtEnd, tryAutoMarkAsRead]);
+  }
+
+  let frontPaginationJSX: ReactNode | undefined;
+  if (!timelineSync.liveTimelineLinked || timelineSync.forwardStatus !== 'idle') {
+    if (timelineSync.forwardStatus === 'error') {
+      frontPaginationJSX = (
+        <Box
+          justifyContent="Center"
+          alignItems="Center"
+          gap="200"
+          style={{ padding: config.space.S300 }}
+        >
+          <Text style={{ color: color.Critical.Main }} size="T300">
+            Failed to load messages.
+          </Text>
+          <Chip
+            variant="SurfaceVariant"
+            radii="Pill"
+            outlined
+            onClick={() => timelineSync.handleTimelinePagination(false)}
+          >
+            <Text size="B300">Retry</Text>
+          </Chip>
+        </Box>
+      );
+    } else if (timelineSync.forwardStatus === 'loading' && timelineSync.eventsLength > 0) {
+      frontPaginationJSX = (
+        <Box justifyContent="Center" style={{ padding: config.space.S300 }}>
+          <Spinner variant="Secondary" size="400" />
+        </Box>
+      );
+    }
+  }
 
   return (
     <Box grow="Yes" style={{ position: 'relative' }}>
@@ -462,47 +637,81 @@ export function RoomTimeline({
         </TimelineFloat>
       )}
 
-      <Scroll
-        ref={scrollRef}
-        visibility="Hover"
-        onScroll={() => {
-          onScroll();
-          if (scrollRef.current) {
-            scrollDataRef.current.scrollTop = scrollRef.current.scrollTop;
-            scrollDataRef.current.scrollHeight = scrollRef.current.scrollHeight;
+      <VList
+        ref={vListRef}
+        data={vListData}
+        shift={shift}
+        className={css.messageList}
+        style={{
+          flex: 1,
+          minHeight: 0,
+          display: 'flex',
+          flexDirection: 'column',
+          paddingTop: topSpacerHeight > 0 ? topSpacerHeight : config.space.S600,
+          paddingBottom: config.space.S600,
+        }}
+        onScroll={handleVListScroll}
+        onScrollEnd={() => {
+          const windowExpiry = mountScrollWindowRef.current;
+          const v = vListRef.current;
+          const dfb = v ? v.scrollSize - v.scrollOffset - v.viewportSize : -1;
+          if (windowExpiry !== 0 && eventsLengthRef.current > 0 && !eventId) {
+            if (v && dfb < 20) {
+              mountScrollWindowRef.current = 0;
+            } else if (Date.now() < windowExpiry && v != null) {
+              v.scrollToIndex(eventsLengthRef.current - 1, { align: 'end' });
+            } else {
+              mountScrollWindowRef.current = 0;
+            }
           }
         }}
       >
-        <Box
-          ref={messageListRef}
-          className={css.messageList}
-          style={{ minHeight: '100%', padding: `${config.space.S600} 0` }}
-        >
-          {(!timelineSync.liveTimelineLinked ||
-            !timelineSync.rangeAtEnd ||
-            timelineSync.forwardStatus !== 'idle') && (
-            <PaginationLoader
-              status={timelineSync.forwardStatus}
-              direction="forward"
-              isCompact={messageLayout === MessageLayout.Compact}
-              isEmpty={virtualPaginator.getItems().length === 0}
-              onRetry={() => timelineSync.handleTimelinePagination(false)}
-              observerRef={virtualPaginator.observeFrontAnchor}
-            />
-          )}
+        {(index: number) => {
+          if (showLoadingPlaceholders) {
+            return (
+              <MessageBase key={`placeholder-${index}`}>
+                {messageLayout === MessageLayout.Compact ? (
+                  <CompactPlaceholder />
+                ) : (
+                  <DefaultPlaceholder />
+                )}
+              </MessageBase>
+            );
+          }
 
-          {processedEvents.map((eventData) => (
-            <Fragment key={eventData.id}>
-              {renderMatrixEvent(
-                eventData.mEvent.getType(),
-                typeof eventData.mEvent.getStateKey() === 'string',
-                eventData.id,
-                eventData.mEvent,
-                eventData.itemIndex,
-                eventData.timelineSet,
-                eventData.collapsed
-              )}
+          const eventData = processedEvents.find((e) => e?.itemIndex === index);
 
+          if (!eventData) {
+            if (index === 0 && !timelineSync.canPaginateBack) {
+              return (
+                <Fragment key="intro-and-first">
+                  {backPaginationJSX}
+                  <div
+                    style={{
+                      padding: `${config.space.S700} ${config.space.S400} ${config.space.S600} ${messageLayout === MessageLayout.Compact ? config.space.S400 : toRem(64)}`,
+                    }}
+                  >
+                    <RoomIntro room={room} />
+                  </div>
+                </Fragment>
+              );
+            }
+            if (index === 0) return <Fragment key="first">{backPaginationJSX}</Fragment>;
+            return <Fragment key={index} />;
+          }
+
+          const renderedEvent = renderMatrixEvent(
+            eventData.mEvent.getType(),
+            typeof eventData.mEvent.getStateKey() === 'string',
+            eventData.id,
+            eventData.mEvent,
+            eventData.itemIndex,
+            eventData.timelineSet,
+            eventData.collapsed
+          );
+
+          const dividers = (
+            <>
               {eventData.willRenderDayDivider && (
                 <MessageBase space={messageSpacing}>
                   <TimelineDivider variant="Surface">
@@ -512,7 +721,6 @@ export function RoomTimeline({
                   </TimelineDivider>
                 </MessageBase>
               )}
-
               {eventData.willRenderNewDivider && (
                 <MessageBase space={messageSpacing}>
                   <TimelineDivider style={{ color: color.Success.Main }} variant="Inherit">
@@ -522,42 +730,40 @@ export function RoomTimeline({
                   </TimelineDivider>
                 </MessageBase>
               )}
+            </>
+          );
+
+          if (index === 0) {
+            return (
+              <Fragment key="first-item-block">
+                {!timelineSync.canPaginateBack && (
+                  <div
+                    style={{
+                      padding: `${config.space.S700} ${config.space.S400} ${config.space.S600} ${messageLayout === MessageLayout.Compact ? config.space.S400 : toRem(64)}`,
+                    }}
+                  >
+                    <RoomIntro room={room} />
+                  </div>
+                )}
+                {backPaginationJSX}
+                {dividers}
+                {renderedEvent}
+              </Fragment>
+            );
+          }
+
+          return (
+            <Fragment key={eventData.id}>
+              {dividers}
+              {renderedEvent}
             </Fragment>
-          ))}
+          );
+        }}
+      </VList>
 
-          {(timelineSync.canPaginateBack ||
-            !timelineSync.rangeAtStart ||
-            timelineSync.backwardStatus !== 'idle') && (
-            <PaginationLoader
-              status={timelineSync.backwardStatus}
-              direction="backward"
-              isCompact={messageLayout === MessageLayout.Compact}
-              isEmpty={virtualPaginator.getItems().length === 0}
-              onRetry={() => timelineSync.handleTimelinePagination(true)}
-              observerRef={
-                timelineSync.eventsLength > 0 || !timelineSync.liveTimelineLinked
-                  ? virtualPaginator.observeBackAnchor
-                  : undefined
-              }
-            />
-          )}
+      {frontPaginationJSX}
 
-          {!timelineSync.canPaginateBack &&
-            timelineSync.rangeAtStart &&
-            processedEvents.length > 0 && (
-              <div
-                style={{
-                  padding: `${config.space.S700} ${config.space.S400} ${config.space.S600} ${messageLayout === MessageLayout.Compact ? config.space.S400 : toRem(64)}`,
-                }}
-              >
-                <RoomIntro room={room} />
-              </div>
-            )}
-          <div ref={sentryRef} style={{ height: '1px', width: '100%', flexShrink: 0 }} />
-        </Box>
-      </Scroll>
-
-      {!isAtBottom && (
+      {!atBottomState && (
         <TimelineFloat position="Bottom">
           <Chip
             variant="SurfaceVariant"

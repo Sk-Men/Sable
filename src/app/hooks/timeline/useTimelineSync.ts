@@ -17,7 +17,6 @@ import {
 
 import { useAlive } from '$hooks/useAlive';
 import { createDebugLogger } from '$utils/debugLogger';
-import { ItemRange } from '$hooks/useVirtualPaginator';
 import { markAsRead } from '$utils/notifications';
 import { decryptAllTimelineEvent } from '$utils/room';
 import {
@@ -39,7 +38,6 @@ export type PaginationStatus = 'idle' | 'loading' | 'error';
 
 export type TimelineState = {
   linkedTimelines: EventTimeline[];
-  range: ItemRange;
 };
 
 const useEventTimelineLoader = (
@@ -121,32 +119,10 @@ const useTimelinePagination = (
   const fetchingRef = useRef({ backward: false, forward: false });
 
   const paginate = useMemo(() => {
-    const recalibratePagination = (
-      linkedTimelines: EventTimeline[],
-      timelinesEventsCount: number[],
-      backwards: boolean
-    ) => {
+    const recalibratePagination = (linkedTimelines: EventTimeline[]) => {
       const topTimeline = linkedTimelines[0];
-      const timelineMatch = (mt: EventTimeline) => (t: EventTimeline) => t === mt;
-
       const newLTimelines = getLinkedTimelines(topTimeline);
-      const topTmIndex = newLTimelines.findIndex(timelineMatch(topTimeline));
-      const topAddedTm = topTmIndex === -1 ? [] : newLTimelines.slice(0, topTmIndex);
-
-      const topTmAddedEvt =
-        (newLTimelines[topTmIndex]?.getEvents()?.length ?? 0) - timelinesEventsCount[0];
-      const offsetRange = getTimelinesEventsCount(topAddedTm) + (backwards ? topTmAddedEvt : 0);
-
-      setTimeline((currentTimeline) => ({
-        linkedTimelines: newLTimelines,
-        range:
-          offsetRange > 0
-            ? {
-                start: currentTimeline.range.start + offsetRange,
-                end: currentTimeline.range.end + offsetRange,
-              }
-            : { ...currentTimeline.range },
-      }));
+      setTimeline(() => ({ linkedTimelines: newLTimelines }));
     };
 
     return async (backwards: boolean) => {
@@ -155,7 +131,6 @@ const useTimelinePagination = (
       if (fetchingRef.current[directionKey]) return;
 
       const { linkedTimelines: lTimelines } = timelineRef.current;
-      const timelinesEventsCount = lTimelines.map((t) => t.getEvents()?.length ?? 0);
 
       const timelineToPaginate = backwards ? lTimelines[0] : lTimelines.at(-1);
       if (!timelineToPaginate) return;
@@ -169,7 +144,7 @@ const useTimelinePagination = (
         getTimelinesEventsCount(lTimelines) !==
           getTimelinesEventsCount(getLinkedTimelines(timelineToPaginate))
       ) {
-        recalibratePagination(lTimelines, timelinesEventsCount, backwards);
+        recalibratePagination(lTimelines);
         return;
       }
 
@@ -218,7 +193,7 @@ const useTimelinePagination = (
         }
 
         if (alive()) {
-          recalibratePagination(lTimelines, timelinesEventsCount, backwards);
+          recalibratePagination(lTimelines);
           (backwards ? setBackwardStatus : setForwardStatus)('idle');
           Sentry.metrics.distribution(
             'sable.pagination.latency_ms',
@@ -377,7 +352,7 @@ export function useTimelineSync({
   const alive = useAlive();
 
   const [timeline, setTimeline] = useState<TimelineState>(() =>
-    eventId ? getEmptyTimeline() : getInitialTimeline(room)
+    eventId ? getEmptyTimeline() : { linkedTimelines: getInitialTimeline(room).linkedTimelines }
   );
 
   const [focusItem, setFocusItem] = useState<
@@ -397,11 +372,8 @@ export function useTimelineSync({
   const canPaginateBack =
     typeof timeline.linkedTimelines[0]?.getPaginationToken(Direction.Backward) === 'string';
 
-  const rangeAtStart = timeline.range.start === 0;
-  const rangeAtEnd = timeline.range.end === eventsLength;
-
-  const atLiveEndRef = useRef(liveTimelineLinked && rangeAtEnd);
-  atLiveEndRef.current = liveTimelineLinked && rangeAtEnd;
+  const atLiveEndRef = useRef(liveTimelineLinked);
+  atLiveEndRef.current = liveTimelineLinked;
 
   const {
     paginate: handleTimelinePagination,
@@ -434,20 +406,18 @@ export function useTimelineSync({
         eventsLength,
         prevEventsLength: prev,
         liveTimelineLinked,
-        rangeEnd: timeline.range.end,
         atBottom: isAtBottom,
-        rangeGap: eventsLength - timeline.range.end,
       },
     });
 
     if (delta > 50 && liveTimelineLinked) {
       Sentry.captureMessage('Timeline: large event batch from sliding sync', {
         level: 'warning',
-        extra: { delta, eventsLength, rangeEnd: timeline.range.end, atBottom: isAtBottom },
+        extra: { delta, eventsLength, atBottom: isAtBottom },
         tags: { feature: 'timeline', batchSize },
       });
     }
-  }, [eventsLength, liveTimelineLinked, isAtBottom, timeline.range.end]);
+  }, [eventsLength, liveTimelineLinked, isAtBottom]);
 
   const loadEventTimeline = useEventTimelineLoader(
     mx,
@@ -455,15 +425,8 @@ export function useTimelineSync({
     useCallback(
       (evtId, lTimelines, evtAbsIndex) => {
         if (!alive()) return;
-        const evLength = getTimelinesEventsCount(lTimelines);
 
-        setTimeline({
-          linkedTimelines: lTimelines,
-          range: {
-            start: Math.max(evtAbsIndex - PAGINATION_LIMIT, 0),
-            end: Math.min(evtAbsIndex + PAGINATION_LIMIT, evLength),
-          },
-        });
+        setTimeline({ linkedTimelines: lTimelines });
 
         setFocusItem({
           index: evtAbsIndex,
@@ -475,10 +438,15 @@ export function useTimelineSync({
     ),
     useCallback(() => {
       if (!alive()) return;
-      setTimeline(getInitialTimeline(room));
+      setTimeline({ linkedTimelines: getInitialTimeline(room).linkedTimelines });
       scrollToBottom('instant');
     }, [alive, room, scrollToBottom])
   );
+
+  const lastScrolledAtEventsLengthRef = useRef(eventsLength);
+
+  const eventsLengthRef = useRef(eventsLength);
+  eventsLengthRef.current = eventsLength;
 
   useLiveEventArrive(
     room,
@@ -502,14 +470,9 @@ export function useTimelineSync({
           }
 
           scrollToBottom(getSender.call(mEvt) === mx.getUserId() ? 'instant' : 'smooth');
+          lastScrolledAtEventsLengthRef.current = eventsLengthRef.current + 1;
 
-          setTimeline((ct) => ({
-            ...ct,
-            range: {
-              start: ct.range.start + 1,
-              end: ct.range.end + 1,
-            },
-          }));
+          setTimeline((ct) => ({ ...ct }));
           return;
         }
 
@@ -542,7 +505,7 @@ export function useTimelineSync({
     useCallback(() => {
       const wasAtBottom = isAtBottom;
       timelineJustResetRef.current = true;
-      setTimeline(getInitialTimeline(room));
+      setTimeline({ linkedTimelines: getInitialTimeline(room).linkedTimelines });
       if (wasAtBottom) {
         scrollToBottom('instant');
       }
@@ -565,30 +528,21 @@ export function useTimelineSync({
 
   useEffect(() => {
     const resetPending = timelineJustResetRef.current;
-    const isActuallyAtLiveEnd = isAtBottom && atLiveEndRef.current;
+    if (resetPending) timelineJustResetRef.current = false;
 
-    if (
-      (isActuallyAtLiveEnd || resetPending) &&
-      liveTimelineLinked &&
-      eventsLength > timeline.range.end
-    ) {
-      if (resetPending) timelineJustResetRef.current = false;
-      scrollToBottom('instant');
-      setTimeline((ct) => ({
-        ...ct,
-        range: {
-          start: Math.max(eventsLength - PAGINATION_LIMIT, 0),
-          end: eventsLength,
-        },
-      }));
-    }
-  }, [isAtBottom, liveTimelineLinked, eventsLength, timeline.range.end, scrollToBottom]);
+    if (!(isAtBottom || resetPending) || !liveTimelineLinked || eventsLength === 0) return;
+
+    if (eventsLength <= lastScrolledAtEventsLengthRef.current && !resetPending) return;
+
+    lastScrolledAtEventsLengthRef.current = eventsLength;
+    scrollToBottom('instant');
+  }, [isAtBottom, liveTimelineLinked, eventsLength, scrollToBottom]);
 
   useEffect(() => {
     if (eventId) return;
     if (timeline.linkedTimelines.length > 0) return;
     if (getLiveTimeline(room).getEvents().length === 0) return;
-    setTimeline(getInitialTimeline(room));
+    setTimeline({ linkedTimelines: getInitialTimeline(room).linkedTimelines });
   }, [eventId, room, timeline.linkedTimelines.length]);
 
   return {
@@ -597,8 +551,6 @@ export function useTimelineSync({
     eventsLength,
     liveTimelineLinked,
     canPaginateBack,
-    rangeAtStart,
-    rangeAtEnd,
     backwardStatus,
     forwardStatus,
     handleTimelinePagination,

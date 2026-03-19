@@ -1,6 +1,6 @@
 import { globalStyle, style } from '@vanilla-extract/css';
 import { RecipeVariants, recipe } from '@vanilla-extract/recipes';
-import { DefaultReset, config } from 'folds';
+import { DefaultReset, color, config, toRem } from 'folds';
 
 export const TimelineFloat = recipe({
   base: [
@@ -29,12 +29,53 @@ export const TimelineFloat = recipe({
 });
 
 export type TimelineFloatVariants = RecipeVariants<typeof TimelineFloat>;
-
 export const messageList = style({
-  display: 'flex',
-  flexDirection: 'column-reverse',
-  width: '100%',
-  overflowAnchor: 'none',
+  overflowY: 'scroll',
+  scrollbarGutter: 'stable',
+
+  '@supports': {
+    'not selector(::-webkit-scrollbar)': {
+      scrollbarWidth: 'auto',
+      selectors: {
+        '&:hover': {
+          scrollbarColor: `${color.SurfaceVariant.ContainerLine} ${color.SurfaceVariant.ContainerActive}`,
+        },
+      },
+    },
+  },
+
+  selectors: {
+    '&::-webkit-scrollbar': {
+      width: toRem(16),
+      height: toRem(16),
+    },
+    '&::-webkit-scrollbar-corner': {
+      backgroundColor: 'transparent',
+    },
+    '&::-webkit-scrollbar-thumb': {
+      backgroundColor: 'transparent',
+      borderRadius: config.radii.Pill,
+      minHeight: toRem(35),
+      border: `${toRem(4)} solid transparent`,
+      backgroundClip: 'padding-box',
+    },
+    '&::-webkit-scrollbar-track': {
+      backgroundColor: 'transparent',
+      borderRadius: config.radii.Pill,
+      border: `${toRem(4)} solid transparent`,
+      backgroundClip: 'padding-box',
+    },
+    '&:hover::-webkit-scrollbar-thumb': {
+      backgroundColor: color.SurfaceVariant.ContainerLine,
+    },
+    '&:hover::-webkit-scrollbar-track': {
+      backgroundColor: color.SurfaceVariant.ContainerActive,
+    },
+  },
+});
+globalStyle(`${messageList} > *`, {
+  scrollbarWidth: 'auto',
+  scrollbarColor: 'auto',
 });
 
 globalStyle(`body ${messageList} > *`, {
@@ -47,6 +88,7 @@ globalStyle(`body ${messageList} [data-message-id]`, {
   position: 'relative',
   zIndex: 1,
 });
+
 globalStyle(`body ${messageList} [data-message-id]:hover`, {
   backgroundColor: 'var(--sable-surface-container-hover) !important',
   zIndex: 2,

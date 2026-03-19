@@ -342,7 +342,6 @@ export function useTimelineEventRenderer({
             mEvent={mEvent}
             messageSpacing={messageSpacing}
             messageLayout={messageLayout}
-            collapse={collapse}
             highlight={highlighted}
             notifyHighlight={notifyHighlight}
             edit={editId === mEventId}
@@ -362,6 +361,7 @@ export function useTimelineEventRenderer({
             onResend={onResend}
             onDeleteFailedSend={onDeleteFailedSend}
             onEditId={onEditId}
+            collapse={collapse}
             activeReplyId={activeReplyId}
             reply={
               replyEventId && (
@@ -463,7 +463,6 @@ export function useTimelineEventRenderer({
             mEvent={mEvent}
             messageSpacing={messageSpacing}
             messageLayout={messageLayout}
-            collapse={collapse}
             highlight={highlighted}
             notifyHighlight={notifyHighlight}
             edit={editId === mEventId}
@@ -482,6 +481,7 @@ export function useTimelineEventRenderer({
             senderDisplayName={senderDisplayName}
             sendStatus={getAssociatedStatus.call(mEvent)}
             onResend={onResend}
+            collapse={collapse}
             onDeleteFailedSend={onDeleteFailedSend}
             reply={
               replyEventId && (
@@ -625,7 +625,6 @@ export function useTimelineEventRenderer({
             mEvent={mEvent}
             messageSpacing={messageSpacing}
             messageLayout={messageLayout}
-            collapse={collapse}
             highlight={highlighted}
             canDelete={canRedact || (canDeleteOwn && senderId === mx.getUserId())}
             canSendReaction={canSendReaction}
@@ -642,6 +641,7 @@ export function useTimelineEventRenderer({
             sendStatus={getAssociatedStatus.call(mEvent)}
             onResend={onResend}
             onDeleteFailedSend={onDeleteFailedSend}
+            collapse={collapse}
             reply={
               replyEventId && (
                 <Reply
@@ -741,11 +741,11 @@ export function useTimelineEventRenderer({
             room={room}
             mEvent={mEvent}
             highlight={highlighted}
-            messageSpacing={messageSpacing}
             canDelete={canRedact || getSender.call(mEvent) === mx.getUserId()}
             onReplyClick={onReplyClick}
             hideReadReceipts={hideReads}
             showDeveloperTools={showDeveloperTools}
+            messageSpacing={messageSpacing}
           >
             <EventContent
               messageLayout={messageLayout}
@@ -786,11 +786,11 @@ export function useTimelineEventRenderer({
             room={room}
             mEvent={mEvent}
             highlight={highlighted}
-            messageSpacing={messageSpacing}
             canDelete={canRedact || senderId === mx.getUserId()}
             onReplyClick={onReplyClick}
             hideReadReceipts={hideReads}
             showDeveloperTools={showDeveloperTools}
+            messageSpacing={messageSpacing}
           >
             <EventContent
               messageLayout={messageLayout}
@@ -832,11 +832,11 @@ export function useTimelineEventRenderer({
             room={room}
             mEvent={mEvent}
             highlight={highlighted}
-            messageSpacing={messageSpacing}
             canDelete={canRedact || senderId === mx.getUserId()}
             onReplyClick={onReplyClick}
             hideReadReceipts={hideReads}
             showDeveloperTools={showDeveloperTools}
+            messageSpacing={messageSpacing}
           >
             <EventContent
               messageLayout={messageLayout}
@@ -878,11 +878,11 @@ export function useTimelineEventRenderer({
             room={room}
             mEvent={mEvent}
             highlight={highlighted}
-            messageSpacing={messageSpacing}
             canDelete={canRedact || senderId === mx.getUserId()}
             onReplyClick={onReplyClick}
             hideReadReceipts={hideReads}
             showDeveloperTools={showDeveloperTools}
+            messageSpacing={messageSpacing}
           >
             <EventContent
               messageLayout={messageLayout}
@@ -931,11 +931,11 @@ export function useTimelineEventRenderer({
             room={room}
             mEvent={mEvent}
             highlight={highlighted}
-            messageSpacing={messageSpacing}
             canDelete={canRedact || senderId === mx.getUserId()}
             hideReadReceipts={hideReads}
             onReplyClick={onReplyClick}
             showDeveloperTools={showDeveloperTools}
+            messageSpacing={messageSpacing}
           >
             <EventContent
               messageLayout={messageLayout}
@@ -979,11 +979,11 @@ export function useTimelineEventRenderer({
           room={room}
           mEvent={mEvent}
           highlight={highlighted}
-          messageSpacing={messageSpacing}
           canDelete={canRedact || senderId === mx.getUserId()}
           onReplyClick={onReplyClick}
           hideReadReceipts={hideReads}
           showDeveloperTools={showDeveloperTools}
+          messageSpacing={messageSpacing}
         >
           <EventContent
             messageLayout={messageLayout}
@@ -1039,11 +1039,11 @@ export function useTimelineEventRenderer({
           room={room}
           mEvent={mEvent}
           highlight={highlighted}
-          messageSpacing={messageSpacing}
           canDelete={canRedact || senderId === mx.getUserId()}
           onReplyClick={onReplyClick}
           hideReadReceipts={hideReads}
           showDeveloperTools={showDeveloperTools}
+          messageSpacing={messageSpacing}
         >
           <EventContent
             messageLayout={messageLayout}
