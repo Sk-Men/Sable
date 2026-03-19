@@ -441,14 +441,18 @@ export function RoomTimeline({
           className={css.messageList}
           style={{ minHeight: '100%', padding: `${config.space.S600} 0` }}
         >
-          <PaginationLoader
-            status={timelineSync.forwardStatus}
-            direction="forward"
-            isCompact={messageLayout === MessageLayout.Compact}
-            isEmpty={virtualPaginator.getItems().length === 0}
-            onRetry={() => timelineSync.handleTimelinePagination(false)}
-            observerRef={virtualPaginator.observeFrontAnchor}
-          />
+          {(!timelineSync.liveTimelineLinked ||
+            !timelineSync.rangeAtEnd ||
+            timelineSync.forwardStatus !== 'idle') && (
+            <PaginationLoader
+              status={timelineSync.forwardStatus}
+              direction="forward"
+              isCompact={messageLayout === MessageLayout.Compact}
+              isEmpty={virtualPaginator.getItems().length === 0}
+              onRetry={() => timelineSync.handleTimelinePagination(false)}
+              observerRef={virtualPaginator.observeFrontAnchor}
+            />
+          )}
 
           {processedEvents.map((eventData) => (
             <Fragment key={eventData.id}>
@@ -484,18 +488,22 @@ export function RoomTimeline({
             </Fragment>
           ))}
 
-          <PaginationLoader
-            status={timelineSync.backwardStatus}
-            direction="backward"
-            isCompact={messageLayout === MessageLayout.Compact}
-            isEmpty={virtualPaginator.getItems().length === 0}
-            onRetry={() => timelineSync.handleTimelinePagination(true)}
-            observerRef={
-              timelineSync.eventsLength > 0 || !timelineSync.liveTimelineLinked
-                ? virtualPaginator.observeBackAnchor
-                : undefined
-            }
-          />
+          {(timelineSync.canPaginateBack ||
+            !timelineSync.rangeAtStart ||
+            timelineSync.backwardStatus !== 'idle') && (
+            <PaginationLoader
+              status={timelineSync.backwardStatus}
+              direction="backward"
+              isCompact={messageLayout === MessageLayout.Compact}
+              isEmpty={virtualPaginator.getItems().length === 0}
+              onRetry={() => timelineSync.handleTimelinePagination(true)}
+              observerRef={
+                timelineSync.eventsLength > 0 || !timelineSync.liveTimelineLinked
+                  ? virtualPaginator.observeBackAnchor
+                  : undefined
+              }
+            />
+          )}
 
           {!timelineSync.canPaginateBack &&
             timelineSync.rangeAtStart &&
