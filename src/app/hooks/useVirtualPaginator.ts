@@ -61,7 +61,7 @@ const getDropIndex = (
   range: ItemRange,
   dropDirection: Direction,
   getItemElement: (index: number) => HTMLElement | undefined,
-  pageThreshold = 1
+  pageThreshold = 6
 ): number | undefined => {
   const fromBackward = dropDirection === Direction.Backward;
   const items = fromBackward ? generateItems(range) : generateItems(range).reverse();
@@ -69,9 +69,11 @@ const getDropIndex = (
   const { viewHeight, top, height } = getScrollInfo(scrollEl);
   const { offsetTop: sOffsetTop } = scrollEl;
   const bottom = top + viewHeight;
+
   const dropEdgePx = fromBackward
     ? Math.max(top - viewHeight * pageThreshold, 0)
     : Math.min(bottom + viewHeight * pageThreshold, height);
+
   if (dropEdgePx === 0 || dropEdgePx === height) return undefined;
 
   let dropIndex: number | undefined;
@@ -92,39 +94,6 @@ const getDropIndex = (
   });
 
   return dropIndex;
-};
-
-type RestoreAnchorData = [number | undefined, HTMLElement | undefined];
-const getRestoreAnchor = (
-  range: ItemRange,
-  getItemElement: (index: number) => HTMLElement | undefined,
-  direction: Direction
-): RestoreAnchorData => {
-  let scrollAnchorEl: HTMLElement | undefined;
-  const scrollAnchorItem = (
-    direction === Direction.Backward ? generateItems(range) : generateItems(range).reverse()
-  ).find((i) => {
-    const el = getItemElement(i);
-    if (el) {
-      scrollAnchorEl = el;
-      return true;
-    }
-    return false;
-  });
-  return [scrollAnchorItem, scrollAnchorEl];
-};
-
-const getRestoreScrollData = (scrollTop: number, restoreAnchorData: RestoreAnchorData) => {
-  const [anchorItem, anchorElement] = restoreAnchorData;
-  if (!anchorItem || !anchorElement) {
-    return undefined;
-  }
-  return {
-    scrollTop: Math.max(0, scrollTop),
-    anchorItem,
-    anchorElement,
-    anchorOffsetTop: anchorElement.offsetTop,
-  };
 };
 
 const useObserveAnchorHandle = (
@@ -149,30 +118,15 @@ export const useVirtualPaginator = <TScrollElement extends HTMLElement>(
   const { count, limit, range, onRangeChange, getScrollElement, getItemElement, onEnd } = options;
 
   const initialRenderRef = useRef(true);
-
-  const restoreScrollRef = useRef<{
-    scrollTop: number;
-    anchorOffsetTop: number;
-    anchorItem: number;
-    anchorElement: HTMLElement;
-  }>();
+  const isPaginatingRef = useRef(false);
 
   const scrollToItemRef = useRef<{
     index: number;
     opts?: ScrollToOptions;
   }>();
 
-  const propRef = useRef({
-    range,
-    limit,
-    count,
-  });
-
-  propRef.current = {
-    range,
-    count,
-    limit,
-  };
+  const propRef = useRef({ range, limit, count });
+  propRef.current = { range, count, limit };
 
   const getItems = useMemo(() => {
     const items = generateItems(range);
@@ -204,10 +158,7 @@ export const useVirtualPaginator = <TScrollElement extends HTMLElement>(
       if (opts?.behavior === 'instant') {
         scrollElement.scrollTop = targetTop;
       } else {
-        scrollElement.scrollTo({
-          top: targetTop,
-          behavior: opts?.behavior,
-        });
+        scrollElement.scrollTo({ top: targetTop, behavior: opts?.behavior });
       }
       return true;
     },
@@ -224,10 +175,7 @@ export const useVirtualPaginator = <TScrollElement extends HTMLElement>(
           start: Math.max(index - currentLimit, 0),
           end: Math.min(index + currentLimit, currentCount),
         });
-        scrollToItemRef.current = {
-          index,
-          opts,
-        };
+        scrollToItemRef.current = { index, opts };
         return true;
       }
 
@@ -242,10 +190,7 @@ export const useVirtualPaginator = <TScrollElement extends HTMLElement>(
         if (opts?.behavior === 'instant' && scrollElement) {
           scrollElement.scrollTop = targetTop;
         } else if (scrollElement) {
-          scrollElement.scrollTo({
-            top: targetTop,
-            behavior: opts?.behavior,
-          });
+          scrollElement.scrollTo({ top: targetTop, behavior: opts?.behavior });
         }
         return true;
       }
@@ -256,51 +201,42 @@ export const useVirtualPaginator = <TScrollElement extends HTMLElement>(
 
   const paginate = useCallback(
     (direction: Direction) => {
+      if (isPaginatingRef.current) return;
+
       const scrollEl = getScrollElement();
       const { range: currentRange, limit: currentLimit, count: currentCount } = propRef.current;
       let { start, end } = currentRange;
 
       if (direction === Direction.Backward) {
-        restoreScrollRef.current = undefined;
         if (start === 0) {
           onEnd?.(true);
           return;
         }
         if (scrollEl) {
-          restoreScrollRef.current = getRestoreScrollData(
-            scrollEl.scrollTop,
-            getRestoreAnchor({ start, end }, getItemElement, Direction.Backward)
-          );
-        }
-        if (scrollEl) {
-          end = getDropIndex(scrollEl, currentRange, Direction.Forward, getItemElement, 2) ?? end;
+          end = getDropIndex(scrollEl, currentRange, Direction.Forward, getItemElement, 6) ?? end;
         }
         start = Math.max(start - currentLimit, 0);
       }
 
       if (direction === Direction.Forward) {
-        restoreScrollRef.current = undefined;
         if (end === currentCount) {
           onEnd?.(false);
           return;
         }
-        if (scrollEl) {
-          restoreScrollRef.current = getRestoreScrollData(
-            scrollEl.scrollTop,
-            getRestoreAnchor({ start, end }, getItemElement, Direction.Forward)
-          );
-        }
+
         end = Math.min(end + currentLimit, currentCount);
         if (scrollEl) {
           start =
-            getDropIndex(scrollEl, currentRange, Direction.Backward, getItemElement, 2) ?? start;
+            getDropIndex(scrollEl, currentRange, Direction.Backward, getItemElement, 6) ?? start;
         }
       }
 
-      onRangeChange({
-        start,
-        end,
-      });
+      isPaginatingRef.current = true;
+      setTimeout(() => {
+        isPaginatingRef.current = false;
+      }, 100);
+
+      onRangeChange({ start, end });
     },
     [getScrollElement, getItemElement, onEnd, onRangeChange]
   );
@@ -325,46 +261,11 @@ export const useVirtualPaginator = <TScrollElement extends HTMLElement>(
 
   const intersectionObserver = useIntersectionObserver(
     handlePaginatorElIntersection,
-    useCallback(
-      () => ({
-        root: getScrollElement(),
-      }),
-      [getScrollElement]
-    )
+    useCallback(() => ({ root: getScrollElement() }), [getScrollElement])
   );
 
   const observeBackAnchor = useObserveAnchorHandle(intersectionObserver, Direction.Backward);
   const observeFrontAnchor = useObserveAnchorHandle(intersectionObserver, Direction.Forward);
-
-  useLayoutEffect(() => {
-    const scrollEl = getScrollElement();
-    if (!restoreScrollRef.current || !scrollEl) return;
-
-    const {
-      anchorOffsetTop: oldOffsetTop,
-      anchorElement,
-      anchorItem,
-      scrollTop: oldScrollTop,
-    } = restoreScrollRef.current;
-
-    let offsetTop: number | undefined;
-
-    if (anchorElement && anchorElement.isConnected) {
-      offsetTop = anchorElement.offsetTop;
-    } else {
-      const fallbackEl = getItemElement(anchorItem);
-      if (fallbackEl) offsetTop = fallbackEl.offsetTop;
-    }
-
-    if (offsetTop !== undefined) {
-      const offsetAddition = offsetTop - oldOffsetTop;
-      const restoreTop = oldScrollTop + offsetAddition;
-
-      scrollEl.scrollTop = restoreTop;
-    }
-
-    restoreScrollRef.current = undefined;
-  }, [range, count, getScrollElement, getItemElement]);
 
   useLayoutEffect(() => {
     if (scrollToItemRef.current === undefined) return;
