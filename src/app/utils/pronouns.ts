@@ -1,3 +1,9 @@
+export type PronounSet = {
+  summary: string;
+  language?: string;
+  grammatical_gender?: string;
+};
+
 // helper function to convert a comma-separated pronouns string into an array of objects with summary and optional language
 export function parsePronounsInput(pronouns: string): { summary: string; language?: string }[] {
   if (!pronouns || typeof pronouns !== 'string') return [];
@@ -23,6 +29,10 @@ export function parsePronounsInput(pronouns: string): { summary: string; languag
         summary: (summary || '').trim().slice(0, 16),
       };
     });
+}
+
+export function parsePronounsStringToPronounsSetArray(pronouns: string): PronounSet[] {
+  return parsePronounsInput(pronouns) as unknown as PronounSet[];
 }
 
 // helper function to filter a list of pronouns based on the user's language settings
