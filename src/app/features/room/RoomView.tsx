@@ -159,7 +159,6 @@ export function RoomView({ eventId }: { eventId?: string }) {
                 key={roomId}
                 room={room}
                 eventId={eventId}
-                roomInputRef={roomInputRef}
                 editor={editor}
                 onEditorReset={handleResetEditor}
               />

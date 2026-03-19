@@ -101,7 +101,6 @@ const getDayDividerText = (ts: number) => {
 export type RoomTimelineProps = {
   room: Room;
   eventId?: string;
-  roomInputRef: RefObject<HTMLElement>;
   editor: Editor;
   onEditorReset?: () => void;
 };
@@ -109,7 +108,6 @@ export type RoomTimelineProps = {
 export function RoomTimeline({
   room,
   eventId,
-  roomInputRef,
   editor,
   onEditorReset,
 }: Readonly<RoomTimelineProps>) {
