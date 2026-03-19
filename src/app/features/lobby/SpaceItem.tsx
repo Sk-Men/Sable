@@ -12,12 +12,9 @@ import {
   Spinner,
   PopOut,
   config,
-  IconButton,
   Menu,
   MenuItem,
   RectCords,
-  Tooltip,
-  TooltipProvider,
 } from 'folds';
 import classNames from 'classnames';
 import { MatrixError, Room, IHierarchyRoom } from '$types/matrix-sdk';
