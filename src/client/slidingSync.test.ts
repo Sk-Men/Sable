@@ -89,6 +89,7 @@ function makeMockMx(overrides: Record<string, unknown> = {}) {
     store: {
       setSyncData: vi.fn().mockResolvedValue(undefined),
       save: vi.fn().mockResolvedValue(undefined),
+      removeRoom: vi.fn(),
     },
     ...overrides,
   } as unknown as import('$types/matrix-sdk').MatrixClient;
@@ -169,6 +170,24 @@ describe('SlidingSyncManager — timeline pruning on unsubscribe', () => {
     expect(payload.rooms.join['!room:example.com'].timeline.limited).toBe(true);
   });
 
+  it('evicts room from store cache when persist fails', async () => {
+    const room = makeMockRoom(PRUNE_THRESHOLD + 1);
+    const mx = makeMockMx({ getRoom: vi.fn().mockReturnValue(room) });
+    // Make setSyncData reject to simulate an IndexedDB write failure.
+    (
+      mx as unknown as { store: { setSyncData: ReturnType<typeof vi.fn> } }
+    ).store.setSyncData.mockRejectedValue(new Error('IndexedDB write failed'));
+    const manager = makeManager(mx);
+
+    manager.unsubscribeFromRoom('!room:example.com');
+    await flushPromises();
+
+    const { store } = mx as unknown as {
+      store: { removeRoom: ReturnType<typeof vi.fn> };
+    };
+    expect(store.removeRoom).toHaveBeenCalledWith('!room:example.com');
+  });
+
   it('does not reset when event count equals the threshold exactly', () => {
     const room = makeMockRoom(PRUNE_THRESHOLD);
     const mx = makeMockMx({ getRoom: vi.fn().mockReturnValue(room) });
@@ -205,13 +224,16 @@ describe('SlidingSyncManager — membership leave auto-unsubscribe', () => {
     mx: ReturnType<typeof makeMockMx>,
     membership: string,
     roomId = '!room:example.com',
-    userId = '@user:example.com',
+    userId = '@user:example.com'
   ) {
     const onCall = (mx.on as ReturnType<typeof vi.fn>).mock.calls.find(
-      ([event]: [string]) => event === 'RoomMember.membership',
+      (args: unknown[]) => args[0] === 'RoomMember.membership'
     );
     if (!onCall) throw new Error('onMembershipLeave listener not registered');
-    const [, handler] = onCall as [string, (e: unknown, m: { userId: string; roomId: string; membership: string }) => void];
+    const [, handler] = onCall as [
+      string,
+      (e: unknown, m: { userId: string; roomId: string; membership: string }) => void,
+    ];
     handler(undefined, { userId, roomId, membership });
   }
 
@@ -275,4 +297,3 @@ describe('SlidingSyncManager — membership leave auto-unsubscribe', () => {
     expect(room._resetLiveTimeline).not.toHaveBeenCalled();
   });
 });
-

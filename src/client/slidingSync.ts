@@ -258,7 +258,10 @@ export class SlidingSyncManager {
 
   private readonly onLifecycle: (state: SlidingSyncState, resp: unknown, err?: Error) => void;
 
-  private readonly onMembershipLeave: (event: unknown, member: { userId: string; roomId: string; membership?: string }) => void;
+  private readonly onMembershipLeave: (
+    event: unknown,
+    member: { userId: string; roomId: string; membership?: string }
+  ) => void;
 
   private presenceExtension!: ExtensionPresence;
 
@@ -430,7 +433,8 @@ export class SlidingSyncManager {
 
     this.onMembershipLeave = (_event, member) => {
       if (member.userId !== this.mx.getUserId()) return;
-      if (member.membership !== KnownMembership.Leave && member.membership !== KnownMembership.Ban) return;
+      if (member.membership !== KnownMembership.Leave && member.membership !== KnownMembership.Ban)
+        return;
       if (!this.activeRoomSubscriptions.has(member.roomId)) return;
       this.unsubscribeFromRoom(member.roomId);
     };
@@ -563,13 +567,18 @@ export class SlidingSyncManager {
     room.getUnfilteredTimelineSet().resetLiveTimeline();
 
     // Persist the tail of the timeline to IndexedDB asynchronously.
-    // If it fails, the events are still available from the server.
+    // On failure, evict the room from the store so the next open gets a clean
+    // server fetch rather than potentially stale cached data.
     this.persistRoomTimeline(
       roomId,
       events.map((e) => e.event as IRoomEvent),
       prevBatch
     ).catch((err: unknown) => {
-      debugLog.warn('timeline', 'Failed to persist pruned room timeline', { roomId, err });
+      debugLog.warn('timeline', 'Failed to persist pruned room timeline — evicting store cache', {
+        roomId,
+        err,
+      });
+      this.mx.store.removeRoom(roomId);
     });
 
     debugLog.info('timeline', 'Pruned room timeline from memory', {
