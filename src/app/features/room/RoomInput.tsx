@@ -731,7 +731,7 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
         } else {
           // we don't have a formatted body, but we need one
           content.format = 'org.matrix.custom.html';
-          content.formatted_body = `${htmlPrefix} ${plainText}`;
+          content.formatted_body = `${htmlPrefix}${plainText}`;
         }
       }
 
