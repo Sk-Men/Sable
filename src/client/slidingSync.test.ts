@@ -6,28 +6,16 @@
  *    running after the client is "stopped", leaking network traffic and
  *    event listeners.
  *
- * 2. pruneRoomTimeline (via unsubscribeFromRoom) — when a room is explicitly
- *    unsubscribed (e.g. user leaves the room), its in-memory event chain is
- *    released if it exceeds PRUNE_TIMELINE_THRESHOLD. The recent tail is
- *    persisted to IndexedDB (via store.setSyncData + store.save) so the events
- *    survive an app reload; the full history is always available from the server.
- *
- *    Note: navigation between rooms no longer calls unsubscribeFromRoom —
- *    subscriptions accumulate across the session so returning to a room is
- *    instant (matching Element Web's model).
- *
- * 3. onMembershipLeave — when the MatrixClient emits a RoomMemberEvent.Membership
+ * 2. onMembershipLeave — when the MatrixClient emits a RoomMemberEvent.Membership
  *    event indicating the local user left or was banned from a room that is
  *    actively subscribed, unsubscribeFromRoom() should be called automatically.
+ *
+ *    Note: navigation between rooms does not call unsubscribeFromRoom —
+ *    subscriptions accumulate across the session so returning to a room is
+ *    instant (matching Element Web's model).
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { SlidingSyncManager, type SlidingSyncConfig } from './slidingSync';
-
-/** Flush all pending Promise microtasks. */
-const flushPromises = (): Promise<void> =>
-  new Promise((r) => {
-    setTimeout(r, 0);
-  });
 
 // ── vi.hoisted mocks ─────────────────────────────────────────────────────────
 // Must be defined via vi.hoisted so they're available before vi.mock runs
@@ -86,31 +74,8 @@ function makeMockMx(overrides: Record<string, unknown> = {}) {
     on: vi.fn(),
     off: vi.fn(),
     removeListener: vi.fn(),
-    store: {
-      setSyncData: vi.fn().mockResolvedValue(undefined),
-      save: vi.fn().mockResolvedValue(undefined),
-      removeRoom: vi.fn(),
-    },
     ...overrides,
   } as unknown as import('$types/matrix-sdk').MatrixClient;
-}
-
-function makeMockRoom(eventCount: number) {
-  const events = Array.from({ length: eventCount }, (_, i) => ({
-    getId: () => `$ev${i}`,
-    event: { event_id: `$ev${i}`, type: 'm.room.message', content: {} },
-  }));
-  const resetLiveTimeline = vi.fn();
-  return {
-    getUnfilteredTimelineSet: vi.fn().mockReturnValue({
-      getLiveTimeline: vi.fn().mockReturnValue({
-        getEvents: vi.fn().mockReturnValue(events),
-        getPaginationToken: vi.fn().mockReturnValue('t123'),
-      }),
-      resetLiveTimeline,
-    }),
-    _resetLiveTimeline: resetLiveTimeline,
-  };
 }
 
 function makeManager(mx: ReturnType<typeof makeMockMx>): SlidingSyncManager {
@@ -129,90 +94,6 @@ describe('SlidingSyncManager.dispose()', () => {
     const manager = makeManager(makeMockMx());
     manager.dispose();
     expect(mocks.slidingSyncInstance.stop).toHaveBeenCalledOnce();
-  });
-});
-
-// ── pruneRoomTimeline (exercised via unsubscribeFromRoom) ────────────────────
-
-// This value must match PRUNE_TIMELINE_THRESHOLD in slidingSync.ts.
-const PRUNE_THRESHOLD = 100;
-
-describe('SlidingSyncManager — timeline pruning on unsubscribe', () => {
-  it('resets the live timeline when event count exceeds the threshold', () => {
-    const room = makeMockRoom(PRUNE_THRESHOLD + 1);
-    const mx = makeMockMx({ getRoom: vi.fn().mockReturnValue(room) });
-    const manager = makeManager(mx);
-
-    manager.unsubscribeFromRoom('!room:example.com');
-
-    expect(room._resetLiveTimeline).toHaveBeenCalledOnce();
-  });
-
-  it('persists events to store.setSyncData and store.save after pruning', async () => {
-    const room = makeMockRoom(PRUNE_THRESHOLD + 1);
-    const mx = makeMockMx({ getRoom: vi.fn().mockReturnValue(room) });
-    const manager = makeManager(mx);
-
-    manager.unsubscribeFromRoom('!room:example.com');
-    await flushPromises();
-
-    const { store } = mx as unknown as {
-      store: { setSyncData: ReturnType<typeof vi.fn>; save: ReturnType<typeof vi.fn> };
-    };
-    expect(store.setSyncData).toHaveBeenCalledOnce();
-    expect(store.save).toHaveBeenCalledWith(true);
-
-    // The payload must target the correct room and use limited:true so the
-    // accumulator replaces any stale timeline rather than appending.
-    const [payload] = store.setSyncData.mock.calls[0] as [
-      { rooms: { join: Record<string, { timeline: { limited: boolean } }> } },
-    ];
-    expect(payload.rooms.join['!room:example.com'].timeline.limited).toBe(true);
-  });
-
-  it('evicts room from store cache when persist fails', async () => {
-    const room = makeMockRoom(PRUNE_THRESHOLD + 1);
-    const mx = makeMockMx({ getRoom: vi.fn().mockReturnValue(room) });
-    // Make setSyncData reject to simulate an IndexedDB write failure.
-    (
-      mx as unknown as { store: { setSyncData: ReturnType<typeof vi.fn> } }
-    ).store.setSyncData.mockRejectedValue(new Error('IndexedDB write failed'));
-    const manager = makeManager(mx);
-
-    manager.unsubscribeFromRoom('!room:example.com');
-    await flushPromises();
-
-    const { store } = mx as unknown as {
-      store: { removeRoom: ReturnType<typeof vi.fn> };
-    };
-    expect(store.removeRoom).toHaveBeenCalledWith('!room:example.com');
-  });
-
-  it('does not reset when event count equals the threshold exactly', () => {
-    const room = makeMockRoom(PRUNE_THRESHOLD);
-    const mx = makeMockMx({ getRoom: vi.fn().mockReturnValue(room) });
-    const manager = makeManager(mx);
-
-    manager.unsubscribeFromRoom('!room:example.com');
-
-    expect(room._resetLiveTimeline).not.toHaveBeenCalled();
-  });
-
-  it('does not reset for rooms with very few events', () => {
-    const room = makeMockRoom(5);
-    const mx = makeMockMx({ getRoom: vi.fn().mockReturnValue(room) });
-    const manager = makeManager(mx);
-
-    manager.unsubscribeFromRoom('!room:example.com');
-
-    expect(room._resetLiveTimeline).not.toHaveBeenCalled();
-  });
-
-  it('does not throw when the room is not yet in SDK state', () => {
-    const mx = makeMockMx({ getRoom: vi.fn().mockReturnValue(null) });
-    const manager = makeManager(mx);
-
-    expect(() => manager.unsubscribeFromRoom('!room:example.com')).not.toThrow();
   });
 });
 
@@ -238,62 +119,58 @@ describe('SlidingSyncManager — membership leave auto-unsubscribe', () => {
   }
 
   it('unsubscribes when the local user leaves an active room', () => {
-    const room = makeMockRoom(PRUNE_THRESHOLD + 1);
-    const mx = makeMockMx({ getRoom: vi.fn().mockReturnValue(room) });
+    const mx = makeMockMx();
     const manager = makeManager(mx);
     manager.attach();
-    // Manually add to active subscriptions to simulate having visited the room.
     manager.subscribeToRoom('!room:example.com');
 
     fireMembershipEvent(mx, 'leave');
 
-    expect(room._resetLiveTimeline).toHaveBeenCalledOnce();
+    // subscribeToRoom + unsubscribeFromRoom = 2 calls
+    expect(mocks.slidingSyncInstance.modifyRoomSubscriptions).toHaveBeenCalledTimes(2);
   });
 
   it('unsubscribes when the local user is banned from an active room', () => {
-    const room = makeMockRoom(PRUNE_THRESHOLD + 1);
-    const mx = makeMockMx({ getRoom: vi.fn().mockReturnValue(room) });
+    const mx = makeMockMx();
     const manager = makeManager(mx);
     manager.attach();
     manager.subscribeToRoom('!room:example.com');
 
     fireMembershipEvent(mx, 'ban');
 
-    expect(room._resetLiveTimeline).toHaveBeenCalledOnce();
+    expect(mocks.slidingSyncInstance.modifyRoomSubscriptions).toHaveBeenCalledTimes(2);
   });
 
   it('does nothing when a different user leaves', () => {
-    const room = makeMockRoom(PRUNE_THRESHOLD + 1);
-    const mx = makeMockMx({ getRoom: vi.fn().mockReturnValue(room) });
+    const mx = makeMockMx();
     const manager = makeManager(mx);
     manager.attach();
     manager.subscribeToRoom('!room:example.com');
 
     fireMembershipEvent(mx, 'leave', '!room:example.com', '@other:example.com');
 
-    expect(room._resetLiveTimeline).not.toHaveBeenCalled();
+    // Only the initial subscribe — no unsubscribe
+    expect(mocks.slidingSyncInstance.modifyRoomSubscriptions).toHaveBeenCalledTimes(1);
   });
 
   it('does nothing when membership is join', () => {
-    const room = makeMockRoom(PRUNE_THRESHOLD + 1);
-    const mx = makeMockMx({ getRoom: vi.fn().mockReturnValue(room) });
+    const mx = makeMockMx();
     const manager = makeManager(mx);
     manager.attach();
     manager.subscribeToRoom('!room:example.com');
 
     fireMembershipEvent(mx, 'join');
 
-    expect(room._resetLiveTimeline).not.toHaveBeenCalled();
+    expect(mocks.slidingSyncInstance.modifyRoomSubscriptions).toHaveBeenCalledTimes(1);
   });
 
   it('does nothing for a room that was never subscribed', () => {
-    const room = makeMockRoom(PRUNE_THRESHOLD + 1);
-    const mx = makeMockMx({ getRoom: vi.fn().mockReturnValue(room) });
+    const mx = makeMockMx();
     const manager = makeManager(mx);
     manager.attach(); // registers the listener, but no subscribeToRoom call
 
     fireMembershipEvent(mx, 'leave');
 
-    expect(room._resetLiveTimeline).not.toHaveBeenCalled();
+    expect(mocks.slidingSyncInstance.modifyRoomSubscriptions).not.toHaveBeenCalled();
   });
 });

@@ -1,12 +1,8 @@
 /* eslint-disable max-classes-per-file */
 import {
   ClientEvent,
-  EventTimeline,
   Extension,
   ExtensionState,
-  IJoinedRoom,
-  IRoomEvent,
-  ISyncResponse,
   KnownMembership,
   MatrixClient,
   MSC3575List,
@@ -55,8 +51,6 @@ const UNENCRYPTED_SUBSCRIPTION_KEY = 'unencrypted';
 // Timeline limit for the active-room subscription (full history load).
 // List entries always use LIST_TIMELINE_LIMIT=1 for lightweight previews.
 const ACTIVE_ROOM_TIMELINE_LIMIT = 50;
-// Events accumulated in a room before its timeline is freed on explicit unsubscribe.
-const PRUNE_TIMELINE_THRESHOLD = 100;
 
 export type PartialSlidingSyncRequest = {
   filters?: MSC3575List['filters'];
@@ -542,90 +536,6 @@ export class SlidingSyncManager {
     });
   }
 
-  /**
-   * Reset the live timeline for a room that is no longer actively viewed,
-   * freeing its in-memory event chain. Only fires when the room has accumulated
-   * more than PRUNE_TIMELINE_THRESHOLD events.
-   *
-   * The timeline is reset synchronously so memory is freed immediately. Then,
-   * as a best-effort fire-and-forget step, the snapshot of recent events is
-   * fed into the SyncAccumulator and flushed to IndexedDB so they survive an
-   * app reload (the accumulator caps storage at ~50 events per room; the full
-   * history is always available from the server).
-   */
-  private pruneRoomTimeline(roomId: string): void {
-    const room = this.mx.getRoom(roomId);
-    if (!room) return;
-    const tl = room.getUnfilteredTimelineSet().getLiveTimeline();
-    const events = tl.getEvents();
-    if (events.length <= PRUNE_TIMELINE_THRESHOLD) return;
-
-    // Capture the back-pagination token before resetting the timeline.
-    const prevBatch = tl.getPaginationToken(EventTimeline.BACKWARDS);
-
-    // Free the in-memory event chain immediately.
-    room.getUnfilteredTimelineSet().resetLiveTimeline();
-
-    // Persist the tail of the timeline to IndexedDB asynchronously.
-    // On failure, evict the room from the store so the next open gets a clean
-    // server fetch rather than potentially stale cached data.
-    this.persistRoomTimeline(
-      roomId,
-      events.map((e) => e.event as IRoomEvent),
-      prevBatch
-    ).catch((err: unknown) => {
-      debugLog.warn('timeline', 'Failed to persist pruned room timeline — evicting store cache', {
-        roomId,
-        err,
-      });
-      this.mx.store.removeRoom(roomId);
-    });
-
-    debugLog.info('timeline', 'Pruned room timeline from memory', {
-      roomId,
-      threshold: PRUNE_TIMELINE_THRESHOLD,
-    });
-  }
-
-  /**
-   * Persist a snapshot of room timeline events to the IndexedDB store via a
-   * synthetic /sync payload. This feeds the SyncAccumulator (which the SDK
-   * uses for both start-up replay and classic sync persistence) so that the
-   * last ~50 events are available on the next app load without a server round-
-   * trip. The sliding sync layer never calls setSyncData itself, so this is
-   * the only path by which sliding-sync rooms get on-disk history.
-   */
-  private async persistRoomTimeline(
-    roomId: string,
-    rawEvents: IRoomEvent[],
-    prevBatch: string | null
-  ): Promise<void> {
-    const payload: ISyncResponse = {
-      next_batch: '',
-      account_data: { events: [] },
-      rooms: {
-        join: {
-          [roomId]: {
-            summary: {},
-            timeline: {
-              events: rawEvents,
-              limited: true,
-              prev_batch: prevBatch,
-            },
-            ephemeral: { events: [] },
-            account_data: { events: [] },
-            unread_notifications: {},
-          } as unknown as IJoinedRoom,
-        },
-        invite: {},
-        leave: {},
-        knock: {},
-      },
-    };
-    await this.mx.store.setSyncData(payload);
-    await this.mx.store.save(true);
-  }
-
   public setPresenceEnabled(enabled: boolean): void {
     this.presenceExtension.setEnabled(enabled);
   }
@@ -1036,7 +946,6 @@ export class SlidingSyncManager {
       remainingSubscriptions: this.activeRoomSubscriptions.size,
       syncCycle: this.syncCount,
     });
-    this.pruneRoomTimeline(roomId);
   }
 
   public static async probe(
