@@ -37,7 +37,7 @@ export const messageList = style({
     'not selector(::-webkit-scrollbar)': {
       scrollbarWidth: 'auto',
       selectors: {
-        '&:hover': {
+        '&:hover, &:has(*:hover)': {
           scrollbarColor: `${color.SurfaceVariant.ContainerLine} ${color.SurfaceVariant.ContainerActive}`,
         },
       },
@@ -65,10 +65,10 @@ export const messageList = style({
       border: `${toRem(4)} solid transparent`,
       backgroundClip: 'padding-box',
     },
-    '&:hover::-webkit-scrollbar-thumb': {
+    '&:hover::-webkit-scrollbar-thumb, &:has(*:hover)::-webkit-scrollbar-thumb': {
       backgroundColor: color.SurfaceVariant.ContainerLine,
     },
-    '&:hover::-webkit-scrollbar-track': {
+    '&:hover::-webkit-scrollbar-track, &:has(*:hover)::-webkit-scrollbar-track': {
       backgroundColor: color.SurfaceVariant.ContainerActive,
     },
   },
