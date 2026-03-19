@@ -724,7 +724,7 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
          */
         const escapedName = sanitizeCustomHtml(perMessageProfile.name);
 
-        const htmlPrefix = `<strong data-mx-profile-fallback>${escapedName}:</strong> `;
+        const htmlPrefix = `<strong data-mx-profile-fallback>${escapedName}: </strong>`;
 
         if (content.formatted_body && !content.formatted_body.startsWith(htmlPrefix)) {
           content.formatted_body = htmlPrefix + content.formatted_body;
