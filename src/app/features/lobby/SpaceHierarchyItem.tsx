@@ -1,4 +1,4 @@
-import { forwardRef, MouseEventHandler, useEffect, useMemo } from 'react';
+import { forwardRef, MouseEventHandler, useEffect, useMemo, useState } from 'react';
 import { MatrixError, Room, IHierarchyRoom } from '$types/matrix-sdk';
 import { Box, config, Text } from 'folds';
 import {
@@ -98,15 +98,19 @@ export const SpaceHierarchyItem = forwardRef<HTMLDivElement, SpaceHierarchyItemP
       onSpacesFound(Array.from(subspaces.values()));
     }, [subspaces, onSpacesFound]);
 
-    let childItems = roomItems?.filter((i) => !subspaces.has(i.roomId));
-    if (!spacePermissions?.stateEvent(StateEvent.SpaceChild, mx.getSafeUserId())) {
-      // hide unknown rooms for normal user
-      childItems = childItems?.filter((i) => {
-        const forbidden = error instanceof MatrixError ? error.errcode === 'M_FORBIDDEN' : false;
-        const inaccessibleRoom = !rooms.get(i.roomId) && !fetching && (error ? forbidden : true);
-        return !inaccessibleRoom;
-      });
-    }
+    const [childItems, setChildItems] = useState([] as HierarchyItemRoom[] | undefined);
+    useEffect(() => {
+      let childItemsMut = roomItems?.filter((i) => !subspaces.has(i.roomId));
+      if (!spacePermissions?.stateEvent(StateEvent.SpaceChild, mx.getSafeUserId())) {
+        // hide unknown rooms for normal user
+        childItemsMut = childItems?.filter((i) => {
+          const forbidden = error instanceof MatrixError ? error.errcode === 'M_FORBIDDEN' : false;
+          const inaccessibleRoom = !rooms.get(i.roomId) && !fetching && (error ? forbidden : true);
+          return !inaccessibleRoom;
+        });
+      }
+      setChildItems(childItemsMut);
+    }, [childItems, spacePermissions, mx, roomItems, subspaces, fetching, error, rooms]);
 
     return (
       <Box direction="Column" gap="0" ref={ref}>
@@ -204,7 +208,7 @@ export const SpaceHierarchyItem = forwardRef<HTMLDivElement, SpaceHierarchyItemP
           </Box>
         ) : (
           childItems && (
-            <SequenceCard variant="SurfaceVariant" gap="300" alignItems="Center" radii="0">
+            <SequenceCard variant="SurfaceVariant" gap="300" alignItems="Center" radii="300">
               <Box
                 grow="Yes"
                 style={{

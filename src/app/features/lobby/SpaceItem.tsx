@@ -1,25 +1,5 @@
-import { MouseEventHandler, ReactNode, useCallback, useRef, useState } from 'react';
-import {
-  Box,
-  Avatar,
-  Text,
-  Chip,
-  Icon,
-  Icons,
-  as,
-  Badge,
-  toRem,
-  Spinner,
-  PopOut,
-  Menu,
-  MenuItem,
-  RectCords,
-  config,
-  IconButton,
-  TooltipProvider,
-  Tooltip,
-} from 'folds';
-import FocusTrap from 'focus-trap-react';
+import { MouseEventHandler, ReactNode, useCallback, useRef } from 'react';
+import { Box, Avatar, Text, Chip, Icon, Icons, as, Badge, toRem, Spinner } from 'folds';
 import classNames from 'classnames';
 import { MatrixError, Room, IHierarchyRoom } from '$types/matrix-sdk';
 import { HierarchyItem } from '$hooks/useSpaceHierarchy';
@@ -29,14 +9,8 @@ import { nameInitials } from '$utils/common';
 import { LocalRoomSummaryLoader } from '$components/RoomSummaryLoader';
 import { getRoomAvatarUrl } from '$utils/room';
 import { AsyncStatus, useAsyncCallback } from '$hooks/useAsyncCallback';
-import { stopPropagation } from '$utils/keyboard';
 import { mxcUrlToHttp } from '$utils/matrix';
 import { useMediaAuthentication } from '$hooks/useMediaAuthentication';
-import { useOpenCreateRoomModal } from '$state/hooks/createRoomModal';
-import { useOpenCreateSpaceModal } from '$state/hooks/createSpaceModal';
-import { CreateRoomType } from '$components/create-room/types';
-import { AddExistingModal } from '$features/add-existing';
-import { BetaNoticeBadge } from '$components/BetaNoticeBadge';
 import { useDraggableItem } from './DnD';
 import * as styleCss from './style.css';
 import * as css from './SpaceItem.css';
@@ -60,7 +34,7 @@ type InaccessibleSpaceProfileProps = {
   roomId: string;
   suggested?: boolean;
 };
-function InaccessibleSpaceProfile({ roomId, suggested }: InaccessibleSpaceProfileProps) {
+export function InaccessibleSpaceProfile({ roomId, suggested }: InaccessibleSpaceProfileProps) {
   return (
     <Chip
       as="span"
@@ -105,7 +79,7 @@ type UnjoinedSpaceProfileProps = {
   avatarUrl?: string;
   suggested?: boolean;
 };
-function UnjoinedSpaceProfile({
+export function UnjoinedSpaceProfile({
   roomId,
   via,
   name,
@@ -244,204 +218,205 @@ function RootSpaceProfile({ closed, categoryId, handleClose }: RootSpaceProfileP
   );
 }
 
-function AddRoomButton({ item }: { item: HierarchyItem }) {
-  const [cords, setCords] = useState<RectCords>();
-  const openCreateRoomModal = useOpenCreateRoomModal();
-  const [addExisting, setAddExisting] = useState(false);
+// Keeping this dead code here until I figure out how to add it into the HierarchyItemMenu...
+// function AddRoomButton({ item }: { item: HierarchyItem }) {
+//   const [cords, setCords] = useState<RectCords>();
+//   const openCreateRoomModal = useOpenCreateRoomModal();
+//   const [addExisting, setAddExisting] = useState(false);
 
-  const handleAddRoom: MouseEventHandler<HTMLButtonElement> = (evt) => {
-    setCords(evt.currentTarget.getBoundingClientRect());
-  };
+//   const handleAddRoom: MouseEventHandler<HTMLButtonElement> = (evt) => {
+//     setCords(evt.currentTarget.getBoundingClientRect());
+//   };
 
-  const handleCreateRoom = (type?: CreateRoomType) => {
-    openCreateRoomModal(item.roomId, type);
-    setCords(undefined);
-  };
+//   const handleCreateRoom = (type?: CreateRoomType) => {
+//     openCreateRoomModal(item.roomId, type);
+//     setCords(undefined);
+//   };
 
-  const handleAddExisting = () => {
-    setAddExisting(true);
-    setCords(undefined);
-  };
+//   const handleAddExisting = () => {
+//     setAddExisting(true);
+//     setCords(undefined);
+//   };
 
-  return (
-    <PopOut
-      anchor={cords}
-      position="Bottom"
-      align="End"
-      content={
-        <FocusTrap
-          focusTrapOptions={{
-            initialFocus: false,
-            onDeactivate: () => setCords(undefined),
-            clickOutsideDeactivates: true,
-            isKeyForward: (evt: KeyboardEvent) => evt.key === 'ArrowDown',
-            isKeyBackward: (evt: KeyboardEvent) => evt.key === 'ArrowUp',
-            escapeDeactivates: stopPropagation,
-          }}
-        >
-          <Menu style={{ padding: config.space.S100 }}>
-            <MenuItem
-              size="300"
-              radii="300"
-              variant="Primary"
-              fill="None"
-              onClick={() => handleCreateRoom(CreateRoomType.TextRoom)}
-            >
-              <Text size="T300">Chat Room</Text>
-            </MenuItem>
-            <MenuItem
-              size="300"
-              radii="300"
-              variant="Primary"
-              fill="None"
-              onClick={() => handleCreateRoom(CreateRoomType.VoiceRoom)}
-              after={<BetaNoticeBadge />}
-            >
-              <Text size="T300">Voice Room</Text>
-            </MenuItem>
-            <MenuItem size="300" radii="300" fill="None" onClick={handleAddExisting}>
-              <Text size="T300">Existing Room</Text>
-            </MenuItem>
-          </Menu>
-        </FocusTrap>
-      }
-    >
-      {item.parentId === undefined ? (
-        <Chip
-          variant="Primary"
-          radii="Pill"
-          before={<Icon src={Icons.Plus} size="50" />}
-          onClick={handleAddRoom}
-          aria-pressed={!!cords}
-        >
-          <Text size="B300">Add Room</Text>
-        </Chip>
-    ) : (
-      <TooltipProvider
-        position="Bottom"
-        offset={4}
-        tooltip={
-          <Tooltip>
-            <Text>Add Room</Text>
-          </Tooltip>
-        }
-      >
-        {(triggerRef) => (
-            <IconButton
-              ref={triggerRef}
-              onClick={handleAddRoom}
-              aria-pressed={!!cords}
-              aria-label="Add Room"
-              variant="Primary"
-              fill="Soft"
-              size="300"
-              radii="300"
-            >
-              <Icon size="50" src={Icons.HashPlus} />
-            </IconButton>
-          )}
-        </TooltipProvider>
-      )}
-      {addExisting && (
-        <AddExistingModal parentId={item.roomId} requestClose={() => setAddExisting(false)} />
-      )}
-    </PopOut>
-  );
-}
+//   return (
+//     <PopOut
+//       anchor={cords}
+//       position="Bottom"
+//       align="End"
+//       content={
+//         <FocusTrap
+//           focusTrapOptions={{
+//             initialFocus: false,
+//             onDeactivate: () => setCords(undefined),
+//             clickOutsideDeactivates: true,
+//             isKeyForward: (evt: KeyboardEvent) => evt.key === 'ArrowDown',
+//             isKeyBackward: (evt: KeyboardEvent) => evt.key === 'ArrowUp',
+//             escapeDeactivates: stopPropagation,
+//           }}
+//         >
+//           <Menu style={{ padding: config.space.S100 }}>
+//             <MenuItem
+//               size="300"
+//               radii="300"
+//               variant="Primary"
+//               fill="None"
+//               onClick={() => handleCreateRoom(CreateRoomType.TextRoom)}
+//             >
+//               <Text size="T300">Chat Room</Text>
+//             </MenuItem>
+//             <MenuItem
+//               size="300"
+//               radii="300"
+//               variant="Primary"
+//               fill="None"
+//               onClick={() => handleCreateRoom(CreateRoomType.VoiceRoom)}
+//               after={<BetaNoticeBadge />}
+//             >
+//               <Text size="T300">Voice Room</Text>
+//             </MenuItem>
+//             <MenuItem size="300" radii="300" fill="None" onClick={handleAddExisting}>
+//               <Text size="T300">Existing Room</Text>
+//             </MenuItem>
+//           </Menu>
+//         </FocusTrap>
+//       }
+//     >
+//       {item.parentId === undefined ? (
+//         <Chip
+//           variant="Primary"
+//           radii="Pill"
+//           before={<Icon src={Icons.Plus} size="50" />}
+//           onClick={handleAddRoom}
+//           aria-pressed={!!cords}
+//         >
+//           <Text size="B300">Add Room</Text>
+//         </Chip>
+//     ) : (
+//       <TooltipProvider
+//         position="Bottom"
+//         offset={4}
+//         tooltip={
+//           <Tooltip>
+//             <Text>Add Room</Text>
+//           </Tooltip>
+//         }
+//       >
+//         {(triggerRef) => (
+//             <IconButton
+//               ref={triggerRef}
+//               onClick={handleAddRoom}
+//               aria-pressed={!!cords}
+//               aria-label="Add Room"
+//               variant="Primary"
+//               fill="Soft"
+//               size="300"
+//               radii="300"
+//             >
+//               <Icon size="50" src={Icons.HashPlus} />
+//             </IconButton>
+//           )}
+//         </TooltipProvider>
+//       )}
+//       {addExisting && (
+//         <AddExistingModal parentId={item.roomId} requestClose={() => setAddExisting(false)} />
+//       )}
+//     </PopOut>
+//   );
+// }
 
-function AddSpaceButton({ item }: { item: HierarchyItem }) {
-  const [cords, setCords] = useState<RectCords>();
-  const openCreateSpaceModal = useOpenCreateSpaceModal();
-  const [addExisting, setAddExisting] = useState(false);
+// function AddSpaceButton({ item }: { item: HierarchyItem }) {
+//   const [cords, setCords] = useState<RectCords>();
+//   const openCreateSpaceModal = useOpenCreateSpaceModal();
+//   const [addExisting, setAddExisting] = useState(false);
 
-  const handleAddSpace: MouseEventHandler<HTMLButtonElement> = (evt) => {
-    setCords(evt.currentTarget.getBoundingClientRect());
-  };
+//   const handleAddSpace: MouseEventHandler<HTMLButtonElement> = (evt) => {
+//     setCords(evt.currentTarget.getBoundingClientRect());
+//   };
 
-  const handleCreateSpace = () => {
-    openCreateSpaceModal(item.roomId as any);
-    setCords(undefined);
-  };
+//   const handleCreateSpace = () => {
+//     openCreateSpaceModal(item.roomId as any);
+//     setCords(undefined);
+//   };
 
-  const handleAddExisting = () => {
-    setAddExisting(true);
-    setCords(undefined);
-  };
-  return (
-    <PopOut
-      anchor={cords}
-      position="Bottom"
-      align="End"
-      content={
-        <FocusTrap
-          focusTrapOptions={{
-            initialFocus: false,
-            onDeactivate: () => setCords(undefined),
-            clickOutsideDeactivates: true,
-            isKeyForward: (evt: KeyboardEvent) => evt.key === 'ArrowDown',
-            isKeyBackward: (evt: KeyboardEvent) => evt.key === 'ArrowUp',
-            escapeDeactivates: stopPropagation,
-          }}
-        >
-          <Menu style={{ padding: config.space.S100 }}>
-            <MenuItem
-              size="300"
-              radii="300"
-              variant="Primary"
-              fill="None"
-              onClick={handleCreateSpace}
-            >
-              <Text size="T300">New Space</Text>
-            </MenuItem>
-            <MenuItem size="300" radii="300" fill="None" onClick={handleAddExisting}>
-              <Text size="T300">Existing Space</Text>
-            </MenuItem>
-          </Menu>
-        </FocusTrap>
-      }
-    >
-      {item.parentId === undefined ? (
-        <Chip
-          variant="SurfaceVariant"
-          radii="Pill"
-          before={<Icon src={Icons.Plus} size="50" />}
-          onClick={handleAddSpace}
-          aria-pressed={!!cords}
-        >
-          <Text size="B300">Add Space</Text>
-        </Chip>
-      ) : (
-        <TooltipProvider
-          position="Bottom"
-          offset={4}
-          tooltip={
-            <Tooltip>
-              <Text>Add Space</Text>
-            </Tooltip>
-          }
-        >
-          {(triggerRef) => (
-            <IconButton
-              ref={triggerRef}
-              onClick={handleAddSpace}
-              aria-pressed={!!cords}
-              aria-label="Add Space"
-              variant="SurfaceVariant"
-              fill="None"
-              size="300"
-              radii="300"
-            >
-              <Icon size="50" src={Icons.SpacePlus} />
-            </IconButton>
-          )}
-        </TooltipProvider>
-      )}
-      {addExisting && (
-        <AddExistingModal space parentId={item.roomId} requestClose={() => setAddExisting(false)} />
-      )}
-    </PopOut>
-  );
-}
+//   const handleAddExisting = () => {
+//     setAddExisting(true);
+//     setCords(undefined);
+//   };
+//   return (
+//     <PopOut
+//       anchor={cords}
+//       position="Bottom"
+//       align="End"
+//       content={
+//         <FocusTrap
+//           focusTrapOptions={{
+//             initialFocus: false,
+//             onDeactivate: () => setCords(undefined),
+//             clickOutsideDeactivates: true,
+//             isKeyForward: (evt: KeyboardEvent) => evt.key === 'ArrowDown',
+//             isKeyBackward: (evt: KeyboardEvent) => evt.key === 'ArrowUp',
+//             escapeDeactivates: stopPropagation,
+//           }}
+//         >
+//           <Menu style={{ padding: config.space.S100 }}>
+//             <MenuItem
+//               size="300"
+//               radii="300"
+//               variant="Primary"
+//               fill="None"
+//               onClick={handleCreateSpace}
+//             >
+//               <Text size="T300">New Space</Text>
+//             </MenuItem>
+//             <MenuItem size="300" radii="300" fill="None" onClick={handleAddExisting}>
+//               <Text size="T300">Existing Space</Text>
+//             </MenuItem>
+//           </Menu>
+//         </FocusTrap>
+//       }
+//     >
+//       {item.parentId === undefined ? (
+//         <Chip
+//           variant="SurfaceVariant"
+//           radii="Pill"
+//           before={<Icon src={Icons.Plus} size="50" />}
+//           onClick={handleAddSpace}
+//           aria-pressed={!!cords}
+//         >
+//           <Text size="B300">Add Space</Text>
+//         </Chip>
+//       ) : (
+//         <TooltipProvider
+//           position="Bottom"
+//           offset={4}
+//           tooltip={
+//             <Tooltip>
+//               <Text>Add Space</Text>
+//             </Tooltip>
+//           }
+//         >
+//           {(triggerRef) => (
+//             <IconButton
+//               ref={triggerRef}
+//               onClick={handleAddSpace}
+//               aria-pressed={!!cords}
+//               aria-label="Add Space"
+//               variant="SurfaceVariant"
+//               fill="None"
+//               size="300"
+//               radii="300"
+//             >
+//               <Icon size="50" src={Icons.SpacePlus} />
+//             </IconButton>
+//           )}
+//         </TooltipProvider>
+//       )}
+//       {addExisting && (
+//         <AddExistingModal space parentId={item.roomId} requestClose={() => setAddExisting(false)} />
+//       )}
+//     </PopOut>
+//   );
+// }
 
 type SpaceItemCardProps = {
   summary: IHierarchyRoom | undefined;
@@ -556,12 +531,6 @@ export const SpaceItemCard = as<'div', SpaceItemCardProps>(
               </>
             )}
           </Box>
-          {space && canEditChild && (
-            <Box shrink="No" alignItems="Inherit" gap="200">
-              <AddRoomButton item={item} />
-              <AddSpaceButton item={item} />
-            </Box>
-          )}
         </Box>
         {options}
         {after}

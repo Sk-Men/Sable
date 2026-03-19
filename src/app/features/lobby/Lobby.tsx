@@ -1,5 +1,25 @@
-import { MouseEventHandler, ReactElement, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Box, Chip, Icon, IconButton, Icons, Line, Scroll, Spinner, Text, color, config } from 'folds';
+import {
+  MouseEventHandler,
+  ReactElement,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
+import {
+  Box,
+  Chip,
+  Icon,
+  IconButton,
+  Icons,
+  Line,
+  Scroll,
+  Spinner,
+  Text,
+  color,
+  config,
+} from 'folds';
 import { useVirtualizer, VirtualItem } from '@tanstack/react-virtual';
 import { useAtom, useAtomValue } from 'jotai';
 import { useNavigate } from 'react-router-dom';
@@ -13,7 +33,7 @@ import {
 import { produce } from 'immer';
 import { useSpace } from '$hooks/useSpace';
 import { Page, PageContent, PageContentCenter, PageHeroSection } from '$components/page';
-import { HierarchyItem, HierarchyItemSpace, SpaceHierarchy, useSpaceHierarchy } from '$hooks/useSpaceHierarchy';
+import { HierarchyItem, HierarchyItemSpace, useSpaceHierarchy } from '$hooks/useSpaceHierarchy';
 import { VirtualTile } from '$components/virtualizer';
 import { spaceRoomsAtom } from '$state/spaceRooms';
 import { useSetting } from '$state/hooks/settings';
@@ -56,6 +76,7 @@ import { SpaceHierarchyItem } from './SpaceHierarchyItem';
 import { CanDropCallback, useDnDMonitor } from './DnD';
 import { LobbyHero } from './LobbyHero';
 import { LobbyHeader } from './LobbyHeader';
+import { SpaceHierarchyNavItem } from './SpaceHierarchyNavItem';
 
 const useCanDropLobbyItem = (
   space: Room,
@@ -273,11 +294,16 @@ export function Lobby() {
     return !Array.from(parentIds).some((id) => !getInClosedCategories(spaceId, id, roomId));
   };
 
+  const [subspaceHierarchyLimit] = useSetting(settingsAtom, 'subspaceHierarchyLimit');
   const [draggingItem, setDraggingItem] = useState<HierarchyItem>();
   const hierarchy = useSpaceHierarchy(
     space.roomId,
     spaceRooms,
     getRoom,
+    useCallback(
+      (_childId, _spaceId, depth) => depth >= subspaceHierarchyLimit,
+      [subspaceHierarchyLimit]
+    ),
     useCallback(
       (childId) =>
         getInClosedCategories(space.roomId, childId) ||
@@ -520,73 +546,76 @@ export function Lobby() {
     [mx, sidebarItems, sidebarSpaces]
   );
 
-  const getPaddingTop = (hierarchy: SpaceHierarchy[], vItem: VirtualItem) => {
+  const getPaddingTop = (vItem: VirtualItem) => {
     if (vItem.index === 0) return 0;
     const prevDepth = hierarchy[vItem.index - 1]?.space.depth ?? 0;
-    const depth = hierarchy[vItem.index].space.depth;
+    const { depth } = hierarchy[vItem.index].space;
     if (depth !== 1 && depth >= prevDepth) return config.space.S200;
     return config.space.S500;
   };
 
-  const getConnectorSVG = useCallback((hierarchy: SpaceHierarchy[], virtualizedItems: VirtualItem[]): ReactElement => {
-    const PADDING_LEFT_DEPTH_OFFSET = 15.75;
-    const PADDING_LEFT_DEPTH_OFFSET_START = -15;
+  const getConnectorSVG = useCallback(
+    (virtualizedItems: VirtualItem[]): ReactElement => {
+      const PADDING_LEFT_DEPTH_OFFSET = 15.75;
+      const PADDING_LEFT_DEPTH_OFFSET_START = -15;
 
-    var aY: number = 0;
-    // Holder for the paths
-    const pathHolder: ReactElement[] = [];
-    virtualizedItems.forEach((vItem) => {
-      const { depth } = hierarchy[vItem.index].space ?? {};
+      let aY = 0;
+      // Holder for the paths
+      const pathHolder: ReactElement[] = [];
+      virtualizedItems.forEach((vItem) => {
+        const { depth } = hierarchy[vItem.index].space ?? {};
 
-      // We will render spaces at a level above their normal depth, since we want their children to be "under" them
-      // for the root items, we are not doing anything with it.
-      if (depth < 1) {
-        return;
-      }
-      // for the sub-root items, we will not draw any arcs from root to it.
-      // however, we should capture the aX and aY to draw starter arcs for next depths.
-      if (depth === 1) {
+        // We will render spaces at a level above their normal depth, since we want their children to be "under" them
+        // for the root items, we are not doing anything with it.
+        if (depth < 1) {
+          return;
+        }
+        // for the sub-root items, we will not draw any arcs from root to it.
+        // however, we should capture the aX and aY to draw starter arcs for next depths.
+        if (depth === 1) {
+          aY = vItem.end;
+          return;
+        }
+
+        const pathStrings: string[] = [];
+
+        for (let iDepth = 0; iDepth < depth; iDepth += 1) {
+          const X = iDepth * PADDING_LEFT_DEPTH_OFFSET + PADDING_LEFT_DEPTH_OFFSET_START;
+
+          const bY = vItem.end;
+
+          pathStrings.push(`M ${X} ${aY} L ${X} ${bY}`);
+        }
+
+        pathHolder.push(
+          <path
+            d={pathStrings.join(' ')}
+            fill="none"
+            stroke={color.Surface.ContainerLine}
+            strokeWidth={config.borderWidth.B300}
+            display="block"
+          />
+        );
+
         aY = vItem.end;
-        return;
-      }
+      });
 
-      var pathStrings: string[] = [];
-
-      for (var iDepth = 0; iDepth < depth; iDepth++) {
-        var X = iDepth * PADDING_LEFT_DEPTH_OFFSET + PADDING_LEFT_DEPTH_OFFSET_START;
-
-        var bY = vItem.end;
-
-        pathStrings.push(`M ${X} ${aY} L ${X} ${bY}`); 
-      }
-
-      pathHolder.push(
-        <path
-          d={pathStrings.join(" ")}
-          fill="none"
-          stroke={color.Surface.ContainerLine}
-          strokeWidth={config.borderWidth.B300}
-          display="block"
-        />
+      return (
+        <svg
+          style={{
+            position: 'absolute',
+            inset: 0,
+            width: '100%',
+            height: '100%',
+            pointerEvents: 'none',
+          }}
+        >
+          {pathHolder}
+        </svg>
       );
-
-      aY = vItem.end;
-    });
-
-    return (
-      <svg
-        style={{
-          position: 'absolute',
-          inset: 0,
-          width: '100%',
-          height: '100%',
-          pointerEvents: 'none',
-        }}
-      >
-        {pathHolder}
-      </svg>
-    );
-  }, [hierarchy, vItems]);
+    },
+    [hierarchy]
+  );
 
   return (
     <PowerLevelsContextProvider value={spacePowerLevels}>
@@ -641,39 +670,57 @@ export function Lobby() {
                         <VirtualTile
                           virtualItem={vItem}
                           style={{
-                            paddingTop: getPaddingTop(hierarchy, vItem),
+                            paddingTop: getPaddingTop(vItem),
                             paddingLeft,
                           }}
                           ref={virtualizer.measureElement}
                           key={vItem.index}
                         >
-                          <SpaceHierarchyItem
-                            spaceItem={item.space}
-                            summary={spacesItems.get(item.space.roomId)}
-                            roomItems={item.rooms}
-                            allJoinedRooms={allJoinedRooms}
-                            mDirects={mDirects}
-                            roomsPowerLevels={roomsPowerLevels}
-                            categoryId={categoryId}
-                            closed={
-                              inClosedCategory || (draggingItem ? 'space' in draggingItem : false)
-                            }
-                            handleClose={handleCategoryClick}
-                            draggingItem={draggingItem}
-                            onDragging={setDraggingItem}
-                            canDrop={canDrop}
-                            disabledReorder={reordering}
-                            nextSpaceId={nextSpaceId}
-                            getRoom={getRoom}
-                            pinned={sidebarSpaces.has(item.space.roomId)}
-                            togglePinToSidebar={togglePinToSidebar}
-                            onSpacesFound={handleSpacesFound}
-                            onOpenRoom={handleOpenRoom}
-                          />
+                          {item.space.depth !== subspaceHierarchyLimit ? (
+                            <SpaceHierarchyItem
+                              spaceItem={item.space}
+                              roomItems={item.rooms}
+                              summary={spacesItems.get(item.space.roomId)}
+                              allJoinedRooms={allJoinedRooms}
+                              mDirects={mDirects}
+                              roomsPowerLevels={roomsPowerLevels}
+                              categoryId={categoryId}
+                              closed={
+                                inClosedCategory || (draggingItem ? 'space' in draggingItem : false)
+                              }
+                              handleClose={handleCategoryClick}
+                              draggingItem={draggingItem}
+                              onDragging={setDraggingItem}
+                              canDrop={canDrop}
+                              disabledReorder={reordering}
+                              nextSpaceId={nextSpaceId}
+                              getRoom={getRoom}
+                              pinned={sidebarSpaces.has(item.space.roomId)}
+                              togglePinToSidebar={togglePinToSidebar}
+                              onSpacesFound={handleSpacesFound}
+                              onOpenRoom={handleOpenRoom}
+                            />
+                          ) : (
+                            <SpaceHierarchyNavItem
+                              spaceItem={item.space}
+                              summary={spacesItems.get(item.space.roomId)}
+                              allJoinedRooms={allJoinedRooms}
+                              roomsPowerLevels={roomsPowerLevels}
+                              categoryId={categoryId}
+                              draggingItem={draggingItem}
+                              onDragging={setDraggingItem}
+                              canDrop={canDrop}
+                              disabledReorder={reordering}
+                              nextSpaceId={nextSpaceId}
+                              pinned={sidebarSpaces.has(item.space.roomId)}
+                              togglePinToSidebar={togglePinToSidebar}
+                              getRoom={getRoom}
+                            />
+                          )}
                         </VirtualTile>
                       );
                     })}
-                    {getConnectorSVG(hierarchy, vItems)}
+                    {getConnectorSVG(vItems)}
                   </div>
                   {reordering && (
                     <Box

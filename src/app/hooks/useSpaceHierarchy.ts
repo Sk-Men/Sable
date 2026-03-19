@@ -114,12 +114,13 @@ const getSpaceHierarchy = (
   rootSpaceId: string,
   spaceRooms: Set<string>,
   getRoom: (roomId: string) => Room | undefined,
+  excludeRoom: (parentId: string, roomId: string, depth: number) => boolean,
   closedCategory: (spaceId: string) => boolean
 ): SpaceHierarchy[] => {
   const spaceItems: HierarchyItemSpace[] = getHierarchySpaces(
     rootSpaceId,
     getRoom,
-    () => false,
+    excludeRoom,
     spaceRooms
   );
 
@@ -161,19 +162,20 @@ export const useSpaceHierarchy = (
   spaceId: string,
   spaceRooms: Set<string>,
   getRoom: (roomId: string) => Room | undefined,
+  excludeRoom: (parentId: string, roomId: string, depth: number) => boolean,
   closedCategory: (spaceId: string) => boolean
 ): SpaceHierarchy[] => {
   const mx = useMatrixClient();
   const roomToParents = useAtomValue(roomToParentsAtom);
 
   const [hierarchyAtom] = useState(() =>
-    atom(getSpaceHierarchy(spaceId, spaceRooms, getRoom, closedCategory))
+    atom(getSpaceHierarchy(spaceId, spaceRooms, getRoom, excludeRoom, closedCategory))
   );
   const [hierarchy, setHierarchy] = useAtom(hierarchyAtom);
 
   useEffect(() => {
-    setHierarchy(getSpaceHierarchy(spaceId, spaceRooms, getRoom, closedCategory));
-  }, [mx, spaceId, spaceRooms, setHierarchy, getRoom, closedCategory]);
+    setHierarchy(getSpaceHierarchy(spaceId, spaceRooms, getRoom, excludeRoom, closedCategory));
+  }, [mx, spaceId, spaceRooms, setHierarchy, getRoom, closedCategory, excludeRoom]);
 
   useStateEventCallback(
     mx,
@@ -184,10 +186,12 @@ export const useSpaceHierarchy = (
         if (!eventRoomId) return;
 
         if (spaceId === eventRoomId || getAllParents(roomToParents, eventRoomId).has(spaceId)) {
-          setHierarchy(getSpaceHierarchy(spaceId, spaceRooms, getRoom, closedCategory));
+          setHierarchy(
+            getSpaceHierarchy(spaceId, spaceRooms, getRoom, excludeRoom, closedCategory)
+          );
         }
       },
-      [spaceId, roomToParents, setHierarchy, spaceRooms, getRoom, closedCategory]
+      [spaceId, roomToParents, setHierarchy, spaceRooms, getRoom, closedCategory, excludeRoom]
     )
   );
 
