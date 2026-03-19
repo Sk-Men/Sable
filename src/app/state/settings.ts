@@ -99,6 +99,7 @@ export interface Settings {
   alwaysShowCallButton: boolean;
   faviconForMentionsOnly: boolean;
   highlightMentions: boolean;
+  mentionInReplies: boolean;
 
   // furry stuff
   renderAnimals: boolean;
@@ -182,6 +183,7 @@ const defaultSettings: Settings = {
   alwaysShowCallButton: false,
   faviconForMentionsOnly: false,
   highlightMentions: true,
+  mentionInReplies: true,
 
   // furry stuff
   renderAnimals: true,
