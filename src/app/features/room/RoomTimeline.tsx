@@ -164,6 +164,9 @@ export function RoomTimeline({
   const hideReadsRef = useRef(hideReads);
   hideReadsRef.current = hideReads;
 
+  const prevViewportHeightRef = useRef(0);
+  const messageListRef = useRef<HTMLDivElement>(null);
+
   const mediaAuthentication = useMediaAuthentication();
   const spoilerClickHandler = useSpoilerClickHandler();
   const mentionClickHandler = useMentionClickHandler(room.roomId);
@@ -345,6 +348,28 @@ export function RoomTimeline({
       }
     }
   }, [room, unreadInfo, timelineSync.timeline.linkedTimelines, eventId]);
+
+  useEffect(() => {
+    const el = messageListRef.current;
+    if (!el) {
+      return;
+    }
+
+    const observer = new ResizeObserver((entries) => {
+      const newHeight = entries[0].contentRect.height;
+      const prev = prevViewportHeightRef.current;
+      const atBottom = atBottomRef.current;
+      const shrank = newHeight < prev;
+
+      if (shrank && atBottom) {
+        vListRef.current?.scrollToIndex(eventsLengthRef.current - 1, { align: 'end' });
+      }
+      prevViewportHeightRef.current = newHeight;
+    });
+
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
 
   const actions = useTimelineActions({
     room,
@@ -674,113 +699,118 @@ export function RoomTimeline({
         </TimelineFloat>
       )}
 
-      <VList<ProcessedEvent>
-        ref={vListRef}
-        data={processedEvents}
-        shift={shift}
-        className={css.messageList}
-        style={{
-          flex: 1,
-          minHeight: 0,
-          display: 'flex',
-          flexDirection: 'column',
-          paddingTop: topSpacerHeight > 0 ? topSpacerHeight : config.space.S600,
-          paddingBottom: config.space.S600,
-        }}
-        onScroll={handleVListScroll}
+      <div
+        ref={messageListRef}
+        style={{ flex: 1, minHeight: 0, overflow: 'hidden', position: 'relative' }}
       >
-        {(eventData, index) => {
-          if (showLoadingPlaceholders) {
-            return (
-              <MessageBase key={`placeholder-${index}`}>
-                {messageLayout === MessageLayout.Compact ? (
-                  <CompactPlaceholder />
-                ) : (
-                  <DefaultPlaceholder />
-                )}
-              </MessageBase>
-            );
-          }
-
-          if (!eventData) {
-            if (index === 0 && !timelineSync.canPaginateBack) {
+        <VList<ProcessedEvent>
+          ref={vListRef}
+          data={processedEvents}
+          shift={shift}
+          className={css.messageList}
+          style={{
+            flex: 1,
+            minHeight: 0,
+            display: 'flex',
+            flexDirection: 'column',
+            paddingTop: topSpacerHeight > 0 ? topSpacerHeight : config.space.S600,
+            paddingBottom: config.space.S600,
+          }}
+          onScroll={handleVListScroll}
+        >
+          {(eventData, index) => {
+            if (showLoadingPlaceholders) {
               return (
-                <Fragment key="intro-and-first">
+                <MessageBase key={`placeholder-${index}`}>
+                  {messageLayout === MessageLayout.Compact ? (
+                    <CompactPlaceholder />
+                  ) : (
+                    <DefaultPlaceholder />
+                  )}
+                </MessageBase>
+              );
+            }
+
+            if (!eventData) {
+              if (index === 0 && !timelineSync.canPaginateBack) {
+                return (
+                  <Fragment key="intro-and-first">
+                    {backPaginationJSX}
+                    <div
+                      style={{
+                        padding: `${config.space.S700} ${config.space.S400} ${config.space.S600} ${messageLayout === MessageLayout.Compact ? config.space.S400 : toRem(64)}`,
+                      }}
+                    >
+                      <RoomIntro room={room} />
+                    </div>
+                  </Fragment>
+                );
+              }
+              if (index === 0) return <Fragment key="first">{backPaginationJSX}</Fragment>;
+              return <Fragment key={index} />;
+            }
+
+            const renderedEvent = renderMatrixEvent(
+              eventData.mEvent.getType(),
+              typeof eventData.mEvent.getStateKey() === 'string',
+              eventData.id,
+              eventData.mEvent,
+              eventData.itemIndex,
+              eventData.timelineSet,
+              eventData.collapsed
+            );
+
+            const dividers = (
+              <>
+                {eventData.willRenderDayDivider && (
+                  <MessageBase space={messageSpacing}>
+                    <TimelineDivider variant="Surface">
+                      <Badge as="span" size="500" variant="Secondary" fill="None" radii="300">
+                        <Text size="L400">{getDayDividerText(eventData.mEvent.getTs())}</Text>
+                      </Badge>
+                    </TimelineDivider>
+                  </MessageBase>
+                )}
+                {eventData.willRenderNewDivider && (
+                  <MessageBase space={messageSpacing}>
+                    <TimelineDivider style={{ color: color.Success.Main }} variant="Inherit">
+                      <Badge as="span" size="500" variant="Success" fill="Solid" radii="300">
+                        <Text size="L400">New Messages</Text>
+                      </Badge>
+                    </TimelineDivider>
+                  </MessageBase>
+                )}
+              </>
+            );
+
+            if (index === 0) {
+              return (
+                <Fragment key="first-item-block">
+                  {!timelineSync.canPaginateBack && (
+                    <div
+                      style={{
+                        padding: `${config.space.S700} ${config.space.S400} ${config.space.S600} ${messageLayout === MessageLayout.Compact ? config.space.S400 : toRem(64)}`,
+                      }}
+                    >
+                      <RoomIntro room={room} />
+                    </div>
+                  )}
                   {backPaginationJSX}
-                  <div
-                    style={{
-                      padding: `${config.space.S700} ${config.space.S400} ${config.space.S600} ${messageLayout === MessageLayout.Compact ? config.space.S400 : toRem(64)}`,
-                    }}
-                  >
-                    <RoomIntro room={room} />
-                  </div>
+                  {dividers}
+                  {renderedEvent}
                 </Fragment>
               );
             }
-            if (index === 0) return <Fragment key="first">{backPaginationJSX}</Fragment>;
-            return <Fragment key={index} />;
-          }
 
-          const renderedEvent = renderMatrixEvent(
-            eventData.mEvent.getType(),
-            typeof eventData.mEvent.getStateKey() === 'string',
-            eventData.id,
-            eventData.mEvent,
-            eventData.itemIndex,
-            eventData.timelineSet,
-            eventData.collapsed
-          );
-
-          const dividers = (
-            <>
-              {eventData.willRenderDayDivider && (
-                <MessageBase space={messageSpacing}>
-                  <TimelineDivider variant="Surface">
-                    <Badge as="span" size="500" variant="Secondary" fill="None" radii="300">
-                      <Text size="L400">{getDayDividerText(eventData.mEvent.getTs())}</Text>
-                    </Badge>
-                  </TimelineDivider>
-                </MessageBase>
-              )}
-              {eventData.willRenderNewDivider && (
-                <MessageBase space={messageSpacing}>
-                  <TimelineDivider style={{ color: color.Success.Main }} variant="Inherit">
-                    <Badge as="span" size="500" variant="Success" fill="Solid" radii="300">
-                      <Text size="L400">New Messages</Text>
-                    </Badge>
-                  </TimelineDivider>
-                </MessageBase>
-              )}
-            </>
-          );
-
-          if (index === 0) {
             return (
-              <Fragment key="first-item-block">
-                {!timelineSync.canPaginateBack && (
-                  <div
-                    style={{
-                      padding: `${config.space.S700} ${config.space.S400} ${config.space.S600} ${messageLayout === MessageLayout.Compact ? config.space.S400 : toRem(64)}`,
-                    }}
-                  >
-                    <RoomIntro room={room} />
-                  </div>
-                )}
-                {backPaginationJSX}
+              <Fragment key={eventData.id}>
                 {dividers}
                 {renderedEvent}
               </Fragment>
             );
-          }
-
-          return (
-            <Fragment key={eventData.id}>
-              {dividers}
-              {renderedEvent}
-            </Fragment>
-          );
-        }}
-      </VList>
+          }}
+        </VList>
+      </div>
 
       {frontPaginationJSX}
 
