@@ -202,10 +202,13 @@ export function RoomTimeline({
   const hasInitialScrolledRef = useRef(false);
   const currentRoomIdRef = useRef(room.roomId);
 
+  const [isReady, setIsReady] = useState(false);
+
   if (currentRoomIdRef.current !== room.roomId) {
     hasInitialScrolledRef.current = false;
     mountScrollWindowRef.current = Date.now() + 3000;
     currentRoomIdRef.current = room.roomId;
+    setIsReady(false);
   }
 
   const processedEventsRef = useRef<ProcessedEvent[]>([]);
@@ -275,6 +278,7 @@ export function RoomTimeline({
       vListRef.current.scrollToIndex(processedEventsRef.current.length - 1, { align: 'end' });
       const t = setTimeout(() => {
         vListRef.current?.scrollToIndex(processedEventsRef.current.length - 1, { align: 'end' });
+        setIsReady(true);
       }, 80);
       hasInitialScrolledRef.current = true;
       return () => clearTimeout(t);
@@ -694,7 +698,7 @@ export function RoomTimeline({
 
   return (
     <Box grow="Yes" style={{ position: 'relative' }}>
-      {unreadInfo?.readUptoEventId && !unreadInfo?.inLiveTimeline && (
+      {unreadInfo?.readUptoEventId && !unreadInfo?.inLiveTimeline && isReady && (
         <TimelineFloat position="Top">
           <Chip
             variant="Primary"
@@ -719,7 +723,13 @@ export function RoomTimeline({
 
       <div
         ref={messageListRef}
-        style={{ flex: 1, minHeight: 0, overflow: 'hidden', position: 'relative' }}
+        style={{
+          flex: 1,
+          minHeight: 0,
+          overflow: 'hidden',
+          position: 'relative',
+          opacity: isReady ? 1 : 0,
+        }}
       >
         <VList<ProcessedEvent>
           ref={vListRef}
@@ -832,7 +842,7 @@ export function RoomTimeline({
 
       {frontPaginationJSX}
 
-      {!atBottomState && (
+      {!atBottomState && isReady && (
         <TimelineFloat position="Bottom">
           <Chip
             variant="SurfaceVariant"
