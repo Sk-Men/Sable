@@ -214,20 +214,12 @@ export function RoomTimeline({
   const processedEventsRef = useRef<ProcessedEvent[]>([]);
   const timelineSyncRef = useRef<typeof timelineSync>(null as unknown as typeof timelineSync);
 
-  const scrollToBottom = useCallback(
-    (behavior?: 'instant' | 'smooth') => {
-      if (!vListRef.current) return;
-      const lastIndex = processedEventsRef.current.length - 1;
-      if (lastIndex < 0) return;
-
-      if (behavior === 'smooth' && !reducedMotion) {
-        vListRef.current.scrollToIndex(lastIndex, { align: 'end', smooth: true });
-      } else {
-        vListRef.current.scrollTo(vListRef.current.scrollSize);
-      }
-    },
-    [reducedMotion]
-  );
+  const scrollToBottom = useCallback(() => {
+    if (!vListRef.current) return;
+    const lastIndex = processedEventsRef.current.length - 1;
+    if (lastIndex < 0) return;
+    vListRef.current.scrollTo(vListRef.current.scrollSize);
+  }, []);
 
   const timelineSync = useTimelineSync({
     room,
@@ -341,6 +333,18 @@ export function RoomTimeline({
       if (timeoutId !== undefined) clearTimeout(timeoutId);
     };
   }, [timelineSync.focusItem, timelineSync, reducedMotion, getRawIndexToProcessedIndex]);
+
+  useEffect(() => {
+    if (timelineSync.focusItem) {
+      setIsReady(true);
+    }
+  }, [timelineSync.focusItem]);
+
+  useEffect(() => {
+    if (!eventId) return;
+    setIsReady(false);
+    timelineSyncRef.current.loadEventTimeline(eventId);
+  }, [eventId, room.roomId]);
 
   useEffect(() => {
     if (eventId) return;
@@ -636,7 +640,8 @@ export function RoomTimeline({
       : timelineSync.eventsLength;
   const vListIndices = useMemo(
     () => Array.from({ length: vListItemCount }, (_, i) => i),
-    [vListItemCount]
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [vListItemCount, timelineSync.timeline]
   );
 
   const processedEvents = useProcessedTimeline({
@@ -857,7 +862,7 @@ export function RoomTimeline({
             onClick={() => {
               if (eventId) navigateRoom(room.roomId, undefined, { replace: true });
               timelineSync.setTimeline(getInitialTimeline(room));
-              scrollToBottom('instant');
+              scrollToBottom();
             }}
           >
             <Text size="L400">Jump to Latest</Text>
