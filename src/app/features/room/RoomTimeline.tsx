@@ -194,7 +194,7 @@ export function RoomTimeline({
     atBottomRef.current = val;
   }, []);
 
-  const shift = !atBottomState;
+  const [shift, setShift] = useState(false);
   const [topSpacerHeight, setTopSpacerHeight] = useState(0);
 
   const topSpacerHeightRef = useRef(0);
@@ -212,24 +212,22 @@ export function RoomTimeline({
   }
 
   const processedEventsRef = useRef<ProcessedEvent[]>([]);
-
   const timelineSyncRef = useRef<typeof timelineSync>(null as unknown as typeof timelineSync);
 
-  const scrollToBottom = useCallback((behavior?: 'instant' | 'smooth') => {
-    if (!vListRef.current) return;
-    const lastIndex = processedEventsRef.current.length - 1;
-    if (lastIndex < 0) return;
+  const scrollToBottom = useCallback(
+    (behavior?: 'instant' | 'smooth') => {
+      if (!vListRef.current) return;
+      const lastIndex = processedEventsRef.current.length - 1;
+      if (lastIndex < 0) return;
 
-    vListRef.current.scrollTo(vListRef.current.scrollSize);
-
-    if (behavior === 'instant') {
-      setTimeout(() => {
-        vListRef.current?.scrollToIndex(processedEventsRef.current.length - 1, {
-          align: 'end',
-        });
-      }, 80);
-    }
-  }, []);
+      if (behavior === 'smooth' && !reducedMotion) {
+        vListRef.current.scrollToIndex(lastIndex, { align: 'end', smooth: true });
+      } else {
+        vListRef.current.scrollTo(vListRef.current.scrollSize);
+      }
+    },
+    [reducedMotion]
+  );
 
   const timelineSync = useTimelineSync({
     room,
@@ -295,7 +293,7 @@ export function RoomTimeline({
     if (Math.abs(prev - newH) > 2) {
       topSpacerHeightRef.current = newH;
       setTopSpacerHeight(newH);
-      if (prev > 0 && newH === 0 && eventsLengthRef.current > 0) {
+      if (prev > 0 && newH === 0 && processedEventsRef.current.length > 0) {
         requestAnimationFrame(() => {
           vListRef.current?.scrollToIndex(processedEventsRef.current.length - 1, { align: 'end' });
         });
@@ -316,12 +314,14 @@ export function RoomTimeline({
     prevBackwardStatusRef.current = timelineSync.backwardStatus;
     if (timelineSync.backwardStatus === 'loading') {
       wasAtBottomBeforePaginationRef.current = atBottomRef.current;
+      if (!atBottomRef.current) setShift(true);
     } else if (prev === 'loading' && timelineSync.backwardStatus === 'idle') {
+      setShift(false);
       if (wasAtBottomBeforePaginationRef.current) {
-        vListRef.current?.scrollToIndex(eventsLengthRef.current - 1, { align: 'end' });
+        vListRef.current?.scrollToIndex(processedEventsRef.current.length - 1, { align: 'end' });
       }
     }
-  }, [timelineSync.backwardStatus, shift]);
+  }, [timelineSync.backwardStatus]);
 
   useEffect(() => {
     let timeoutId: ReturnType<typeof setTimeout> | undefined;
@@ -382,7 +382,7 @@ export function RoomTimeline({
       const shrank = newHeight < prev;
 
       if (shrank && atBottom) {
-        vListRef.current?.scrollToIndex(processedEventsRef.current.length - 1, { align: 'end' });
+        vListRef.current?.scrollTo(vListRef.current.scrollSize);
       }
       prevViewportHeightRef.current = newHeight;
     });
