@@ -258,6 +258,7 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
     const [enterForNewline] = useSetting(settingsAtom, 'enterForNewline');
     const [isMarkdown] = useSetting(settingsAtom, 'isMarkdown');
     const [hideActivity] = useSetting(settingsAtom, 'hideActivity');
+    const [mentionInReplies] = useSetting(settingsAtom, 'mentionInReplies');
     const commands = useCommands(mx, room);
     const emojiBtnRef = useRef<HTMLButtonElement>(null);
     const micBtnRef = useRef<HTMLButtonElement>(null);
@@ -363,7 +364,7 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
     );
     const [scheduleMenuAnchor, setScheduleMenuAnchor] = useState<RectCords>();
     const [showSchedulePicker, setShowSchedulePicker] = useState(false);
-    const [silentReply, setSilentReply] = useState(false);
+    const [silentReply, setSilentReply] = useState(!mentionInReplies);
     const [hour24Clock] = useSetting(settingsAtom, 'hour24Clock');
     const isEncrypted = room.hasEncryptionStateEvent();
 
@@ -449,9 +450,9 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
 
     useEffect(() => {
       if (replyDraft !== undefined) {
-        setSilentReply(replyDraft.userId === mx.getUserId());
+        setSilentReply(replyDraft.userId === mx.getUserId() || !mentionInReplies);
       }
-    }, [mx, replyDraft]);
+    }, [mentionInReplies, mx, replyDraft]);
 
     const handleFileMetadata = useCallback(
       (fileItem: TUploadItem, metadata: TUploadMetadata) => {
