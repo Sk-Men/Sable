@@ -1,5 +1,14 @@
 # Sable Client Changelog
 
+## 1.10.2 (2026-03-20)
+
+### Fixes
+
+* Fix edit button not always editing. ([#413](https://github.com/SableClient/Sable/pull/413) by @7w1)
+* Fix search/nav/links/etc not loading messages. ([#413](https://github.com/SableClient/Sable/pull/413) by @7w1)
+* Fix timeline not sticking to the bottom in non-reduced motion setting. ([#413](https://github.com/SableClient/Sable/pull/413) by @7w1)
+* Replace matrix.org with matrixrooms.info in default featured servers section. ([#413](https://github.com/SableClient/Sable/pull/413) by @7w1)
+
 ## 1.10.1 (2026-03-20)
 
 ### Fixes
