@@ -225,7 +225,7 @@ export function RoomTimeline({
 
       if (behavior === 'instant') {
         setTimeout(() => {
-          vListRef.current?.scrollToIndex(timelineSyncRef.current.eventsLength - 1, {
+          vListRef.current?.scrollToIndex(processedEventsRef.current.length - 1, {
             align: 'end',
           });
         }, 80);
@@ -278,9 +278,9 @@ export function RoomTimeline({
       timelineSync.eventsLength > 0 &&
       vListRef.current
     ) {
-      vListRef.current.scrollToIndex(timelineSync.eventsLength - 1, { align: 'end' });
+      vListRef.current.scrollToIndex(processedEventsRef.current.length - 1, { align: 'end' });
       const t = setTimeout(() => {
-        vListRef.current?.scrollToIndex(eventsLengthRef.current - 1, { align: 'end' });
+        vListRef.current?.scrollToIndex(processedEventsRef.current.length - 1, { align: 'end' });
       }, 80);
       hasInitialScrolledRef.current = true;
       return () => clearTimeout(t);
@@ -299,7 +299,7 @@ export function RoomTimeline({
       setTopSpacerHeight(newH);
       if (prev > 0 && newH === 0 && eventsLengthRef.current > 0) {
         requestAnimationFrame(() => {
-          vListRef.current?.scrollToIndex(eventsLengthRef.current - 1, { align: 'end' });
+          vListRef.current?.scrollToIndex(processedEventsRef.current.length - 1, { align: 'end' });
         });
       }
     }
