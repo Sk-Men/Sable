@@ -212,27 +212,21 @@ export function RoomTimeline({
 
   const timelineSyncRef = useRef<typeof timelineSync>(null as unknown as typeof timelineSync);
 
-  const scrollToBottom = useCallback(
-    (behavior?: 'instant' | 'smooth') => {
-      if (!vListRef.current) return;
-      const lastIndex = processedEventsRef.current.length - 1;
-      if (lastIndex < 0) return;
+  const scrollToBottom = useCallback((behavior?: 'instant' | 'smooth') => {
+    if (!vListRef.current) return;
+    const lastIndex = processedEventsRef.current.length - 1;
+    if (lastIndex < 0) return;
 
-      vListRef.current.scrollToIndex(lastIndex, {
-        align: 'end',
-        smooth: behavior === 'smooth' && !reducedMotion,
-      });
+    vListRef.current.scrollTo(vListRef.current.scrollSize);
 
-      if (behavior === 'instant') {
-        setTimeout(() => {
-          vListRef.current?.scrollToIndex(processedEventsRef.current.length - 1, {
-            align: 'end',
-          });
-        }, 80);
-      }
-    },
-    [reducedMotion]
-  );
+    if (behavior === 'instant') {
+      setTimeout(() => {
+        vListRef.current?.scrollToIndex(processedEventsRef.current.length - 1, {
+          align: 'end',
+        });
+      }, 80);
+    }
+  }, []);
 
   const timelineSync = useTimelineSync({
     room,
