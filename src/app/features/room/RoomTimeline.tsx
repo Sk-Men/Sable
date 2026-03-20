@@ -628,7 +628,8 @@ export function RoomTimeline({
       : timelineSync.eventsLength;
   const vListIndices = useMemo(
     () => Array.from({ length: vListItemCount }, (_, i) => i),
-    [vListItemCount]
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [vListItemCount, timelineSync.timeline]
   );
 
   const processedEvents = useProcessedTimeline({
