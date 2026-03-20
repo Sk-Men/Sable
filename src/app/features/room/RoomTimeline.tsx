@@ -346,35 +346,6 @@ export function RoomTimeline({
     }
   }, [room, unreadInfo, timelineSync.timeline.linkedTimelines, eventId]);
 
-  useEffect(() => {
-    if (!canPaginateBackRef.current) return;
-
-    let rafId: number;
-    let attempts = 0;
-    const MAX_ATTEMPTS = 20;
-
-    const check = () => {
-      const v = vListRef.current;
-      if (!v) return;
-
-      if (v.viewportSize === 0) {
-        if (attempts++ < MAX_ATTEMPTS) rafId = requestAnimationFrame(check);
-        return;
-      }
-
-      if (
-        canPaginateBackRef.current &&
-        backwardStatusRef.current === 'idle' &&
-        (v.scrollSize <= v.viewportSize || v.scrollOffset < 500)
-      ) {
-        timelineSyncRef.current.handleTimelinePagination(true);
-      }
-    };
-
-    rafId = requestAnimationFrame(check);
-    return () => cancelAnimationFrame(rafId);
-  }, [timelineSync.eventsLength, timelineSync.backwardStatus]);
-
   const actions = useTimelineActions({
     room,
     mx,
@@ -644,6 +615,39 @@ export function RoomTimeline({
       timelineSyncRef.current.handleTimelinePagination(true);
     }
   }, [timelineSync.eventsLength, timelineSync.backwardStatus]);
+
+  useEffect(() => {
+    if (!canPaginateBackRef.current) return;
+
+    let rafId: number;
+    let attempts = 0;
+    const MAX_ATTEMPTS = 20;
+    const processedLengthAtEffectStart = processedEvents.length;
+
+    const check = () => {
+      const v = vListRef.current;
+      if (!v) return;
+
+      if (v.viewportSize === 0) {
+        if (attempts++ < MAX_ATTEMPTS) rafId = requestAnimationFrame(check);
+        return;
+      }
+
+      if (!canPaginateBackRef.current) return;
+      if (backwardStatusRef.current !== 'idle') return;
+
+      const atTop = v.scrollOffset < 500;
+      const noVisibleGrowth = processedEvents.length === processedLengthAtEffectStart;
+      const hasRealScrollRoom = v.scrollSize > v.viewportSize + 300;
+
+      if (!hasRealScrollRoom || (atTop && noVisibleGrowth)) {
+        timelineSyncRef.current.handleTimelinePagination(true);
+      }
+    };
+
+    rafId = requestAnimationFrame(check);
+    return () => cancelAnimationFrame(rafId);
+  }, [timelineSync.eventsLength, timelineSync.backwardStatus, processedEvents.length]);
 
   return (
     <Box grow="Yes" style={{ position: 'relative' }}>
