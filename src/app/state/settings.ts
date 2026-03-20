@@ -100,6 +100,7 @@ export interface Settings {
   faviconForMentionsOnly: boolean;
   highlightMentions: boolean;
   mentionInReplies: boolean;
+  showPersonaSetting: boolean;
 
   // furry stuff
   renderAnimals: boolean;
@@ -184,6 +185,7 @@ const defaultSettings: Settings = {
   faviconForMentionsOnly: false,
   highlightMentions: true,
   mentionInReplies: true,
+  showPersonaSetting: false,
 
   // furry stuff
   renderAnimals: true,
