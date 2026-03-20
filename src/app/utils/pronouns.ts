@@ -89,7 +89,8 @@ export function getParsedPronouns(rawName: string, parseSetting: boolean) {
   }
 
   // match text like (she/her) or [he/they/them] but not (hi)
-  const regex = /[([]?([a-zA-Z]+\/[a-zA-Z]+(?:\/[a-zA-Z]+)?)[)\]]?/;
+  const regex =
+    /(?:\(([a-zA-Z]+\/[a-zA-Z]+(?:\/[a-zA-Z]+)?)\)|\[([a-zA-Z]+\/[a-zA-Z]+(?:\/[a-zA-Z]+)?)\])/;
   const match = rawName.match(regex);
 
   let result: { cleanedDisplayName: string; inlinePronoun: string | null } = {
