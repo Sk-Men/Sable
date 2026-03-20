@@ -2,10 +2,7 @@ import { style } from '@vanilla-extract/css';
 import { config, toRem } from 'folds';
 
 export const RoomItemCard = style({
-  paddingLeft: config.space.S400,
-  paddingRight: config.space.S400,
-  paddingTop: config.space.S300,
-  paddingBottom: config.space.S300,
+  padding: config.space.S400,
   borderRadius: 0,
   position: 'relative',
   selectors: {
