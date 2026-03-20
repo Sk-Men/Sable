@@ -129,18 +129,17 @@ export function useProcessedTimeline({
         const { getSender: getPrevSender, getType: getPrevType, getTs: getPrevTs } = prevEvent;
 
         if (isMessageEvent) {
-          // Message events: same sender+type within 2 min, respect unread divider
           const withinTimeThreshold =
             minuteDifference(getPrevTs.call(prevEvent), getEvtTs.call(mEvent)) < 2;
+          const normalizeMessageType = (t: string) =>
+            t === 'm.room.encrypted' ? 'm.room.message' : t;
+
           collapsed =
             (!newDivider || eventSender === mxUserId) &&
             getPrevSender.call(prevEvent) === eventSender &&
-            getPrevType.call(prevEvent) === type &&
+            normalizeMessageType(getPrevType.call(prevEvent)) === normalizeMessageType(type) &&
             withinTimeThreshold;
         } else {
-          // Non-message/system events: collapse unconditionally until a day boundary,
-          // except when immediately following a message event (which acts as a visual
-          // break — the first system event after messages should always show in full).
           const prevIsMessageEvent = MESSAGE_EVENT_TYPES.includes(getPrevType.call(prevEvent));
           collapsed = !prevIsMessageEvent;
         }
