@@ -346,6 +346,35 @@ export function RoomTimeline({
     }
   }, [room, unreadInfo, timelineSync.timeline.linkedTimelines, eventId]);
 
+  useEffect(() => {
+    if (!canPaginateBackRef.current) return;
+
+    let rafId: number;
+    let attempts = 0;
+    const MAX_ATTEMPTS = 20;
+
+    const check = () => {
+      const v = vListRef.current;
+      if (!v) return;
+
+      if (v.viewportSize === 0) {
+        if (attempts++ < MAX_ATTEMPTS) rafId = requestAnimationFrame(check);
+        return;
+      }
+
+      if (
+        canPaginateBackRef.current &&
+        backwardStatusRef.current === 'idle' &&
+        (v.scrollSize <= v.viewportSize || v.scrollOffset < 500)
+      ) {
+        timelineSyncRef.current.handleTimelinePagination(true);
+      }
+    };
+
+    rafId = requestAnimationFrame(check);
+    return () => cancelAnimationFrame(rafId);
+  }, [timelineSync.eventsLength, timelineSync.backwardStatus]);
+
   const actions = useTimelineActions({
     room,
     mx,

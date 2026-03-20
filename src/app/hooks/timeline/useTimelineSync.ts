@@ -117,7 +117,6 @@ const useTimelinePagination = (
   const [forwardStatus, setForwardStatus] = useState<PaginationStatus>('idle');
 
   const fetchingRef = useRef({ backward: false, forward: false });
-
   const paginate = useMemo(() => {
     const recalibratePagination = (linkedTimelines: EventTimeline[]) => {
       const topTimeline = linkedTimelines[0];
@@ -127,11 +126,9 @@ const useTimelinePagination = (
 
     return async (backwards: boolean) => {
       const directionKey = backwards ? 'backward' : 'forward';
-
       if (fetchingRef.current[directionKey]) return;
 
       const { linkedTimelines: lTimelines } = timelineRef.current;
-
       const timelineToPaginate = backwards ? lTimelines[0] : lTimelines.at(-1);
       if (!timelineToPaginate) return;
 
@@ -151,31 +148,16 @@ const useTimelinePagination = (
       fetchingRef.current[directionKey] = true;
       if (alive()) {
         (backwards ? setBackwardStatus : setForwardStatus)('loading');
-        debugLog.info('timeline', 'Timeline pagination started', {
-          direction: backwards ? 'backward' : 'forward',
-          eventsLoaded: getTimelinesEventsCount(lTimelines),
-          hasToken: !!paginationToken,
-        });
       }
 
       try {
-        const paginateStart = performance.now();
-        const [err] = await to(
-          mx.paginateEventTimeline(timelineToPaginate, {
-            backwards,
-            limit,
-          })
-        );
+        const countBefore = getTimelinesEventsCount(lTimelines);
+
+        const [err] = await to(mx.paginateEventTimeline(timelineToPaginate, { backwards, limit }));
+
         if (err) {
           if (alive()) {
             (backwards ? setBackwardStatus : setForwardStatus)('error');
-            Sentry.metrics.count('sable.pagination.error', 1, {
-              attributes: { direction: backwards ? 'backward' : 'forward' },
-            });
-            debugLog.error('timeline', 'Timeline pagination failed', {
-              direction: backwards ? 'backward' : 'forward',
-              error: err instanceof Error ? err.message : String(err),
-            });
           }
           return;
         }
@@ -195,20 +177,21 @@ const useTimelinePagination = (
         if (alive()) {
           recalibratePagination(lTimelines);
           (backwards ? setBackwardStatus : setForwardStatus)('idle');
-          Sentry.metrics.distribution(
-            'sable.pagination.latency_ms',
-            performance.now() - paginateStart,
-            {
-              attributes: {
-                direction: backwards ? 'backward' : 'forward',
-                encrypted: String(!!evRoom?.hasEncryptionStateEvent()),
-              },
+
+          const countAfter = getTimelinesEventsCount(getLinkedTimelines(lTimelines[0]));
+          const fetched = countAfter - countBefore;
+
+          if (fetched > 0 && fetched < 5) {
+            const stillHasToken =
+              typeof getLinkedTimelines(lTimelines[0])[0]?.getPaginationToken(
+                Direction.Backward
+              ) === 'string';
+            if (stillHasToken) {
+              fetchingRef.current[directionKey] = false;
+              paginate(backwards);
+              return;
             }
-          );
-          debugLog.info('timeline', 'Timeline pagination completed', {
-            direction: backwards ? 'backward' : 'forward',
-            totalEventsNow: getTimelinesEventsCount(lTimelines),
-          });
+          }
         }
       } finally {
         fetchingRef.current[directionKey] = false;
