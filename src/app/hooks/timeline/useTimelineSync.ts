@@ -314,6 +314,7 @@ export interface UseTimelineSyncOptions {
   mx: MatrixClient;
   eventId?: string;
   isAtBottom: boolean;
+  isAtBottomRef: React.MutableRefObject<boolean>;
   scrollToBottom: (behavior?: 'instant' | 'smooth') => void;
   unreadInfo: ReturnType<typeof getRoomUnreadInfo>;
   setUnreadInfo: Dispatch<SetStateAction<ReturnType<typeof getRoomUnreadInfo>>>;
@@ -326,6 +327,7 @@ export function useTimelineSync({
   mx,
   eventId,
   isAtBottom,
+  isAtBottomRef,
   scrollToBottom,
   unreadInfo,
   setUnreadInfo,
@@ -438,7 +440,7 @@ export function useTimelineSync({
         const { threadRootId, getSender, getRoomId } = mEvt;
         if (threadRootId !== undefined) return;
 
-        if (isAtBottom && atLiveEndRef.current) {
+        if (isAtBottomRef.current && atLiveEndRef.current) {
           if (
             document.hasFocus() &&
             (!unreadInfo?.readUptoEventId || getSender.call(mEvt) === mx.getUserId())
@@ -464,7 +466,7 @@ export function useTimelineSync({
           setUnreadInfo(getRoomUnreadInfo(room));
         }
       },
-      [mx, room, isAtBottom, unreadInfo, scrollToBottom, setUnreadInfo, hideReadsRef]
+      [mx, room, isAtBottomRef, unreadInfo, scrollToBottom, setUnreadInfo, hideReadsRef]
     )
   );
 
@@ -486,13 +488,13 @@ export function useTimelineSync({
   useLiveTimelineRefresh(
     room,
     useCallback(() => {
-      const wasAtBottom = isAtBottom;
+      const wasAtBottom = isAtBottomRef.current;
       timelineJustResetRef.current = true;
       setTimeline({ linkedTimelines: getInitialTimeline(room).linkedTimelines });
       if (wasAtBottom) {
         scrollToBottom('instant');
       }
-    }, [room, isAtBottom, scrollToBottom])
+    }, [room, isAtBottomRef, scrollToBottom])
   );
 
   useRelationUpdate(

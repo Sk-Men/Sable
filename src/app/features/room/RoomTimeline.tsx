@@ -194,7 +194,7 @@ export function RoomTimeline({
     atBottomRef.current = val;
   }, []);
 
-  const [shift, setShift] = useState(false);
+  const shift = !atBottomState;
   const [topSpacerHeight, setTopSpacerHeight] = useState(0);
 
   const topSpacerHeightRef = useRef(0);
@@ -235,6 +235,7 @@ export function RoomTimeline({
     mx,
     eventId,
     isAtBottom: atBottomState,
+    isAtBottomRef: atBottomRef,
     scrollToBottom,
     unreadInfo,
     setUnreadInfo,
@@ -302,9 +303,7 @@ export function RoomTimeline({
     prevBackwardStatusRef.current = timelineSync.backwardStatus;
     if (timelineSync.backwardStatus === 'loading') {
       wasAtBottomBeforePaginationRef.current = atBottomRef.current;
-      if (!atBottomRef.current) setShift(true);
     } else if (prev === 'loading' && timelineSync.backwardStatus === 'idle') {
-      if (shift) setShift(false);
       if (wasAtBottomBeforePaginationRef.current) {
         vListRef.current?.scrollToIndex(eventsLengthRef.current - 1, { align: 'end' });
       }
