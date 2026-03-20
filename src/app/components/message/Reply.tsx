@@ -50,11 +50,7 @@ export const ReplyLayout = as<'div', ReplyLayoutProps>(
         <Icon size="100" src={Icons.ReplyArrow} />
       </Box>
       {!!icon && <Icon style={{ opacity: 0.6 }} size="50" src={icon} />}
-      <Box
-        style={{ color: !icon ? userColor : 'unset', maxWidth: toRem(200) }}
-        alignItems="Center"
-        shrink="No"
-      >
+      <Box style={{ color: userColor, maxWidth: toRem(200) }} alignItems="Center" shrink="No">
         {username}
       </Box>
       <Box grow="Yes" className={css.ReplyContent}>
