@@ -5,12 +5,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import classNames from 'classnames';
 import parse from 'html-react-parser';
 import { useAtomValue } from 'jotai';
-import {
-  getMemberDisplayName,
-  isMembershipChanged,
-  trimReplyFromBody,
-  trimReplyFromFormattedBody,
-} from '$utils/room';
+import { getMemberDisplayName, trimReplyFromBody, trimReplyFromFormattedBody } from '$utils/room';
 import { getMxIdLocalPart } from '$utils/matrix';
 import { randomNumberBetween } from '$utils/common';
 import {
@@ -27,6 +22,7 @@ import { useMatrixClient } from '$hooks/useMatrixClient';
 import { useMemberEventParser } from '$hooks/useMemberEventParser';
 import { StateEvent } from '$types/matrix/room';
 import { useTranslation } from 'react-i18next';
+import * as customHtmlCss from '$styles/CustomHtml.css';
 import {
   MessageBadEncryptedContent,
   MessageBlockedContent,
@@ -100,13 +96,12 @@ export const Reply = as<'div', ReplyProps>(
 
     const { body, formatted_body: formattedBody, format } = replyEvent?.getContent() ?? {};
     const sender = replyEvent?.getSender();
+    const eventType = replyEvent?.getType();
 
     const ignoredUsers = useIgnoredUsers();
     const isBlockedSender = !!sender && ignoredUsers.includes(sender);
-    const eventStateType = replyEvent?.getType();
     const { t } = useTranslation();
 
-    const isMemberShipEvent = !!replyEvent && isMembershipChanged(replyEvent);
     const parseMemberEvent = useMemberEventParser();
 
     const { color: usernameColor, font: usernameFont } = useSableCosmetics(sender ?? '', room);
@@ -152,23 +147,32 @@ export const Reply = as<'div', ReplyProps>(
     } else if (body) {
       const strippedBody = trimReplyFromBody(body).replaceAll(/(?:\r\n|\r|\n)/g, ' ');
       bodyJSX = scaleSystemEmoji(strippedBody);
-    } else if (isMemberShipEvent) {
+    } else if (eventType === StateEvent.RoomMember && !!replyEvent) {
       const parsedMemberEvent = parseMemberEvent(replyEvent);
       image = parsedMemberEvent.icon;
       bodyJSX = parsedMemberEvent.body;
-    } else if (eventStateType === StateEvent.RoomName) {
+    } else if (eventType === StateEvent.RoomName) {
       image = Icons.Hash;
       bodyJSX = t('Organisms.RoomCommon.changed_room_name');
-    } else if (eventStateType === StateEvent.RoomTopic) {
+    } else if (eventType === StateEvent.RoomTopic) {
       image = Icons.Hash;
       bodyJSX = ' changed room topic';
-    } else if (eventStateType === StateEvent.RoomAvatar) {
+    } else if (eventType === StateEvent.RoomAvatar) {
       image = Icons.Hash;
       bodyJSX = ' changed room avatar';
-    } else if (!!replyEvent && eventStateType === StateEvent.GroupCallMemberPrefix) {
+    } else if (eventType === StateEvent.GroupCallMemberPrefix && !!replyEvent) {
       const callJoined = replyEvent.getContent<SessionMembershipData>().application;
       image = callJoined ? Icons.Phone : Icons.PhoneDown;
       bodyJSX = callJoined ? ' joined the call' : ' ended the call';
+    } else if (eventType) {
+      image = Icons.Code;
+      bodyJSX = (
+        <>
+          {' sent '}
+          <code className={customHtmlCss.Code}>{eventType}</code>
+          {' state event'}
+        </>
+      );
     }
 
     return (
@@ -182,7 +186,7 @@ export const Reply = as<'div', ReplyProps>(
           icon={image}
           username={
             sender &&
-            !isMemberShipEvent && (
+            eventType !== StateEvent.RoomMember && (
               <Text size="T300" truncate style={{ fontFamily: usernameFont }}>
                 <b>{getMemberDisplayName(room, sender, nicknames) ?? getMxIdLocalPart(sender)}</b>
               </Text>
