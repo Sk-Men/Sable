@@ -11,7 +11,7 @@ export const ItemDraggableTarget = style([
     top: 0,
     zIndex: 1,
     cursor: 'grab',
-    borderRadius: 0,
+    borderRadius: config.radii.R400,
     opacity: config.opacity.P300,
 
     ':active': {
