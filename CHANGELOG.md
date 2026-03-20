@@ -1,5 +1,11 @@
 # Sable Client Changelog
 
+## 1.10.4 (2026-03-20)
+
+### Fixes
+
+* Change default push notification server. ([#433](https://github.com/SableClient/Sable/pull/433) by @7w1)
+
 ## 1.10.3 (2026-03-20)
 
 ### Fixes
