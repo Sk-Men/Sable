@@ -1,5 +1,11 @@
 # Sable Client Changelog
 
+## 1.10.1 (2026-03-20)
+
+### Fixes
+
+* Fix messages overlapping in timeline. ([#411](https://github.com/SableClient/Sable/pull/411) by @7w1)
+
 ## 1.10.0 (2026-03-20)
 
 ### Features
