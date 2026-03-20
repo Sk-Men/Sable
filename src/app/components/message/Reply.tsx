@@ -20,7 +20,7 @@ import { useIgnoredUsers } from '$hooks/useIgnoredUsers';
 import { nicknamesAtom } from '$state/nicknames';
 import { useMatrixClient } from '$hooks/useMatrixClient';
 import { useMemberEventParser } from '$hooks/useMemberEventParser';
-import { StateEvent } from '$types/matrix/room';
+import { StateEvent, MessageEvent } from '$types/matrix/room';
 import { useTranslation } from 'react-i18next';
 import * as customHtmlCss from '$styles/CustomHtml.css';
 import {
@@ -50,7 +50,11 @@ export const ReplyLayout = as<'div', ReplyLayoutProps>(
         <Icon size="100" src={Icons.ReplyArrow} />
       </Box>
       {!!icon && <Icon style={{ opacity: 0.6 }} size="50" src={icon} />}
-      <Box style={{ color: userColor, maxWidth: toRem(200) }} alignItems="Center" shrink="No">
+      <Box
+        style={{ color: !icon ? userColor : 'unset', maxWidth: toRem(200) }}
+        alignItems="Center"
+        shrink="No"
+      >
         {username}
       </Box>
       <Box grow="Yes" className={css.ReplyContent}>
@@ -101,6 +105,7 @@ export const Reply = as<'div', ReplyProps>(
     const ignoredUsers = useIgnoredUsers();
     const isBlockedSender = !!sender && ignoredUsers.includes(sender);
     const { t } = useTranslation();
+    const isRedacted = replyEvent?.isRedacted() === true;
 
     const parseMemberEvent = useMemberEventParser();
 
@@ -108,11 +113,7 @@ export const Reply = as<'div', ReplyProps>(
     const nicknames = useAtomValue(nicknamesAtom);
     const useAuthentication = useMediaAuthentication();
 
-    const fallbackBody = replyEvent?.isRedacted() ? (
-      <MessageDeletedContent />
-    ) : (
-      <MessageFailedContent />
-    );
+    const fallbackBody = isRedacted ? <MessageDeletedContent /> : <MessageFailedContent />;
 
     const badEncryption = replyEvent?.getContent().msgtype === 'm.bad.encrypted';
 
@@ -164,7 +165,7 @@ export const Reply = as<'div', ReplyProps>(
       const callJoined = replyEvent.getContent<SessionMembershipData>().application;
       image = callJoined ? Icons.Phone : Icons.PhoneDown;
       bodyJSX = callJoined ? ' joined the call' : ' ended the call';
-    } else if (eventType) {
+    } else if (Object.values(MessageEvent).every((v) => v !== eventType)) {
       image = Icons.Code;
       bodyJSX = (
         <>
@@ -174,7 +175,6 @@ export const Reply = as<'div', ReplyProps>(
         </>
       );
     }
-
     return (
       <Box direction="Row" gap="200" alignItems="Center" {...props} ref={ref}>
         {threadRootId && (
@@ -204,13 +204,15 @@ export const Reply = as<'div', ReplyProps>(
               })()}
             </Text>
           ) : (
-            <LinePlaceholder
-              style={{
-                backgroundColor: color.SurfaceVariant.ContainerActive,
-                width: toRem(placeholderWidth),
-                maxWidth: '100%',
-              }}
-            />
+            (isRedacted && <MessageDeletedContent />) || (
+              <LinePlaceholder
+                style={{
+                  backgroundColor: color.SurfaceVariant.ContainerActive,
+                  width: toRem(placeholderWidth),
+                  maxWidth: '100%',
+                }}
+              />
+            )
           )}
         </ReplyLayout>
         {replyEvent === null && (
