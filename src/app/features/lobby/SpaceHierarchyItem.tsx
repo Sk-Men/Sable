@@ -98,19 +98,17 @@ export const SpaceHierarchyItem = forwardRef<HTMLDivElement, SpaceHierarchyItemP
       onSpacesFound(Array.from(subspaces.values()));
     }, [subspaces, onSpacesFound]);
 
-    const [childItems, setChildItems] = useState([] as HierarchyItemRoom[] | undefined);
-    useEffect(() => {
-      let childItemsMut = roomItems?.filter((i) => !subspaces.has(i.roomId));
-      if (!spacePermissions?.stateEvent(StateEvent.SpaceChild, mx.getSafeUserId())) {
-        // hide unknown rooms for normal user
-        childItemsMut = childItems?.filter((i) => {
-          const forbidden = error instanceof MatrixError ? error.errcode === 'M_FORBIDDEN' : false;
-          const inaccessibleRoom = !rooms.get(i.roomId) && !fetching && (error ? forbidden : true);
-          return !inaccessibleRoom;
-        });
-      }
-      setChildItems(childItemsMut);
-    }, [childItems, spacePermissions, mx, roomItems, subspaces, fetching, error, rooms]);
+    let childItems: HierarchyItemRoom[] | undefined = roomItems?.filter(
+      (i) => !subspaces.has(i.roomId)
+    );
+    if (!spacePermissions?.stateEvent(StateEvent.SpaceChild, mx.getSafeUserId())) {
+      // hide unknown rooms for normal user
+      childItems = childItems?.filter((i) => {
+        const forbidden = error instanceof MatrixError ? error.errcode === 'M_FORBIDDEN' : false;
+        const inaccessibleRoom = !rooms.get(i.roomId) && !fetching && (error ? forbidden : true);
+        return !inaccessibleRoom;
+      });
+    }
 
     return (
       <Box direction="Column" gap="0" ref={ref}>
