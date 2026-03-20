@@ -1,5 +1,11 @@
 # Sable Client Changelog
 
+## 1.10.3 (2026-03-20)
+
+### Fixes
+
+* Place persona settings behind a toggle in experimental. ([#431](https://github.com/SableClient/Sable/pull/431) by @7w1)
+
 ## 1.10.2 (2026-03-20)
 
 ### Fixes
