@@ -26,6 +26,8 @@ import { nameInitials } from '$utils/common';
 import { UseStateProvider } from '$components/UseStateProvider';
 import { stopPropagation } from '$utils/keyboard';
 import { LogoutDialog } from '$components/LogoutDialog';
+import { useSetting } from '$state/hooks/settings';
+import { settingsAtom } from '$state/settings';
 import { Notifications } from './notifications';
 import { Devices } from './devices';
 import { EmojisStickers } from './emojis-stickers';
@@ -37,8 +39,6 @@ import { Cosmetics } from './cosmetics/Cosmetics';
 import { Experimental } from './experimental/Experimental';
 import { KeyboardShortcuts } from './keyboard-shortcuts';
 import { PerMessageProfilePage } from './Persona/ProfilesPage';
-import { useSetting } from '$state/hooks/settings';
-import { settingsAtom } from '$state/settings';
 
 export enum SettingsPages {
   GeneralPage,
