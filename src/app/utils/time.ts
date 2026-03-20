@@ -51,7 +51,7 @@ export const minuteDifference = (ts1: number, ts2: number): number => {
 
   let diff = (dt2.getTime() - dt1.getTime()) / 1000;
   diff /= 60;
-  return Math.abs(Math.round(diff));
+  return Math.abs(Math.floor(diff));
 };
 
 export const hour24to12 = (hour24: number): number => {

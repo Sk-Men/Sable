@@ -33,7 +33,15 @@ export interface ProcessedEvent {
   willRenderDayDivider: boolean;
 }
 
-const MESSAGE_EVENT_TYPES = ['m.room.message', 'm.room.message.encrypted', 'm.sticker'];
+const MESSAGE_EVENT_TYPES = [
+  'm.room.message',
+  'm.room.message.encrypted',
+  'm.sticker',
+  'm.room.encrypted',
+];
+
+const normalizeMessageType = (t: string): string =>
+  t === 'm.room.encrypted' || t === 'm.room.message.encrypted' ? 'm.room.message' : t;
 
 export function useProcessedTimeline({
   items,
@@ -54,7 +62,7 @@ export function useProcessedTimeline({
     let newDivider = false;
     let dayDivider = false;
 
-    return items.reduce<ProcessedEvent[]>((acc, item) => {
+    const result = items.reduce<ProcessedEvent[]>((acc, item) => {
       const [eventTimeline, baseIndex] = getTimelineAndBaseIndex(linkedTimelines, item);
       if (!eventTimeline) return acc;
 
@@ -131,14 +139,12 @@ export function useProcessedTimeline({
         if (isMessageEvent) {
           const withinTimeThreshold =
             minuteDifference(getPrevTs.call(prevEvent), getEvtTs.call(mEvent)) < 2;
-          const normalizeMessageType = (t: string) =>
-            t === 'm.room.encrypted' ? 'm.room.message' : t;
+          const senderMatch = getPrevSender.call(prevEvent) === eventSender;
+          const typeMatch =
+            normalizeMessageType(getPrevType.call(prevEvent)) === normalizeMessageType(type);
+          const dividerOk = !newDivider || eventSender === mxUserId;
 
-          collapsed =
-            (!newDivider || eventSender === mxUserId) &&
-            getPrevSender.call(prevEvent) === eventSender &&
-            normalizeMessageType(getPrevType.call(prevEvent)) === normalizeMessageType(type) &&
-            withinTimeThreshold;
+          collapsed = dividerOk && senderMatch && typeMatch && withinTimeThreshold;
         } else {
           const prevIsMessageEvent = MESSAGE_EVENT_TYPES.includes(getPrevType.call(prevEvent));
           collapsed = !prevIsMessageEvent;
@@ -167,6 +173,7 @@ export function useProcessedTimeline({
       acc.push(processed);
       return acc;
     }, []);
+    return result;
   }, [
     items,
     linkedTimelines,
