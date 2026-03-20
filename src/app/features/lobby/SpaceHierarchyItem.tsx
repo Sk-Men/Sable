@@ -1,4 +1,4 @@
-import { forwardRef, MouseEventHandler, useEffect, useMemo } from 'react';
+import { forwardRef, MouseEventHandler, useEffect, useMemo, useState } from 'react';
 import { MatrixError, Room, IHierarchyRoom } from '$types/matrix-sdk';
 import { Box, config, Text } from 'folds';
 import {
@@ -18,7 +18,7 @@ import { AfterItemDropTarget, CanDropCallback } from './DnD';
 import { HierarchyItemMenu } from './HierarchyItemMenu';
 import { RoomItemCard } from './RoomItem';
 
-type SpaceHierarchyProps = {
+type SpaceHierarchyItemProps = {
   summary: IHierarchyRoom | undefined;
   spaceItem: HierarchyItemSpace;
   roomItems?: HierarchyItemRoom[];
@@ -39,7 +39,7 @@ type SpaceHierarchyProps = {
   onSpacesFound: (spaceItems: IHierarchyRoom[]) => void;
   onOpenRoom: MouseEventHandler<HTMLButtonElement>;
 };
-export const SpaceHierarchy = forwardRef<HTMLDivElement, SpaceHierarchyProps>(
+export const SpaceHierarchyItem = forwardRef<HTMLDivElement, SpaceHierarchyItemProps>(
   (
     {
       summary,
@@ -98,18 +98,22 @@ export const SpaceHierarchy = forwardRef<HTMLDivElement, SpaceHierarchyProps>(
       onSpacesFound(Array.from(subspaces.values()));
     }, [subspaces, onSpacesFound]);
 
-    let childItems = roomItems?.filter((i) => !subspaces.has(i.roomId));
-    if (!spacePermissions?.stateEvent(StateEvent.SpaceChild, mx.getSafeUserId())) {
-      // hide unknown rooms for normal user
-      childItems = childItems?.filter((i) => {
-        const forbidden = error instanceof MatrixError ? error.errcode === 'M_FORBIDDEN' : false;
-        const inaccessibleRoom = !rooms.get(i.roomId) && !fetching && (error ? forbidden : true);
-        return !inaccessibleRoom;
-      });
-    }
+    const [childItems, setChildItems] = useState([] as HierarchyItemRoom[] | undefined);
+    useEffect(() => {
+      let childItemsMut = roomItems?.filter((i) => !subspaces.has(i.roomId));
+      if (!spacePermissions?.stateEvent(StateEvent.SpaceChild, mx.getSafeUserId())) {
+        // hide unknown rooms for normal user
+        childItemsMut = childItems?.filter((i) => {
+          const forbidden = error instanceof MatrixError ? error.errcode === 'M_FORBIDDEN' : false;
+          const inaccessibleRoom = !rooms.get(i.roomId) && !fetching && (error ? forbidden : true);
+          return !inaccessibleRoom;
+        });
+      }
+      setChildItems(childItemsMut);
+    }, [childItems, spacePermissions, mx, roomItems, subspaces, fetching, error, rooms]);
 
     return (
-      <Box direction="Column" gap="100" ref={ref}>
+      <Box direction="Column" gap="0" ref={ref}>
         <SpaceItemCard
           summary={rooms.get(spaceItem.roomId) ?? summary}
           loading={fetching}
@@ -152,7 +156,7 @@ export const SpaceHierarchy = forwardRef<HTMLDivElement, SpaceHierarchyProps>(
           data-dragging={draggingSpace}
         />
         {childItems && childItems.length > 0 ? (
-          <Box direction="Column" gap="100">
+          <Box direction="Column" gap="0">
             {childItems.map((roomItem, index) => {
               const roomSummary = rooms.get(roomItem.roomId);
 
@@ -204,22 +208,19 @@ export const SpaceHierarchy = forwardRef<HTMLDivElement, SpaceHierarchyProps>(
           </Box>
         ) : (
           childItems && (
-            <SequenceCard variant="SurfaceVariant" gap="300" alignItems="Center">
+            <SequenceCard variant="SurfaceVariant" gap="300" alignItems="Center" radii="300">
               <Box
                 grow="Yes"
                 style={{
-                  padding: config.space.S700,
+                  padding: config.space.S100,
                 }}
                 direction="Column"
                 alignItems="Center"
                 justifyContent="Center"
                 gap="100"
               >
-                <Text size="H5" align="Center">
-                  No Rooms
-                </Text>
                 <Text align="Center" size="T300" priority="300">
-                  This space does not contains rooms yet.
+                  This space does not contain any rooms.
                 </Text>
               </Box>
             </SequenceCard>
