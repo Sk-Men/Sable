@@ -1,5 +1,12 @@
 # Sable Client Changelog
 
+## 1.10.5 (2026-03-20)
+
+### Fixes
+
+* Hide unread dot/highlight for rooms with notification mode set to Mute. ([#429](https://github.com/SableClient/Sable/pull/429) by @saschabuehrle)
+* Fix thread drawer flooding console with "Ignoring event" warnings when server-side thread support is enabled. ([#438](https://github.com/SableClient/Sable/pull/438) by @Just-Insane)
+
 ## 1.10.4 (2026-03-20)
 
 ### Fixes
