@@ -529,7 +529,12 @@ export function RoomTimeline({
   useEffect(() => {
     if (atBottomState && document.hasFocus() && timelineSync.liveTimelineLinked)
       tryAutoMarkAsRead();
-  }, [atBottomState, timelineSync.liveTimelineLinked, tryAutoMarkAsRead]);
+  }, [
+    atBottomState,
+    timelineSync.liveTimelineLinked,
+    tryAutoMarkAsRead,
+    timelineSync.eventsLength,
+  ]);
 
   const handleVListScroll = useCallback(
     (offset: number) => {
