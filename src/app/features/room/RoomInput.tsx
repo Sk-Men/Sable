@@ -351,6 +351,10 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
     );
 
     const replyEvent = replyDraft ? room.findEventById(replyDraft.eventId) : undefined;
+
+    // Seed the reply draft with the thread relation whenever we're in thread
+    // mode (e.g. on first render or when the thread root changes). We use the
+    // current user's ID as userId so that the mention logic skips it.
     useEffect(() => {
       if (!threadRootId) return;
       setReplyDraft((prev) => {
