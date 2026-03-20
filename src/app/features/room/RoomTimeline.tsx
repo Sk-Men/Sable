@@ -335,6 +335,18 @@ export function RoomTimeline({
   }, [timelineSync.focusItem, timelineSync, reducedMotion, getRawIndexToProcessedIndex]);
 
   useEffect(() => {
+    if (timelineSync.focusItem) {
+      setIsReady(true);
+    }
+  }, [timelineSync.focusItem]);
+
+  useEffect(() => {
+    if (!eventId) return;
+    setIsReady(false);
+    timelineSyncRef.current.loadEventTimeline(eventId);
+  }, [eventId, room.roomId]);
+
+  useEffect(() => {
     if (eventId) return;
     const { readUptoEventId, inLiveTimeline, scrollTo } = unreadInfo ?? {};
     if (readUptoEventId && inLiveTimeline && scrollTo) {
