@@ -1332,6 +1332,25 @@ export const Event = as<'div', EventProps>(
                         }}
                       >
                         <Menu {...props} ref={ref}>
+                          <MenuItem
+                            size="300"
+                            after={<Icon size="100" src={Icons.ReplyArrow} />}
+                            radii="300"
+                            data-event-id={mEvent.getId()}
+                            onClick={(evt: any) => {
+                              onReplyClick(evt);
+                              closeMenu();
+                            }}
+                          >
+                            <Text
+                              className={css.MessageMenuItemText}
+                              as="span"
+                              size="T300"
+                              truncate
+                            >
+                              Reply
+                            </Text>
+                          </MenuItem>
                           <Box direction="Column" gap="100" className={css.MessageMenuGroup}>
                             {!hideReadReceipts && (
                               <MessageReadReceiptItem room={room} eventId={mEvent.getId() ?? ''} />
