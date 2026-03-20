@@ -850,7 +850,7 @@ export function RoomTimeline({
             onClick={() => {
               if (eventId) navigateRoom(room.roomId, undefined, { replace: true });
               timelineSync.setTimeline(getInitialTimeline(room));
-              scrollToBottom('instant');
+              scrollToBottom();
             }}
           >
             <Text size="L400">Jump to Latest</Text>
