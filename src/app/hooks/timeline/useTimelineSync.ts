@@ -16,7 +16,6 @@ import {
 } from '$types/matrix-sdk';
 
 import { useAlive } from '$hooks/useAlive';
-import { createDebugLogger } from '$utils/debugLogger';
 import { markAsRead } from '$utils/notifications';
 import { decryptAllTimelineEvent } from '$utils/room';
 import {
@@ -29,8 +28,6 @@ import {
   getRoomUnreadInfo,
   PAGINATION_LIMIT,
 } from '$utils/timeline';
-
-const debugLog = createDebugLogger('TimelineSync');
 
 export const EVENT_TIMELINE_LOAD_TIMEOUT_MS = 12000;
 
@@ -189,7 +186,6 @@ const useTimelinePagination = (
             if (stillHasToken) {
               fetchingRef.current[directionKey] = false;
               paginate(backwards);
-              return;
             }
           }
         }

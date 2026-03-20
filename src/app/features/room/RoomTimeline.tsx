@@ -208,10 +208,14 @@ export function RoomTimeline({
     currentRoomIdRef.current = room.roomId;
   }
 
+  const processedEventsRef = useRef<ProcessedEvent[]>([]);
+
+  const timelineSyncRef = useRef<typeof timelineSync>(null as unknown as typeof timelineSync);
+
   const scrollToBottom = useCallback(
     (behavior?: 'instant' | 'smooth') => {
       if (!vListRef.current) return;
-      const lastIndex = timelineSyncRef.current.eventsLength - 1;
+      const lastIndex = processedEventsRef.current.length - 1;
       if (lastIndex < 0) return;
 
       vListRef.current.scrollToIndex(lastIndex, {
@@ -243,7 +247,6 @@ export function RoomTimeline({
     readUptoEventIdRef,
   });
 
-  const timelineSyncRef = useRef(timelineSync);
   timelineSyncRef.current = timelineSync;
 
   const eventsLengthRef = useRef(timelineSync.eventsLength);
@@ -261,9 +264,20 @@ export function RoomTimeline({
   const forwardStatusRef = useRef(timelineSync.forwardStatus);
   forwardStatusRef.current = timelineSync.forwardStatus;
 
+  const getRawIndexToProcessedIndex = useCallback((rawIndex: number): number | undefined => {
+    const events = processedEventsRef.current;
+    const match = events.find((e) => e.itemIndex === rawIndex);
+    if (!match) return undefined;
+    return events.indexOf(match);
+  }, []);
+
   useLayoutEffect(() => {
-    if (eventId || hasInitialScrolledRef.current) return;
-    if (timelineSync.eventsLength > 0 && vListRef.current) {
+    if (
+      !eventId &&
+      !hasInitialScrolledRef.current &&
+      timelineSync.eventsLength > 0 &&
+      vListRef.current
+    ) {
       vListRef.current.scrollToIndex(timelineSync.eventsLength - 1, { align: 'end' });
       const t = setTimeout(() => {
         vListRef.current?.scrollToIndex(eventsLengthRef.current - 1, { align: 'end' });
@@ -271,6 +285,7 @@ export function RoomTimeline({
       hasInitialScrolledRef.current = true;
       return () => clearTimeout(t);
     }
+    return () => {};
   }, [timelineSync.eventsLength, eventId, room.roomId]);
 
   const recalcTopSpacer = useCallback(() => {
@@ -314,10 +329,11 @@ export function RoomTimeline({
     let timeoutId: ReturnType<typeof setTimeout> | undefined;
     if (timelineSync.focusItem) {
       if (timelineSync.focusItem.scrollTo && vListRef.current) {
-        vListRef.current.scrollToIndex(timelineSync.focusItem.index, {
-          align: 'center',
-        });
-        timelineSync.setFocusItem((prev) => (prev ? { ...prev, scrollTo: false } : undefined));
+        const processedIndex = getRawIndexToProcessedIndex(timelineSync.focusItem.index);
+        if (processedIndex !== undefined) {
+          vListRef.current.scrollToIndex(processedIndex, { align: 'center' });
+          timelineSync.setFocusItem((prev) => (prev ? { ...prev, scrollTo: false } : undefined));
+        }
       }
       timeoutId = setTimeout(() => {
         timelineSync.setFocusItem(undefined);
@@ -326,7 +342,7 @@ export function RoomTimeline({
     return () => {
       if (timeoutId !== undefined) clearTimeout(timeoutId);
     };
-  }, [timelineSync.focusItem, timelineSync, reducedMotion]);
+  }, [timelineSync.focusItem, timelineSync, reducedMotion, getRawIndexToProcessedIndex]);
 
   useEffect(() => {
     if (eventId) return;
@@ -342,17 +358,24 @@ export function RoomTimeline({
         : undefined;
 
       if (absoluteIndex !== undefined && vListRef.current) {
-        vListRef.current.scrollToIndex(absoluteIndex, { align: 'start' });
-        setUnreadInfo((prev) => (prev ? { ...prev, scrollTo: false } : prev));
+        const processedIndex = getRawIndexToProcessedIndex(absoluteIndex);
+        if (processedIndex !== undefined) {
+          vListRef.current.scrollToIndex(processedIndex, { align: 'start' });
+          setUnreadInfo((prev) => (prev ? { ...prev, scrollTo: false } : prev));
+        }
       }
     }
-  }, [room, unreadInfo, timelineSync.timeline.linkedTimelines, eventId]);
+  }, [
+    room,
+    unreadInfo,
+    timelineSync.timeline.linkedTimelines,
+    eventId,
+    getRawIndexToProcessedIndex,
+  ]);
 
   useEffect(() => {
     const el = messageListRef.current;
-    if (!el) {
-      return;
-    }
+    if (!el) return () => {};
 
     const observer = new ResizeObserver((entries) => {
       const newHeight = entries[0].contentRect.height;
@@ -361,7 +384,7 @@ export function RoomTimeline({
       const shrank = newHeight < prev;
 
       if (shrank && atBottom) {
-        vListRef.current?.scrollToIndex(eventsLengthRef.current - 1, { align: 'end' });
+        vListRef.current?.scrollToIndex(processedEventsRef.current.length - 1, { align: 'end' });
       }
       prevViewportHeightRef.current = newHeight;
     });
@@ -392,10 +415,9 @@ export function RoomTimeline({
         : undefined;
 
       if (typeof absoluteIndex === 'number') {
-        if (vListRef.current) {
-          vListRef.current.scrollToIndex(absoluteIndex, {
-            align: 'center',
-          });
+        const processedIndex = getRawIndexToProcessedIndex(absoluteIndex);
+        if (vListRef.current && processedIndex !== undefined) {
+          vListRef.current.scrollToIndex(processedIndex, { align: 'center' });
         }
         timelineSync.setFocusItem({ index: absoluteIndex, scrollTo: false, highlight: true });
       } else {
@@ -628,6 +650,8 @@ export function RoomTimeline({
     hideMemberInReadOnly,
   });
 
+  processedEventsRef.current = processedEvents;
+
   useEffect(() => {
     const v = vListRef.current;
     if (!v) return;
@@ -641,7 +665,7 @@ export function RoomTimeline({
   }, [timelineSync.eventsLength, timelineSync.backwardStatus]);
 
   useEffect(() => {
-    if (!canPaginateBackRef.current) return;
+    if (!canPaginateBackRef.current) return () => {};
 
     let rafId: number;
     let attempts = 0;
@@ -653,7 +677,8 @@ export function RoomTimeline({
       if (!v) return;
 
       if (v.viewportSize === 0) {
-        if (attempts++ < MAX_ATTEMPTS) rafId = requestAnimationFrame(check);
+        attempts += 1;
+        if (attempts <= MAX_ATTEMPTS) rafId = requestAnimationFrame(check);
         return;
       }
 
