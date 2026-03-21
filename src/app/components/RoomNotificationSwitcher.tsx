@@ -1,4 +1,4 @@
-import { Box, config, Icon, Menu, MenuItem, PopOut, RectCords, Text } from 'folds';
+import { Box, config, Icon, Menu, MenuItem, PopOut, RectCords, Text, toRem } from 'folds';
 import { MouseEventHandler, ReactNode, useMemo, useState } from 'react';
 import FocusTrap from 'focus-trap-react';
 import { stopPropagation } from '$utils/keyboard';
@@ -90,9 +90,10 @@ export function RoomNotificationModeSwitcher({
               {modes.map((mode) => (
                 <MenuItem
                   key={mode}
-                  size={mode === RoomNotificationMode.Unset ? '300' : '400'}
+                  size="300"
                   variant="Surface"
                   aria-pressed={mode === value}
+                  style={mode === RoomNotificationMode.Unset ? { height: toRem(48) } : undefined}
                   radii="300"
                   disabled={changing}
                   onClick={() => handleSelect(mode)}
