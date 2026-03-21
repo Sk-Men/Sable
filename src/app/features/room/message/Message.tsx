@@ -683,7 +683,7 @@ function MessageInternal(
         <MessageEditor
           style={{
             maxWidth: '100%',
-            width: '100vw',
+            width: '100%',
           }}
           roomId={room.roomId}
           room={room}
