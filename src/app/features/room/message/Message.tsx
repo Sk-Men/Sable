@@ -387,7 +387,7 @@ function MessageInternal(
    */
   const pmp: PerMessageProfileBeeperFormat | undefined = useMemo(
     () =>
-      mEvent.event.content?.['com.beeper.per_message_profile'] as
+      mEvent.getContent()?.['com.beeper.per_message_profile'] as
         | PerMessageProfileBeeperFormat
         | undefined,
     [mEvent]
