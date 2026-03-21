@@ -49,7 +49,7 @@ import {
   Username,
   UsernameBold,
 } from '$components/message';
-import { canEditEvent, getEventEdits, getMemberAvatarMxc } from '$utils/room';
+import { canEditEvent, getEditedEvent, getEventEdits, getMemberAvatarMxc } from '$utils/room';
 import { mxcUrlToHttp } from '$utils/matrix';
 import { getSettings, MessageLayout, MessageSpacing, settingsAtom } from '$state/settings';
 import { nicknamesAtom, setNicknameAtom } from '$state/nicknames';
@@ -380,18 +380,38 @@ function MessageInternal(
   const mx = useMatrixClient();
   const useAuthentication = useMediaAuthentication();
 
+  const [editVersion, setEditVersion] = useState(0);
+
+  useEffect(() => {
+    const onReplaced = () => setEditVersion((v) => v + 1);
+    mEvent.on('Event.replaced' as any, onReplaced);
+    return () => {
+      mEvent.off('Event.replaced' as any, onReplaced);
+    };
+  }, [mEvent]);
+
   /**
    * We read the per-message profile from the event content here.
    * We have to do this in the message component because the per-message profile can be different for each message, and we need to read it for each message individually.
    * We also want to avoid reading and parsing the per-message profile in a parent component like the timeline, because that would be inefficient and would cause unnecessary re-renders of the entire timeline whenever a per-message profile changes.
    */
-  const pmp: PerMessageProfileBeeperFormat | undefined = useMemo(
-    () =>
-      mEvent.getContent()?.['com.beeper.per_message_profile'] as
-        | PerMessageProfileBeeperFormat
-        | undefined,
-    [mEvent]
-  );
+  const pmp: PerMessageProfileBeeperFormat | undefined = useMemo(() => {
+    const evtId = mEvent.getId();
+    const evtTimeline = evtId ? room.getTimelineForEvent(evtId) : undefined;
+    const editedEvent =
+      evtTimeline && evtId
+        ? getEditedEvent(evtId, mEvent, evtTimeline.getTimelineSet())
+        : undefined;
+
+    const resolvedContent = editedEvent
+      ? editedEvent.getContent()['m.new_content']
+      : mEvent.getContent();
+
+    return resolvedContent?.['com.beeper.per_message_profile'] as
+      | PerMessageProfileBeeperFormat
+      | undefined;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mEvent, room, editVersion]);
 
   /**
    * We convert the per-message profile from the Beeper format to our internal format here in the message component
