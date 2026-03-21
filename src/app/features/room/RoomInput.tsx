@@ -932,6 +932,8 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
         autocompleteQuery,
         isComposing,
         showAudioRecorder,
+        editor,
+        onEditLastMessage,
       ]
     );
 
