@@ -231,9 +231,10 @@ interface RoomInputProps {
   roomId: string;
   room: Room;
   threadRootId?: string;
+  onEditLastMessage?: () => void;
 }
 export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
-  ({ editor, fileDropContainerRef, roomId, room, threadRootId }, ref) => {
+  ({ editor, fileDropContainerRef, roomId, room, threadRootId, onEditLastMessage }, ref) => {
     // When in thread mode, isolate drafts by thread root ID so thread replies
     // don't clobber the main room draft (and vice versa).
     const draftKey = threadRootId ?? roomId;
@@ -888,6 +889,15 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
               selectedItem.click();
               return;
             }
+          }
+        }
+
+        if (isKeyHotkey('arrowup', evt) && isEmptyEditor(editor)) {
+          const { selection } = editor;
+          if (selection && Editor.isStart(editor, selection.anchor, [])) {
+            evt.preventDefault();
+            onEditLastMessage?.();
+            return;
           }
         }
 
