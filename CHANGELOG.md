@@ -1,5 +1,11 @@
 # Sable Client Changelog
 
+## 1.11.1 (2026-03-21)
+
+### Fixes
+
+* Fix conditional memo in reply renderer leading to crashes. ([#453](https://github.com/SableClient/Sable/pull/453) by @7w1)
+
 ## 1.11.0 (2026-03-21)
 
 ### Features
