@@ -410,7 +410,16 @@ export const MessageEditor = as<'div', MessageEditorProps>(
           <Box
             style={
               captionPosition !== CaptionPosition.Inline
-                ? { marginTop: config.space.S400, width: '100%' }
+                ? {
+                    marginTop:
+                      msgType === MsgType.Image ||
+                      msgType === MsgType.Video ||
+                      msgType === MsgType.Audio ||
+                      msgType === MsgType.File
+                        ? config.space.S400
+                        : undefined,
+                    width: '100%',
+                  }
                 : {
                     padding: config.space.S200,
                     wordBreak: 'break-word',
