@@ -1,5 +1,11 @@
 # Sable Client Changelog
 
+## 1.10.6 (2026-03-21)
+
+### Fixes
+
+* Change default notification server. ([#443](https://github.com/SableClient/Sable/pull/443) by @7w1)
+
 ## 1.10.5 (2026-03-20)
 
 ### Fixes
