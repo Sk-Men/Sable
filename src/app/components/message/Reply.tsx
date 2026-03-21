@@ -12,6 +12,9 @@ import {
   getReactCustomHtmlParser,
   scaleSystemEmoji,
   LINKIFY_OPTS,
+  makeMentionCustomProps,
+  factoryRenderLinkifyWithMention,
+  renderMatrixMention,
 } from '$plugins/react-custom-html-parser';
 import { useRoomEvent } from '$hooks/useRoomEvent';
 import { useSableCosmetics } from '$hooks/useSableCosmetics';
@@ -31,6 +34,7 @@ import {
 } from './content';
 import * as css from './Reply.css';
 import { LinePlaceholder } from './placeholder';
+import { useMentionClickHandler } from '$hooks/useMentionClickHandler';
 
 type ReplyLayoutProps = {
   userColor?: string;
@@ -112,6 +116,7 @@ export const Reply = as<'div', ReplyProps>(
     const fallbackBody = isRedacted ? <MessageDeletedContent /> : <MessageFailedContent />;
 
     const badEncryption = replyEvent?.getContent().msgtype === 'm.bad.encrypted';
+    const mentionClickHandler = useMentionClickHandler(room.roomId);
 
     // An encrypted event that hasn't been decrypted yet (keys pending) has an
     // empty result from getClearContent().  Treat it as still-loading rather
@@ -135,10 +140,26 @@ export const Reply = as<'div', ReplyProps>(
         .replaceAll(/<\/li>\s*<li[^>]*>/gi, ' ')
         .replaceAll(/<\/?(ul|ol|li|blockquote|h[1-6]|pre|div)[^>]*>/gi, '')
         .replaceAll(/(?:\r\n|\r|\n)/g, ' ');
+      const replyLinkifyOpts = useMemo(
+        () => ({
+          ...LINKIFY_OPTS,
+          render: factoryRenderLinkifyWithMention((href) =>
+            renderMatrixMention(
+              mx,
+              room.roomId,
+              href,
+              makeMentionCustomProps(mentionClickHandler),
+              nicknames
+            )
+          ),
+        }),
+        [mx, room.roomId, mentionClickHandler, nicknames]
+      );
       const parserOpts = getReactCustomHtmlParser(mx, room.roomId, {
-        linkifyOpts: LINKIFY_OPTS,
+        linkifyOpts: replyLinkifyOpts,
         useAuthentication,
         nicknames,
+        handleMentionClick: mentionClickHandler,
       });
       bodyJSX = parse(strippedHtml, parserOpts) as JSX.Element;
     } else if (body) {
