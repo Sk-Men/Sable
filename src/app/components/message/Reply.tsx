@@ -24,6 +24,7 @@ import { nicknamesAtom } from '$state/nicknames';
 import { useMatrixClient } from '$hooks/useMatrixClient';
 import { useMemberEventParser } from '$hooks/useMemberEventParser';
 import { StateEvent, MessageEvent } from '$types/matrix/room';
+import { useMentionClickHandler } from '$hooks/useMentionClickHandler';
 import { useTranslation } from 'react-i18next';
 import * as customHtmlCss from '$styles/CustomHtml.css';
 import {
@@ -34,7 +35,6 @@ import {
 } from './content';
 import * as css from './Reply.css';
 import { LinePlaceholder } from './placeholder';
-import { useMentionClickHandler } from '$hooks/useMentionClickHandler';
 
 type ReplyLayoutProps = {
   userColor?: string;
