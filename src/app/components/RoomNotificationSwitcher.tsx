@@ -90,7 +90,7 @@ export function RoomNotificationModeSwitcher({
               {modes.map((mode) => (
                 <MenuItem
                   key={mode}
-                  size="300"
+                  size={mode === RoomNotificationMode.Unset ? '300' : '400'}
                   variant="Surface"
                   aria-pressed={mode === value}
                   radii="300"
