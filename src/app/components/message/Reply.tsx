@@ -132,6 +132,22 @@ export const Reply = as<'div', ReplyProps>(
     let bodyJSX: ReactNode = fallbackBody;
     let image: IconSrc | undefined;
 
+    const replyLinkifyOpts = useMemo(
+      () => ({
+        ...LINKIFY_OPTS,
+        render: factoryRenderLinkifyWithMention((href) =>
+          renderMatrixMention(
+            mx,
+            room.roomId,
+            href,
+            makeMentionCustomProps(mentionClickHandler),
+            nicknames
+          )
+        ),
+      }),
+      [mx, room.roomId, mentionClickHandler, nicknames]
+    );
+
     if (format === 'org.matrix.custom.html' && formattedBody) {
       const strippedHtml = trimReplyFromFormattedBody(formattedBody)
         .replaceAll(/<br\s*\/?>/gi, ' ')
@@ -140,21 +156,6 @@ export const Reply = as<'div', ReplyProps>(
         .replaceAll(/<\/li>\s*<li[^>]*>/gi, ' ')
         .replaceAll(/<\/?(ul|ol|li|blockquote|h[1-6]|pre|div)[^>]*>/gi, '')
         .replaceAll(/(?:\r\n|\r|\n)/g, ' ');
-      const replyLinkifyOpts = useMemo(
-        () => ({
-          ...LINKIFY_OPTS,
-          render: factoryRenderLinkifyWithMention((href) =>
-            renderMatrixMention(
-              mx,
-              room.roomId,
-              href,
-              makeMentionCustomProps(mentionClickHandler),
-              nicknames
-            )
-          ),
-        }),
-        [mx, room.roomId, mentionClickHandler, nicknames]
-      );
       const parserOpts = getReactCustomHtmlParser(mx, room.roomId, {
         linkifyOpts: replyLinkifyOpts,
         useAuthentication,
