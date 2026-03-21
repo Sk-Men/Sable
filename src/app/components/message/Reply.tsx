@@ -1,5 +1,5 @@
-import { Box, Chip, Icon, Icons, Text, as, color, toRem } from 'folds';
-import { EventTimelineSet, Room } from '$types/matrix-sdk';
+import { Box, Chip, Icon, IconSrc, Icons, Text, as, color, toRem } from 'folds';
+import { EventTimelineSet, Room, SessionMembershipData } from '$types/matrix-sdk';
 import { MouseEventHandler, ReactNode, useCallback, useMemo } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import classNames from 'classnames';
@@ -19,6 +19,10 @@ import { useMediaAuthentication } from '$hooks/useMediaAuthentication';
 import { useIgnoredUsers } from '$hooks/useIgnoredUsers';
 import { nicknamesAtom } from '$state/nicknames';
 import { useMatrixClient } from '$hooks/useMatrixClient';
+import { useMemberEventParser } from '$hooks/useMemberEventParser';
+import { StateEvent, MessageEvent } from '$types/matrix/room';
+import { useTranslation } from 'react-i18next';
+import * as customHtmlCss from '$styles/CustomHtml.css';
 import {
   MessageBadEncryptedContent,
   MessageBlockedContent,
@@ -31,9 +35,10 @@ import { LinePlaceholder } from './placeholder';
 type ReplyLayoutProps = {
   userColor?: string;
   username?: ReactNode;
+  icon?: IconSrc;
 };
 export const ReplyLayout = as<'div', ReplyLayoutProps>(
-  ({ username, userColor, className, children, ...props }, ref) => (
+  ({ username, userColor, icon, className, children, ...props }, ref) => (
     <Box
       className={classNames(css.Reply, className)}
       alignItems="Center"
@@ -41,8 +46,11 @@ export const ReplyLayout = as<'div', ReplyLayoutProps>(
       {...props}
       ref={ref}
     >
-      <Box style={{ color: userColor, maxWidth: toRem(200) }} alignItems="Center" shrink="No">
+      <Box style={{ color: userColor }} alignItems="Center" shrink="No">
         <Icon size="100" src={Icons.ReplyArrow} />
+      </Box>
+      {!!icon && <Icon style={{ opacity: 0.6 }} size="50" src={icon} />}
+      <Box style={{ color: userColor, maxWidth: toRem(200) }} alignItems="Center" shrink="No">
         {username}
       </Box>
       <Box grow="Yes" className={css.ReplyContent}>
@@ -88,19 +96,20 @@ export const Reply = as<'div', ReplyProps>(
 
     const { body, formatted_body: formattedBody, format } = replyEvent?.getContent() ?? {};
     const sender = replyEvent?.getSender();
+    const eventType = replyEvent?.getType();
 
     const ignoredUsers = useIgnoredUsers();
     const isBlockedSender = !!sender && ignoredUsers.includes(sender);
+    const { t } = useTranslation();
+    const isRedacted = replyEvent?.isRedacted() === true;
+
+    const parseMemberEvent = useMemberEventParser();
 
     const { color: usernameColor, font: usernameFont } = useSableCosmetics(sender ?? '', room);
     const nicknames = useAtomValue(nicknamesAtom);
     const useAuthentication = useMediaAuthentication();
 
-    const fallbackBody = replyEvent?.isRedacted() ? (
-      <MessageDeletedContent />
-    ) : (
-      <MessageFailedContent />
-    );
+    const fallbackBody = isRedacted ? <MessageDeletedContent /> : <MessageFailedContent />;
 
     const badEncryption = replyEvent?.getContent().msgtype === 'm.bad.encrypted';
 
@@ -116,6 +125,7 @@ export const Reply = as<'div', ReplyProps>(
       !replyEvent.getClearContent();
 
     let bodyJSX: ReactNode = fallbackBody;
+    let image: IconSrc | undefined;
 
     if (format === 'org.matrix.custom.html' && formattedBody) {
       const strippedHtml = trimReplyFromFormattedBody(formattedBody)
@@ -134,8 +144,33 @@ export const Reply = as<'div', ReplyProps>(
     } else if (body) {
       const strippedBody = trimReplyFromBody(body).replaceAll(/(?:\r\n|\r|\n)/g, ' ');
       bodyJSX = scaleSystemEmoji(strippedBody);
+    } else if (eventType === StateEvent.RoomMember && !!replyEvent) {
+      const parsedMemberEvent = parseMemberEvent(replyEvent);
+      image = parsedMemberEvent.icon;
+      bodyJSX = parsedMemberEvent.body;
+    } else if (eventType === StateEvent.RoomName) {
+      image = Icons.Hash;
+      bodyJSX = t('Organisms.RoomCommon.changed_room_name');
+    } else if (eventType === StateEvent.RoomTopic) {
+      image = Icons.Hash;
+      bodyJSX = ' changed room topic';
+    } else if (eventType === StateEvent.RoomAvatar) {
+      image = Icons.Hash;
+      bodyJSX = ' changed room avatar';
+    } else if (eventType === StateEvent.GroupCallMemberPrefix && !!replyEvent) {
+      const callJoined = replyEvent.getContent<SessionMembershipData>().application;
+      image = callJoined ? Icons.Phone : Icons.PhoneDown;
+      bodyJSX = callJoined ? ' joined the call' : ' ended the call';
+    } else if (Object.values(MessageEvent).every((v) => v !== eventType)) {
+      image = Icons.Code;
+      bodyJSX = (
+        <>
+          {' sent '}
+          <code className={customHtmlCss.Code}>{eventType}</code>
+          {' state event'}
+        </>
+      );
     }
-
     return (
       <Box direction="Row" gap="200" alignItems="Center" {...props} ref={ref}>
         {threadRootId && (
@@ -144,8 +179,10 @@ export const Reply = as<'div', ReplyProps>(
         <ReplyLayout
           as="button"
           userColor={usernameColor}
+          icon={image}
           username={
-            sender && (
+            sender &&
+            eventType !== StateEvent.RoomMember && (
               <Text size="T300" truncate style={{ fontFamily: usernameFont }}>
                 <b>{getMemberDisplayName(room, sender, nicknames) ?? getMxIdLocalPart(sender)}</b>
               </Text>
@@ -163,13 +200,15 @@ export const Reply = as<'div', ReplyProps>(
               })()}
             </Text>
           ) : (
-            <LinePlaceholder
-              style={{
-                backgroundColor: color.SurfaceVariant.ContainerActive,
-                width: toRem(placeholderWidth),
-                maxWidth: '100%',
-              }}
-            />
+            (isRedacted && <MessageDeletedContent />) || (
+              <LinePlaceholder
+                style={{
+                  backgroundColor: color.SurfaceVariant.ContainerActive,
+                  width: toRem(placeholderWidth),
+                  maxWidth: '100%',
+                }}
+              />
+            )
           )}
         </ReplyLayout>
         {replyEvent === null && (
